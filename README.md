@@ -30,7 +30,7 @@ from it. Full schema:
 tasklib:
   package:
     name: my_package        # required
-    python_version: "3.12"  # used by env.create-venv
+    python_version: "3.14"  # used by env.create-venv
   paths:
     src: src/my_package               # default: src/<package.name>
     tests: tests
