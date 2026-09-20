@@ -1,0 +1,101 @@
+r"""Test and benchmark tasks."""
+
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING
+
+from invoke.tasks import task
+
+from invoke_tasklib.config import get_config
+
+if TYPE_CHECKING:
+    from invoke.context import Context
+
+logger: logging.Logger = logging.getLogger(__name__)
+
+
+@task
+def doctest_src(c: Context) -> None:
+    r"""Run doctests on source code."""
+    cfg = get_config(c)
+    src = cfg["paths"]["src"]
+    logger.info("📚 Running doctests on source code...")
+    c.run(f"python -m pytest --xdoctest {src}", pty=True)
+    logger.info("✅ Doctest validation complete")
+
+
+@task
+def all_test(c: Context, cov: bool = False) -> None:
+    r"""Run all tests (unit and integration).
+
+    Args:
+        c: The invoke context.
+        cov: If True, generate coverage reports in HTML, XML, and terminal
+            formats. Default is False.
+    """
+    cfg = get_config(c)
+    name = cfg["package"]["name"]
+    tests = cfg["paths"]["tests"]
+    logger.info("🧪 Running all tests (unit and integration)...")
+    cmd = ["python -m pytest --xdoctest --timeout 10"]
+    if cov:
+        cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
+        logger.info("📊 Coverage reports will be generated")
+    cmd.append(tests)
+    c.run(" ".join(cmd), pty=True)
+    logger.info("✅ All tests complete")
+
+
+@task
+def unit_test(c: Context, cov: bool = False) -> None:
+    r"""Run unit tests.
+
+    Args:
+        c: The invoke context.
+        cov: If True, generate coverage reports. Default is False.
+    """
+    cfg = get_config(c)
+    name = cfg["package"]["name"]
+    unit_tests = cfg["paths"]["unit_tests"]
+    logger.info("🧪 Running unit tests...")
+    cmd = ["python -m pytest --xdoctest --timeout 10"]
+    if cov:
+        cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
+        logger.info("📊 Coverage reports will be generated")
+    cmd.append(unit_tests)
+    c.run(" ".join(cmd), pty=True)
+    logger.info("✅ Unit tests complete")
+
+
+@task
+def integration_test(c: Context, cov: bool = False) -> None:
+    r"""Run integration tests.
+
+    Args:
+        c: The invoke context.
+        cov: If True, generate coverage reports (appended). Default is False.
+    """
+    cfg = get_config(c)
+    name = cfg["package"]["name"]
+    integration_tests = cfg["paths"]["integration_tests"]
+    logger.info("🧪 Running integration tests...")
+    cmd = ["python -m pytest --xdoctest --timeout 60"]
+    if cov:
+        cmd.append(
+            f"--cov-report html --cov-report xml --cov-report term --cov-append --cov={name}"
+        )
+        logger.info("📊 Coverage reports will be generated (appending)")
+    cmd.append(integration_tests)
+    c.run(" ".join(cmd), pty=True)
+    logger.info("✅ Integration tests complete")
+
+
+@task
+def benchmark(c: Context) -> None:
+    r"""Run performance benchmarks."""
+    cfg = get_config(c)
+    benchmarks = cfg["paths"]["benchmarks"]
+    logger.info("⏱️  Running benchmarks...")
+    c.run(f"python -m pytest {benchmarks}/ --benchmark-only", pty=True)
+    logger.info("✅ Benchmarks complete")

@@ -1,0 +1,34 @@
+r"""Reusable Invoke tasks shared across Python projects.
+
+Typical usage in a consuming project's ``tasks.py``::
+
+    from invoke_tasklib import ns
+
+and an ``invoke.yaml`` at the project root::
+
+    tasklib:
+      package:
+        name: my_package
+
+To compose a custom subset of tasks instead of using the default
+``ns``, import individual task modules::
+
+    from invoke import Collection
+    from invoke_tasklib import lint, test
+
+    ns = Collection(lint, test)
+"""
+
+from __future__ import annotations
+
+from invoke.collection import Collection
+
+from invoke_tasklib import env, lint, release, test
+
+__all__ = ["env", "lint", "ns", "release", "test"]
+
+ns = Collection()
+ns.add_collection(Collection.from_module(lint), name="lint")
+ns.add_collection(Collection.from_module(test), name="test")
+ns.add_collection(Collection.from_module(env), name="env")
+ns.add_collection(Collection.from_module(release), name="release")
