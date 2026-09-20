@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 DEFAULT_PACKAGE = {
     "name": None,
-    "python_version": "3.12",
+    "python_version": "3.14",
 }
 
 DEFAULT_PATHS = {

@@ -20,7 +20,7 @@ def test_get_config_requires_package_name() -> None:
 def test_get_config_defaults() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}}))
     assert cfg == {
-        "package": {"name": "mypkg", "python_version": "3.12"},
+        "package": {"name": "mypkg", "python_version": "3.14"},
         "paths": {
             "src": "src/mypkg",
             "tests": "tests",
