@@ -55,11 +55,11 @@ def publish_doc_dev(c: Context) -> None:
 def publish_doc_latest(c: Context) -> None:
     r"""Publish latest (e.g. stable) docs.
 
-    Requires the ``feu`` and ``packaging`` packages to determine the latest
-    version tag.
+    Requires the ``feu`` and ``packaging`` packages to determine the
+    latest version tag.
     """
-    from feu.local_git import get_last_version_tag_name  # noqa: PLC0415
-    from packaging.version import Version  # noqa: PLC0415
+    from feu.local_git import get_last_version_tag_name
+    from packaging.version import Version
 
     cfg = get_config(c)
     docs_config = cfg["paths"]["docs_config"]
