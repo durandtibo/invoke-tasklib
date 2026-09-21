@@ -1,0 +1,56 @@
+# Comprehensive test suite workflow.
+# Runs unit, integration and functional tests (src/invoke_tasklib/test.py's
+# `all` task, which runs all three with combined coverage) across every
+# supported Python version and OS.
+# The ubuntu-latest/3.14 cell also uploads coverage to Codecov, so coverage
+# tracking rides on an existing run instead of a separate full test pass.
+
+name: Unit & Integration Tests
+on:
+  workflow_call:
+    inputs:
+      test-matrix:
+        description: "JSON test matrix from lib-get-test-matrix.yaml, loaded once by the caller"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  all:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      max-parallel: 8
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(inputs.test-matrix).os_matrix }}
+        python-version: ${{ fromJson(inputs.test-matrix).python_versions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run all tests (unit, integration, functional) with coverage
+        run: |
+          uv run inv test.all --cov
+
+      # Upload coverage from a single representative cell of the matrix (only
+      # for the main repository, to avoid spam from forks).
+      - name: Upload coverage to Codecov
+        if: |
+          matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14' &&
+          github.repository == 'durandtibo/invoke-tasklib' && (github.event_name == 'push' || github.event_name == 'pull_request')
+        uses: codecov/codecov-action@0b35c9ecc4f0529d0eb674914510c22f85b196b4 # ratchet:codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          # Ignore codecov failures as the codecov server is not very
+          # reliable, but we don't want to report a failure in the GitHub UI
+          # just because the coverage report failed to be published.
+          fail_ci_if_error: false

@@ -1,0 +1,51 @@
+# Reusable workflow that loads the shared Python-version and OS matrix from
+# dev/config/test_matrix.json and exposes it as a single output, so the
+# supported version/OS lists only need to be updated in one place.
+#
+# Usage:
+#   jobs:
+#     get-matrix:
+#       uses: ./.github/workflows/lib-get-test-matrix.yaml
+#
+#     test:
+#       needs: get-matrix
+#       strategy:
+#         matrix:
+#           python-version: ${{ fromJson(needs.get-matrix.outputs.test_matrix).python_versions }}
+#           os: ${{ fromJson(needs.get-matrix.outputs.test_matrix).os_matrix }}
+
+name: Get Test Matrix
+on:
+  workflow_call:
+    outputs:
+      test_matrix:
+        description: "JSON string containing python_versions and os_matrix"
+        value: ${{ jobs.get-matrix.outputs.test_matrix }}
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  get-matrix:
+    runs-on: ubuntu-slim
+    timeout-minutes: 2
+    outputs:
+      test_matrix: ${{ steps.build-matrix.outputs.test_matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Read test matrix config
+        id: build-matrix
+        run: |
+          set -euo pipefail
+          test_matrix=$(jq -c '.' dev/config/test_matrix.json)
+          echo "test_matrix=$test_matrix" >> "$GITHUB_OUTPUT"
+
+      - name: Display test matrix
+        env:
+          JSON_CONTENT: ${{ steps.build-matrix.outputs.test_matrix }}
+        run: |
+          echo "🧪 Test matrix loaded successfully:"
+          echo "$JSON_CONTENT" | jq '.'

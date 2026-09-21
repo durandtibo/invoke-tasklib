@@ -1,0 +1,23 @@
+# Composite action used by nightly-test-package.yaml to smoke-test a
+# `pip`/`uv pip` install of invoke-tasklib from PyPI.
+
+name: Verify installed package
+description: Print the dependency tree and run basic import/version checks on the installed package
+
+runs:
+  using: composite
+  steps:
+    - name: Show installed packages
+      shell: bash
+      run: uv pip list
+
+    - name: Verify package imports and exposes tasks
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -c "
+        import invoke_tasklib
+        from invoke_tasklib import ns
+        print('invoke_tasklib version/module:', invoke_tasklib.__file__)
+        print('namespace tasks:', sorted(t for t in ns.task_names))
+        "

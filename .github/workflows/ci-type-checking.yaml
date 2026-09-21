@@ -1,0 +1,25 @@
+# Type checking workflow. Maps to src/invoke_tasklib/types.py's check task
+# (pyright --verifytypes).
+
+name: Type Checking
+on:
+  workflow_call:
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  type-checking:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Check types
+        run: |
+          uv run inv types.check

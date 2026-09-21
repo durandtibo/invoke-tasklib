@@ -1,0 +1,27 @@
+# Build and package validation workflow.
+# Tests that the package can be built (sdist + wheel), installs cleanly, and
+# passes twine's metadata checks, via the `inv release.build --check` task
+# (src/invoke_tasklib/release.py:build).
+
+name: Build Tests
+on:
+  workflow_call:
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Build and verify package
+        run: |
+          uv run inv release.build --check

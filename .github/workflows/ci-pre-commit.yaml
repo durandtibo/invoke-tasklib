@@ -1,0 +1,27 @@
+# Pre-commit hooks validation workflow.
+# Runs all configured pre-commit hooks (.pre-commit-config.yaml) to validate
+# code quality (formatting, linting, pyright, etc.).
+
+name: Pre-commit
+on:
+  workflow_call:
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      # pyright pre-commit hook runs via `uv run inv types.check`, which
+      # needs the project synced, not just uv/python installed.
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Run pre-commit
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # ratchet:pre-commit/action@v3.0.1

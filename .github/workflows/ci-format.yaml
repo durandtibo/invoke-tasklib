@@ -1,0 +1,61 @@
+# Code formatting workflow.
+# Checks Python/docstring formatting (ruff, docformatter) and shell-script
+# formatting/linting (shfmt, shellcheck).
+# Maps to src/invoke_tasklib/format.py's check_python / check_docstrings /
+# check_shell tasks. shfmt has no `check_*` task counterpart (only the
+# mutating `fix_shell`), so shfmt is run directly here in --diff mode,
+# matching how upstream coola runs it.
+
+name: Format
+on:
+  workflow_call:
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Check code format (ruff)
+        run: |
+          uv run inv format.check-python
+
+      - name: Check docstring format (docformatter)
+        run: |
+          uv run inv format.check-docstrings
+
+  shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      # Runs shellcheck via the repo's own task (invoke_tasklib.format.check_shell).
+      - name: Check shell scripts (shellcheck)
+        run: |
+          uv run inv format.check-shell
+
+      # Installs and runs ShellCheck's shfmt formatter, which the repo only
+      # exposes in mutating form (`fix_shell`) via invoke, so it is run
+      # directly here in check mode.
+      - name: Install shfmt
+        uses: mfinelli/setup-shfmt@a25fda4c1fe115aec0f85e04126610841bc3141d # ratchet:mfinelli/setup-shfmt@v4.0.1
+
+      - name: Check shell formatting (shfmt)
+        run: |
+          shopt -s globstar
+          echo "✨ Checking shell script formatting with shfmt..."
+          shfmt -d -- **/*.sh
