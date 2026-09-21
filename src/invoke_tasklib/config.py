@@ -15,18 +15,43 @@ from it.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
     from invoke.context import Context
 
 
-DEFAULT_PACKAGE = {
+class PackageConfig(TypedDict):
+    r"""Resolved ``package`` config section."""
+
+    name: str
+    python_version: str
+
+
+class PathsConfig(TypedDict):
+    r"""Resolved ``paths`` config section."""
+
+    src: str
+    tests: str
+    unit_tests: str
+    integration_tests: str
+    benchmarks: str
+    docs_config: str
+
+
+class TasklibConfig(TypedDict):
+    r"""Resolved tasklib config."""
+
+    package: PackageConfig
+    paths: PathsConfig
+
+
+DEFAULT_PACKAGE: dict[str, str | None] = {
     "name": None,
     "python_version": "3.14",
 }
 
-DEFAULT_PATHS = {
+DEFAULT_PATHS: dict[str, str | None] = {
     "src": None,
     "tests": "tests",
     "unit_tests": None,
@@ -36,7 +61,7 @@ DEFAULT_PATHS = {
 }
 
 
-def get_config(c: Context) -> dict:
+def get_config(c: Context) -> TasklibConfig:
     r"""Return the effective tasklib config, merging user overrides from
     ``invoke.yaml`` (under the ``tasklib`` key) on top of the defaults.
 
@@ -66,4 +91,14 @@ def get_config(c: Context) -> dict:
     if not paths["benchmarks"]:
         paths["benchmarks"] = f"{paths['tests']}/benchmarks"
 
-    return {"package": package, "paths": paths}
+    return {
+        "package": PackageConfig(name=package["name"], python_version=package["python_version"]),
+        "paths": PathsConfig(
+            src=paths["src"],
+            tests=paths["tests"],
+            unit_tests=paths["unit_tests"],
+            integration_tests=paths["integration_tests"],
+            benchmarks=paths["benchmarks"],
+            docs_config=paths["docs_config"],
+        ),
+    }

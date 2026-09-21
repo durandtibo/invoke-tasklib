@@ -27,7 +27,7 @@ from invoke_tasklib import env, format, lint, release, test, types
 
 __all__ = ["env", "format", "lint", "ns", "release", "test", "types"]
 
-ns = Collection()
+ns: Collection = Collection()
 ns.add_collection(Collection.from_module(format), name="format")
 ns.add_collection(Collection.from_module(lint), name="lint")
 ns.add_collection(Collection.from_module(types), name="types")
