@@ -1,0 +1,51 @@
+# Documentation testing workflow.
+# Runs doctests on code examples in docstrings (src/invoke_tasklib/test.py's
+# doctest task) and validates the docs site builds without errors (mike).
+
+name: Doctest
+on:
+  workflow_call:
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  doctest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Run doctest on source code
+        run: |
+          uv run inv test.doctest
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+        with:
+          docs-deps: "true"
+
+      # Configure git for mike (documentation versioning tool), shared with
+      # release-docs-publish.yaml so the two never drift.
+      - name: Setup doc deploy
+        uses: ./.github/actions/setup-doc-deploy
+        with:
+          ci-bot-email: ${{ secrets.CI_BOT_EMAIL || 'ci-docs-bot@users.noreply.github.com' }}
+
+      # Build documentation to a temporary branch to verify no errors,
+      # without pushing/publishing anything.
+      - name: Build documentation
+        run: |
+          uv run mike deploy --config-file docs/mkdocs.yml --branch tmp-doc-build-1234 dev

@@ -1,0 +1,25 @@
+# Scans dependency manifest files that change as part of a Pull Request,
+# surfacing known-vulnerable versions of packages declared/updated in the PR.
+#
+# Source repository: https://github.com/actions/dependency-review-action
+name: Dependency Review
+on:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  # Required for the comment-summary-in-pr option below.
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+      - name: Dependency Review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # ratchet:actions/dependency-review-action@v5
+        with:
+          comment-summary-in-pr: always

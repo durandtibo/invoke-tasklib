@@ -1,0 +1,38 @@
+# Composite action shared by every CI/nightly/release workflow that needs a
+# Python + uv environment. Wraps astral-sh/setup-uv and `uv sync` so the
+# python-version / dependency-group selection isn't duplicated per workflow.
+
+name: Setup uv environment
+description: Install uv, select a Python version, and sync project dependencies
+
+inputs:
+  python-version:
+    description: "Python version to install (passed to astral-sh/setup-uv). Empty uses the pinned .python-version / uv default."
+    required: false
+    default: ""
+  docs-deps:
+    description: "If 'true', also sync the docs dependency group."
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # ratchet:astral-sh/setup-uv@v10.1.0
+      with:
+        python-version: ${{ inputs.python-version }}
+        activate-environment: true
+
+    - name: Sync dependencies
+      shell: bash
+      env:
+        DOCS_DEPS: ${{ inputs.docs-deps }}
+      run: |
+        set -euo pipefail
+        cmd=(uv sync --group dev)
+        if [[ "$DOCS_DEPS" == "true" ]]; then
+          cmd+=(--group docs)
+        fi
+        "${cmd[@]}"
+        uv pip install -e .

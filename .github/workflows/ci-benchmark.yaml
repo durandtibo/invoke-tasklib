@@ -1,0 +1,27 @@
+# Benchmark workflow. Runs performance benchmarks (src/invoke_tasklib/test.py's
+# benchmark task) nightly on its own schedule instead of gating every PR/push,
+# since a benchmark regression isn't a merge blocker.
+
+name: Benchmark
+on:
+  schedule:
+    - cron: "20 9 * * *" # Run nightly at 9:20 AM UTC
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Run benchmarks
+        run: |
+          uv run inv test.benchmark
