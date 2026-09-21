@@ -16,7 +16,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 @task
-def doctest_src(c: Context) -> None:
+def doctest(c: Context) -> None:
     r"""Run doctests on source code."""
     cfg = get_config(c)
     src = cfg["paths"]["src"]
@@ -26,8 +26,8 @@ def doctest_src(c: Context) -> None:
 
 
 @task
-def all_test(c: Context, cov: bool = False) -> None:
-    r"""Run all tests (unit and integration).
+def all(c: Context, cov: bool = False) -> None:
+    r"""Run all tests (unit, integration, and functional).
 
     Args:
         c: The invoke context.
@@ -37,7 +37,7 @@ def all_test(c: Context, cov: bool = False) -> None:
     cfg = get_config(c)
     name = cfg["package"]["name"]
     tests = cfg["paths"]["tests"]
-    logger.info("🧪 Running all tests (unit and integration)...")
+    logger.info("🧪 Running all tests...")
     cmd = ["python -m pytest --xdoctest --timeout 10"]
     if cov:
         cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
@@ -48,7 +48,7 @@ def all_test(c: Context, cov: bool = False) -> None:
 
 
 @task
-def unit_test(c: Context, cov: bool = False) -> None:
+def unit(c: Context, cov: bool = False) -> None:
     r"""Run unit tests.
 
     Args:
@@ -69,7 +69,7 @@ def unit_test(c: Context, cov: bool = False) -> None:
 
 
 @task
-def integration_test(c: Context, cov: bool = False) -> None:
+def integration(c: Context, cov: bool = False) -> None:
     r"""Run integration tests.
 
     Args:
@@ -89,6 +89,29 @@ def integration_test(c: Context, cov: bool = False) -> None:
     cmd.append(integration_tests)
     c.run(" ".join(cmd), pty=True)
     logger.info("✅ Integration tests complete")
+
+
+@task
+def functional(c: Context, cov: bool = False) -> None:
+    r"""Run functional tests.
+
+    Args:
+        c: The invoke context.
+        cov: If True, generate coverage reports (appended). Default is False.
+    """
+    cfg = get_config(c)
+    name = cfg["package"]["name"]
+    functional_tests = cfg["paths"]["functional_tests"]
+    logger.info("🧪 Running functional tests...")
+    cmd = ["python -m pytest --xdoctest --timeout 60"]
+    if cov:
+        cmd.append(
+            f"--cov-report html --cov-report xml --cov-report term --cov-append --cov={name}"
+        )
+        logger.info("📊 Coverage reports will be generated (appending)")
+    cmd.append(functional_tests)
+    c.run(" ".join(cmd), pty=True)
+    logger.info("✅ Functional tests complete")
 
 
 @task

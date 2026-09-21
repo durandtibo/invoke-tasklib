@@ -35,6 +35,7 @@ class PathsConfig(TypedDict):
     tests: str
     unit_tests: str
     integration_tests: str
+    functional_tests: str
     benchmarks: str
     docs_config: str
 
@@ -56,6 +57,7 @@ DEFAULT_PATHS: dict[str, str | None] = {
     "tests": "tests",
     "unit_tests": None,
     "integration_tests": None,
+    "functional_tests": None,
     "benchmarks": None,
     "docs_config": "docs/mkdocs.yml",
 }
@@ -88,6 +90,8 @@ def get_config(c: Context) -> TasklibConfig:
         paths["unit_tests"] = f"{paths['tests']}/unit"
     if not paths["integration_tests"]:
         paths["integration_tests"] = f"{paths['tests']}/integration"
+    if not paths["functional_tests"]:
+        paths["functional_tests"] = f"{paths['tests']}/functional"
     if not paths["benchmarks"]:
         paths["benchmarks"] = f"{paths['tests']}/benchmarks"
 
@@ -98,6 +102,7 @@ def get_config(c: Context) -> TasklibConfig:
             tests=paths["tests"],
             unit_tests=paths["unit_tests"],
             integration_tests=paths["integration_tests"],
+            functional_tests=paths["functional_tests"],
             benchmarks=paths["benchmarks"],
             docs_config=paths["docs_config"],
         ),

@@ -26,6 +26,7 @@ def test_get_config_defaults() -> None:
             "tests": "tests",
             "unit_tests": "tests/unit",
             "integration_tests": "tests/integration",
+            "functional_tests": "tests/functional",
             "benchmarks": "tests/benchmarks",
             "docs_config": "docs/mkdocs.yml",
         },

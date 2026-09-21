@@ -58,6 +58,7 @@ tasklib:
     tests: tests
     unit_tests: tests/unit            # default: <tests>/unit
     integration_tests: tests/integration  # default: <tests>/integration
+    functional_tests: tests/functional    # default: <tests>/functional
     benchmarks: tests/benchmarks      # default: <tests>/benchmarks
     docs_config: docs/mkdocs.yml
 ```
