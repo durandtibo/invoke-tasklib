@@ -1,7 +1,7 @@
 r"""Code and docstring formatting tasks.
 
-Naming convention: ``check_<target>`` tasks are read-only (they fail without
-modifying files); ``fix_<target>`` tasks modify files in place.
+Naming convention: ``check_<target>`` tasks are read-only (they fail
+without modifying files); ``fix_<target>`` tasks modify files in place.
 """
 
 from __future__ import annotations
@@ -27,6 +27,30 @@ def check_python(c: Context) -> None:
     logger.info("🎨 Checking code format with ruff...")
     c.run("ruff format --check .", pty=True)
     logger.info("✅ Code format check passed")
+
+
+@task
+def check_docstrings(c: Context) -> None:
+    r"""Check docstring formatting with docformatter without modifying
+    files."""
+    cfg = get_config(c)
+    src = cfg["paths"]["src"]
+    logger.info("📖 Checking docstring formatting...")
+    c.run(f"docformatter --config ./pyproject.toml --check {src}", pty=True)
+    logger.info("✅ Docstring format check passed")
+
+
+@task
+def fix_python(c: Context) -> None:
+    r"""Format code in place with ruff.
+
+    Note:
+        This modifies files in place. Ensure your work is committed before
+        running this task.
+    """
+    logger.info("🎨 Formatting code with ruff...")
+    c.run("ruff format .", pty=True)
+    logger.info("✅ Code formatting complete")
 
 
 @task

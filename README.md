@@ -31,7 +31,9 @@ named `fix_<target>`. Both share the same `<target>` (e.g. `python`, `shell`,
 | Task                     | Behavior                                    |
 | ------------------------ | -------------------------------------------- |
 | `format.check-python`    | Checks Python formatting with ruff (read-only) |
+| `format.check-docstrings`| Checks docstring formatting with docformatter (read-only) |
 | `format.check-shell`     | Checks shell scripts with shellcheck (read-only) |
+| `format.fix-python`      | Formats Python code with ruff (in place)     |
 | `format.fix-docstrings`  | Formats docstrings with docformatter (in place) |
 | `format.fix-shell`       | Formats shell scripts with shfmt (in place)  |
 | `lint.check-lint`        | Checks linting with ruff (read-only)         |

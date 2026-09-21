@@ -21,6 +21,18 @@ def test_check_python() -> None:
     assert "ruff format --check ." in _commands(c)
 
 
+def test_check_docstrings_uses_configured_src_path() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
+    format.check_docstrings(c)
+    assert "docformatter --config ./pyproject.toml --check src/mypkg" in _commands(c)
+
+
+def test_fix_python() -> None:
+    c = _context()
+    format.fix_python(c)
+    assert "ruff format ." in _commands(c)
+
+
 def test_fix_docstrings_uses_configured_src_path() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     format.fix_docstrings(c)
