@@ -1,0 +1,52 @@
+name: Get Package Versions
+
+# Reusable workflow that reads the invoke version bounds from
+# dev/config/package_versions.json and exposes them as a single output, so
+# ci-test-deps.yaml and nightly-test-package-dep.yaml don't each parse the
+# file themselves. Kept up to date by bot-generate-package-versions.yaml.
+#
+# Usage:
+#   jobs:
+#     get-versions:
+#       uses: ./.github/workflows/lib-get-package-versions.yaml
+#
+#     use-versions:
+#       needs: get-versions
+#       strategy:
+#         matrix:
+#           package-version: ${{ fromJson(needs.get-versions.outputs.package_versions).invoke }}
+
+on:
+  workflow_call:
+    outputs:
+      package_versions:
+        description: "JSON string containing all package versions from dev/config/package_versions.json"
+        value: ${{ jobs.get-versions.outputs.package_versions }}
+
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  get-versions:
+    runs-on: ubuntu-slim
+    timeout-minutes: 2
+    outputs:
+      package_versions: ${{ steps.read-json.outputs.json-content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Read and validate JSON file
+        uses: durandtibo/read-json-action@b014656c6f0c53b3caf9056fedeaead02ebae3ad # ratchet:durandtibo/read-json-action@v0.1
+        id: read-json
+        with:
+          file-path: dev/config/package_versions.json
+
+      - name: Display package versions
+        env:
+          JSON_CONTENT: ${{ steps.read-json.outputs.json-content }}
+        run: |
+          echo "📦 Package versions loaded successfully:"
+          echo "$JSON_CONTENT" | jq '.'

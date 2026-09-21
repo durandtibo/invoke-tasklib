@@ -1,8 +1,9 @@
 # Nightly dispatcher: tests the published PyPI package (stable + pre-release)
 # against every supported Python version / OS, to catch issues from external
 # changes (e.g. a new Python release) independent of the repo's source.
-# No `*-extras`/`*-dep` jobs, unlike upstream coola: invoke-tasklib has no
-# optional dependencies / [project.optional-dependencies] extras to test.
+# No `*-extras` job, unlike upstream coola: invoke-tasklib has no optional
+# dependencies / [project.optional-dependencies] extras to test. It does have
+# a `*-dep` job (below), scoped to invoke, its one runtime dependency.
 
 name: Nightly Package Tests
 on:
@@ -29,4 +30,10 @@ jobs:
     uses: ./.github/workflows/nightly-test-package.yaml
     with:
       install-cmd: "uv pip install --pre invoke-tasklib"
+      test-matrix: ${{ needs.get-matrix.outputs.test_matrix }}
+
+  deps:
+    needs: get-matrix
+    uses: ./.github/workflows/nightly-test-package-dep.yaml
+    with:
       test-matrix: ${{ needs.get-matrix.outputs.test_matrix }}
