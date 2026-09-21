@@ -16,8 +16,14 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 @task
-def build(c: Context) -> None:
-    r"""Build the package and verify it can be installed."""
+def build(c: Context, check: bool = False) -> None:
+    r"""Build the package and verify it can be installed.
+
+    Args:
+        c: The invoke context.
+        check: If True, also check the package's PyPI metadata with
+            twine. Default is False.
+    """
     cfg = get_config(c)
     name = cfg["package"]["name"]
     logger.info("📦 Building package...")
@@ -27,6 +33,9 @@ def build(c: Context) -> None:
         f'uv run --with {name} --refresh-package {name} --no-project -- python -c "import {name}"',
         pty=True,
     )
+    if check:
+        logger.info("🔍 Checking package metadata with twine...")
+        c.run("uvx twine check dist/*", pty=True)
 
 
 @task
