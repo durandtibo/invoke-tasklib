@@ -30,7 +30,7 @@ jobs:
   build:
     # Manual runs are only allowed from main; tag pushes are always allowed.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     # Unlike a typical consumer of pypi-release-action, this repo's own
     # tasks.py imports invoke_tasklib itself, so it must be importable
@@ -53,7 +53,7 @@ jobs:
   sign-and-release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write # Required to attach signed artifacts to the GitHub release
@@ -71,7 +71,10 @@ jobs:
       always() &&
       needs.build.result == 'success' &&
       (needs.sign-and-release.result == 'success' || needs.sign-and-release.result == 'skipped')
-    runs-on: ubuntu-slim
+    # pypi-release-action/publish runs pypa/gh-action-pypi-publish, a Docker
+    # container action, which requires a Docker daemon - ubuntu-slim doesn't
+    # have one, so this job needs ubuntu-latest unlike the other jobs here.
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     environment:
       name: pypi
