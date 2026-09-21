@@ -15,20 +15,28 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in c.run.call_args_list]
 
 
-def test_build() -> None:
+_INSTALL_CHECK_CMD = (
+    'uv run --with mypkg --refresh-package mypkg --no-project -- python -c "import mypkg"'
+)
+
+
+def test_build_without_check() -> None:
     c = _context({"package": {"name": "mypkg"}})
     release.build(c)
-    commands = _commands(c)
-    assert "uv build" in commands
-    assert (
-        'uv run --with mypkg --refresh-package mypkg --no-project -- python -c "import mypkg"'
-        in commands
-    )
+    assert _commands(c) == ["uv build", _INSTALL_CHECK_CMD]
+
+
+def test_build_with_check() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    release.build(c, check=True)
+    assert _commands(c) == ["uv build", _INSTALL_CHECK_CMD, "uvx twine check dist/*"]
 
 
 def test_pypi() -> None:
     c = _context({"package": {"name": "mypkg"}})
     release.pypi(c)
-    commands = _commands(c)
-    assert "uv build" in commands
-    assert "uv publish --token ${PYPI_TOKEN}" in commands
+    assert _commands(c) == [
+        "uv build",
+        _INSTALL_CHECK_CMD,
+        "uv publish --token ${PYPI_TOKEN}",
+    ]

@@ -85,10 +85,10 @@ exists.
 
 ### `release.*`
 
-| Task              | Behavior                                     |
-| ------------------ | ---------------------------------------------- |
-| `release.build`   | Builds the package and verifies installation  |
-| `release.pypi`    | Builds and publishes the package to PyPI      |
+| Task              | Behavior                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| `release.build`   | Builds the package and verifies installation (`--check` also validates metadata with twine) |
+| `release.pypi`    | Builds and publishes the package to PyPI                              |
 
 ### `doc.*`
 
