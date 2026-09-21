@@ -18,8 +18,8 @@ tasklib:
     name: my_package
 ```
 
-Run `invoke --list` to see the available tasks (`lint.*`, `test.*`, `env.*`,
-`release.*`).
+Run `invoke --list` to see the available tasks (`format.*`, `lint.*`, `test.*`,
+`env.*`, `release.*`).
 
 ### Config
 

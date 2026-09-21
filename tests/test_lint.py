@@ -15,12 +15,6 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in c.run.call_args_list]
 
 
-def test_check_format() -> None:
-    c = _context()
-    lint.check_format(c)
-    assert "ruff format --check ." in _commands(c)
-
-
 def test_check_lint() -> None:
     c = _context()
     lint.check_lint(c)
@@ -31,18 +25,3 @@ def test_check_types() -> None:
     c = _context({"package": {"name": "mypkg"}})
     lint.check_types(c)
     assert "pyright --verifytypes mypkg --ignoreexternal" in _commands(c)
-
-
-def test_docformat_uses_configured_src_path() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
-    lint.docformat(c)
-    assert "docformatter --config ./pyproject.toml --in-place src/mypkg" in _commands(c)
-
-
-def test_format_shell() -> None:
-    c = _context()
-    lint.format_shell(c)
-    commands = _commands(c)
-    find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
-    assert f"{find_sh} -print0 | xargs -0 -r shellcheck --" in commands
-    assert f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --" in commands
