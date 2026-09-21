@@ -43,6 +43,17 @@ When adding a new task, follow this convention: pick `check_` or `fix_`
 based on whether the task mutates files, and use a `<target>` name that
 matches its read-only/mutating counterpart if one exists.
 
+### Test tasks
+
+| Task                | Behavior                                          |
+| -------------------- | -------------------------------------------------- |
+| `test.doctest`       | Runs doctests on source code                      |
+| `test.unit`          | Runs unit tests                                   |
+| `test.integration`   | Runs integration tests                            |
+| `test.functional`    | Runs functional tests                             |
+| `test.all`           | Runs all tests (unit, integration, and functional) |
+| `test.benchmark`     | Runs performance benchmarks                       |
+
 ### Config
 
 Only `tasklib.package.name` is required. Everything else has a default derived
