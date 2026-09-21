@@ -21,6 +21,26 @@ tasklib:
 Run `invoke --list` to see the available tasks (`format.*`, `lint.*`, `test.*`,
 `env.*`, `release.*`).
 
+### Task naming convention
+
+Tasks that check or verify something (never modify files, exit non-zero on
+violations) are named `check_<target>`. Tasks that modify files in place are
+named `fix_<target>`. Both share the same `<target>` (e.g. `python`, `shell`,
+`docstrings`) so the read-only/mutating counterpart of a task is easy to find:
+
+| Task                     | Behavior                                    |
+| ------------------------ | -------------------------------------------- |
+| `format.check-python`    | Checks Python formatting with ruff (read-only) |
+| `format.check-shell`     | Checks shell scripts with shellcheck (read-only) |
+| `format.fix-docstrings`  | Formats docstrings with docformatter (in place) |
+| `format.fix-shell`       | Formats shell scripts with shfmt (in place)  |
+| `lint.check-lint`        | Checks linting with ruff (read-only)         |
+| `lint.check-types`       | Checks type hints with pyright (read-only)   |
+
+When adding a new task, follow this convention: pick `check_` or `fix_`
+based on whether the task mutates files, and use a `<target>` name that
+matches its read-only/mutating counterpart if one exists.
+
 ### Config
 
 Only `tasklib.package.name` is required. Everything else has a default derived
