@@ -90,17 +90,17 @@ CI/release steps call this repo's own `invoke_tasklib` tasks (via
 checks a contributor runs locally (`make`, `uv run inv --list`) are exactly
 what CI runs. Key mappings:
 
-| Workflow job                | Invoke task                                           |
-| --------------------------- | ----------------------------------------------------- |
-| `ci-format.yaml` / `format` | `format.check-python`, `format.check-docstrings`      |
-| `ci-format.yaml` / `shell`  | `format.check-shell` (+ `shfmt -d`, no task wraps it) |
-| `ci-lint.yaml`              | `lint.check-lint`                                     |
-| `ci-type-checking.yaml`     | `types.check`                                         |
-| `ci-doctest.yaml`           | `test.doctest`                                        |
-| `ci-test.yaml`              | `test.all --cov`                                      |
-| `ci-build.yaml`             | `release.build --check`                               |
+| Workflow job                | Invoke task                                            |
+| --------------------------- | ------------------------------------------------------ |
+| `ci-format.yaml` / `format` | `format.check-python`, `format.check-docstrings`       |
+| `ci-format.yaml` / `shell`  | `format.check-shell` (+ `shfmt -d`, no task wraps it)  |
+| `ci-lint.yaml`              | `lint.check-lint`                                      |
+| `ci-type-checking.yaml`     | `types.check`                                          |
+| `ci-doctest.yaml`           | `test.doctest`                                         |
+| `ci-test.yaml`              | `test.all --cov`                                       |
+| `ci-build.yaml`             | `release.build --check`                                |
 | `release-pypi.yaml`         | `build-package` (via `durandtibo/pypi-release-action`) |
-| `release-docs-publish.yaml` | `doc.publish-latest`, `doc.publish-dev`               |
+| `release-docs-publish.yaml` | `doc.publish-latest`, `doc.publish-dev`                |
 
 `ci-pre-commit.yaml` runs `.pre-commit-config.yaml` directly via
 `pre-commit/action` rather than an invoke task, since pre-commit already
