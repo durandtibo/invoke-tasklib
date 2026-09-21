@@ -41,15 +41,15 @@ violations) are named `check_<target>`. Tasks that modify files in place are
 named `fix_<target>`. Both share the same `<target>` (e.g. `python`, `shell`,
 `docstrings`) so the read-only/mutating counterpart of a task is easy to find:
 
-| Task                        | Behavior                                                    |
-| ---------------------------- | ------------------------------------------------------------ |
-| `format.check-python`        | Checks Python formatting with ruff (read-only)               |
-| `format.check-docstrings`    | Checks docstring formatting with docformatter (read-only)    |
-| `format.check-shell`         | Checks shell scripts with shellcheck (read-only)             |
-| `format.fix-python`          | Formats Python code with ruff (in place)                     |
-| `format.fix-docstrings`      | Formats docstrings with docformatter (in place)               |
-| `format.fix-shell`           | Formats shell scripts with shfmt (in place)                  |
-| `lint.check-lint`            | Checks linting with ruff (read-only)                          |
+| Task                      | Behavior                                                  |
+| ------------------------- | --------------------------------------------------------- |
+| `format.check-python`     | Checks Python formatting with ruff (read-only)            |
+| `format.check-docstrings` | Checks docstring formatting with docformatter (read-only) |
+| `format.check-shell`      | Checks shell scripts with shellcheck (read-only)          |
+| `format.fix-python`       | Formats Python code with ruff (in place)                  |
+| `format.fix-docstrings`   | Formats docstrings with docformatter (in place)           |
+| `format.fix-shell`        | Formats shell scripts with shfmt (in place)               |
+| `lint.check-lint`         | Checks linting with ruff (read-only)                      |
 
 When adding a new task to these namespaces, follow this convention: pick
 `check_` or `fix_` based on whether the task mutates files, and use a
@@ -58,44 +58,44 @@ exists.
 
 ### `types.*`
 
-| Task          | Behavior                                    |
-| -------------- | -------------------------------------------- |
-| `types.check` | Checks type hints with pyright (read-only)  |
+| Task          | Behavior                                   |
+| ------------- | ------------------------------------------ |
+| `types.check` | Checks type hints with pyright (read-only) |
 
 ### `test.*`
 
-| Task               | Behavior                                            |
-| ------------------- | ---------------------------------------------------- |
-| `test.doctest`      | Runs doctests on source code                        |
-| `test.unit`         | Runs unit tests                                     |
-| `test.integration`  | Runs integration tests                              |
-| `test.functional`   | Runs functional tests                               |
-| `test.all`          | Runs all tests (unit, integration, and functional)  |
-| `test.benchmark`    | Runs performance benchmarks                         |
+| Task               | Behavior                                           |
+| ------------------ | -------------------------------------------------- |
+| `test.doctest`     | Runs doctests on source code                       |
+| `test.unit`        | Runs unit tests                                    |
+| `test.integration` | Runs integration tests                             |
+| `test.functional`  | Runs functional tests                              |
+| `test.all`         | Runs all tests (unit, integration, and functional) |
+| `test.benchmark`   | Runs performance benchmarks                        |
 
 ### `env.*`
 
 | Task                          | Behavior                                                 |
-| ------------------------------ | ---------------------------------------------------------- |
-| `env.create-venv`             | Creates a virtual environment and installs invoke         |
-| `env.install`                 | Installs project dependencies and the package (editable)  |
-| `env.update`                  | Updates dependencies and pre-commit hooks                  |
-| `env.show-installed-packages` | Shows the installed packages                                |
-| `env.show-python-config`      | Shows the Python configuration                              |
+| ----------------------------- | -------------------------------------------------------- |
+| `env.create-venv`             | Creates a virtual environment and installs invoke        |
+| `env.install`                 | Installs project dependencies and the package (editable) |
+| `env.update`                  | Updates dependencies and pre-commit hooks                |
+| `env.show-installed-packages` | Shows the installed packages                             |
+| `env.show-python-config`      | Shows the Python configuration                           |
 
 ### `release.*`
 
-| Task              | Behavior                                                              |
-| ------------------ | ------------------------------------------------------------------------ |
-| `release.build`   | Builds the package and verifies installation (`--check` also validates metadata with twine) |
-| `release.pypi`    | Builds and publishes the package to PyPI                              |
+| Task            | Behavior                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| `release.build` | Builds the package and verifies installation (`--check` also validates metadata with twine) |
+| `release.pypi`  | Builds and publishes the package to PyPI                                                    |
 
 ### `doc.*`
 
-| Task                  | Behavior                             |
-| ---------------------- | --------------------------------------- |
-| `doc.publish-dev`     | Publishes development (unstable) docs  |
-| `doc.publish-latest`  | Publishes latest (stable) docs         |
+| Task                 | Behavior                              |
+| -------------------- | ------------------------------------- |
+| `doc.publish-dev`    | Publishes development (unstable) docs |
+| `doc.publish-latest` | Publishes latest (stable) docs        |
 
 ## Config
 
@@ -105,15 +105,15 @@ derived from it. Full schema:
 ```yaml
 tasklib:
   package:
-    name: my_package        # required
-    python_version: "3.14"  # used by env.create-venv
+    name: my_package # required
+    python_version: "3.14" # used by env.create-venv
   paths:
-    src: src/my_package                   # default: src/<package.name>
+    src: src/my_package # default: src/<package.name>
     tests: tests
-    unit_tests: tests/unit                # default: <tests>/unit
-    integration_tests: tests/integration  # default: <tests>/integration
-    functional_tests: tests/functional    # default: <tests>/functional
-    benchmarks: tests/benchmarks          # default: <tests>/benchmarks
+    unit_tests: tests/unit # default: <tests>/unit
+    integration_tests: tests/integration # default: <tests>/integration
+    functional_tests: tests/functional # default: <tests>/functional
+    benchmarks: tests/benchmarks # default: <tests>/benchmarks
     docs_config: docs/mkdocs.yml
 ```
 
