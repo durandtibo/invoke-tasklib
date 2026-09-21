@@ -23,13 +23,14 @@ from __future__ import annotations
 
 from invoke.collection import Collection
 
-from invoke_tasklib import env, format, lint, release, test
+from invoke_tasklib import env, format, lint, release, test, types
 
-__all__ = ["env", "format", "lint", "ns", "release", "test"]
+__all__ = ["env", "format", "lint", "ns", "release", "test", "types"]
 
 ns = Collection()
 ns.add_collection(Collection.from_module(format), name="format")
 ns.add_collection(Collection.from_module(lint), name="lint")
+ns.add_collection(Collection.from_module(types), name="types")
 ns.add_collection(Collection.from_module(test), name="test")
 ns.add_collection(Collection.from_module(env), name="env")
 ns.add_collection(Collection.from_module(release), name="release")
