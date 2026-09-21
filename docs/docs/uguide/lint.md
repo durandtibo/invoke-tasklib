@@ -4,9 +4,9 @@
 
 ## Overview
 
-| Task                | Behavior                                                |
-| --------------------- | ------------------------------------------------------------ |
-| `lint.check-lint`   | Checks code linting with [ruff](https://docs.astral.sh/ruff/) (read-only) |
+| Task              | Behavior                                                                  |
+| ----------------- | ------------------------------------------------------------------------- |
+| `lint.check-lint` | Checks code linting with [ruff](https://docs.astral.sh/ruff/) (read-only) |
 
 ## Usage
 
