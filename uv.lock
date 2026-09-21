@@ -508,7 +508,7 @@ wheels = [
 
 [[package]]
 name = "invoke-tasklib"
-version = "0.1.0a0"
+version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "invoke" },

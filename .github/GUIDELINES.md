@@ -99,7 +99,7 @@ what CI runs. Key mappings:
 | `ci-doctest.yaml`           | `test.doctest`                                        |
 | `ci-test.yaml`              | `test.all --cov`                                      |
 | `ci-build.yaml`             | `release.build --check`                               |
-| `release-pypi.yaml`         | `release.build --check`, `release.pypi`               |
+| `release-pypi.yaml`         | `build-package` (via `durandtibo/pypi-release-action`) |
 | `release-docs-publish.yaml` | `doc.publish-latest`, `doc.publish-dev`               |
 
 `ci-pre-commit.yaml` runs `.pre-commit-config.yaml` directly via

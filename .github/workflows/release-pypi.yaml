@@ -2,14 +2,15 @@
 # Builds and publishes the package to PyPI when a new version tag is pushed
 # (or manually, for a dev/pre-release version from main).
 #
-# Publishing goes through `inv release.pypi` (src/invoke_tasklib/release.py),
-# which builds (`uv build`) and publishes (`uv publish --token`) in one step
-# - a token-based publish, not PyPI Trusted Publishing (OIDC). Build and
-# publish are kept in a single job/step (rather than build -> sign -> publish
-# in separate jobs, as upstream coola does) because the task rebuilds the
-# dist itself; splitting them would sign one build and publish a different
-# one. See .github/GUIDELINES.md follow-ups for migrating to Trusted
-# Publishing and a build/sign/publish split later.
+# Uses the composite actions from durandtibo/pypi-release-action, which
+# build (uv build + inv build-package), sign with Sigstore, and publish via
+# PyPI Trusted Publishing (OIDC) - no PYPI_TOKEN secret needed. Requires a
+# GitHub Environment named "pypi" configured as a PyPI Trusted Publisher for
+# this project, with workflow filename "release-pypi.yaml". See
+# https://github.com/durandtibo/pypi-release-action for details.
+#
+# pypi-release-action has no tagged release yet, so it is pinned to a commit
+# SHA on main rather than a version tag.
 
 name: Publish PyPI Package
 on:
@@ -26,100 +27,48 @@ permissions:
   contents: read
 
 jobs:
-  release:
+  build:
     # Manual runs are only allowed from main; tag pushes are always allowed.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Build package
+        uses: durandtibo/pypi-release-action/build-package@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
+
+  sign-and-release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      contents: write # Required to attach signed artifacts to the GitHub release
+      id-token: write # Required to sign artifacts with Sigstore using OIDC keyless signing
+    steps:
+      - name: Sign and release package
+        uses: durandtibo/pypi-release-action/sign@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
+
+  publish:
+    needs: [build, sign-and-release]
+    # Only fail-closed on tag pushes: on a tag, publish must wait for
+    # sign-and-release to succeed; on workflow_dispatch, sign-and-release is
+    # skipped (not failed), so allow publish to proceed.
+    if: |
+      always() &&
+      needs.build.result == 'success' &&
+      (needs.sign-and-release.result == 'success' || needs.sign-and-release.result == 'skipped')
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     environment:
       name: pypi
       url: https://pypi.org/project/invoke-tasklib/
     permissions:
-      contents: write # Required to attach signed artifacts to the GitHub release
-      id-token: write # Required to sign artifacts with Sigstore using OIDC keyless signing
+      id-token: write # Required for PyPI Trusted Publishing (OIDC)
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-
-      - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
-
-      - name: Extract package metadata
-        id: metadata
-        run: |
-          set -euo pipefail
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import tomllib
-          with open("pyproject.toml", "rb") as f:
-              data = tomllib.load(f)
-          project = data["project"]
-          print(f"name={project['name']}")
-          print(f"version={project['version']}")
-          PY
-
-      - name: Check manual run uses a dev/pre-release version
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
-        run: |
-          # Manual runs must never publish a plain release version
-          # (e.g. "1.2.3"); only pre-release/dev versions
-          # (e.g. "1.2.3a1", "1.2.3.dev1") are allowed. Real releases
-          # must go through a "vX.Y.Z" tag push instead.
-          if [[ "${PACKAGE_VERSION}" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
-            echo "::error::Manual runs require a dev/pre-release version, got plain release version ${PACKAGE_VERSION}"
-            exit 1
-          fi
-
-      - name: Check tag matches package version
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          TAG_VERSION: ${{ github.ref_name }}
-          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
-        run: |
-          if [[ "${TAG_VERSION#v}" != "${PACKAGE_VERSION}" ]]; then
-            echo "::error::Tag ${TAG_VERSION} does not match package version ${PACKAGE_VERSION}"
-            exit 1
-          fi
-
-      - name: Check version not already published on PyPI
-        env:
-          PACKAGE_NAME: ${{ steps.metadata.outputs.name }}
-          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
-        run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://pypi.org/pypi/${PACKAGE_NAME}/${PACKAGE_VERSION}/json")
-          if [[ "$status" == "200" ]]; then
-            echo "::error::${PACKAGE_NAME} ${PACKAGE_VERSION} is already published on PyPI"
-            exit 1
-          fi
-
-      # Builds (uv build), checks metadata with twine, verifies the wheel
-      # installs and imports, then publishes to PyPI. Requires the PYPI_TOKEN
-      # repository secret - see .github/GUIDELINES.md follow-ups.
-      - name: Build, check and publish package to PyPI
-        env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          uv run inv release.build --check
-          uv run inv release.pypi
-
-      - name: Generate checksums
-        run: |
-          cd dist && sha256sum -- *.tar.gz *.whl > SHA256SUMS
-
-      - name: Sign distributions with Sigstore
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: sigstore/gh-action-sigstore-python@790bc6befb9d733738f18d8f895854b453640ec9 # ratchet:sigstore/gh-action-sigstore-python@v3.5.0
+      - name: Publish package to PyPI
+        uses: durandtibo/pypi-release-action/publish@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
         with:
-          inputs: dist/*.tar.gz dist/*.whl
-
-      - name: Upload artifacts and signatures to GitHub release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # ratchet:softprops/action-gh-release@v3.0.3
-        with:
-          files: |
-            dist/*.tar.gz
-            dist/*.whl
-            dist/*.sigstore.json
-            dist/SHA256SUMS
+          workflow-filename: release-pypi.yaml
