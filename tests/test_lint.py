@@ -43,5 +43,6 @@ def test_format_shell() -> None:
     c = _context()
     lint.format_shell(c)
     commands = _commands(c)
-    assert "shellcheck -- **/*.sh" in commands
-    assert "shfmt -l -w -- **/*.sh" in commands
+    find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
+    assert f"{find_sh} -print0 | xargs -0 -r shellcheck --" in commands
+    assert f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --" in commands
