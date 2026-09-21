@@ -1,4 +1,8 @@
-r"""Code and docstring formatting tasks."""
+r"""Code and docstring formatting tasks.
+
+Naming convention: ``check_<target>`` tasks are read-only (they fail
+without modifying files); ``fix_<target>`` tasks modify files in place.
+"""
 
 from __future__ import annotations
 
@@ -14,9 +18,11 @@ if TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+_FIND_SH = "find . -name '*.sh' -type f -not -path './.git/*'"
+
 
 @task
-def check_format(c: Context) -> None:
+def check_python(c: Context) -> None:
     r"""Check code format with ruff without modifying files."""
     logger.info("🎨 Checking code format with ruff...")
     c.run("ruff format --check .", pty=True)
@@ -24,7 +30,31 @@ def check_format(c: Context) -> None:
 
 
 @task
-def docformat(c: Context) -> None:
+def check_docstrings(c: Context) -> None:
+    r"""Check docstring formatting with docformatter without modifying
+    files."""
+    cfg = get_config(c)
+    src = cfg["paths"]["src"]
+    logger.info("📖 Checking docstring formatting...")
+    c.run(f"docformatter --config ./pyproject.toml --check {src}", pty=True)
+    logger.info("✅ Docstring format check passed")
+
+
+@task
+def fix_python(c: Context) -> None:
+    r"""Format code in place with ruff.
+
+    Note:
+        This modifies files in place. Ensure your work is committed before
+        running this task.
+    """
+    logger.info("🎨 Formatting code with ruff...")
+    c.run("ruff format .", pty=True)
+    logger.info("✅ Code formatting complete")
+
+
+@task
+def fix_docstrings(c: Context) -> None:
     r"""Format docstrings in source code with docformatter.
 
     Note:
@@ -39,13 +69,21 @@ def docformat(c: Context) -> None:
 
 
 @task
-def format_shell(c: Context) -> None:
-    r"""Check and format shell scripts with shellcheck and shfmt."""
-    find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
+def check_shell(c: Context) -> None:
+    r"""Check shell scripts with shellcheck."""
     logger.info("🐚 Running shellcheck on shell scripts...")
-    c.run(f"{find_sh} -print0 | xargs -0 -r shellcheck --", pty=True)
-    logger.info("✅ Shellcheck passed\n")
+    c.run(f"{_FIND_SH} -print0 | xargs -0 -r shellcheck --", pty=True)
+    logger.info("✅ Shellcheck passed")
 
+
+@task
+def fix_shell(c: Context) -> None:
+    r"""Format shell scripts in place with shfmt.
+
+    Note:
+        This modifies files in place. Ensure your work is committed before
+        running this task.
+    """
     logger.info("🔧 Running shfmt to format shell scripts...")
-    c.run(f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --", pty=True)
+    c.run(f"{_FIND_SH} -print0 | xargs -0 -r shfmt -l -w --", pty=True)
     logger.info("✅ Shell formatting complete")
