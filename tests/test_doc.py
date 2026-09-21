@@ -21,9 +21,10 @@ def _commands(c: MockContext) -> list[str]:
 def test_publish_dev() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_dev(c)
-    commands = _commands(c)
-    assert "mike delete --config-file docs/mkdocs.yml main" in commands
-    assert "mike deploy --config-file docs/mkdocs.yml --push --update-aliases main dev" in commands
+    assert _commands(c) == [
+        "mike delete --config-file docs/mkdocs.yml main",
+        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases main dev",
+    ]
 
 
 def _install_fake_feu_module(monkeypatch, version: str | None) -> None:
@@ -45,20 +46,19 @@ def test_publish_latest_uses_last_version_tag(monkeypatch) -> None:
     _install_fake_feu_module(monkeypatch, "1.2.3")
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_latest(c)
-    commands = _commands(c)
-    assert "mike delete --config-file docs/mkdocs.yml 1.2" in commands
-    assert (
-        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 1.2 latest" in commands
-    )
-    assert "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest" in commands
+    assert _commands(c) == [
+        "mike delete --config-file docs/mkdocs.yml 1.2",
+        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 1.2 latest",
+        "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest",
+    ]
 
 
 def test_publish_latest_falls_back_when_no_tag(monkeypatch) -> None:
     _install_fake_feu_module(monkeypatch, None)
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_latest(c)
-    commands = _commands(c)
-    assert "mike delete --config-file docs/mkdocs.yml 0.0" in commands
-    assert (
-        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 0.0 latest" in commands
-    )
+    assert _commands(c) == [
+        "mike delete --config-file docs/mkdocs.yml 0.0",
+        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 0.0 latest",
+        "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest",
+    ]

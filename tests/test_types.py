@@ -18,4 +18,4 @@ def _commands(c: MockContext) -> list[str]:
 def test_check() -> None:
     c = _context({"package": {"name": "mypkg"}})
     types.check(c)
-    assert "pyright --verifytypes mypkg --ignoreexternal" in _commands(c)
+    assert _commands(c) == ["pyright --verifytypes mypkg --ignoreexternal"]

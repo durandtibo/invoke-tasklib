@@ -18,4 +18,4 @@ def _commands(c: MockContext) -> list[str]:
 def test_check_lint() -> None:
     c = _context()
     lint.check_lint(c)
-    assert "ruff check --output-format=github ." in _commands(c)
+    assert _commands(c) == ["ruff check --output-format=github ."]
