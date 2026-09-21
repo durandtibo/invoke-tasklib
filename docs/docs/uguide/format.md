@@ -11,14 +11,14 @@ Tasks follow a `check_<target>` / `fix_<target>` naming convention:
   wrong, but never modify files.
 - `fix_<target>` tasks **modify files in place** to match the expected format.
 
-| Task                     | Behavior                                                   |
-| ------------------------- | -------------------------------------------------------------- |
-| `format.check-python`    | Checks Python formatting with [ruff](https://docs.astral.sh/ruff/) (read-only) |
-| `format.fix-python`      | Formats Python code with ruff (in place)                    |
-| `format.check-docstrings`| Checks docstring formatting with [docformatter](https://docformatter.readthedocs.io/) (read-only) |
-| `format.fix-docstrings`  | Formats docstrings with docformatter (in place)              |
-| `format.check-shell`     | Checks shell scripts with [shellcheck](https://www.shellcheck.net/) (read-only) |
-| `format.fix-shell`       | Formats shell scripts with [shfmt](https://github.com/mvdan/sh) (in place) |
+| Task                      | Behavior                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `format.check-python`     | Checks Python formatting with [ruff](https://docs.astral.sh/ruff/) (read-only)                    |
+| `format.fix-python`       | Formats Python code with ruff (in place)                                                          |
+| `format.check-docstrings` | Checks docstring formatting with [docformatter](https://docformatter.readthedocs.io/) (read-only) |
+| `format.fix-docstrings`   | Formats docstrings with docformatter (in place)                                                   |
+| `format.check-shell`      | Checks shell scripts with [shellcheck](https://www.shellcheck.net/) (read-only)                   |
+| `format.fix-shell`        | Formats shell scripts with [shfmt](https://github.com/mvdan/sh) (in place)                        |
 
 ## Checking Format
 
@@ -39,7 +39,7 @@ invoke format.fix-shell
 ```
 
 !!! warning
-    `fix_*` tasks modify files in place. Ensure your work is committed before running them.
+`fix_*` tasks modify files in place. Ensure your work is committed before running them.
 
 ## Docstring Style
 

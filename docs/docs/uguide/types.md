@@ -4,9 +4,9 @@
 
 ## Overview
 
-| Task           | Behavior                                                 |
-| --------------- | --------------------------------------------------------- |
-| `types.check`  | Checks type hints with [pyright](https://microsoft.github.io/pyright/) (read-only) |
+| Task          | Behavior                                                                           |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `types.check` | Checks type hints with [pyright](https://microsoft.github.io/pyright/) (read-only) |
 
 ## Usage
 

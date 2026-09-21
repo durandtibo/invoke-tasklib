@@ -6,10 +6,10 @@ versioned documentation with [`mike`](https://github.com/jimporter/mike), on top
 
 ## Overview
 
-| Task                  | Behavior                             |
-| ---------------------- | --------------------------------------- |
-| `doc.publish-dev`     | Publishes development (unstable) docs  |
-| `doc.publish-latest`  | Publishes latest (stable) docs         |
+| Task                 | Behavior                              |
+| -------------------- | ------------------------------------- |
+| `doc.publish-dev`    | Publishes development (unstable) docs |
+| `doc.publish-latest` | Publishes latest (stable) docs        |
 
 Both tasks read `paths.docs_config` from the [resolved config](config.md) (default:
 `docs/mkdocs.yml`) and pass it to `mike` via `--config-file`.
@@ -38,8 +38,8 @@ It then deletes any previously published version with that tag, deploys the curr
 that tag with the `latest` alias, and sets `latest` as the default version shown to visitors.
 
 !!! note
-    `doc.publish-latest` requires the `feu` and `packaging` packages. Install documentation
-    dependencies with `invoke env.install --docs-deps` before running it.
+`doc.publish-latest` requires the `feu` and `packaging` packages. Install documentation
+dependencies with `invoke env.install --docs-deps` before running it.
 
 ## Local Preview
 

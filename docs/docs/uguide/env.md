@@ -6,12 +6,12 @@ inspect a project's Python environment using [`uv`](https://docs.astral.sh/uv/).
 ## Overview
 
 | Task                          | Behavior                                                 |
-| ------------------------------ | ------------------------------------------------------------- |
-| `env.create-venv`             | Creates a virtual environment and installs invoke         |
-| `env.install`                 | Installs project dependencies and the package (editable)  |
-| `env.update`                  | Updates dependencies and pre-commit hooks                  |
-| `env.show-installed-packages` | Shows the installed packages                                |
-| `env.show-python-config`      | Shows the Python configuration                              |
+| ----------------------------- | -------------------------------------------------------- |
+| `env.create-venv`             | Creates a virtual environment and installs invoke        |
+| `env.install`                 | Installs project dependencies and the package (editable) |
+| `env.update`                  | Updates dependencies and pre-commit hooks                |
+| `env.show-installed-packages` | Shows the installed packages                             |
+| `env.show-python-config`      | Shows the Python configuration                           |
 
 ## Creating a Virtual Environment
 
@@ -23,7 +23,7 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 [resolved config](config.md), and installs `invoke` into it via `uv tool install`.
 
 !!! warning
-    This clears any existing `.venv`.
+This clears any existing `.venv`.
 
 ## Installing Dependencies
 
@@ -49,8 +49,8 @@ Runs `uv sync --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
 (`pre-commit autoupdate`), and reinstalls the project with documentation dependencies.
 
 !!! warning
-    Updating dependencies may introduce breaking changes. Review the changes and run the test
-    suite afterward.
+Updating dependencies may introduce breaking changes. Review the changes and run the test
+suite afterward.
 
 ## Inspecting the Environment
 

@@ -30,16 +30,16 @@ defaults are derived from `package.name` or from `paths.tests`.
 
 ## Defaults
 
-| Key                        | Default                        |
-| --------------------------- | --------------------------------- |
-| `package.python_version`   | `"3.14"`                        |
-| `paths.src`                | `src/<package.name>`            |
-| `paths.tests`              | `tests`                         |
-| `paths.unit_tests`         | `<paths.tests>/unit`            |
-| `paths.integration_tests`  | `<paths.tests>/integration`     |
-| `paths.functional_tests`   | `<paths.tests>/functional`      |
-| `paths.benchmarks`         | `<paths.tests>/benchmarks`      |
-| `paths.docs_config`        | `docs/mkdocs.yml`                |
+| Key                       | Default                     |
+| ------------------------- | --------------------------- |
+| `package.python_version`  | `"3.14"`                    |
+| `paths.src`               | `src/<package.name>`        |
+| `paths.tests`             | `tests`                     |
+| `paths.unit_tests`        | `<paths.tests>/unit`        |
+| `paths.integration_tests` | `<paths.tests>/integration` |
+| `paths.functional_tests`  | `<paths.tests>/functional`  |
+| `paths.benchmarks`        | `<paths.tests>/benchmarks`  |
+| `paths.docs_config`       | `docs/mkdocs.yml`           |
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`.
 
