@@ -32,17 +32,20 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-slim
     timeout-minutes: 5
+    # Unlike a typical consumer of pypi-release-action, this repo's own
+    # tasks.py imports invoke_tasklib itself, so it must be importable
+    # before `inv build-package` can even load the task collection.
+    # build-package's own astral-sh/setup-uv step always runs `uv venv
+    # --clear`, unconditionally wiping any venv/install made in a prior
+    # step - so a pip/editable install can't survive it. PYTHONPATH does
+    # survive (it's a job-level env var, not part of the venv), and since
+    # this is a plain src-layout package with no compiled parts, pointing
+    # at src/ directly is enough to make it importable without installing.
+    env:
+      PYTHONPATH: ${{ github.workspace }}/src
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-
-      # Unlike a typical consumer of pypi-release-action, this repo's own
-      # tasks.py imports invoke_tasklib itself, so it must be installed
-      # (editable) before `inv build-package` can even load the task
-      # collection. build-package's own `make install-invoke` only installs
-      # bare invoke, not this project.
-      - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
 
       - name: Build package
         uses: durandtibo/pypi-release-action/build-package@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
