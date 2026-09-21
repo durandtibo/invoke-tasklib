@@ -18,36 +18,36 @@ def _commands(c: MockContext) -> list[str]:
 def test_check_python() -> None:
     c = _context()
     format.check_python(c)
-    assert "ruff format --check ." in _commands(c)
+    assert _commands(c) == ["ruff format --check ."]
 
 
 def test_check_docstrings_uses_configured_src_path() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     format.check_docstrings(c)
-    assert "docformatter --config ./pyproject.toml --check src/mypkg" in _commands(c)
+    assert _commands(c) == ["docformatter --config ./pyproject.toml --check src/mypkg"]
 
 
 def test_fix_python() -> None:
     c = _context()
     format.fix_python(c)
-    assert "ruff format ." in _commands(c)
+    assert _commands(c) == ["ruff format ."]
 
 
 def test_fix_docstrings_uses_configured_src_path() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     format.fix_docstrings(c)
-    assert "docformatter --config ./pyproject.toml --in-place src/mypkg" in _commands(c)
+    assert _commands(c) == ["docformatter --config ./pyproject.toml --in-place src/mypkg"]
 
 
 def test_check_shell() -> None:
     c = _context()
     format.check_shell(c)
     find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
-    assert f"{find_sh} -print0 | xargs -0 -r shellcheck --" in _commands(c)
+    assert _commands(c) == [f"{find_sh} -print0 | xargs -0 -r shellcheck --"]
 
 
 def test_fix_shell() -> None:
     c = _context()
     format.fix_shell(c)
     find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
-    assert f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --" in _commands(c)
+    assert _commands(c) == [f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --"]

@@ -18,53 +18,53 @@ def _commands(c: MockContext) -> list[str]:
 def test_create_venv_uses_configured_python_version() -> None:
     c = _context({"package": {"name": "mypkg", "python_version": "3.11"}})
     env.create_venv(c)
-    commands = _commands(c)
-    assert "uv venv --python 3.11 --clear" in commands
-    assert "uv tool install invoke" in commands
+    assert _commands(c) == ["uv venv --python 3.11 --clear", "uv tool install invoke"]
 
 
 def test_install_default_options() -> None:
     c = _context()
     env.install(c)
-    commands = _commands(c)
-    assert "uv sync --frozen --all-extras --group dev" in commands
-    assert "uv pip install -e ." in commands
+    assert _commands(c) == ["uv sync --frozen --all-extras --group dev", "uv pip install -e ."]
 
 
 def test_install_no_optional_no_dev_deps() -> None:
     c = _context()
     env.install(c, optional_deps=False, dev_deps=False)
-    commands = _commands(c)
-    assert "uv sync --frozen" in commands
+    assert _commands(c) == ["uv sync --frozen", "uv pip install -e ."]
 
 
 def test_install_with_docs_deps() -> None:
     c = _context()
     env.install(c, docs_deps=True)
-    commands = _commands(c)
-    assert "uv sync --frozen --all-extras --group dev --group docs" in commands
+    assert _commands(c) == [
+        "uv sync --frozen --all-extras --group dev --group docs",
+        "uv pip install -e .",
+    ]
 
 
 def test_update_runs_expected_commands() -> None:
     c = _context({"package": {"name": "mypkg"}})
     env.update(c)
-    commands = _commands(c)
-    assert "uv sync --upgrade" in commands
-    assert "uv tool upgrade --all" in commands
-    assert "pre-commit autoupdate" in commands
-    assert "uv pip install -e ." in commands
+    assert _commands(c) == [
+        "uv sync --upgrade",
+        "uv tool upgrade --all",
+        "pre-commit autoupdate",
+        "uv sync --frozen --all-extras --group dev --group docs",
+        "uv pip install -e .",
+    ]
 
 
 def test_show_installed_packages() -> None:
     c = _context()
     env.show_installed_packages(c)
-    assert "uv pip list" in _commands(c)
+    assert _commands(c) == ["uv pip list"]
 
 
 def test_show_python_config() -> None:
     c = _context()
     env.show_python_config(c)
-    commands = _commands(c)
-    assert "uv python list --only-installed" in commands
-    assert "uv python find" in commands
-    assert "which python" in commands
+    assert _commands(c) == [
+        "uv python list --only-installed",
+        "uv python find",
+        "which python",
+    ]

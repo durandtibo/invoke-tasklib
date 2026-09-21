@@ -18,74 +18,70 @@ def _commands(c: MockContext) -> list[str]:
 def test_doctest() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest(c)
-    assert "python -m pytest --xdoctest src/mypkg" in _commands(c)
+    assert _commands(c) == ["python -m pytest --xdoctest src/mypkg"]
 
 
 def test_all_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.all(c)
-    assert "python -m pytest --xdoctest --timeout 10 tests" in _commands(c)
+    assert _commands(c) == ["python -m pytest --xdoctest --timeout 10 tests"]
 
 
 def test_all_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.all(c, cov=True)
-    commands = _commands(c)
-    assert (
+    assert _commands(c) == [
         "python -m pytest --xdoctest --timeout 10 "
-        "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests" in commands
-    )
+        "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests"
+    ]
 
 
 def test_unit_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.unit(c)
-    assert "python -m pytest --xdoctest --timeout 10 tests/unit" in _commands(c)
+    assert _commands(c) == ["python -m pytest --xdoctest --timeout 10 tests/unit"]
 
 
 def test_unit_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.unit(c, cov=True)
-    commands = _commands(c)
-    assert (
+    assert _commands(c) == [
         "python -m pytest --xdoctest --timeout 10 "
-        "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests/unit" in commands
-    )
+        "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests/unit"
+    ]
 
 
 def test_integration_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.integration(c)
-    assert "python -m pytest --xdoctest --timeout 60 tests/integration" in _commands(c)
+    assert _commands(c) == ["python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
 def test_integration_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.integration(c, cov=True)
-    commands = _commands(c)
-    assert (
+    assert _commands(c) == [
         "python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
-        "--cov-report term --cov-append --cov=mypkg tests/integration" in commands
-    )
+        "--cov-report term --cov-append --cov=mypkg tests/integration"
+    ]
 
 
 def test_functional_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.functional(c)
-    assert "python -m pytest --xdoctest --timeout 60 tests/functional" in _commands(c)
+    assert _commands(c) == ["python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
 def test_functional_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.functional(c, cov=True)
-    commands = _commands(c)
-    assert (
+    assert _commands(c) == [
         "python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
-        "--cov-report term --cov-append --cov=mypkg tests/functional" in commands
-    )
+        "--cov-report term --cov-append --cov=mypkg tests/functional"
+    ]
 
 
 def test_benchmark() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
-    assert "python -m pytest tests/benchmarks/ --benchmark-only" in _commands(c)
+    assert _commands(c) == ["python -m pytest tests/benchmarks/ --benchmark-only"]
