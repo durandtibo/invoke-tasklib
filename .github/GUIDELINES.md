@@ -32,6 +32,7 @@ either side. Configure branch protection to require these status checks
 - `pre-commit / pre-commit`
 - `doctest / doctest` and `doctest / build`
 - `test / all`
+- `test-deps / test-dep`
 
 Two `ci-*` workflows are deliberately _not_ called from `ci.yaml`, each
 standalone with its own trigger instead: `ci-benchmark.yaml` runs nightly on
@@ -49,8 +50,8 @@ than every PR/push.
 - **`.github/workflows/lib-*.yaml`** (reusable workflows called with
   `uses: ./.github/workflows/lib-....yaml`): used when the output needs to
   feed a matrix, or when the shared logic is naturally a whole job (e.g.
-  reading `../dev/config/test_matrix.json` once and handing the JSON down to
-  several jobs via `needs:`).
+  loading `durandtibo/workflow-config-action`'s config once and handing the
+  JSON down to several jobs via `needs:`).
 
 When adding new duplication, prefer extending an existing composite
 action/reusable workflow over copy-pasting steps.
@@ -107,18 +108,26 @@ orchestrates the hooks (including a `pyright` hook that itself shells out to
 `uv run inv types.check`).
 
 Unlike upstream `durandtibo/coola`, this repo has no
-`[project.optional-dependencies]` extras, so there are no `*-extras` /
-`*-dep` job variants, `lib-get-package-extras.yaml`, `lib-get-package-deps.yaml`,
-or `bot-generate-package-versions.yaml` equivalents here.
+`[project.optional-dependencies]` extras, so there are no `*-extras` job
+variants or `lib-get-package-extras.yaml` / `lib-get-package-deps.yaml`
+equivalents here. It does have a `*-dep` variant (`ci-test-deps.yaml`,
+`nightly-test-package-dep.yaml`) and `bot-generate-package-versions.yaml`,
+scoped to invoke-tasklib's one runtime dependency, `invoke`, instead of
+matrixing over extras.
 
 ## Shared configuration
 
 Values that would otherwise be duplicated across workflows are centralized in
 `../dev/config`:
 
-- `../dev/config/test_matrix.json` - supported Python versions (3.10-3.14,
-  matching `pyproject.toml`'s classifiers) / OS matrix, read once per run by
-  `lib-get-test-matrix.yaml`.
+The Python-version/OS matrix is not one of these files: `lib-get-test-matrix.yaml`
+loads it straight from `durandtibo/workflow-config-action`'s own built-in
+default config (no local override), matching upstream `durandtibo/coola`.
+
+- `../dev/config/package_versions.json` - tested `invoke` version list (its
+  pyproject.toml lower bound through latest), read once per run by
+  `lib-get-package-versions.yaml`. Regenerated weekly by
+  `bot-generate-package-versions.yaml` via `../dev/generate_versions.py`.
 
 ## Validating changes to this directory
 

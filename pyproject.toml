@@ -35,14 +35,9 @@ classifiers = [
 ]
 
 requires-python = ">=3.10"
-dependencies = ["invoke>=2.0"]
+dependencies = ["invoke>=3.0"]
 
-[project.urls]
-Homepage = "https://github.com/durandtibo/invoke-tasklib"
-Repository = "https://github.com/durandtibo/invoke-tasklib"
-Documentation = "https://durandtibo.github.io/invoke-tasklib/"
-Changelog = "https://github.com/durandtibo/invoke-tasklib/releases"
-Issues = "https://github.com/durandtibo/invoke-tasklib/issues"
+
 
 [dependency-groups]
 dev = [
@@ -65,9 +60,21 @@ docs = [
     "mkdocstrings[python]>=1.0,<2.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/durandtibo/invoke-tasklib"
+Repository = "https://github.com/durandtibo/invoke-tasklib"
+Documentation = "https://durandtibo.github.io/invoke-tasklib/"
+Changelog = "https://github.com/durandtibo/invoke-tasklib/releases"
+Issues = "https://github.com/durandtibo/invoke-tasklib/issues"
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pyright]
+include = ["src"]
+venvPath = "."
+venv = ".venv"

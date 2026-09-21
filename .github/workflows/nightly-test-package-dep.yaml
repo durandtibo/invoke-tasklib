@@ -1,0 +1,54 @@
+# Dependency compatibility workflow (PyPI package).
+# Installs the published invoke-tasklib package and verifies it against every
+# supported version of invoke, its one runtime dependency, across the full
+# Python-version x OS matrix.
+# Adapted from coola's nightly-test-package-dep.yaml: coola matrices this
+# per-extra (numpy, torch, ...); invoke-tasklib has no optional dependencies,
+# so this runs a single job over invoke's version list instead.
+
+name: Dependency Compatibility (PyPI Package)
+on:
+  workflow_call:
+    inputs:
+      test-matrix:
+        description: "JSON test matrix from lib-get-test-matrix.yaml, loaded once by the caller"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  get-versions:
+    uses: ./.github/workflows/lib-get-package-versions.yaml
+
+  test-dep:
+    needs: get-versions
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      max-parallel: 8
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(inputs.test-matrix).os_matrix }}
+        python-version: ${{ fromJson(inputs.test-matrix).python_versions }}
+        package-version: ${{ fromJson(needs.get-versions.outputs.package_versions).invoke }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # ratchet:astral-sh/setup-uv@v10.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
+
+      - name: Install package
+        run: uv pip install invoke-tasklib
+
+      - name: Install invoke version
+        run: uv pip install "invoke==${{ matrix.package-version }}"
+
+      - name: Verify installed package
+        uses: ./.github/actions/verify-installed-package
