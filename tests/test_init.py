@@ -10,4 +10,4 @@ def test_ns_is_collection() -> None:
 
 
 def test_ns_contains_expected_subcollections() -> None:
-    assert set(ns.collections.keys()) == {"lint", "test", "env", "release"}
+    assert set(ns.collections.keys()) == {"format", "lint", "types", "test", "env", "release"}

@@ -18,8 +18,8 @@ tasklib:
     name: my_package
 ```
 
-Run `invoke --list` to see the available tasks (`format.*`, `lint.*`, `test.*`,
-`env.*`, `release.*`).
+Run `invoke --list` to see the available tasks (`format.*`, `lint.*`,
+`types.*`, `test.*`, `env.*`, `release.*`).
 
 ### Task naming convention
 
@@ -37,7 +37,7 @@ named `fix_<target>`. Both share the same `<target>` (e.g. `python`, `shell`,
 | `format.fix-docstrings`  | Formats docstrings with docformatter (in place) |
 | `format.fix-shell`       | Formats shell scripts with shfmt (in place)  |
 | `lint.check-lint`        | Checks linting with ruff (read-only)         |
-| `lint.check-types`       | Checks type hints with pyright (read-only)   |
+| `types.check`            | Checks type hints with pyright (read-only)   |
 
 When adding a new task, follow this convention: pick `check_` or `fix_`
 based on whether the task mutates files, and use a `<target>` name that
