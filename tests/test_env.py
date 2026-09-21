@@ -20,7 +20,6 @@ def test_create_venv_uses_configured_python_version() -> None:
     env.create_venv(c)
     commands = _commands(c)
     assert "uv venv --python 3.11 --clear" in commands
-    assert "source .venv/bin/activate" in commands
     assert "uv tool install invoke" in commands
 
 

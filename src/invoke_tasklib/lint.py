@@ -59,10 +59,11 @@ def docformat(c: Context) -> None:
 @task
 def format_shell(c: Context) -> None:
     r"""Check and format shell scripts with shellcheck and shfmt."""
+    find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
     logger.info("🐚 Running shellcheck on shell scripts...")
-    c.run("shellcheck -- **/*.sh", pty=True)
+    c.run(f"{find_sh} -print0 | xargs -0 -r shellcheck --", pty=True)
     logger.info("✅ Shellcheck passed\n")
 
     logger.info("🔧 Running shfmt to format shell scripts...")
-    c.run("shfmt -l -w -- **/*.sh", pty=True)
+    c.run(f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --", pty=True)
     logger.info("✅ Shell formatting complete")

@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+from invoke.config import Config
+from invoke.context import MockContext
+
+from invoke_tasklib import test as test_tasks
+
+
+def _context(tasklib_config: dict | None = None) -> MockContext:
+    overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
+    return MockContext(config=Config(overrides=overrides), run=True)
+
+
+def _commands(c: MockContext) -> list[str]:
+    return [call.args[0] for call in c.run.call_args_list]
+
+
+def test_doctest_src() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
+    test_tasks.doctest_src(c)
+    assert "python -m pytest --xdoctest src/mypkg" in _commands(c)
+
+
+def test_all_test_without_coverage() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.all_test(c)
+    assert "python -m pytest --xdoctest --timeout 10 tests" in _commands(c)
+
+
+def test_all_test_with_coverage() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.all_test(c, cov=True)
+    commands = _commands(c)
+    assert (
+        "python -m pytest --xdoctest --timeout 10 "
+        "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests" in commands
+    )
+
+
+def test_unit_test_without_coverage() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit_test(c)
+    assert "python -m pytest --xdoctest --timeout 10 tests/unit" in _commands(c)
+
+
+def test_unit_test_with_coverage() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit_test(c, cov=True)
+    commands = _commands(c)
+    assert (
+        "python -m pytest --xdoctest --timeout 10 "
+        "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests/unit" in commands
+    )
+
+
+def test_integration_test_without_coverage() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.integration_test(c)
+    assert "python -m pytest --xdoctest --timeout 60 tests/integration" in _commands(c)
+
+
+def test_integration_test_with_coverage() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.integration_test(c, cov=True)
+    commands = _commands(c)
+    assert (
+        "python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+        "--cov-report term --cov-append --cov=mypkg tests/integration" in commands
+    )
+
+
+def test_benchmark() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.benchmark(c)
+    assert "python -m pytest tests/benchmarks/ --benchmark-only" in _commands(c)

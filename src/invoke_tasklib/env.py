@@ -27,7 +27,6 @@ def create_venv(c: Context) -> None:
     python_version = cfg["package"]["python_version"]
     logger.info(f"🐍 Creating virtual environment with Python {python_version}...")
     c.run(f"uv venv --python {python_version} --clear", pty=True)
-    c.run("source .venv/bin/activate", pty=True)
     logger.info("📦 Installing invoke...")
     c.run("uv tool install invoke", pty=True)
     logger.info("✅ Virtual environment created successfully")
