@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from invoke.config import Config
 from invoke.context import MockContext
 
@@ -15,10 +17,34 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in c.run.call_args_list]
 
 
-def test_doctest() -> None:
+def test_doctest_markdown(monkeypatch) -> None:
+    files = [Path("README.md"), Path("docs/index.md"), Path(".venv/lib/pkg/README.md")]
+    monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter(files))
+
+    c = _context()
+    test_tasks.doctest_markdown(c)
+    assert _commands(c) == [
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/index.md",
+    ]
+
+
+def test_doctest_python() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
+    test_tasks.doctest_python(c)
+    assert _commands(c) == ["python -m pytest --xdoctest src/mypkg"]
+
+
+def test_doctest(monkeypatch) -> None:
+    files = [Path("README.md")]
+    monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter(files))
+
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest(c)
-    assert _commands(c) == ["python -m pytest --xdoctest src/mypkg"]
+    assert _commands(c) == [
+        "python -m pytest --xdoctest src/mypkg",
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
+    ]
 
 
 def test_all_without_coverage() -> None:

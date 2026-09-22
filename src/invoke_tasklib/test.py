@@ -3,6 +3,7 @@ r"""Test and benchmark tasks."""
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
@@ -14,15 +15,39 @@ if TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+MARKDOWN_DOCTEST_EXCLUDE_DIRS = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
+
 
 @task
-def doctest(c: Context) -> None:
+def doctest_python(c: Context) -> None:
     r"""Run doctests on source code."""
     cfg = get_config(c)
     src = cfg["paths"]["src"]
     logger.info("📚 Running doctests on source code...")
     c.run(f"python -m pytest --xdoctest {src}", pty=True)
     logger.info("✅ Doctest validation complete")
+
+
+@task
+def doctest_markdown(c: Context) -> None:
+    r"""Run doctests on Python code examples embedded in markdown files."""
+    md_files = sorted(
+        p for p in Path().rglob("*.md") if not MARKDOWN_DOCTEST_EXCLUDE_DIRS.intersection(p.parts)
+    )
+    logger.info(f"📚 Found {len(md_files)} markdown files")
+    for f in md_files:
+        logger.info(f"🔍 Checking: {f}")
+        c.run(
+            f"python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF {f}", pty=True
+        )
+    logger.info(f"✅ All {len(md_files)} markdown files have been checked")
+
+
+@task
+def doctest(c: Context) -> None:
+    r"""Run doctests on both source code and markdown files."""
+    doctest_python(c)
+    doctest_markdown(c)
 
 
 @task
