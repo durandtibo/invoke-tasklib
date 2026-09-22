@@ -93,7 +93,8 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 🧪 **Testing**
 
-- `test.doctest`, `test.unit`, `test.integration`, `test.functional`, `test.all`, `test.benchmark`
+- `test.doctest`, `test.doctest-src`, `test.doctest-markdown`, `test.unit`, `test.integration`,
+  `test.functional`, `test.all`, `test.benchmark`
 
 [Learn more →](uguide/test.md)
 

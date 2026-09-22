@@ -80,7 +80,9 @@ Available tasks:
   release.pypi                  Build and publish the package to PyPI.
   test.all                      Run all tests (unit, integration, and functional).
   test.benchmark                Run performance benchmarks.
-  test.doctest                  Run doctests on source code.
+  test.doctest                  Run doctests on both source code and markdown files.
+  test.doctest-markdown         Run doctests on Python code examples embedded in markdown files.
+  test.doctest-src               Run doctests on source code.
   test.functional               Run functional tests.
   test.integration              Run integration tests.
   test.unit                     Run unit tests.

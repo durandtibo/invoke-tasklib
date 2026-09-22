@@ -5,17 +5,19 @@ doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 
 ## Overview
 
-| Task               | Behavior                                           |
-| ------------------ | -------------------------------------------------- |
-| `test.doctest`     | Runs doctests on source code                       |
-| `test.unit`        | Runs unit tests                                    |
-| `test.integration` | Runs integration tests                             |
-| `test.functional`  | Runs functional tests                              |
-| `test.all`         | Runs all tests (unit, integration, and functional) |
-| `test.benchmark`   | Runs performance benchmarks                        |
+| Task                    | Behavior                                           |
+| ----------------------- | -------------------------------------------------- |
+| `test.doctest`          | Runs doctests on source code and markdown files    |
+| `test.doctest-src`      | Runs doctests on source code                       |
+| `test.doctest-markdown` | Runs doctests on Python examples in markdown files |
+| `test.unit`             | Runs unit tests                                    |
+| `test.integration`      | Runs integration tests                             |
+| `test.functional`       | Runs functional tests                              |
+| `test.all`              | Runs all tests (unit, integration, and functional) |
+| `test.benchmark`        | Runs performance benchmarks                        |
 
-All test tasks (except `test.benchmark`) run `pytest` with `--xdoctest` enabled, so doctests
-embedded in the code under test are also collected.
+All test tasks (except `test.benchmark`, `test.doctest`, and `test.doctest-markdown`) run `pytest`
+with `--xdoctest` enabled, so doctests embedded in the code under test are also collected.
 
 ## Running Doctests
 
@@ -23,7 +25,21 @@ embedded in the code under test are also collected.
 invoke test.doctest
 ```
 
+Runs both `test.doctest-src` and `test.doctest-markdown`.
+
+```shell
+invoke test.doctest-src
+```
+
 Runs doctests against `paths.src` from the [resolved config](config.md).
+
+```shell
+invoke test.doctest-markdown
+```
+
+Recursively finds every `*.md` file in the project (skipping `.venv`, `.pytest_cache`, `.git`,
+and `node_modules`) and runs `python -m doctest` against each one, so Python code examples
+embedded in markdown files (README, docs, ...) stay correct and up to date.
 
 ## Running Tests by Scope
 
