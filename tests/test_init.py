@@ -13,6 +13,7 @@ def test_ns_contains_expected_subcollections() -> None:
     assert set(ns.collections.keys()) == {
         "format",
         "lint",
+        "imports",
         "types",
         "test",
         "env",

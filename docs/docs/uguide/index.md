@@ -18,6 +18,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Format](format.md)     | `format.fix-shell`            | Format shell scripts with shfmt                     |    ✅    |
 | [Lint](lint.md)         | `lint.check-lint`             | Check code linting with ruff                        |    ❌    |
 | [Lint](lint.md)         | `lint.fix`                    | Fix auto-fixable linting issues with ruff           |    ✅    |
+| [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
 | [Types](types.md)       | `types.check`                 | Check type hints with pyright                       |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
 | [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                         |    ❌    |
@@ -47,14 +48,14 @@ A typical local development loop looks like this:
 
 ```shell
 invoke format.fix-python format.fix-docstrings   # auto-fix formatting
-invoke lint.check-lint types.check                # check quality
+invoke lint.check-lint imports.check-cycles types.check  # check quality
 invoke test.unit --cov                            # run tests with coverage
 ```
 
 And what CI typically runs (nothing should modify the working tree):
 
 ```shell
-invoke format.check-python format.check-docstrings lint.check-lint types.check
+invoke format.check-python format.check-docstrings lint.check-lint imports.check-cycles types.check
 invoke test.all --cov
 ```
 
