@@ -52,8 +52,16 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 `format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project, excluding
 `.git/`.
 
+!!! note
+`shellcheck` and `shfmt` are not Python packages, so they aren't installed by
+[`env.install`](env.md). Install them with your system package manager, e.g.
+`brew install shellcheck shfmt` on macOS or `apt install shellcheck` on Debian/Ubuntu
+(`shfmt` there comes from the `golang-go` toolchain or a
+[release binary](https://github.com/mvdan/sh/releases)).
+
 ## See Also
 
 - [Config](config.md): where `paths.src` (used by the docstring tasks) comes from.
 - [Lint](lint.md): the companion `lint.check-lint` task.
 - [`invoke_tasklib.format` reference](../refs/format.md)
+- [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

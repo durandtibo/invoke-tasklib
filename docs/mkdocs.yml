@@ -24,6 +24,7 @@ nav:
   - Home: index.md
   - get_started.md
   - User Guide:
+      - uguide/index.md
       - uguide/format.md
       - uguide/lint.md
       - uguide/types.md
@@ -32,6 +33,7 @@ nav:
       - uguide/release.md
       - uguide/doc.md
       - uguide/config.md
+  - troubleshooting.md
   - Developer Guide:
       - dev/development.md
       - dev/architecture.md
@@ -50,6 +52,7 @@ repo_url: https://github.com/durandtibo/invoke-tasklib
 repo_name: durandtibo/invoke-tasklib
 
 markdown_extensions:
+  - admonition
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.highlight

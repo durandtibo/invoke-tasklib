@@ -22,3 +22,4 @@ from third-party dependencies rather than from the project's own code.
 
 - [Config](config.md): where `package.name` comes from.
 - [`invoke_tasklib.types` reference](../refs/types.md)
+- [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

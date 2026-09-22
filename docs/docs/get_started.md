@@ -22,12 +22,28 @@ pip install invoke-tasklib
 
 ## Setting up a project
 
-Add a `tasks.py` at the root of your project:
+Starting from a typical project layout:
+
+```text
+my_package/
+├── src/
+│   └── my_package/
+│       └── __init__.py
+├── tests/
+│   └── unit/
+├── pyproject.toml
+```
+
+### 1. Add a `tasks.py`
+
+Add a `tasks.py` at the root of your project that imports the shared namespace:
 
 ```python
 # tasks.py
 from invoke_tasklib import ns
 ```
+
+### 2. Add an `invoke.yaml`
 
 Add an `invoke.yaml` at the root of your project with, at minimum, the package name:
 
@@ -37,14 +53,61 @@ tasklib:
     name: my_package
 ```
 
-Then list the available tasks:
+### 3. List the available tasks
 
 ```shell
 invoke --list
 ```
 
-See the [user guide](uguide/config.md) for the full config schema, and the config's
-[reference](refs/config.md) for implementation details.
+```text
+Available tasks:
+
+  doc.publish-dev              Publish development (e.g. unstable) docs.
+  doc.publish-latest           Publish latest (e.g. stable) docs.
+  env.create-venv              Create a virtual environment and install invoke.
+  env.install                  Install project dependencies and the package in editable mode.
+  env.show-installed-packages  Show the installed packages.
+  env.show-python-config       Show the python configuration.
+  env.update                   Update dependencies and pre-commit hooks to their latest versions.
+  format.check-docstrings      Check docstring formatting with docformatter without modifying files.
+  format.check-python          Check code format with ruff without modifying files.
+  format.check-shell           Check shell scripts with shellcheck.
+  format.fix-docstrings        Format docstrings in source code with docformatter.
+  format.fix-python            Format code in place with ruff.
+  format.fix-shell             Format shell scripts in place with shfmt.
+  lint.check-lint               Check code linting with ruff.
+  release.build                 Build the package and verify it can be installed.
+  release.pypi                  Build and publish the package to PyPI.
+  test.all                      Run all tests (unit, integration, and functional).
+  test.benchmark                Run performance benchmarks.
+  test.doctest                  Run doctests on source code.
+  test.functional               Run functional tests.
+  test.integration              Run integration tests.
+  test.unit                     Run unit tests.
+  types.check                   Check type hints with pyright.
+```
+
+### 4. Run your first tasks
+
+```shell
+invoke format.check-python lint.check-lint
+invoke test.unit
+```
+
+If a task fails because a tool such as `ruff` or `pytest` isn't installed yet, run
+[`env.install`](uguide/env.md) first:
+
+```shell
+invoke env.install
+```
+
+## Next Steps
+
+- [User Guide](uguide/index.md): a full task reference organized by namespace, with an
+  at-a-glance table of every task.
+- [Config](uguide/config.md): the full `invoke.yaml` schema and how path defaults are derived.
+- [Troubleshooting](troubleshooting.md): fixes for common setup errors (missing package name,
+  missing tools, `PYPI_TOKEN`, ...).
 
 ## Installing from source
 

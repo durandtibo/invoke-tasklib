@@ -66,3 +66,4 @@ would select, and the interpreter currently on `PATH`.
 
 - [Config](config.md): where `package.python_version` comes from.
 - [`invoke_tasklib.env` reference](../refs/env.md)
+- [Troubleshooting](../troubleshooting.md): fixes for common install/update errors.

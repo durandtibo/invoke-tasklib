@@ -75,3 +75,4 @@ Runs `pytest --benchmark-only` against `paths.benchmarks`. This requires
 
 - [Config](config.md): the `paths.*_tests` and `paths.benchmarks` config used by these tasks.
 - [`invoke_tasklib.test` reference](../refs/test.md)
+- [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.
