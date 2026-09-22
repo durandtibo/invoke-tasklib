@@ -85,6 +85,12 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 [Learn more →](uguide/format.md)
 
+### 🔁 **Cyclic Imports**
+
+- `imports.check-cycles`: check for cyclic import dependencies
+
+[Learn more →](uguide/imports.md)
+
 ### 🔬 **Type Checking**
 
 - `types.check`: check type hints with pyright

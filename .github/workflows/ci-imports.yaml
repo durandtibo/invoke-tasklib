@@ -1,0 +1,26 @@
+# Import-graph workflow. Maps to src/invoke_tasklib/imports.py's
+# check_cycles task, which imports each subpackage in isolation to
+# catch cyclic import dependencies.
+
+name: Imports
+on:
+  workflow_call:
+  workflow_dispatch: # to trigger manually
+
+permissions:
+  contents: read
+
+jobs:
+  imports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+
+      - name: Setup python environment
+        uses: ./.github/actions/setup-uv-env
+
+      - name: Check imports
+        run: |
+          uv run inv imports.check-cycles

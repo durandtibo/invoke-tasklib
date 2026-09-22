@@ -28,6 +28,7 @@ from invoke_tasklib import (
     doc,
     env,
     format,  # noqa: A004
+    imports,
     lint,
     release,
     security,
@@ -40,6 +41,7 @@ __all__ = [
     "doc",
     "env",
     "format",
+    "imports",
     "lint",
     "ns",
     "release",
@@ -51,6 +53,7 @@ __all__ = [
 ns: Collection = Collection()
 ns.add_collection(Collection.from_module(format), name="format")
 ns.add_collection(Collection.from_module(lint), name="lint")
+ns.add_collection(Collection.from_module(imports), name="imports")
 ns.add_collection(Collection.from_module(types), name="types")
 ns.add_collection(Collection.from_module(test), name="test")
 ns.add_collection(Collection.from_module(env), name="env")

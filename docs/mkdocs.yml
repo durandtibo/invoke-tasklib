@@ -27,6 +27,7 @@ nav:
       - uguide/index.md
       - uguide/format.md
       - uguide/lint.md
+      - uguide/imports.md
       - uguide/types.md
       - uguide/test.md
       - uguide/env.md
@@ -42,6 +43,7 @@ nav:
   - Reference:
       - refs/format.md
       - refs/lint.md
+      - refs/imports.md
       - refs/types.md
       - refs/test.md
       - refs/env.md

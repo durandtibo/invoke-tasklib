@@ -51,6 +51,10 @@ jobs:
   lint:
     uses: ./.github/workflows/ci-lint.yaml
 
+  # Check for cyclic import dependencies
+  imports:
+    uses: ./.github/workflows/ci-imports.yaml
+
   # Check type annotations with pyright
   type-checking:
     uses: ./.github/workflows/ci-type-checking.yaml
