@@ -23,7 +23,7 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 [resolved config](config.md), and installs `invoke` into it via `uv tool install`.
 
 !!! warning
-    This clears any existing `.venv`.
+This clears any existing `.venv`.
 
 ## Installing Dependencies
 
@@ -31,8 +31,15 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 invoke env.install
 ```
 
-Runs `uv sync --frozen` and installs the package in editable mode. By default this installs
-optional (extras) and dev dependencies; documentation dependencies are opt-in:
+Runs `uv sync --frozen` and installs the package in editable mode.
+
+| Flag              | Default | Adds to `uv sync` |
+| ----------------- | ------- | ----------------- |
+| `--optional-deps` | on      | `--all-extras`    |
+| `--dev-deps`      | on      | `--group dev`     |
+| `--docs-deps`     | off     | `--group docs`    |
+
+Disable the on-by-default flags with their `--no-` counterparts:
 
 ```shell
 invoke env.install --no-optional-deps --no-dev-deps
@@ -49,8 +56,8 @@ Runs `uv sync --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
 (`pre-commit autoupdate`), and reinstalls the project with documentation dependencies.
 
 !!! warning
-    Updating dependencies may introduce breaking changes. Review the changes and run the test
-    suite afterward.
+Updating dependencies may introduce breaking changes. Review the changes and run the test
+suite afterward.
 
 ## Inspecting the Environment
 

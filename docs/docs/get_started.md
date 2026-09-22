@@ -75,18 +75,18 @@ Available tasks:
   format.fix-docstrings        Format docstrings in source code with docformatter.
   format.fix-python            Format code in place with ruff.
   format.fix-shell             Format shell scripts in place with shfmt.
-  lint.check-lint               Check code linting with ruff.
-  release.build                 Build the package and verify it can be installed.
-  release.pypi                  Build and publish the package to PyPI.
-  test.all                      Run all tests (unit, integration, and functional).
-  test.benchmark                Run performance benchmarks.
-  test.doctest                  Run doctests on both source code and markdown files.
-  test.doctest-markdown         Run doctests on Python code examples embedded in markdown files.
-  test.doctest-src               Run doctests on source code.
-  test.functional               Run functional tests.
-  test.integration              Run integration tests.
-  test.unit                     Run unit tests.
-  types.check                   Check type hints with pyright.
+  lint.check-lint              Check code linting with ruff.
+  release.build                Build the package and verify it can be installed.
+  release.pypi                 Build and publish the package to PyPI.
+  test.all                     Run all tests (unit, integration, and functional).
+  test.benchmark               Run performance benchmarks.
+  test.doctest                 Run doctests on both source code and markdown files.
+  test.doctest-markdown        Run doctests on Python code examples embedded in markdown files.
+  test.doctest-src             Run doctests on source code.
+  test.functional              Run functional tests.
+  test.integration             Run integration tests.
+  test.unit                    Run unit tests.
+  types.check                  Check type hints with pyright.
 ```
 
 ### 4. Run your first tasks

@@ -36,8 +36,8 @@ Builds the package (via `release.build`) and then runs `uv publish`, using the `
 environment variable for authentication.
 
 !!! warning
-    This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
-    and that you are releasing the intended version before running this task.
+This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
+and that you are releasing the intended version before running this task.
 
 ## See Also
 

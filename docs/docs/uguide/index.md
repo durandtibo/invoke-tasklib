@@ -5,34 +5,37 @@ one page in this guide.
 
 ## All Tasks at a Glance
 
-| Namespace             | Task                          | Behavior                                        |
-| --------------------- | ----------------------------- | ----------------------------------------------- |
-| [Format](format.md)   | `format.check-python`         | Check Python formatting with ruff (read-only)   |
-| [Format](format.md)   | `format.fix-python`           | Format Python code with ruff (in place)         |
-| [Format](format.md)   | `format.check-docstrings`     | Check docstring formatting with docformatter    |
-| [Format](format.md)   | `format.fix-docstrings`       | Format docstrings with docformatter (in place)  |
-| [Format](format.md)   | `format.check-shell`          | Check shell scripts with shellcheck             |
-| [Format](format.md)   | `format.fix-shell`            | Format shell scripts with shfmt (in place)      |
-| [Lint](lint.md)       | `lint.check-lint`             | Check code linting with ruff                    |
-| [Types](types.md)     | `types.check`                 | Check type hints with pyright                   |
-| [Test](test.md)       | `test.doctest`                | Run doctests on source code and markdown files  |
-| [Test](test.md)       | `test.doctest-src`            | Run doctests on source code                     |
-| [Test](test.md)       | `test.doctest-markdown`       | Run doctests on Python examples in markdown     |
-| [Test](test.md)       | `test.unit`                   | Run unit tests                                  |
-| [Test](test.md)       | `test.integration`            | Run integration tests                           |
-| [Test](test.md)       | `test.functional`             | Run functional tests                            |
-| [Test](test.md)       | `test.all`                    | Run unit, integration, and functional tests     |
-| [Test](test.md)       | `test.benchmark`              | Run performance benchmarks                      |
-| [Env](env.md)         | `env.create-venv`             | Create a virtual environment and install invoke |
-| [Env](env.md)         | `env.install`                 | Install project dependencies and the package    |
-| [Env](env.md)         | `env.update`                  | Update dependencies and pre-commit hooks        |
-| [Env](env.md)         | `env.show-installed-packages` | Show installed packages                         |
-| [Env](env.md)         | `env.show-python-config`      | Show the Python configuration                   |
-| [Release](release.md) | `release.build`               | Build the package and verify installation       |
-| [Release](release.md) | `release.pypi`                | Build and publish the package to PyPI           |
-| [Doc](doc.md)         | `doc.publish-dev`             | Publish development (unstable) docs             |
-| [Doc](doc.md)         | `doc.publish-latest`          | Publish latest (stable) docs                    |
-| [Config](config.md)   | _(none — shared config)_      | Config resolution used by all tasks above       |
+Each task either **checks/reports** (read-only, exits non-zero on violations) or **mutates**
+(formats, builds, publishes) — the `Mutates?` column below flags which.
+
+| Namespace             | Task                          | Behavior                                        | Mutates? |
+| --------------------- | ----------------------------- | ----------------------------------------------- | :------: |
+| [Format](format.md)   | `format.check-python`         | Check Python formatting with ruff               |    ❌    |
+| [Format](format.md)   | `format.fix-python`           | Format Python code with ruff                    |    ✅    |
+| [Format](format.md)   | `format.check-docstrings`     | Check docstring formatting with docformatter    |    ❌    |
+| [Format](format.md)   | `format.fix-docstrings`       | Format docstrings with docformatter             |    ✅    |
+| [Format](format.md)   | `format.check-shell`          | Check shell scripts with shellcheck             |    ❌    |
+| [Format](format.md)   | `format.fix-shell`            | Format shell scripts with shfmt                 |    ✅    |
+| [Lint](lint.md)       | `lint.check-lint`             | Check code linting with ruff                    |    ❌    |
+| [Types](types.md)     | `types.check`                 | Check type hints with pyright                   |    ❌    |
+| [Test](test.md)       | `test.doctest`                | Run doctests on source code and markdown files  |    ❌    |
+| [Test](test.md)       | `test.doctest-src`            | Run doctests on source code                     |    ❌    |
+| [Test](test.md)       | `test.doctest-markdown`       | Run doctests on Python examples in markdown     |    ❌    |
+| [Test](test.md)       | `test.unit`                   | Run unit tests                                  |    ❌    |
+| [Test](test.md)       | `test.integration`            | Run integration tests                           |    ❌    |
+| [Test](test.md)       | `test.functional`             | Run functional tests                            |    ❌    |
+| [Test](test.md)       | `test.all`                    | Run unit, integration, and functional tests     |    ❌    |
+| [Test](test.md)       | `test.benchmark`              | Run performance benchmarks                      |    ❌    |
+| [Env](env.md)         | `env.create-venv`             | Create a virtual environment and install invoke |    ✅    |
+| [Env](env.md)         | `env.install`                 | Install project dependencies and the package    |    ✅    |
+| [Env](env.md)         | `env.update`                  | Update dependencies and pre-commit hooks        |    ✅    |
+| [Env](env.md)         | `env.show-installed-packages` | Show installed packages                         |    ❌    |
+| [Env](env.md)         | `env.show-python-config`      | Show the Python configuration                   |    ❌    |
+| [Release](release.md) | `release.build`               | Build the package and verify installation       |    ✅    |
+| [Release](release.md) | `release.pypi`                | Build and publish the package to PyPI           |    ✅    |
+| [Doc](doc.md)         | `doc.publish-dev`             | Publish development (unstable) docs             |    ✅    |
+| [Doc](doc.md)         | `doc.publish-latest`          | Publish latest (stable) docs                    |    ✅    |
+| [Config](config.md)   | _(none — shared config)_      | Config resolution used by all tasks above       |    —     |
 
 ## Everyday Workflow
 
@@ -66,7 +69,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`shellcheck`](https://www.shellcheck.net/)                    | `format.check-shell`                                          |
 | [`shfmt`](https://github.com/mvdan/sh)                         | `format.fix-shell`                                            |
 | [`pyright`](https://microsoft.github.io/pyright/)              | `types.check`                                                 |
-| [`pytest`](https://docs.pytest.org/)                           | `test.*`                                                      |
+| [`pytest`](https://docs.pytest.org/)                           | `test.*` except `test.doctest` and `test.doctest-markdown`    |
 | [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) | `test.benchmark`                                              |
 | [`uv`](https://docs.astral.sh/uv/)                             | `env.*`, `release.*`                                          |
 | [`twine`](https://twine.readthedocs.io/) (via `uvx`)           | `release.build --check`                                       |

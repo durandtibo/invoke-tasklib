@@ -39,7 +39,7 @@ invoke format.fix-shell
 ```
 
 !!! warning
-    `fix_*` tasks modify files in place. Ensure your work is committed before running them.
+`fix_*` tasks modify files in place. Ensure your work is committed before running them.
 
 ## Docstring Style
 
@@ -53,11 +53,11 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 `.git/`.
 
 !!! note
-    `shellcheck` and `shfmt` are not Python packages, so they aren't installed by
-    [`env.install`](env.md). Install them with your system package manager, e.g.
-    `brew install shellcheck shfmt` on macOS or `apt install shellcheck` on Debian/Ubuntu
-    (`shfmt` there comes from the `golang-go` toolchain or a
-    [release binary](https://github.com/mvdan/sh/releases)).
+`shellcheck` and `shfmt` are not Python packages, so they aren't installed by
+[`env.install`](env.md). Install them with your system package manager, e.g.
+`brew install shellcheck shfmt` on macOS or `apt install shellcheck` on Debian/Ubuntu
+(`shfmt` there comes from the `golang-go` toolchain or a
+[release binary](https://github.com/mvdan/sh/releases)).
 
 ## See Also
 
