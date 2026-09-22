@@ -42,8 +42,8 @@ renamed the import or wrapped it, Invoke won't find it.
 the missing tool, either directly or via your project's dependency groups:
 
 ```shell
-invoke env.install            # installs dev deps: ruff, pyright, pytest, ...
-invoke env.install --docs-deps  # additionally installs mike, feu, packaging
+invoke env.install                  # installs dev deps: ruff, pyright, pytest, ...
+invoke env.install --groups dev,docs  # additionally installs mike, feu, packaging
 ```
 
 `shellcheck` and `shfmt` are not Python packages; install them with your system package manager
@@ -57,7 +57,7 @@ invoke env.install --docs-deps  # additionally installs mike, feu, packaging
 documentation dependencies first:
 
 ```shell
-invoke env.install --docs-deps
+invoke env.install --groups dev,docs
 ```
 
 See [Doc](uguide/doc.md).

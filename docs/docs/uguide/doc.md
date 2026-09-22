@@ -39,7 +39,7 @@ that tag with the `latest` alias, and sets `latest` as the default version shown
 
 !!! note
 `doc.publish-latest` requires the `feu` and `packaging` packages. Install documentation
-dependencies with `invoke env.install --docs-deps` before running it.
+dependencies with `invoke env.install --groups dev,docs` before running it.
 
 ## Local Preview
 

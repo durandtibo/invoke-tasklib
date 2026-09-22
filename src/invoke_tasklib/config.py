@@ -40,11 +40,19 @@ class PathsConfig(TypedDict):
     docs_config: str
 
 
+class GroupsConfig(TypedDict):
+    r"""Resolved ``groups`` config section."""
+
+    install: str
+    update: str
+
+
 class TasklibConfig(TypedDict):
     r"""Resolved tasklib config."""
 
     package: PackageConfig
     paths: PathsConfig
+    groups: GroupsConfig
 
 
 DEFAULT_PACKAGE: dict[str, str | None] = {
@@ -60,6 +68,11 @@ DEFAULT_PATHS: dict[str, str | None] = {
     "functional_tests": None,
     "benchmarks": None,
     "docs_config": "docs/mkdocs.yml",
+}
+
+DEFAULT_GROUPS: dict[str, str] = {
+    "install": "dev",
+    "update": "dev,docs",
 }
 
 
@@ -79,6 +92,7 @@ def get_config(c: Context) -> TasklibConfig:
     user = dict(c.config.get("tasklib", {}))
     package = {**DEFAULT_PACKAGE, **user.get("package", {})}
     paths = {**DEFAULT_PATHS, **user.get("paths", {})}
+    groups = {**DEFAULT_GROUPS, **user.get("groups", {})}
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
@@ -106,4 +120,5 @@ def get_config(c: Context) -> TasklibConfig:
             benchmarks=paths["benchmarks"],
             docs_config=paths["docs_config"],
         ),
+        "groups": GroupsConfig(install=groups["install"], update=groups["update"]),
     }

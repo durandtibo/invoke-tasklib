@@ -23,6 +23,9 @@ tasklib:
     functional_tests: tests/functional
     benchmarks: tests/benchmarks
     docs_config: docs/mkdocs.yml
+  groups:
+    install: dev
+    update: dev,docs
 ```
 
 Only `tasklib.package.name` is required. Everything else has a default, and most of the `paths`
@@ -40,6 +43,8 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `paths.functional_tests`  | `<paths.tests>/functional`  |
 | `paths.benchmarks`        | `<paths.tests>/benchmarks`  |
 | `paths.docs_config`       | `docs/mkdocs.yml`           |
+| `groups.install`          | `dev`                       |
+| `groups.update`           | `dev,docs`                  |
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`.
 
@@ -72,6 +77,21 @@ tasklib:
 
 Here `paths.unit_tests` still resolves to `<paths.tests>/unit`, i.e. `test/unit`, since it is
 derived from the overridden `paths.tests`.
+
+## Overriding Dependency Groups
+
+[`env.install`](env.md) and [`env.update`](env.md) install `uv` dependency groups by name.
+Projects that define more groups than `dev`/`docs` (e.g. `test`, `lint`) can change the defaults
+those tasks use, instead of passing `--groups` on every invocation:
+
+```yaml
+tasklib:
+  package:
+    name: my_package
+  groups:
+    install: dev,test
+    update: dev,test,docs
+```
 
 ## Using `get_config` in a Custom Task
 

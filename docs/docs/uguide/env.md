@@ -33,18 +33,24 @@ invoke env.install
 
 Runs `uv sync --frozen` and installs the package in editable mode.
 
-| Flag              | Default | Adds to `uv sync` |
-| ----------------- | ------- | ----------------- |
-| `--optional-deps` | on      | `--all-extras`    |
-| `--dev-deps`      | on      | `--group dev`     |
-| `--docs-deps`     | off     | `--group docs`    |
+| Flag              | Default                          | Adds to `uv sync`                               |
+| ----------------- | -------------------------------- | ----------------------------------------------- |
+| `--optional-deps` | on                               | `--all-extras`                                  |
+| `--groups`        | `groups.install` (default `dev`) | `--group <name>` for each comma-separated group |
 
-Disable the on-by-default flags with their `--no-` counterparts:
+`--groups` takes a comma-separated list of [dependency groups](https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups)
+to install, e.g. `dev,docs`. Pass an empty string to skip installing any group.
+
+Disable the on-by-default optional deps, or override the groups, with:
 
 ```shell
-invoke env.install --no-optional-deps --no-dev-deps
-invoke env.install --docs-deps
+invoke env.install --no-optional-deps --groups ""
+invoke env.install --groups dev,docs
 ```
+
+The default value of `--groups` comes from the [resolved config](config.md)'s
+`groups.install` (`"dev"` unless overridden in `invoke.yaml`), so a project with more groups
+than `dev`/`docs` can change the default once instead of passing `--groups` on every call.
 
 ## Updating Dependencies
 
@@ -53,7 +59,12 @@ invoke env.update
 ```
 
 Runs `uv sync --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
-(`pre-commit autoupdate`), and reinstalls the project with documentation dependencies.
+(`pre-commit autoupdate`), and reinstalls the project with the groups from `--groups` (default:
+the [resolved config](config.md)'s `groups.update`, `"dev,docs"` unless overridden).
+
+```shell
+invoke env.update --groups dev,docs,test
+```
 
 !!! warning
 Updating dependencies may introduce breaking changes. Review the changes and run the test

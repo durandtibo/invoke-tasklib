@@ -30,6 +30,7 @@ def test_get_config_defaults() -> None:
             "benchmarks": "tests/benchmarks",
             "docs_config": "docs/mkdocs.yml",
         },
+        "groups": {"install": "dev", "update": "dev,docs"},
     }
 
 
@@ -46,3 +47,16 @@ def test_get_config_overrides() -> None:
     assert cfg["paths"]["src"] == "mypkg"
     assert cfg["paths"]["docs_config"] == "mkdocs.yml"
     assert cfg["paths"]["unit_tests"] == "tests/unit"
+
+
+def test_get_config_groups_overrides() -> None:
+    cfg = get_config(
+        _context(
+            {
+                "package": {"name": "mypkg"},
+                "groups": {"install": "dev,test", "update": "dev,test,docs"},
+            }
+        )
+    )
+    assert cfg["groups"]["install"] == "dev,test"
+    assert cfg["groups"]["update"] == "dev,test,docs"
