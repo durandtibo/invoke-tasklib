@@ -44,7 +44,8 @@ Returning a `TypedDict` rather than a raw dict gives task authors static typing 
 
 Each task module (`format.py`, `lint.py`, `types.py`, `test.py`, `env.py`, `release.py`, `doc.py`)
 is a flat collection of `@task`-decorated functions. A module groups tasks that operate on the
-same underlying tool or concern (e.g. all of `test.py` wraps `pytest`).
+same underlying tool or concern (e.g. most of `test.py` wraps `pytest`, except
+`test.doctest-markdown`, which wraps the standard library's `doctest` module directly).
 
 Tasks that need project-specific values call `get_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_lint`) skip it entirely.
