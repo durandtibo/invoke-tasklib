@@ -13,7 +13,7 @@ def _context(tasklib_config: dict | None = None) -> Context:
 
 
 def test_get_config_requires_package_name() -> None:
-    with pytest.raises(ValueError, match="tasklib.package.name"):
+    with pytest.raises(ValueError, match=r"tasklib\.package\.name"):
         get_config(_context())
 
 

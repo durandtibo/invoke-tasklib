@@ -1,5 +1,6 @@
-r"""Script to create or update the package versions used by the dependency-
-compatibility workflows (ci-test-deps.yaml, nightly-test-package-dep.yaml).
+r"""Script to create or update the package versions used by the
+dependency- compatibility workflows (ci-test-deps.yaml, nightly-test-
+package-dep.yaml).
 
 Adapted from coola's dev/generate_versions.py: invoke-tasklib has a
 single runtime dependency (invoke) and no [project.optional-

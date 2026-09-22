@@ -3,7 +3,7 @@ from __future__ import annotations
 from invoke.config import Config
 from invoke.context import MockContext
 
-from invoke_tasklib import format
+from invoke_tasklib import format  # noqa: A004
 
 
 def _context(tasklib_config: dict | None = None) -> MockContext:

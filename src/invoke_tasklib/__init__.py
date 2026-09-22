@@ -23,7 +23,17 @@ from __future__ import annotations
 
 from invoke.collection import Collection
 
-from invoke_tasklib import clean, doc, env, format, lint, release, security, test, types
+from invoke_tasklib import (
+    clean,
+    doc,
+    env,
+    format,  # noqa: A004
+    lint,
+    release,
+    security,
+    test,
+    types,
+)
 
 __all__ = [
     "clean",
