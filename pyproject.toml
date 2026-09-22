@@ -10,7 +10,7 @@ only-include = ["src"]
 
 [project]
 name = "invoke-tasklib"
-version = "0.0.2a0"
+version = "0.0.2"
 description = "Reusable Invoke tasks shared across Python projects."
 readme = "README.md"
 authors = [
