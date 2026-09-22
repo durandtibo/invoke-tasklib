@@ -31,8 +31,15 @@ This clears any existing `.venv`.
 invoke env.install
 ```
 
-Runs `uv sync --frozen` and installs the package in editable mode. By default this installs
-optional (extras) and dev dependencies; documentation dependencies are opt-in:
+Runs `uv sync --frozen` and installs the package in editable mode.
+
+| Flag              | Default | Adds to `uv sync` |
+| ----------------- | ------- | ----------------- |
+| `--optional-deps` | on      | `--all-extras`    |
+| `--dev-deps`      | on      | `--group dev`     |
+| `--docs-deps`     | off     | `--group docs`    |
+
+Disable the on-by-default flags with their `--no-` counterparts:
 
 ```shell
 invoke env.install --no-optional-deps --no-dev-deps

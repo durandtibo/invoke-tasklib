@@ -38,8 +38,17 @@ invoke test.doctest-markdown
 ```
 
 Recursively finds every `*.md` file in the project (skipping `.venv`, `.pytest_cache`, `.git`,
-and `node_modules`) and runs `python -m doctest` against each one, so Python code examples
-embedded in markdown files (README, docs, ...) stay correct and up to date.
+and `node_modules`) and runs, for each one:
+
+```shell
+python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF <file>.md
+```
+
+so Python code examples embedded in markdown files (README, docs, ...) stay correct and up to
+date. `NORMALIZE_WHITESPACE` and `ELLIPSIS` make output comparisons more forgiving (whitespace
+differences are ignored, and `...` in expected output matches any text), and `REPORT_NDIFF` gives
+a readable diff when an example's output doesn't match. A markdown file with no `>>>` doctest
+blocks is still visited but simply reports zero tests, so it always "passes".
 
 ## Running Tests by Scope
 
