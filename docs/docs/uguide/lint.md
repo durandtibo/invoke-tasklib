@@ -22,3 +22,4 @@ workflow since ruff annotates violations directly on the diff.
 - [Format](format.md): `format.check-python`/`format.fix-python` for formatting (as opposed to
   linting) with ruff.
 - [`invoke_tasklib.lint` reference](../refs/lint.md)
+- [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

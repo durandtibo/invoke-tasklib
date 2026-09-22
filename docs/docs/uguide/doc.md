@@ -54,3 +54,4 @@ mkdocs serve -f docs/mkdocs.yml
 
 - [Config](config.md): where `paths.docs_config` comes from.
 - [`invoke_tasklib.doc` reference](../refs/doc.md)
+- [Troubleshooting](../troubleshooting.md): fixes for missing `feu`/`packaging` errors.

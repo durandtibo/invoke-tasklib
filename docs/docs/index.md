@@ -37,9 +37,10 @@ project imports one namespace and gets a consistent set of `invoke` commands.
 
 **Quick Links:**
 
-- [User Guide](uguide/format.md)
 - [Get Started](get_started.md)
+- [User Guide](uguide/index.md)
 - [Config](uguide/config.md)
+- [Troubleshooting](troubleshooting.md)
 
 ## Why invoke-tasklib?
 

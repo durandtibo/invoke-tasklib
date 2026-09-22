@@ -42,3 +42,4 @@ and that you are releasing the intended version before running this task.
 ## See Also
 
 - [`invoke_tasklib.release` reference](../refs/release.md)
+- [Troubleshooting](../troubleshooting.md): fixes for `PYPI_TOKEN` authentication errors.
