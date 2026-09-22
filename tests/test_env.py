@@ -22,22 +22,40 @@ def test_create_venv_uses_configured_python_version() -> None:
 
 
 def test_install_default_options() -> None:
-    c = _context()
+    c = _context({"package": {"name": "mypkg"}})
     env.install(c)
     assert _commands(c) == ["uv sync --frozen --all-extras --group dev", "uv pip install -e ."]
 
 
-def test_install_no_optional_no_dev_deps() -> None:
+def test_install_default_groups_from_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"install": "dev,test"}})
+    env.install(c)
+    assert _commands(c) == [
+        "uv sync --frozen --all-extras --group dev --group test",
+        "uv pip install -e .",
+    ]
+
+
+def test_install_no_optional_no_groups() -> None:
     c = _context()
-    env.install(c, optional_deps=False, dev_deps=False)
+    env.install(c, optional_deps=False, groups="")
     assert _commands(c) == ["uv sync --frozen", "uv pip install -e ."]
 
 
-def test_install_with_docs_deps() -> None:
+def test_install_with_explicit_groups() -> None:
     c = _context()
-    env.install(c, docs_deps=True)
+    env.install(c, groups="dev,docs")
     assert _commands(c) == [
         "uv sync --frozen --all-extras --group dev --group docs",
+        "uv pip install -e .",
+    ]
+
+
+def test_install_with_custom_groups() -> None:
+    c = _context()
+    env.install(c, groups="dev, test, lint")
+    assert _commands(c) == [
+        "uv sync --frozen --all-extras --group dev --group test --group lint",
         "uv pip install -e .",
     ]
 
@@ -50,6 +68,18 @@ def test_update_runs_expected_commands() -> None:
         "uv tool upgrade --all",
         "pre-commit autoupdate",
         "uv sync --frozen --all-extras --group dev --group docs",
+        "uv pip install -e .",
+    ]
+
+
+def test_update_default_groups_from_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"update": "dev,test"}})
+    env.update(c)
+    assert _commands(c) == [
+        "uv sync --upgrade",
+        "uv tool upgrade --all",
+        "pre-commit autoupdate",
+        "uv sync --frozen --all-extras --group dev --group test",
         "uv pip install -e .",
     ]
 

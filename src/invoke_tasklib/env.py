@@ -33,27 +33,26 @@ def create_venv(c: Context) -> None:
 
 
 @task
-def install(
-    c: Context, optional_deps: bool = True, dev_deps: bool = True, docs_deps: bool = False
-) -> None:
+def install(c: Context, optional_deps: bool = True, groups: str | None = None) -> None:
     r"""Install project dependencies and the package in editable mode.
 
     Args:
         c: The invoke context.
         optional_deps: If True, install all optional dependencies defined in
             the project extras. Default is True.
-        dev_deps: If True, install development dependencies. Default is True.
-        docs_deps: If True, install documentation generation dependencies.
-            Default is False.
+        groups: Comma-separated list of dependency groups to install, e.g.
+            ``"dev,docs"``. Use an empty string to install no group. Defaults
+            to the ``tasklib.groups.install`` config value (``"dev"`` unless
+            overridden in ``invoke.yaml``).
     """
+    if groups is None:
+        groups = get_config(c)["groups"]["install"]
     logger.info("📦 Installing project dependencies...")
     cmd = ["uv sync --frozen"]
     if optional_deps:
         cmd.append("--all-extras")
-    if dev_deps:
-        cmd.append("--group dev")
-    if docs_deps:
-        cmd.append("--group docs")
+    for group in filter(None, (g.strip() for g in groups.split(","))):
+        cmd.append(f"--group {group}")
     c.run(" ".join(cmd), pty=True)
     logger.info("🔧 Installing package in editable mode...")
     c.run("uv pip install -e .", pty=True)
@@ -61,21 +60,30 @@ def install(
 
 
 @task
-def update(c: Context) -> None:
+def update(c: Context, groups: str | None = None) -> None:
     r"""Update dependencies and pre-commit hooks to their latest versions.
+
+    Args:
+        c: The invoke context.
+        groups: Comma-separated list of dependency groups to reinstall after
+            updating, e.g. ``"dev,docs"``. Defaults to the
+            ``tasklib.groups.update`` config value (``"dev,docs"`` unless
+            overridden in ``invoke.yaml``).
 
     Warning:
         This may introduce breaking changes. Review the changes and run tests
         after updating.
     """
+    if groups is None:
+        groups = get_config(c)["groups"]["update"]
     logger.info("🔄 Updating dependencies...")
     c.run("uv sync --upgrade", pty=True)
     logger.info("🛠️  Upgrading uv tools...")
     c.run("uv tool upgrade --all", pty=True)
     logger.info("🪝 Updating pre-commit hooks...")
     c.run("pre-commit autoupdate", pty=True)
-    logger.info("📦 Reinstalling with docs dependencies...")
-    install(c, docs_deps=True)
+    logger.info(f"📦 Reinstalling with dependency groups: {groups}...")
+    install(c, groups=groups)
     logger.info("✅ Update complete")
 
 
