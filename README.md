@@ -1,21 +1,62 @@
 # invoke-tasklib
 
+<p align="center">
+    <a href="https://github.com/durandtibo/invoke-tasklib/actions/workflows/ci.yaml">
+        <img alt="CI" src="https://github.com/durandtibo/invoke-tasklib/actions/workflows/ci.yaml/badge.svg">
+    </a>
+    <a href="https://codecov.io/gh/durandtibo/invoke-tasklib">
+        <img alt="Codecov" src="https://codecov.io/gh/durandtibo/invoke-tasklib/branch/main/graph/badge.svg">
+    </a>
+    <br/>
+    <a href="https://durandtibo.github.io/invoke-tasklib/">
+        <img alt="Documentation" src="https://github.com/durandtibo/invoke-tasklib/actions/workflows/release-docs.yaml/badge.svg">
+    </a>
+    <br/>
+    <a href="https://github.com/astral-sh/ruff">
+        <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff" style="max-width:100%;">
+    </a>
+    <br/>
+    <a href="https://pypi.org/project/invoke-tasklib/">
+        <img alt="PYPI version" src="https://img.shields.io/pypi/v/invoke-tasklib">
+    </a>
+    <a href="https://pypi.org/project/invoke-tasklib/">
+        <img alt="Python" src="https://img.shields.io/pypi/pyversions/invoke-tasklib.svg">
+    </a>
+    <a href="https://opensource.org/licenses/BSD-3-Clause">
+        <img alt="BSD-3-Clause" src="https://img.shields.io/pypi/l/invoke-tasklib">
+    </a>
+    <br/>
+</p>
+
 Reusable [Invoke](https://www.pyinvoke.org/) tasks shared across Python
-projects.
+projects: formatting, linting, type-checking, testing, environment setup,
+releasing, and documentation — all as a single importable package instead
+of a `tasks.py` you copy-paste and let drift between repositories.
 
-## Installation
+:book: **Full documentation:** <https://durandtibo.github.io/invoke-tasklib/>
 
-Add `invoke-tasklib` as a dev dependency.
+## Install
 
-## Usage
+```shell
+uv add --dev invoke-tasklib
+```
 
-In your project's `tasks.py`:
+or with `pip`:
+
+```shell
+pip install invoke-tasklib
+```
+
+## Quickstart
+
+**1. Add a `tasks.py`** at the root of your project:
 
 ```python
+# tasks.py
 from invoke_tasklib import ns
 ```
 
-Set the required config in `invoke.yaml` at the project root:
+**2. Add an `invoke.yaml`** with, at minimum, your package name:
 
 ```yaml
 tasklib:
@@ -23,86 +64,68 @@ tasklib:
     name: my_package
 ```
 
-Then list the available tasks:
+**3. List and run the tasks:**
 
 ```shell
 invoke --list
+invoke format.check-python lint.check-lint
+invoke test.unit
 ```
+
+If a task fails because a tool like `ruff` or `pytest` isn't installed yet,
+run `invoke env.install` first.
+
+See the [Get Started guide](https://durandtibo.github.io/invoke-tasklib/get_started/)
+for a full walkthrough.
 
 ## Tasks
 
-Tasks are organized into namespaces: `format.*`, `lint.*`, `types.*`,
-`test.*`, `env.*`, `release.*`, `doc.*`.
+Tasks are grouped into namespaces, one per module. Each task either
+**checks/reports** (read-only, exits non-zero on violations) or
+**mutates** (formats, builds, publishes) — the table below flags which.
 
-### `format.*` and `lint.*`
+| Namespace | Task                          | Behavior                                                                                 | Mutates? |
+| --------- | ----------------------------- | ---------------------------------------------------------------------------------------- | :------: |
+| `format`  | `format.check-python`         | Check Python formatting with ruff                                                        |    ❌    |
+| `format`  | `format.fix-python`           | Format Python code with ruff                                                             |    ✅    |
+| `format`  | `format.check-docstrings`     | Check docstring formatting with docformatter                                             |    ❌    |
+| `format`  | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
+| `format`  | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
+| `format`  | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
+| `lint`    | `lint.check-lint`             | Check linting with ruff                                                                  |    ❌    |
+| `types`   | `types.check`                 | Check type hints with pyright                                                            |    ❌    |
+| `test`    | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
+| `test`    | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
+| `test`    | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
+| `test`    | `test.unit`                   | Run unit tests                                                                           |    ❌    |
+| `test`    | `test.integration`            | Run integration tests                                                                    |    ❌    |
+| `test`    | `test.functional`             | Run functional tests                                                                     |    ❌    |
+| `test`    | `test.all`                    | Run unit, integration, and functional tests                                              |    ❌    |
+| `test`    | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
+| `env`     | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
+| `env`     | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
+| `env`     | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
+| `env`     | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
+| `env`     | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
+| `release` | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
+| `release` | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
+| `doc`     | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
+| `doc`     | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
 
-Tasks that check or verify something (never modify files, exit non-zero on
-violations) are named `check_<target>`. Tasks that modify files in place are
-named `fix_<target>`. Both share the same `<target>` (e.g. `python`, `shell`,
-`docstrings`) so the read-only/mutating counterpart of a task is easy to find:
+`format.*` and `lint.*` follow a naming convention: read-only checks are
+named `check_<target>`, and the matching in-place fixer is named
+`fix_<target>` (e.g. `check_python`/`fix_python`), so the counterpart of a
+task is always easy to find. Follow this convention when adding new tasks
+to these namespaces.
 
-| Task                      | Behavior                                                  |
-| ------------------------- | --------------------------------------------------------- |
-| `format.check-python`     | Checks Python formatting with ruff (read-only)            |
-| `format.check-docstrings` | Checks docstring formatting with docformatter (read-only) |
-| `format.check-shell`      | Checks shell scripts with shellcheck (read-only)          |
-| `format.fix-python`       | Formats Python code with ruff (in place)                  |
-| `format.fix-docstrings`   | Formats docstrings with docformatter (in place)           |
-| `format.fix-shell`        | Formats shell scripts with shfmt (in place)               |
-| `lint.check-lint`         | Checks linting with ruff (read-only)                      |
+For task-by-task details, options (like `--cov` on `test.*` tasks), and the
+tools each one wraps, see the
+[User Guide](https://durandtibo.github.io/invoke-tasklib/uguide/).
 
-When adding a new task to these namespaces, follow this convention: pick
-`check_` or `fix_` based on whether the task mutates files, and use a
-`<target>` name that matches its read-only/mutating counterpart if one
-exists.
+## Configuration
 
-### `types.*`
-
-| Task          | Behavior                                   |
-| ------------- | ------------------------------------------ |
-| `types.check` | Checks type hints with pyright (read-only) |
-
-### `test.*`
-
-| Task                    | Behavior                                           |
-| ----------------------- | -------------------------------------------------- |
-| `test.doctest`          | Runs doctests on source code and markdown files    |
-| `test.doctest-src`      | Runs doctests on source code                       |
-| `test.doctest-markdown` | Runs doctests on Python examples in markdown files |
-| `test.unit`             | Runs unit tests                                    |
-| `test.integration`      | Runs integration tests                             |
-| `test.functional`       | Runs functional tests                              |
-| `test.all`              | Runs all tests (unit, integration, and functional) |
-| `test.benchmark`        | Runs performance benchmarks                        |
-
-### `env.*`
-
-| Task                          | Behavior                                                 |
-| ----------------------------- | -------------------------------------------------------- |
-| `env.create-venv`             | Creates a virtual environment and installs invoke        |
-| `env.install`                 | Installs project dependencies and the package (editable) |
-| `env.update`                  | Updates dependencies and pre-commit hooks                |
-| `env.show-installed-packages` | Shows the installed packages                             |
-| `env.show-python-config`      | Shows the Python configuration                           |
-
-### `release.*`
-
-| Task            | Behavior                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| `release.build` | Builds the package and verifies installation (`--check` also validates metadata with twine) |
-| `release.pypi`  | Builds and publishes the package to PyPI                                                    |
-
-### `doc.*`
-
-| Task                 | Behavior                              |
-| -------------------- | ------------------------------------- |
-| `doc.publish-dev`    | Publishes development (unstable) docs |
-| `doc.publish-latest` | Publishes latest (stable) docs        |
-
-## Config
-
-Only `tasklib.package.name` is required. Everything else has a default
-derived from it. Full schema:
+Only `tasklib.package.name` is required — everything else has a sensible
+default derived from it:
 
 ```yaml
 tasklib:
@@ -119,10 +142,13 @@ tasklib:
     docs_config: docs/mkdocs.yml
 ```
 
+See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)
+for how each path default is derived.
+
 ## Composing a custom subset of tasks
 
-If a project needs a different set of tasks, or a one-off task alongside the
-shared ones, import individual task modules instead of the pre-built `ns`:
+Need a different set of tasks, or a one-off task alongside the shared ones?
+Import individual task modules instead of the pre-built `ns`:
 
 ```python
 from invoke import Collection
@@ -135,3 +161,22 @@ ns = Collection(lint, test, my_custom_task)
 
 Prefer adding a config knob to a shared task over forking it; reserve custom
 composition for things that are genuinely one-off to a single project.
+
+## API Stability
+
+:warning: `invoke-tasklib` is under active development and its API is not
+yet stable — pin a specific version in your project's dependencies for
+consistent behavior across releases.
+
+## Contributing
+
+Contributions are welcome! Please open an issue first to discuss
+significant changes. See the
+[developer guide](https://durandtibo.github.io/invoke-tasklib/dev/development/)
+for how to set up a development environment.
+
+## License
+
+`invoke-tasklib` is licensed under the BSD 3-Clause "New" or "Revised"
+license available in
+[LICENSE](https://github.com/durandtibo/invoke-tasklib/blob/main/LICENSE).
