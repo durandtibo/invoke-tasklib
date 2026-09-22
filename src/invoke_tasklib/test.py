@@ -30,7 +30,8 @@ def doctest_src(c: Context) -> None:
 
 @task
 def doctest_markdown(c: Context) -> None:
-    r"""Run doctests on Python code examples embedded in markdown files."""
+    r"""Run doctests on Python code examples embedded in markdown
+    files."""
     md_files = sorted(
         p for p in Path().rglob("*.md") if not MARKDOWN_DOCTEST_EXCLUDE_DIRS.intersection(p.parts)
     )
@@ -51,7 +52,7 @@ def doctest(c: Context) -> None:
 
 
 @task
-def all(c: Context, cov: bool = False) -> None:
+def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matches `inv test.all`)
     r"""Run all tests (unit, integration, and functional).
 
     Args:
@@ -141,8 +142,8 @@ def functional(c: Context, cov: bool = False) -> None:
 
 @task
 def coverage_report(c: Context, open_browser: bool = False) -> None:
-    r"""Generate an HTML coverage report from the last recorded coverage data
-    and print the terminal summary.
+    r"""Generate an HTML coverage report from the last recorded coverage
+    data and print the terminal summary.
 
     Args:
         c: The invoke context.

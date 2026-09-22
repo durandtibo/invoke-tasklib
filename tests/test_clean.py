@@ -20,11 +20,11 @@ def test_all_removes_existing_dirs_and_files(monkeypatch: MonkeyPatch) -> None:
     removed_dirs: list[Path] = []
     removed_files: list[Path] = []
 
-    monkeypatch.setattr(Path, "is_dir", lambda self: str(self) in {"dist", "htmlcov"})
-    monkeypatch.setattr(Path, "is_file", lambda self: str(self) == ".coverage")
-    monkeypatch.setattr(Path, "glob", lambda self, _pattern: iter([]))
+    monkeypatch.setattr(Path, "is_dir", lambda _self: str(_self) in {"dist", "htmlcov"})
+    monkeypatch.setattr(Path, "is_file", lambda _self: str(_self) == ".coverage")
+    monkeypatch.setattr(Path, "glob", lambda _self, _pattern: iter([]))
     monkeypatch.setattr("shutil.rmtree", lambda p: removed_dirs.append(p))
-    monkeypatch.setattr(Path, "unlink", lambda self: removed_files.append(self))
+    monkeypatch.setattr(Path, "unlink", lambda _self: removed_files.append(_self))
 
     c = _context()
     clean.all(c)
@@ -34,9 +34,9 @@ def test_all_removes_existing_dirs_and_files(monkeypatch: MonkeyPatch) -> None:
 
 
 def test_all_no_artifacts(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setattr(Path, "is_dir", lambda self: False)
-    monkeypatch.setattr(Path, "is_file", lambda self: False)
-    monkeypatch.setattr(Path, "glob", lambda self, _pattern: iter([]))
+    monkeypatch.setattr(Path, "is_dir", lambda _self: False)
+    monkeypatch.setattr(Path, "is_file", lambda _self: False)
+    monkeypatch.setattr(Path, "glob", lambda _self, _pattern: iter([]))
 
     c = _context()
     clean.all(c)

@@ -35,8 +35,8 @@ def publish_latest(c: Context) -> None:
     Requires the ``feu`` and ``packaging`` packages to determine the
     latest version tag.
     """
-    from feu.local_git import get_last_version_tag_name
-    from packaging.version import Version
+    from feu.local_git import get_last_version_tag_name  # noqa: PLC0415 (optional dependency)
+    from packaging.version import Version  # noqa: PLC0415 (optional dependency)
 
     cfg = get_config(c)
     docs_config = cfg["paths"]["docs_config"]

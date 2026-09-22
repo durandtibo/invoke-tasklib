@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import sys
 import types
+from typing import TYPE_CHECKING
 
 from invoke.config import Config
 from invoke.context import MockContext
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
 
 from invoke_tasklib import doc
 
@@ -27,7 +31,7 @@ def test_publish_dev() -> None:
     ]
 
 
-def _install_fake_feu_module(monkeypatch, version: str | None) -> None:
+def _install_fake_feu_module(monkeypatch: MonkeyPatch, version: str | None) -> None:
     def _get_last_version_tag_name() -> str:
         if version is None:
             msg = "no tags found"
@@ -42,7 +46,7 @@ def _install_fake_feu_module(monkeypatch, version: str | None) -> None:
     monkeypatch.setitem(sys.modules, "feu.local_git", fake_local_git)
 
 
-def test_publish_latest_uses_last_version_tag(monkeypatch) -> None:
+def test_publish_latest_uses_last_version_tag(monkeypatch: MonkeyPatch) -> None:
     _install_fake_feu_module(monkeypatch, "1.2.3")
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_latest(c)
@@ -53,7 +57,7 @@ def test_publish_latest_uses_last_version_tag(monkeypatch) -> None:
     ]
 
 
-def test_publish_latest_falls_back_when_no_tag(monkeypatch) -> None:
+def test_publish_latest_falls_back_when_no_tag(monkeypatch: MonkeyPatch) -> None:
     _install_fake_feu_module(monkeypatch, None)
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_latest(c)

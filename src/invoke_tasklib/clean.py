@@ -29,9 +29,9 @@ FILES = (".coverage", "coverage.xml")
 
 
 @task
-def all(c: Context) -> None:
-    r"""Remove build artifacts and caches (dist, __pycache__, .pytest_cache,
-    .coverage, etc.)."""
+def all(c: Context) -> None:  # noqa: A001, ARG001 (task name/signature required by invoke)
+    r"""Remove build artifacts and caches (dist, __pycache__,
+    .pytest_cache, .coverage, etc.)."""
     logger.info("🧹 Cleaning build artifacts and caches...")
     for d in DIRS:
         _remove_dir(Path(d))

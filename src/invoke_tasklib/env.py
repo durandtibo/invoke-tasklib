@@ -51,8 +51,7 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     cmd = ["uv sync --frozen"]
     if optional_deps:
         cmd.append("--all-extras")
-    for group in filter(None, (g.strip() for g in groups.split(","))):
-        cmd.append(f"--group {group}")
+    cmd.extend(f"--group {group}" for group in filter(None, (g.strip() for g in groups.split(","))))
     c.run(" ".join(cmd), pty=True)
     logger.info("🔧 Installing package in editable mode...")
     c.run("uv pip install -e .", pty=True)
@@ -61,7 +60,8 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
 
 @task
 def update(c: Context, groups: str | None = None) -> None:
-    r"""Update dependencies and pre-commit hooks to their latest versions.
+    r"""Update dependencies and pre-commit hooks to their latest
+    versions.
 
     Args:
         c: The invoke context.
