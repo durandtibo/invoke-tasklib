@@ -23,9 +23,20 @@ from __future__ import annotations
 
 from invoke.collection import Collection
 
-from invoke_tasklib import doc, env, format, lint, release, test, types
+from invoke_tasklib import clean, doc, env, format, lint, release, security, test, types
 
-__all__ = ["doc", "env", "format", "lint", "ns", "release", "test", "types"]
+__all__ = [
+    "clean",
+    "doc",
+    "env",
+    "format",
+    "lint",
+    "ns",
+    "release",
+    "security",
+    "test",
+    "types",
+]
 
 ns: Collection = Collection()
 ns.add_collection(Collection.from_module(format), name="format")
@@ -35,3 +46,5 @@ ns.add_collection(Collection.from_module(test), name="test")
 ns.add_collection(Collection.from_module(env), name="env")
 ns.add_collection(Collection.from_module(release), name="release")
 ns.add_collection(Collection.from_module(doc), name="doc")
+ns.add_collection(Collection.from_module(security), name="security")
+ns.add_task(clean.all, name="clean")

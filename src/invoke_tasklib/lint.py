@@ -19,3 +19,16 @@ def check_lint(c: Context) -> None:
     logger.info("🔍 Checking code linting with ruff...")
     c.run("ruff check --output-format=github .", pty=True)
     logger.info("✅ Linting check passed")
+
+
+@task
+def fix(c: Context) -> None:
+    r"""Fix auto-fixable linting issues in place with ruff.
+
+    Note:
+        This modifies files in place. Ensure your work is committed before
+        running this task.
+    """
+    logger.info("🔧 Fixing linting issues with ruff...")
+    c.run("ruff check --fix .", pty=True)
+    logger.info("✅ Linting fix complete")

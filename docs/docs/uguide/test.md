@@ -5,16 +5,17 @@ doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 
 ## Overview
 
-| Task                    | Behavior                                           |
-| ----------------------- | -------------------------------------------------- |
-| `test.doctest`          | Runs doctests on source code and markdown files    |
-| `test.doctest-src`      | Runs doctests on source code                       |
-| `test.doctest-markdown` | Runs doctests on Python examples in markdown files |
-| `test.unit`             | Runs unit tests                                    |
-| `test.integration`      | Runs integration tests                             |
-| `test.functional`       | Runs functional tests                              |
-| `test.all`              | Runs all tests (unit, integration, and functional) |
-| `test.benchmark`        | Runs performance benchmarks                        |
+| Task                    | Behavior                                                      |
+| ----------------------- | ------------------------------------------------------------- |
+| `test.doctest`          | Runs doctests on source code and markdown files               |
+| `test.doctest-src`      | Runs doctests on source code                                  |
+| `test.doctest-markdown` | Runs doctests on Python examples in markdown files            |
+| `test.unit`             | Runs unit tests                                               |
+| `test.integration`      | Runs integration tests                                        |
+| `test.functional`       | Runs functional tests                                         |
+| `test.all`              | Runs all tests (unit, integration, and functional)            |
+| `test.coverage-report`  | Generates an HTML/terminal report from existing coverage data |
+| `test.benchmark`        | Runs performance benchmarks                                   |
 
 All test tasks (except `test.benchmark`, `test.doctest`, and `test.doctest-markdown`) run `pytest`
 with `--xdoctest` enabled, so doctests embedded in the code under test are also collected.
@@ -85,6 +86,18 @@ across scopes:
 invoke test.unit --cov
 invoke test.integration --cov
 invoke test.functional --cov
+```
+
+```shell
+invoke test.coverage-report
+```
+
+Regenerates the HTML report and prints the terminal summary from whatever coverage data (`.coverage`)
+is currently on disk — the data produced by an earlier `--cov` run — without re-running the tests.
+Pass `--open-browser` to also open `htmlcov/index.html` in your default browser:
+
+```shell
+invoke test.coverage-report --open-browser
 ```
 
 ## Benchmarks

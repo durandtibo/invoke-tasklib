@@ -30,8 +30,9 @@
 
 Reusable [Invoke](https://www.pyinvoke.org/) tasks shared across Python
 projects: formatting, linting, type-checking, testing, environment setup,
-releasing, and documentation — all as a single importable package instead
-of a `tasks.py` you copy-paste and let drift between repositories.
+security auditing, releasing, documentation, and cleanup — all as a single
+importable package instead of a `tasks.py` you copy-paste and let drift
+between repositories.
 
 :book: **Full documentation:** <https://durandtibo.github.io/invoke-tasklib/>
 
@@ -84,33 +85,37 @@ Tasks are grouped into namespaces, one per module. Each task either
 **checks/reports** (read-only, exits non-zero on violations) or
 **mutates** (formats, builds, publishes) — the table below flags which.
 
-| Namespace | Task                          | Behavior                                                                                 | Mutates? |
-| --------- | ----------------------------- | ---------------------------------------------------------------------------------------- | :------: |
-| `format`  | `format.check-python`         | Check Python formatting with ruff                                                        |    ❌    |
-| `format`  | `format.fix-python`           | Format Python code with ruff                                                             |    ✅    |
-| `format`  | `format.check-docstrings`     | Check docstring formatting with docformatter                                             |    ❌    |
-| `format`  | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
-| `format`  | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
-| `format`  | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
-| `lint`    | `lint.check-lint`             | Check linting with ruff                                                                  |    ❌    |
-| `types`   | `types.check`                 | Check type hints with pyright                                                            |    ❌    |
-| `test`    | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
-| `test`    | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
-| `test`    | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
-| `test`    | `test.unit`                   | Run unit tests                                                                           |    ❌    |
-| `test`    | `test.integration`            | Run integration tests                                                                    |    ❌    |
-| `test`    | `test.functional`             | Run functional tests                                                                     |    ❌    |
-| `test`    | `test.all`                    | Run unit, integration, and functional tests                                              |    ❌    |
-| `test`    | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
-| `env`     | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
-| `env`     | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
-| `env`     | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
-| `env`     | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
-| `env`     | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
-| `release` | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
-| `release` | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
-| `doc`     | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
-| `doc`     | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
+| Namespace     | Task                          | Behavior                                                                                 | Mutates? |
+| ------------- | ----------------------------- | ---------------------------------------------------------------------------------------- | :------: |
+| `format`      | `format.check-python`         | Check Python formatting with ruff                                                        |    ❌    |
+| `format`      | `format.fix-python`           | Format Python code with ruff                                                             |    ✅    |
+| `format`      | `format.check-docstrings`     | Check docstring formatting with docformatter                                             |    ❌    |
+| `format`      | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
+| `format`      | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
+| `format`      | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
+| `lint`        | `lint.check-lint`             | Check linting with ruff                                                                  |    ❌    |
+| `lint`        | `lint.fix`                    | Fix auto-fixable linting issues with ruff                                                |    ✅    |
+| `types`       | `types.check`                 | Check type hints with pyright                                                            |    ❌    |
+| `test`        | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
+| `test`        | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
+| `test`        | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
+| `test`        | `test.unit`                   | Run unit tests                                                                           |    ❌    |
+| `test`        | `test.integration`            | Run integration tests                                                                    |    ❌    |
+| `test`        | `test.functional`             | Run functional tests                                                                     |    ❌    |
+| `test`        | `test.all`                    | Run unit, integration, and functional tests                                              |    ❌    |
+| `test`        | `test.coverage-report`        | Generate an HTML/terminal report from existing coverage data                             |    ❌    |
+| `test`        | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
+| `env`         | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
+| `env`         | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
+| `env`         | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
+| `env`         | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
+| `env`         | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
+| `release`     | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
+| `release`     | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
+| `doc`         | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
+| `doc`         | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
+| `security`    | `security.audit`              | Audit installed dependencies for known vulnerabilities with pip-audit                    |    ❌    |
+| _(top-level)_ | `clean`                       | Remove build artifacts and caches                                                        |    ✅    |
 
 `format.*` and `lint.*` follow a naming convention: read-only checks are
 named `check_<target>`, and the matching in-place fixer is named
