@@ -5,16 +5,16 @@ doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 
 ## Overview
 
-| Task                     | Behavior                                             |
-| ------------------------ | ----------------------------------------------------- |
-| `test.doctest`           | Runs doctests on source code and markdown files      |
-| `test.doctest-python`    | Runs doctests on source code                         |
-| `test.doctest-markdown`  | Runs doctests on Python examples in markdown files   |
-| `test.unit`              | Runs unit tests                                      |
-| `test.integration`       | Runs integration tests                               |
-| `test.functional`        | Runs functional tests                                |
-| `test.all`               | Runs all tests (unit, integration, and functional)   |
-| `test.benchmark`         | Runs performance benchmarks                          |
+| Task                    | Behavior                                           |
+| ----------------------- | -------------------------------------------------- |
+| `test.doctest`          | Runs doctests on source code and markdown files    |
+| `test.doctest-python`   | Runs doctests on source code                       |
+| `test.doctest-markdown` | Runs doctests on Python examples in markdown files |
+| `test.unit`             | Runs unit tests                                    |
+| `test.integration`      | Runs integration tests                             |
+| `test.functional`       | Runs functional tests                              |
+| `test.all`              | Runs all tests (unit, integration, and functional) |
+| `test.benchmark`        | Runs performance benchmarks                        |
 
 All test tasks (except `test.benchmark`, `test.doctest`, and `test.doctest-markdown`) run `pytest`
 with `--xdoctest` enabled, so doctests embedded in the code under test are also collected.
