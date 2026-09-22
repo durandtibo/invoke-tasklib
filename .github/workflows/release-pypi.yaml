@@ -2,15 +2,12 @@
 # Builds and publishes the package to PyPI when a new version tag is pushed
 # (or manually, for a dev/pre-release version from main).
 #
-# Uses the composite actions from durandtibo/pypi-release-action, which
-# build (uv build + inv build-package), sign with Sigstore, and publish via
-# PyPI Trusted Publishing (OIDC) - no PYPI_TOKEN secret needed. Requires a
+# Uses the composite actions from durandtibo/build-pypi-package-action,
+# durandtibo/sign-pypi-package-action, and durandtibo/publish-pypi-package-action,
+# which build (uv build + inv build-package), sign with Sigstore, and publish
+# via PyPI Trusted Publishing (OIDC) - no PYPI_TOKEN secret needed. Requires a
 # GitHub Environment named "pypi" configured as a PyPI Trusted Publisher for
-# this project, with workflow filename "release-pypi.yaml". See
-# https://github.com/durandtibo/pypi-release-action for details.
-#
-# pypi-release-action has no tagged release yet, so it is pinned to a commit
-# SHA on main rather than a version tag.
+# this project, with workflow filename "release-pypi.yaml".
 
 name: Publish PyPI Package
 on:
@@ -32,10 +29,10 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Unlike a typical consumer of pypi-release-action, this repo's own
+    # Unlike a typical consumer of build-pypi-package-action, this repo's own
     # tasks.py imports invoke_tasklib itself, so it must be importable
     # before `inv build-package` can even load the task collection.
-    # build-package's own astral-sh/setup-uv step always runs `uv venv
+    # build-pypi-package-action's own astral-sh/setup-uv step always runs `uv venv
     # --clear`, unconditionally wiping any venv/install made in a prior
     # step - so a pip/editable install can't survive it. PYTHONPATH does
     # survive (it's a job-level env var, not part of the venv), and since
@@ -48,7 +45,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Build package
-        uses: durandtibo/pypi-release-action/build-package@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
+        uses: durandtibo/build-pypi-package-action@3781c7eb97f68448f70e67e386f03aac7f7be384 # ratchet:durandtibo/build-pypi-package-action@v0.0.2
 
   sign-and-release:
     needs: build
@@ -60,7 +57,7 @@ jobs:
       id-token: write # Required to sign artifacts with Sigstore using OIDC keyless signing
     steps:
       - name: Sign and release package
-        uses: durandtibo/pypi-release-action/sign@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
+        uses: durandtibo/sign-pypi-package-action@5f8c22801ccd4af3d171e3e395fd44e40018f1f5 # ratchet:durandtibo/sign-pypi-package-action@v0.0.1
 
   publish:
     needs: [build, sign-and-release]
@@ -71,7 +68,7 @@ jobs:
       always() &&
       needs.build.result == 'success' &&
       (needs.sign-and-release.result == 'success' || needs.sign-and-release.result == 'skipped')
-    # pypi-release-action/publish runs pypa/gh-action-pypi-publish, a Docker
+    # publish-pypi-package-action runs pypa/gh-action-pypi-publish, a Docker
     # container action, which requires a Docker daemon - ubuntu-slim doesn't
     # have one, so this job needs ubuntu-latest unlike the other jobs here.
     runs-on: ubuntu-latest
@@ -83,6 +80,6 @@ jobs:
       id-token: write # Required for PyPI Trusted Publishing (OIDC)
     steps:
       - name: Publish package to PyPI
-        uses: durandtibo/pypi-release-action/publish@2221f05901d6235566929645f4fd5da0004ce644 # pypi-release-action@main
+        uses: durandtibo/publish-pypi-package-action@9403f7c650f2aebbeb8e60e6485b23044b17bba1 # ratchet:durandtibo/publish-pypi-package-action@v0.0.1
         with:
           workflow-filename: release-pypi.yaml
