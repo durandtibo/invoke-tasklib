@@ -18,4 +18,9 @@ def test_ns_contains_expected_subcollections() -> None:
         "env",
         "release",
         "doc",
+        "security",
     }
+
+
+def test_ns_contains_clean_task() -> None:
+    assert "clean" in ns.tasks

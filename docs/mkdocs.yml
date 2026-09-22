@@ -32,6 +32,8 @@ nav:
       - uguide/env.md
       - uguide/release.md
       - uguide/doc.md
+      - uguide/security.md
+      - uguide/clean.md
       - uguide/config.md
   - troubleshooting.md
   - Developer Guide:
@@ -45,6 +47,8 @@ nav:
       - refs/env.md
       - refs/release.md
       - refs/doc.md
+      - refs/security.md
+      - refs/clean.md
       - refs/config.md
   - GitHub: https://github.com/durandtibo/invoke-tasklib
 

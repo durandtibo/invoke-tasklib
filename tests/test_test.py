@@ -161,6 +161,22 @@ def test_functional_with_coverage() -> None:
     ]
 
 
+def test_coverage_report() -> None:
+    c = _context()
+    test_tasks.coverage_report(c)
+    assert _commands(c) == ["coverage html", "coverage report"]
+
+
+def test_coverage_report_open_browser() -> None:
+    c = _context()
+    test_tasks.coverage_report(c, open_browser=True)
+    assert _commands(c) == [
+        "coverage html",
+        "coverage report",
+        "python -m webbrowser -t htmlcov/index.html",
+    ]
+
+
 def test_benchmark() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)

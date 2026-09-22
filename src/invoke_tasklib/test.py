@@ -140,6 +140,25 @@ def functional(c: Context, cov: bool = False) -> None:
 
 
 @task
+def coverage_report(c: Context, open_browser: bool = False) -> None:
+    r"""Generate an HTML coverage report from the last recorded coverage data
+    and print the terminal summary.
+
+    Args:
+        c: The invoke context.
+        open_browser: If True, open the generated HTML report in the
+            default web browser. Default is False.
+    """
+    logger.info("📊 Generating coverage report...")
+    c.run("coverage html", pty=True)
+    c.run("coverage report", pty=True)
+    if open_browser:
+        logger.info("🌐 Opening coverage report in the browser...")
+        c.run("python -m webbrowser -t htmlcov/index.html")
+    logger.info("✅ Coverage report generated in htmlcov/")
+
+
+@task
 def benchmark(c: Context) -> None:
     r"""Run performance benchmarks."""
     cfg = get_config(c)
