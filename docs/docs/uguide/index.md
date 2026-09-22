@@ -16,7 +16,7 @@ one page in this guide.
 | [Lint](lint.md)       | `lint.check-lint`             | Check code linting with ruff                    |
 | [Types](types.md)     | `types.check`                 | Check type hints with pyright                   |
 | [Test](test.md)       | `test.doctest`                | Run doctests on source code and markdown files  |
-| [Test](test.md)       | `test.doctest-python`         | Run doctests on source code                     |
+| [Test](test.md)       | `test.doctest-src`            | Run doctests on source code                     |
 | [Test](test.md)       | `test.doctest-markdown`       | Run doctests on Python examples in markdown     |
 | [Test](test.md)       | `test.unit`                   | Run unit tests                                  |
 | [Test](test.md)       | `test.integration`            | Run integration tests                           |

@@ -19,7 +19,7 @@ MARKDOWN_DOCTEST_EXCLUDE_DIRS = frozenset({".venv", ".pytest_cache", ".git", "no
 
 
 @task
-def doctest_python(c: Context) -> None:
+def doctest_src(c: Context) -> None:
     r"""Run doctests on source code."""
     cfg = get_config(c)
     src = cfg["paths"]["src"]
@@ -46,7 +46,7 @@ def doctest_markdown(c: Context) -> None:
 @task
 def doctest(c: Context) -> None:
     r"""Run doctests on both source code and markdown files."""
-    doctest_python(c)
+    doctest_src(c)
     doctest_markdown(c)
 
 

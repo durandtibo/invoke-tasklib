@@ -75,9 +75,9 @@ def test_doctest_markdown_sorts_files(monkeypatch: MonkeyPatch) -> None:
     ]
 
 
-def test_doctest_python() -> None:
+def test_doctest_src() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
-    test_tasks.doctest_python(c)
+    test_tasks.doctest_src(c)
     assert _commands(c) == ["python -m pytest --xdoctest src/mypkg"]
 
 

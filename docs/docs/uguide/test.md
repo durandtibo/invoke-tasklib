@@ -8,7 +8,7 @@ doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 | Task                    | Behavior                                           |
 | ----------------------- | -------------------------------------------------- |
 | `test.doctest`          | Runs doctests on source code and markdown files    |
-| `test.doctest-python`   | Runs doctests on source code                       |
+| `test.doctest-src`      | Runs doctests on source code                       |
 | `test.doctest-markdown` | Runs doctests on Python examples in markdown files |
 | `test.unit`             | Runs unit tests                                    |
 | `test.integration`      | Runs integration tests                             |
@@ -25,10 +25,10 @@ with `--xdoctest` enabled, so doctests embedded in the code under test are also 
 invoke test.doctest
 ```
 
-Runs both `test.doctest-python` and `test.doctest-markdown`.
+Runs both `test.doctest-src` and `test.doctest-markdown`.
 
 ```shell
-invoke test.doctest-python
+invoke test.doctest-src
 ```
 
 Runs doctests against `paths.src` from the [resolved config](config.md).
