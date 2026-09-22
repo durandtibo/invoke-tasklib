@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+import pytest
 from invoke.config import Config
 from invoke.context import MockContext
 
 from invoke_tasklib import test as test_tasks
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
 
 
 def _context(tasklib_config: dict | None = None) -> MockContext:
@@ -17,7 +22,7 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in c.run.call_args_list]
 
 
-def test_doctest_markdown(monkeypatch) -> None:
+def test_doctest_markdown(monkeypatch: MonkeyPatch) -> None:
     files = [Path("README.md"), Path("docs/index.md"), Path(".venv/lib/pkg/README.md")]
     monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter(files))
 
@@ -29,13 +34,54 @@ def test_doctest_markdown(monkeypatch) -> None:
     ]
 
 
+def test_doctest_markdown_no_files(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter([]))
+
+    c = _context()
+    test_tasks.doctest_markdown(c)
+    assert _commands(c) == []
+
+
+@pytest.mark.parametrize(
+    "excluded",
+    [
+        Path(".venv/lib/pkg/README.md"),
+        Path(".pytest_cache/README.md"),
+        Path(".git/README.md"),
+        Path("node_modules/pkg/README.md"),
+    ],
+)
+def test_doctest_markdown_excludes_dir(monkeypatch: MonkeyPatch, excluded: Path) -> None:
+    files = [Path("README.md"), excluded]
+    monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter(files))
+
+    c = _context()
+    test_tasks.doctest_markdown(c)
+    assert _commands(c) == [
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md"
+    ]
+
+
+def test_doctest_markdown_sorts_files(monkeypatch: MonkeyPatch) -> None:
+    files = [Path("docs/z.md"), Path("docs/a.md"), Path("README.md")]
+    monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter(files))
+
+    c = _context()
+    test_tasks.doctest_markdown(c)
+    assert _commands(c) == [
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/a.md",
+        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/z.md",
+    ]
+
+
 def test_doctest_python() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest_python(c)
     assert _commands(c) == ["python -m pytest --xdoctest src/mypkg"]
 
 
-def test_doctest(monkeypatch) -> None:
+def test_doctest(monkeypatch: MonkeyPatch) -> None:
     files = [Path("README.md")]
     monkeypatch.setattr(Path, "rglob", lambda *_args, **_kwargs: iter(files))
 
