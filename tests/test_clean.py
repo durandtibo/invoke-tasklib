@@ -40,3 +40,26 @@ def test_all_no_artifacts(monkeypatch: MonkeyPatch) -> None:
 
     c = _context()
     clean.all(c)
+
+
+def test_all_removes_glob_matches(monkeypatch: MonkeyPatch) -> None:
+    removed_dirs: list[Path] = []
+
+    monkeypatch.setattr(
+        Path, "is_dir", lambda _self: str(_self) in {"pkg.egg-info", "sub/__pycache__"}
+    )
+    monkeypatch.setattr(Path, "is_file", lambda _self: False)
+
+    def fake_glob(_self: Path, pattern: str) -> list[Path]:
+        return {
+            "*.egg-info": [Path("pkg.egg-info")],
+            "**/__pycache__": [Path("sub/__pycache__")],
+        }.get(pattern, [])
+
+    monkeypatch.setattr(Path, "glob", fake_glob)
+    monkeypatch.setattr("shutil.rmtree", lambda p: removed_dirs.append(p))
+
+    c = _context()
+    clean.all(c)
+
+    assert {str(p) for p in removed_dirs} == {"pkg.egg-info", "sub/__pycache__"}

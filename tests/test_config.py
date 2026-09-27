@@ -49,6 +49,32 @@ def test_get_config_overrides() -> None:
     assert cfg["paths"]["unit_tests"] == "tests/unit"
 
 
+def test_get_config_all_paths_overridden() -> None:
+    cfg = get_config(
+        _context(
+            {
+                "package": {"name": "mypkg"},
+                "paths": {
+                    "src": "mypkg",
+                    "unit_tests": "tests/u",
+                    "integration_tests": "tests/i",
+                    "functional_tests": "tests/f",
+                    "benchmarks": "tests/b",
+                },
+            }
+        )
+    )
+    assert cfg["paths"] == {
+        "src": "mypkg",
+        "tests": "tests",
+        "unit_tests": "tests/u",
+        "integration_tests": "tests/i",
+        "functional_tests": "tests/f",
+        "benchmarks": "tests/b",
+        "docs_config": "docs/mkdocs.yml",
+    }
+
+
 def test_get_config_groups_overrides() -> None:
     cfg = get_config(
         _context(
