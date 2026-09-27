@@ -75,7 +75,7 @@ Available tasks:
   format.fix-docstrings        Format docstrings in source code with docformatter.
   format.fix-python            Format code in place with ruff.
   format.fix-shell             Format shell scripts in place with shfmt.
-  lint.check-lint              Check code linting with ruff.
+  lint.check-python              Check code linting with ruff.
   release.build                Build the package and verify it can be installed.
   release.pypi                 Build and publish the package to PyPI.
   test.all                     Run all tests (unit, integration, and functional).
@@ -92,7 +92,7 @@ Available tasks:
 ### 4. Run your first tasks
 
 ```shell
-invoke format.check-python lint.check-lint
+invoke format.check-python lint.check-python
 invoke test.unit
 ```
 

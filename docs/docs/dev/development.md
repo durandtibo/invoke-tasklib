@@ -60,7 +60,7 @@ mode - see the [Makefile](https://github.com/durandtibo/invoke-tasklib/blob/main
 
 ```shell
 ruff format --check .   # format.check-python equivalent
-ruff check .             # lint.check-lint equivalent
+ruff check .             # lint.check-python equivalent
 pyright --verifytypes invoke_tasklib --ignoreexternal
 ```
 
@@ -68,7 +68,7 @@ Or, once the package is installed:
 
 ```shell
 invoke format.check-python
-invoke lint.check-lint
+invoke lint.check-python
 invoke types.check
 ```
 
@@ -141,9 +141,9 @@ from invoke.context import MockContext
 from invoke_tasklib import lint
 
 
-def test_check_lint() -> None:
+def test_check_python() -> None:
     c = MockContext(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}), run=True)
-    lint.check_lint(c)
+    lint.check_python(c)
     assert c.run.call_args.args[0] == "ruff check --output-format=github ."
 ```
 

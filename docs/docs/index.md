@@ -81,7 +81,7 @@ See the [user guide](uguide/config.md) for the full config schema.
   docformatter
 - `format.check-shell` / `format.fix-shell`: check shell scripts with shellcheck, or format them
   with shfmt
-- `lint.check-lint`: check linting with ruff
+- `lint.check-python`: check linting with ruff
 
 [Learn more →](uguide/format.md)
 
