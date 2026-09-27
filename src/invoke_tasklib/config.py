@@ -88,6 +88,23 @@ def get_config(c: Context) -> TasklibConfig:
 
     Raises:
         ValueError: If ``tasklib.package.name`` is not set.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.config import get_config
+    >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
+    >>> cfg = get_config(c)
+    >>> cfg["package"]
+    {'name': 'mypkg', 'python_version': '3.14'}
+    >>> cfg["paths"]["src"]
+    'src/mypkg'
+    >>> cfg["groups"]
+    {'install': 'dev', 'update': 'dev,docs'}
+
+    ```
     """
     user = dict(c.config.get("tasklib", {}))
     package = {**DEFAULT_PACKAGE, **user.get("package", {})}
