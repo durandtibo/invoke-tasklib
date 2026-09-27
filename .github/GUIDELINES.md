@@ -94,7 +94,7 @@ what CI runs. Key mappings:
 | --------------------------- | ------------------------------------------------------ |
 | `ci-format.yaml` / `format` | `format.check-python`, `format.check-docstrings`       |
 | `ci-format.yaml` / `shell`  | `format.check-shell` (+ `shfmt -d`, no task wraps it)  |
-| `ci-lint.yaml`              | `lint.check-lint`                                      |
+| `ci-lint.yaml`              | `lint.check-python`                                    |
 | `ci-type-checking.yaml`     | `types.check`                                          |
 | `ci-doctest.yaml`           | `test.doctest`                                         |
 | `ci-test.yaml`              | `test.all --cov`                                       |

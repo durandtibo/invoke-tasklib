@@ -100,7 +100,7 @@ tasklib:
 
 ```shell
 invoke --list
-invoke format.check-python lint.check-lint
+invoke format.check-python lint.check-python
 invoke test.unit
 ```
 
@@ -124,8 +124,8 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `format`      | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
 | `format`      | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
 | `format`      | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
-| `lint`        | `lint.check-lint`             | Check linting with ruff                                                                  |    ❌    |
-| `lint`        | `lint.fix`                    | Fix auto-fixable linting issues with ruff                                                |    ✅    |
+| `lint`        | `lint.check-python`           | Check linting with ruff                                                                  |    ❌    |
+| `lint`        | `lint.fix-python`             | Fix auto-fixable linting issues with ruff                                                |    ✅    |
 | `imports`     | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
 | `types`       | `types.check`                 | Check type hints with pyright                                                            |    ❌    |
 | `test`        | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |

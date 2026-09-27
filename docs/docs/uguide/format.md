@@ -62,6 +62,6 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 ## See Also
 
 - [Config](config.md): where `paths.src` (used by the docstring tasks) comes from.
-- [Lint](lint.md): the companion `lint.check-lint` task.
+- [Lint](lint.md): the companion `lint.check-python` task.
 - [`invoke_tasklib.format` reference](../refs/format.md)
 - [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

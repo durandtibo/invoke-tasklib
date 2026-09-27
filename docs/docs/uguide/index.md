@@ -16,8 +16,8 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Format](format.md)     | `format.fix-docstrings`       | Format docstrings with docformatter                 |    ✅    |
 | [Format](format.md)     | `format.check-shell`          | Check shell scripts with shellcheck                 |    ❌    |
 | [Format](format.md)     | `format.fix-shell`            | Format shell scripts with shfmt                     |    ✅    |
-| [Lint](lint.md)         | `lint.check-lint`             | Check code linting with ruff                        |    ❌    |
-| [Lint](lint.md)         | `lint.fix`                    | Fix auto-fixable linting issues with ruff           |    ✅    |
+| [Lint](lint.md)         | `lint.check-python`           | Check code linting with ruff                        |    ❌    |
+| [Lint](lint.md)         | `lint.fix-python`             | Fix auto-fixable linting issues with ruff           |    ✅    |
 | [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
 | [Types](types.md)       | `types.check`                 | Check type hints with pyright                       |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
@@ -48,14 +48,14 @@ A typical local development loop looks like this:
 
 ```shell
 invoke format.fix-python format.fix-docstrings   # auto-fix formatting
-invoke lint.check-lint imports.check-cycles types.check  # check quality
+invoke lint.check-python imports.check-cycles types.check  # check quality
 invoke test.unit --cov                            # run tests with coverage
 ```
 
 And what CI typically runs (nothing should modify the working tree):
 
 ```shell
-invoke format.check-python format.check-docstrings lint.check-lint imports.check-cycles types.check
+invoke format.check-python format.check-docstrings lint.check-python imports.check-cycles types.check
 invoke test.all --cov
 ```
 
@@ -67,20 +67,20 @@ Since Invoke lets you chain multiple task names in one command, all of the above
 Tasks are thin wrappers around external command-line tools. Each is expected to be available on
 `PATH` (or installed via [`env.install`](env.md)/[`env.create-venv`](env.md)):
 
-| Tool                                                            | Used by                                                       |
-| --------------------------------------------------------------- | ------------------------------------------------------------- |
-| [`ruff`](https://docs.astral.sh/ruff/)                          | `format.check-python`, `format.fix-python`, `lint.check-lint` |
-| [`docformatter`](https://docformatter.readthedocs.io/)          | `format.check-docstrings`, `format.fix-docstrings`            |
-| [`shellcheck`](https://www.shellcheck.net/)                     | `format.check-shell`                                          |
-| [`shfmt`](https://github.com/mvdan/sh)                          | `format.fix-shell`                                            |
-| [`pyright`](https://microsoft.github.io/pyright/)               | `types.check`                                                 |
-| [`pytest`](https://docs.pytest.org/)                            | `test.*` except `test.doctest` and `test.doctest-markdown`    |
-| [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)  | `test.benchmark`                                              |
-| [`uv`](https://docs.astral.sh/uv/)                              | `env.*`, `release.*`                                          |
-| [`twine`](https://twine.readthedocs.io/) (via `uvx`)            | `release.build --check`                                       |
-| [`mike`](https://github.com/jimporter/mike)                     | `doc.*`                                                       |
-| [`feu`](https://github.com/durandtibo/feu) + `packaging`        | `doc.publish-latest`                                          |
-| [`pip-audit`](https://github.com/pypa/pip-audit) (via `uv run`) | `security.audit`                                              |
+| Tool                                                            | Used by                                                         |
+| --------------------------------------------------------------- | --------------------------------------------------------------- |
+| [`ruff`](https://docs.astral.sh/ruff/)                          | `format.check-python`, `format.fix-python`, `lint.check-python` |
+| [`docformatter`](https://docformatter.readthedocs.io/)          | `format.check-docstrings`, `format.fix-docstrings`              |
+| [`shellcheck`](https://www.shellcheck.net/)                     | `format.check-shell`                                            |
+| [`shfmt`](https://github.com/mvdan/sh)                          | `format.fix-shell`                                              |
+| [`pyright`](https://microsoft.github.io/pyright/)               | `types.check`                                                   |
+| [`pytest`](https://docs.pytest.org/)                            | `test.*` except `test.doctest` and `test.doctest-markdown`      |
+| [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)  | `test.benchmark`                                                |
+| [`uv`](https://docs.astral.sh/uv/)                              | `env.*`, `release.*`                                            |
+| [`twine`](https://twine.readthedocs.io/) (via `uvx`)            | `release.build --check`                                         |
+| [`mike`](https://github.com/jimporter/mike)                     | `doc.*`                                                         |
+| [`feu`](https://github.com/durandtibo/feu) + `packaging`        | `doc.publish-latest`                                            |
+| [`pip-audit`](https://github.com/pypa/pip-audit) (via `uv run`) | `security.audit`                                                |
 
 Most of these come from your project's own dev/docs dependency groups; see
 [Env](env.md#installing-dependencies) for how `env.install` wires them up, and the
