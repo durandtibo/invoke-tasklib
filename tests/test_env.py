@@ -84,6 +84,18 @@ def test_update_default_groups_from_config() -> None:
     ]
 
 
+def test_update_with_explicit_groups() -> None:
+    c = _context()
+    env.update(c, groups="dev,test")
+    assert _commands(c) == [
+        "uv sync --upgrade",
+        "uv tool upgrade --all",
+        "pre-commit autoupdate",
+        "uv sync --frozen --all-extras --group dev --group test",
+        "uv pip install -e .",
+    ]
+
+
 def test_show_installed_packages() -> None:
     c = _context()
     env.show_installed_packages(c)
