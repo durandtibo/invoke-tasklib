@@ -14,7 +14,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 @task
-def check_lint(c: Context) -> None:
+def check_python(c: Context) -> None:
     r"""Check code linting with ruff."""
     logger.info("🔍 Checking code linting with ruff...")
     c.run("ruff check --output-format=github .", pty=True)
@@ -22,7 +22,7 @@ def check_lint(c: Context) -> None:
 
 
 @task
-def fix(c: Context) -> None:
+def fix_python(c: Context) -> None:
     r"""Fix auto-fixable linting issues in place with ruff.
 
     Note:

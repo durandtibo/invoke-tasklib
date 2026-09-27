@@ -15,13 +15,13 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in c.run.call_args_list]
 
 
-def test_check_lint() -> None:
+def test_check_python() -> None:
     c = _context()
-    lint.check_lint(c)
+    lint.check_python(c)
     assert _commands(c) == ["ruff check --output-format=github ."]
 
 
-def test_fix() -> None:
+def test_fix_python() -> None:
     c = _context()
-    lint.fix(c)
+    lint.fix_python(c)
     assert _commands(c) == ["ruff check --fix ."]
