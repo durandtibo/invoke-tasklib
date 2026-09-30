@@ -66,4 +66,4 @@ ns.add_collection(Collection.from_module(env), name="env")
 ns.add_collection(Collection.from_module(release), name="release")
 ns.add_collection(Collection.from_module(doc), name="doc")
 ns.add_collection(Collection.from_module(security), name="security")
-ns.add_task(clean.all, name="clean")
+ns.add_task(clean.all, name="clean")  # ty: ignore[invalid-argument-type]

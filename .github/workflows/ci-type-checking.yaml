@@ -1,5 +1,5 @@
 # Type checking workflow. Maps to src/invoke_tasklib/types.py's check task
-# (pyright --verifytypes).
+# (ty check).
 
 name: Type Checking
 on:

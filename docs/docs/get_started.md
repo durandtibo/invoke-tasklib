@@ -86,7 +86,7 @@ Available tasks:
   test.functional              Run functional tests.
   test.integration             Run integration tests.
   test.unit                    Run unit tests.
-  types.check                  Check type hints with pyright.
+  types.check                  Check type hints with ty.
 ```
 
 ### 4. Run your first tasks

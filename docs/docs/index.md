@@ -45,7 +45,7 @@ project imports one namespace and gets a consistent set of `invoke` commands.
 ## Why invoke-tasklib?
 
 Most Python projects end up with a `tasks.py` that wraps the same handful of tools: `ruff`,
-`pyright`, `pytest`, `docformatter`, `uv`, `mike`. Keeping those wrappers in sync across many
+`ty`, `pytest`, `docformatter`, `uv`, `mike`. Keeping those wrappers in sync across many
 repositories is tedious, and small inconsistencies (a missing `--xdoctest` flag, a different
 coverage flag) creep in over time.
 
@@ -93,7 +93,7 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 🔬 **Type Checking**
 
-- `types.check`: check type hints with pyright
+- `types.check`: check type hints with ty
 
 [Learn more →](uguide/types.md)
 

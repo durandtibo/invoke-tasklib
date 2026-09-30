@@ -61,7 +61,7 @@ mode - see the [Makefile](https://github.com/durandtibo/invoke-tasklib/blob/main
 ```shell
 ruff format --check .   # format.check-python equivalent
 ruff check .             # lint.check-python equivalent
-pyright --verifytypes invoke_tasklib --ignoreexternal
+ty check
 ```
 
 Or, once the package is installed:

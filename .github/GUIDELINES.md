@@ -104,7 +104,7 @@ what CI runs. Key mappings:
 
 `ci-pre-commit.yaml` runs `.pre-commit-config.yaml` directly via
 `pre-commit/action` rather than an invoke task, since pre-commit already
-orchestrates the hooks (including a `pyright` hook that itself shells out to
+orchestrates the hooks (including a `ty` hook that itself shells out to
 `uv run inv types.check`).
 
 Unlike upstream `durandtibo/coola`, this repo has no

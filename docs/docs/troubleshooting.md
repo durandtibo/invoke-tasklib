@@ -36,13 +36,13 @@ from invoke_tasklib import ns
 Invoke discovers tasks from a module-level `ns` (or `namespace`) variable in `tasks.py`; if you
 renamed the import or wrapped it, Invoke won't find it.
 
-## A task fails with "command not found" (`ruff`, `pyright`, `shellcheck`, ...)
+## A task fails with "command not found" (`ruff`, `ty`, `shellcheck`, ...)
 
 `invoke-tasklib` tasks are wrappers around external CLI tools — it does not vendor them. Install
 the missing tool, either directly or via your project's dependency groups:
 
 ```shell
-invoke env.install                  # installs dev deps: ruff, pyright, pytest, ...
+invoke env.install                  # installs dev deps: ruff, ty, pytest, ...
 invoke env.install --groups dev,docs  # additionally installs mike, feu, packaging
 ```
 

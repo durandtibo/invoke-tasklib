@@ -127,7 +127,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `lint`        | `lint.check-python`           | Check linting with ruff                                                                  |    ❌    |
 | `lint`        | `lint.fix-python`             | Fix auto-fixable linting issues with ruff                                                |    ✅    |
 | `imports`     | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
-| `types`       | `types.check`                 | Check type hints with pyright                                                            |    ❌    |
+| `types`       | `types.check`                 | Check type hints with ty                                                            |    ❌    |
 | `test`        | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
 | `test`        | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
 | `test`        | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
