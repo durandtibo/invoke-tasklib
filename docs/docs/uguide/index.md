@@ -19,7 +19,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Lint](lint.md)         | `lint.check-python`           | Check code linting with ruff                        |    ❌    |
 | [Lint](lint.md)         | `lint.fix-python`             | Fix auto-fixable linting issues with ruff           |    ✅    |
 | [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
-| [Types](types.md)       | `types.check`                 | Check type hints with pyright                       |    ❌    |
+| [Types](types.md)       | `types.check`                 | Check type hints with ty                       |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
 | [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                         |    ❌    |
 | [Test](test.md)         | `test.doctest-markdown`       | Run doctests on Python examples in markdown         |    ❌    |
@@ -73,7 +73,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`docformatter`](https://docformatter.readthedocs.io/)          | `format.check-docstrings`, `format.fix-docstrings`              |
 | [`shellcheck`](https://www.shellcheck.net/)                     | `format.check-shell`                                            |
 | [`shfmt`](https://github.com/mvdan/sh)                          | `format.fix-shell`                                              |
-| [`pyright`](https://microsoft.github.io/pyright/)               | `types.check`                                                   |
+| [`ty`](https://docs.astral.sh/ty/)               | `types.check`                                                   |
 | [`pytest`](https://docs.pytest.org/)                            | `test.*` except `test.doctest` and `test.doctest-markdown`      |
 | [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)  | `test.benchmark`                                                |
 | [`uv`](https://docs.astral.sh/uv/)                              | `env.*`, `release.*`                                            |

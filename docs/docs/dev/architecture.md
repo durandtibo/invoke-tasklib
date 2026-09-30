@@ -103,7 +103,7 @@ but the split keeps `invoke --list` self-documenting.
 
 ### Why `TypedDict` for Config?
 
-**Rationale**: Static type checking (via pyright) catches typos like `cfg["path"]["src"]` at
+**Rationale**: Static type checking (via ty) catches typos like `cfg["path"]["src"]` at
 development time, without requiring a runtime schema validation dependency.
 
 **Trade-off**: `TypedDict` doesn't validate values at runtime beyond what `get_config` does

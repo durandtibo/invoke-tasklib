@@ -127,15 +127,17 @@ def get_config(c: Context) -> TasklibConfig:
         paths["benchmarks"] = f"{paths['tests']}/benchmarks"
 
     return {
-        "package": PackageConfig(name=package["name"], python_version=package["python_version"]),
+        "package": PackageConfig(
+            name=package["name"], python_version=str(package["python_version"])
+        ),
         "paths": PathsConfig(
-            src=paths["src"],
-            tests=paths["tests"],
-            unit_tests=paths["unit_tests"],
-            integration_tests=paths["integration_tests"],
-            functional_tests=paths["functional_tests"],
-            benchmarks=paths["benchmarks"],
-            docs_config=paths["docs_config"],
+            src=str(paths["src"]),
+            tests=str(paths["tests"]),
+            unit_tests=str(paths["unit_tests"]),
+            integration_tests=str(paths["integration_tests"]),
+            functional_tests=str(paths["functional_tests"]),
+            benchmarks=str(paths["benchmarks"]),
+            docs_config=str(paths["docs_config"]),
         ),
         "groups": GroupsConfig(install=groups["install"], update=groups["update"]),
     }

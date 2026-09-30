@@ -6,7 +6,7 @@
 
 | Task          | Behavior                                                                           |
 | ------------- | ---------------------------------------------------------------------------------- |
-| `types.check` | Checks type hints with [pyright](https://microsoft.github.io/pyright/) (read-only) |
+| `types.check` | Checks type hints with [ty](https://docs.astral.sh/ty/) (read-only) |
 
 ## Usage
 
@@ -14,12 +14,9 @@
 invoke types.check
 ```
 
-This runs `pyright --verifytypes <package.name> --ignoreexternal`, using `package.name` from the
-[resolved config](config.md). `--ignoreexternal` excludes type completeness issues that originate
-from third-party dependencies rather than from the project's own code.
+This runs `ty check`.
 
 ## See Also
 
-- [Config](config.md): where `package.name` comes from.
 - [`invoke_tasklib.types` reference](../refs/types.md)
 - [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

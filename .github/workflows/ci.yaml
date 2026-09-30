@@ -53,7 +53,7 @@ jobs:
   imports:
     uses: ./.github/workflows/ci-imports.yaml
 
-  # Check type annotations with pyright
+  # Check type annotations with ty
   type-checking:
     uses: ./.github/workflows/ci-type-checking.yaml
 
