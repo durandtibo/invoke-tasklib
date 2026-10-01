@@ -28,6 +28,7 @@ To compose a custom subset of tasks instead of using the default
 from __future__ import annotations
 
 from invoke.collection import Collection
+from invoke.tasks import Task
 
 from invoke_tasklib import (
     clean,
@@ -67,3 +68,4 @@ ns.add_collection(Collection.from_module(release), name="release")
 ns.add_collection(Collection.from_module(doc), name="doc")
 ns.add_collection(Collection.from_module(security), name="security")
 ns.add_task(clean.all, name="clean")  # ty: ignore[invalid-argument-type]
+ns.add_task(Task(clean.pycache, name="clean-pycache"))
