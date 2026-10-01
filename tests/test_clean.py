@@ -63,3 +63,17 @@ def test_all_removes_glob_matches(monkeypatch: MonkeyPatch) -> None:
     clean.all(c)
 
     assert {str(p) for p in removed_dirs} == {"pkg.egg-info", "sub/__pycache__"}
+
+
+def test_pycache_removes_only_pycache_dirs(monkeypatch: MonkeyPatch) -> None:
+    removed_dirs: list[Path] = []
+
+    monkeypatch.setattr(Path, "is_dir", lambda _self: True)
+    monkeypatch.setattr(
+        Path, "glob", lambda _self, _pattern: iter([Path("a/__pycache__"), Path("__pycache__")])
+    )
+    monkeypatch.setattr("shutil.rmtree", lambda p: removed_dirs.append(p))
+
+    clean.pycache(_context())
+
+    assert {str(p) for p in removed_dirs} == {"a/__pycache__", "__pycache__"}

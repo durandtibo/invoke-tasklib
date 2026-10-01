@@ -43,6 +43,14 @@ def all(c: Context) -> None:  # noqa: A001, ARG001 (task name/signature required
     logger.info("✅ Cleanup complete")
 
 
+def pycache(c: Context) -> None:  # noqa: ARG001 (task signature required by invoke)
+    r"""Remove all ``__pycache__`` directories."""
+    logger.info("🧹 Cleaning __pycache__ directories...")
+    for p in Path().glob("**/__pycache__"):
+        _remove_dir(p)
+    logger.info("✅ Cleanup complete")
+
+
 def _remove_dir(path: Path) -> None:
     if path.is_dir():
         logger.info(f"🗑️  Removing {path}")
