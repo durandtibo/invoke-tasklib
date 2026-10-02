@@ -4,9 +4,9 @@
 
 ## Overview
 
-| Task           | Behavior                                              |
-| -------------- | ----------------------------------------------------- |
-| `clean`        | Removes build artifacts and caches from the repo root |
+| Task            | Behavior                                              |
+| --------------- | ----------------------------------------------------- |
+| `clean`         | Removes build artifacts and caches from the repo root |
 | `clean-pycache` | Removes all `__pycache__` directories                 |
 
 Unlike the other namespaces, the clean tasks are registered as single top-level tasks (not
