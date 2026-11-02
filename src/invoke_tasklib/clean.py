@@ -7,8 +7,6 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from invoke.tasks import task
-
 if TYPE_CHECKING:
     from invoke.context import Context
 
@@ -28,7 +26,6 @@ DIR_GLOBS = ("*.egg-info", "**/__pycache__")
 FILES = (".coverage", "coverage.xml")
 
 
-@task
 def all(c: Context) -> None:  # noqa: A001, ARG001 (task name/signature required by invoke)
     r"""Remove build artifacts and caches (dist, __pycache__,
     .pytest_cache, .coverage, etc.)."""
