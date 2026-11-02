@@ -43,7 +43,11 @@ def publish_latest(c: Context) -> None:
     logger.info("📚 Publishing latest documentation...")
 
     try:
-        version = Version(get_last_version_tag_name())
+        tag_name = get_last_version_tag_name()
+        if tag_name is None:
+            msg = "No version tag found"
+            raise RuntimeError(msg)  # noqa: TRY301
+        version = Version(tag_name)
         tag = f"{version.major}.{version.minor}"
         logger.info(f"📌 Using version tag: {tag}")
     except RuntimeError:
