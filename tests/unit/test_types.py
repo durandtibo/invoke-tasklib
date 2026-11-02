@@ -19,3 +19,9 @@ def test_check() -> None:
     c = _context({"package": {"name": "mypkg"}})
     types.check(c)
     assert _commands(c) == ["ty check"]
+
+
+def test_check_complete() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    types.check(c, complete=True)
+    assert _commands(c) == ["ty check", "pyright"]
