@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 import sys
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
@@ -8,7 +10,22 @@ from invoke.config import Config
 from invoke.context import MockContext
 from invoke.exceptions import Exit
 
-from invoke_tasklib.runner import _split, build_command, check_program, python_executable, run
+from invoke_tasklib.runner import (
+    DEFAULT_HINT,
+    PROGRAM_HINTS,
+    _check_module,
+    _hint,
+    _program_of,
+    _split,
+    _stages,
+    build_command,
+    check_program,
+    python_executable,
+    run,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 #######################################
 #     Tests for python_executable     #
@@ -200,9 +217,9 @@ def test_build_command_unclosed_quote_in_paths_exits() -> None:
         build_command("pytest", paths="'a")
 
 
-##############################
+############################
 #     Tests for _split     #
-##############################
+############################
 
 
 def test_split_none() -> None:
@@ -221,3 +238,193 @@ def test_split_unclosed_quote_exit_code() -> None:
     with pytest.raises(Exit) as excinfo:
         _split("'a", "--args")
     assert excinfo.value.code == 2
+
+
+###########################################
+#     Tests for the hints of programs     #
+###########################################
+
+
+def _only(*available: str) -> Callable[[str], str | None]:
+    return lambda program: f"/bin/{program}" if program in available else None
+
+
+@pytest.mark.parametrize("program", ["uv", "shellcheck", "shfmt", "codespell"])
+def test_check_program_uses_the_hint_of_the_program(
+    monkeypatch: pytest.MonkeyPatch, program: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=re.escape(PROGRAM_HINTS[program])):
+        check_program(f"{program} --version")
+
+
+def test_check_program_uv_hint_does_not_suggest_env_install(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=r"^'uv' was not found on the PATH\. Install uv, see https://"):
+        check_program("uv sync")
+
+
+def test_check_program_unknown_program_uses_the_default_hint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=re.escape(DEFAULT_HINT)):
+        check_program("ruff check .")
+
+
+def test_check_program_checks_every_stage_of_a_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("xargs"))
+    with pytest.raises(Exit, match=r"'shellcheck' was not found"):
+        check_program("find . -name '*.sh' -print0 | xargs -0 -r shellcheck --")
+
+
+def test_check_program_accepts_a_pipeline_of_available_programs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("xargs", "shellcheck"))
+    assert check_program("find . -name '*.sh' -print0 | xargs -0 -r shellcheck --") is None
+
+
+def test_check_program_checks_the_second_command_after_and(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ruff"))
+    with pytest.raises(Exit, match=r"'mike' was not found"):
+        check_program("ruff check . && mike list")
+
+
+def test_check_program_does_not_check_a_word_inside_quotes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ruff"))
+    assert check_program("ruff check 'a | b'") is None
+
+
+def test_check_program_xargs_without_command_is_not_an_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("xargs", "echo"))
+    assert check_program("echo | xargs -0") is None
+
+
+def test_check_program_missing_module_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    with pytest.raises(
+        Exit, match=r"The Python module 'pytest' is not installed for /venv/bin/python"
+    ):
+        check_program("/venv/bin/python -m pytest tests")
+
+
+def test_check_program_missing_module_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    with pytest.raises(Exit) as excinfo:
+        check_program("/venv/bin/python -m pytest tests")
+    assert excinfo.value.code == 127
+
+
+def test_check_program_missing_module_after_a_pipe_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    with pytest.raises(Exit, match=r"The Python module 'coverage' is not installed"):
+        check_program("echo && /venv/bin/python -m coverage report")
+
+
+###################################
+#     Tests for _check_module     #
+###################################
+
+
+def test_check_module_accepts_an_installed_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    assert _check_module(["/venv/bin/python", "-m", "pytest"]) is None
+
+
+def test_check_module_ignores_another_interpreter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    assert _check_module(["/other/python", "-m", "pytest"]) is None
+
+
+@pytest.mark.parametrize(
+    "words", [["/venv/bin/python"], ["/venv/bin/python", "-m"], ["/venv/bin/python", "-c", "pass"]]
+)
+def test_check_module_ignores_a_command_that_is_not_a_module_run(
+    monkeypatch: pytest.MonkeyPatch, words: list[str]
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    assert _check_module(words) is None
+
+
+def test_check_module_missing_module_uses_the_default_hint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    with pytest.raises(Exit, match=re.escape(DEFAULT_HINT)):
+        _check_module(["/venv/bin/python", "-m", "pytest"])
+
+
+###########################
+#     Tests for _hint     #
+###########################
+
+
+def test_hint_known_program() -> None:
+    assert _hint("shfmt") == PROGRAM_HINTS["shfmt"]
+
+
+def test_hint_unknown_program() -> None:
+    assert _hint("ruff") == DEFAULT_HINT
+
+
+#############################
+#     Tests for _stages     #
+#############################
+
+
+def test_stages_single_command() -> None:
+    assert _stages("ruff check .") == [["ruff", "check", "."]]
+
+
+def test_stages_pipeline() -> None:
+    assert _stages("find . -print0 | xargs -0 ls") == [
+        ["find", ".", "-print0"],
+        ["xargs", "-0", "ls"],
+    ]
+
+
+@pytest.mark.parametrize("separator", ["||", "&&", ";", "&"])
+def test_stages_separators(separator: str) -> None:
+    assert _stages(f"a x {separator} b y") == [["a", "x"], ["b", "y"]]
+
+
+def test_stages_keeps_a_separator_inside_quotes() -> None:
+    assert _stages("echo 'a | b'") == [["echo", "a | b"]]
+
+
+def test_stages_empty_command() -> None:
+    assert _stages("") == []
+
+
+def test_stages_drops_empty_commands() -> None:
+    assert _stages("; a ; ; b ;") == [["a"], ["b"]]
+
+
+#################################
+#     Tests for _program_of     #
+#################################
+
+
+def test_program_of_a_command() -> None:
+    assert _program_of(["ruff", "check"]) == "ruff"
+
+
+def test_program_of_xargs_is_the_command_it_runs() -> None:
+    assert _program_of(["xargs", "-0", "-r", "shellcheck", "--"]) == "shellcheck"
+
+
+def test_program_of_xargs_without_command_is_none() -> None:
+    assert _program_of(["xargs", "-0"]) is None

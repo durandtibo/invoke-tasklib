@@ -2,6 +2,7 @@ r"""Helpers to build the commands run by the tasks."""
 
 from __future__ import annotations
 
+import importlib.util
 import shlex
 import shutil
 import sys
@@ -49,6 +50,30 @@ r"""Help of the ``--paths`` option of the tasks."""
 UNCHECKED_PROGRAMS: frozenset[str] = frozenset({"command", "find"})
 r"""First words of a command that are not looked up on the ``PATH``
 (shell builtins and tools that every system has)."""
+
+
+PROGRAM_HINTS: dict[str, str] = {
+    "uv": "Install uv, see https://docs.astral.sh/uv/getting-started/installation/.",
+    "shellcheck": (
+        "Install shellcheck with your system package manager, for example "
+        "`brew install shellcheck` or `apt install shellcheck`."
+    ),
+    "shfmt": (
+        "Install shfmt with your system package manager, for example "
+        "`brew install shfmt` or `apt install shfmt`."
+    ),
+    "codespell": "Add codespell to the dependencies of the project, e.g. `uv add --dev codespell`.",
+}
+r"""How to install the programs that ``invoke env.install`` does not
+install (or that it needs itself), by program name."""
+
+DEFAULT_HINT = (
+    "Install the project tools with `invoke env.install` (see the troubleshooting page of the "
+    "documentation)."
+)
+r"""The hint of the programs that are not in ``PROGRAM_HINTS``."""
+
+_SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
 
 
 def build_command(
@@ -127,19 +152,137 @@ def _split(value: str | None, option: str) -> list[str]:
         raise Exit(msg, code=2) from exc
 
 
-def check_program(command: str) -> None:
-    r"""Check that the program of a command is available.
+def _stages(command: str) -> list[list[str]]:
+    r"""Split a command line into the commands of its pipeline.
 
-    The program is the first word of the command. It is not checked when
-    it is an absolute path (for example the running interpreter, see
-    ``python_executable``) or one of ``UNCHECKED_PROGRAMS``.
+    The command line is split on ``|``, ``||``, ``&&``, ``;`` and ``&``
+    (outside quotes) and each part is split into words like a shell
+    does.
+
+    Args:
+        command: The command line.
+
+    Returns:
+        The words of each command, without the empty ones.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _stages
+    >>> _stages("find . -name '*.sh' | xargs -0 shellcheck")
+    [['find', '.', '-name', '*.sh'], ['xargs', '-0', 'shellcheck']]
+
+    ```
+    """
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    stages: list[list[str]] = [[]]
+    for token in lexer:
+        if token in _SEPARATORS:
+            stages.append([])
+        else:
+            stages[-1].append(token)
+    return [words for words in stages if words]
+
+
+def _program_of(words: Sequence[str]) -> str | None:
+    r"""Return the program that a command really runs.
+
+    ``xargs`` runs the command that follows its options, so that command
+    is the one that has to be installed.
+
+    Args:
+        words: The words of a command.
+
+    Returns:
+        The program, or ``None`` if there is none (``xargs`` with no
+        command).
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _program_of
+    >>> _program_of(["ruff", "check"])
+    'ruff'
+    >>> _program_of(["xargs", "-0", "-r", "shellcheck", "--"])
+    'shellcheck'
+
+    ```
+    """
+    if words[0] != "xargs":
+        return words[0]
+    return next((w for w in words[1:] if not w.startswith("-")), None)
+
+
+def _hint(program: str) -> str:
+    r"""Return how to install a program.
+
+    Args:
+        program: The name of the program, or of the Python module.
+
+    Returns:
+        The entry of ``PROGRAM_HINTS`` for the program, or
+        ``DEFAULT_HINT``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _hint
+    >>> _hint("uv")
+    'Install uv, see https://docs.astral.sh/uv/getting-started/installation/.'
+
+    ```
+    """
+    return PROGRAM_HINTS.get(program, DEFAULT_HINT)
+
+
+def _check_module(words: Sequence[str]) -> None:
+    r"""Check the module of a ``python -m <module>`` command.
+
+    Only the running interpreter is checked, because the availability of
+    a module is looked up for this interpreter. Without this check, a
+    missing module is reported by Python as ``No module named ...``,
+    with no hint.
+
+    Args:
+        words: The words of a command.
+
+    Raises:
+        Exit: If the command runs a module of the running interpreter
+            that is not installed.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _check_module
+    >>> _check_module(["ruff", "check"])
+
+    ```
+    """
+    if len(words) < 3 or words[0] != sys.executable or words[1] != "-m":
+        return
+    module = words[2]
+    if importlib.util.find_spec(module) is None:
+        msg = f"The Python module '{module}' is not installed for {words[0]}. {_hint(module)}"
+        raise Exit(msg, code=127)
+
+
+def check_program(command: str) -> None:
+    r"""Check that the programs of a command are available.
+
+    Every command of a pipeline (``a | b``, ``a && b``) is checked, and
+    the command run by ``xargs`` is checked instead of ``xargs``. A
+    program is not checked when it is an absolute path (for example the
+    running interpreter, see ``python_executable``) or one of
+    ``UNCHECKED_PROGRAMS``. For ``python -m <module>`` with the running
+    interpreter, the module is checked.
 
     Args:
         command: The command line.
 
     Raises:
-        Exit: If the program is not found on the ``PATH``. The message
-            says how to install the project tools.
+        Exit: If a program (or the module) is not found. The message
+            says how to install it, see ``PROGRAM_HINTS``.
 
     Example usage:
 
@@ -153,15 +296,14 @@ def check_program(command: str) -> None:
 
     ```
     """
-    words = shlex.split(command)
-    if not words or words[0].startswith("/") or words[0] in UNCHECKED_PROGRAMS:
-        return
-    if shutil.which(words[0]) is None:
-        msg = (
-            f"'{words[0]}' was not found on the PATH. Install the project tools with "
-            "`invoke env.install` (see the troubleshooting page of the documentation)."
-        )
-        raise Exit(msg, code=127)
+    for words in _stages(command):
+        program = _program_of(words)
+        if program is None or program.startswith("/") or program in UNCHECKED_PROGRAMS:
+            _check_module(words)
+            continue
+        if shutil.which(program) is None:
+            msg = f"'{program}' was not found on the PATH. {_hint(program)}"
+            raise Exit(msg, code=127)
 
 
 def run(c: Context, command: str, **kwargs: Any) -> Result:
