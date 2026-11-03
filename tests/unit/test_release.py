@@ -53,7 +53,7 @@ _SDIST_CHECK_CMD = (
 def test_build_without_check() -> None:
     c = _context({"package": {"name": "mypkg"}})
     release.build(c)
-    assert _commands(c) == ["uv build", _WHEEL_CHECK_CMD, _SDIST_CHECK_CMD]
+    assert _commands(c) == ["uv build --clear", _WHEEL_CHECK_CMD, _SDIST_CHECK_CMD]
 
 
 @pytest.mark.usefixtures("dist")
@@ -61,7 +61,7 @@ def test_build_with_check() -> None:
     c = _context({"package": {"name": "mypkg"}})
     release.build(c, check=True)
     assert _commands(c) == [
-        "uv build",
+        "uv build --clear",
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
         "uvx twine check dist/*",
@@ -90,16 +90,65 @@ def test_build_fails_when_no_wheel_is_built(
 ##########################
 
 
-@pytest.mark.usefixtures("dist")
+@pytest.fixture
+def token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("UV_PUBLISH_TOKEN", raising=False)
+    monkeypatch.setenv("PYPI_TOKEN", "pypi-secret")
+
+
+@pytest.mark.usefixtures("dist", "token")
 def test_pypi() -> None:
     c = _context({"package": {"name": "mypkg"}})
     release.pypi(c)
     assert _commands(c) == [
-        "uv build",
+        "uv build --clear",
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
-        "uv publish --token ${PYPI_TOKEN}",
+        "uv publish",
     ]
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_pypi_passes_token_through_environment() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    release.pypi(c)
+    run = c.run
+    assert isinstance(run, Mock)
+    assert run.call_args.kwargs["env"] == {"UV_PUBLISH_TOKEN": "pypi-secret"}
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_pypi_does_not_put_token_on_command_line() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    release.pypi(c)
+    assert "pypi-secret" not in " ".join(_commands(c))
+
+
+@pytest.mark.usefixtures("dist")
+def test_pypi_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PYPI_TOKEN", raising=False)
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    c = _context({"package": {"name": "mypkg"}})
+    release.pypi(c)
+    run = c.run
+    assert isinstance(run, Mock)
+    assert run.call_args.kwargs["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+
+
+def test_pypi_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PYPI_TOKEN", raising=False)
+    monkeypatch.delenv("UV_PUBLISH_TOKEN", raising=False)
+    with pytest.raises(Exit, match=r"PYPI_TOKEN"):
+        release.pypi(_context({"package": {"name": "mypkg"}}))
+
+
+def test_pypi_does_not_build_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PYPI_TOKEN", raising=False)
+    monkeypatch.delenv("UV_PUBLISH_TOKEN", raising=False)
+    c = _context({"package": {"name": "mypkg"}})
+    with pytest.raises(Exit, match=r"PYPI_TOKEN"):
+        release.pypi(c)
+    assert _commands(c) == []
 
 
 ######################################

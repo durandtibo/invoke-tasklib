@@ -2,6 +2,7 @@ r"""Build and publish tasks (PyPI package)."""
 
 from __future__ import annotations
 
+import os
 import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -66,7 +67,7 @@ def build(c: Context, check: bool = False) -> None:
     cfg = get_config(c)
     name = cfg["package"]["name"]
     say(c, "📦 Building package...")
-    c.run("uv build", pty=True)
+    c.run("uv build --clear", pty=True)
     say(c, "🔍 Verifying package installation...")
     for pattern in ("*.whl", "*.tar.gz"):
         artifact = _latest_artifact(Path("dist"), pattern)
@@ -83,8 +84,23 @@ def build(c: Context, check: bool = False) -> None:
 
 @task
 def pypi(c: Context) -> None:
-    r"""Build and publish the package to PyPI."""
+    r"""Build and publish the package to PyPI.
+
+    The token is read from the ``PYPI_TOKEN`` environment variable (or
+    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively) and is
+    passed to ``uv publish`` through its environment, so it does not
+    appear on the command line. The task fails before building if no
+    token is set. ``dist/`` is cleared by the build, so only the freshly
+    built artifacts are uploaded.
+
+    Raises:
+        Exit: If neither ``PYPI_TOKEN`` nor ``UV_PUBLISH_TOKEN`` is set.
+    """
+    token = os.environ.get("PYPI_TOKEN") or os.environ.get("UV_PUBLISH_TOKEN")
+    if not token:
+        msg = "Set the PYPI_TOKEN (or UV_PUBLISH_TOKEN) environment variable to publish to PyPI"
+        raise Exit(msg, code=1)
     build(c)
     say(c, "🚀 Publishing to PyPI...")
-    c.run("uv publish --token ${PYPI_TOKEN}", pty=True)
+    c.run("uv publish", env={"UV_PUBLISH_TOKEN": token}, pty=True)
     say(c, "✅ Package published successfully")
