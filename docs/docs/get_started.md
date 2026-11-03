@@ -62,31 +62,55 @@ invoke --list
 ```text
 Available tasks:
 
-  doc.publish-dev              Publish development (e.g. unstable) docs.
-  doc.publish-latest           Publish latest (e.g. stable) docs.
-  env.create-venv              Create a virtual environment and install invoke.
-  env.install                  Install project dependencies and the package in editable mode.
-  env.show-installed-packages  Show the installed packages.
-  env.show-python-config       Show the python configuration.
-  env.update                   Update dependencies and pre-commit hooks to their latest versions.
-  format.check-docstrings      Check docstring formatting with docformatter without modifying files.
-  format.check-python          Check code format with ruff without modifying files.
-  format.check-shell           Check shell scripts with shellcheck.
-  format.fix-docstrings        Format docstrings in source code with docformatter.
-  format.fix-python            Format code in place with ruff.
-  format.fix-shell             Format shell scripts in place with shfmt.
-  lint.check-python              Check code linting with ruff.
-  release.build                Build the package and verify it can be installed.
-  release.pypi                 Build and publish the package to PyPI.
-  test.all                     Run all tests (unit, integration, and functional).
-  test.benchmark               Run performance benchmarks.
-  test.doctest                 Run doctests on both source code and markdown files.
-  test.doctest-markdown        Run doctests on Python code examples embedded in markdown files.
-  test.doctest-src             Run doctests on source code.
-  test.functional              Run functional tests.
-  test.integration             Run integration tests.
-  test.unit                    Run unit tests.
-  types.check                  Check type hints with ty.
+  check.all (check)             Run the main checks of the project.
+  clean.all (clean)             Remove build artifacts and caches.
+  clean.pycache                 Remove all ``__pycache__`` directories.
+  doc.build                     Build the documentation and fail on any
+                                warning.
+  doc.publish-dev               Publish development (e.g. unstable) docs.
+  doc.publish-latest            Publish latest (e.g. stable) docs.
+  doc.serve                     Serve the documentation locally with live
+                                reload.
+  env.create-venv               Create a virtual environment and install invoke
+                                in it.
+  env.install                   Install the dependencies and the package
+                                (editable).
+  env.show-installed-packages   Show the installed packages.
+  env.show-python-config        Show the python configuration.
+  env.update                    Update dependencies and pre-commit hooks.
+  format.check-docstrings       Check docstring format with docformatter.
+  format.check-python           Check code format with ruff without modifying
+                                files.
+  format.check-shell            Check shell scripts with shellcheck.
+  format.fix-docstrings         Format docstrings in source code with
+                                docformatter.
+  format.fix-python             Format code in place with ruff.
+  format.fix-shell              Format shell scripts in place with shfmt.
+  imports.check-cycles          Check for cyclic imports, one module at a time.
+  lint.check-python             Check code linting with ruff.
+  lint.check-spelling           Check the spelling with codespell.
+  lint.fix-python               Fix auto-fixable linting issues in place with
+                                ruff.
+  lint.pre-commit               Run all the pre-commit hooks on all the files.
+  release.build                 Build the package and verify the built
+                                artifacts.
+  release.pypi                  Build and publish the package to PyPI.
+  security.audit                Audit the dependencies for known
+                                vulnerabilities.
+  test.all                      Run all tests (unit, integration, and
+                                functional).
+  test.benchmark                Run performance benchmarks.
+  test.coverage-report          Generate an HTML coverage report.
+  test.doctest                  Run doctests on both source code and markdown
+                                files.
+  test.doctest-markdown         Run doctests on the Python examples of the
+                                markdown files.
+  test.doctest-src              Run doctests on source code.
+  test.functional               Run functional tests.
+  test.integration              Run integration tests.
+  test.unit                     Run unit tests.
+  types.check                   Check type hints.
+
 ```
 
 ### 4. Run your first tasks
