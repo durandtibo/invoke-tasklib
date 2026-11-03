@@ -18,14 +18,14 @@ invoke check
 
 Runs the steps of `tasklib.check.tasks`, in that order, and stops at the first failure. By default:
 
-| Step                | Task                                                    |
-| ------------------- | ------------------------------------------------------- |
-| `format-python`     | [`format.check-python`](format.md)                      |
-| `format-docstrings` | [`format.check-docstrings`](format.md)                  |
-| `lint`              | [`lint.check-python`](lint.md)                          |
-| `types`             | [`types.check`](types.md)                               |
-| `imports`           | [`imports.check-cycles`](imports.md)                    |
-| `unit`              | [`test.unit`](test.md)                                  |
+| Step                | Task                                   |
+| ------------------- | -------------------------------------- |
+| `format-python`     | [`format.check-python`](format.md)     |
+| `format-docstrings` | [`format.check-docstrings`](format.md) |
+| `lint`              | [`lint.check-python`](lint.md)         |
+| `types`             | [`types.check`](types.md)              |
+| `imports`           | [`imports.check-cycles`](imports.md)   |
+| `unit`              | [`test.unit`](test.md)                 |
 
 Other steps can be added to the config (or run with `--only`): `doctest` ([`test.doctest`](test.md)),
 `shell` ([`format.check-shell`](format.md)), `spelling` ([`lint.check-spelling`](lint.md)), `docs`
@@ -40,11 +40,11 @@ tasklib:
 
 None of them modifies a file.
 
-| Option         | Effect                                                                            |
-| -------------- | --------------------------------------------------------------------------------- |
-| `--keep-going` | Runs every step, prints the failed ones and exits with 1 if any failed            |
-| `--only`       | Comma-separated steps to run instead of `tasklib.check.tasks`                     |
-| `--skip`       | Comma-separated steps to leave out                                                |
+| Option         | Effect                                                                 |
+| -------------- | ---------------------------------------------------------------------- |
+| `--keep-going` | Runs every step, prints the failed ones and exits with 1 if any failed |
+| `--only`       | Comma-separated steps to run instead of `tasklib.check.tasks`          |
+| `--skip`       | Comma-separated steps to leave out                                     |
 
 ```shell
 invoke check --keep-going

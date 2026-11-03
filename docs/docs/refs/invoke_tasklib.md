@@ -1,5 +1,3 @@
 ::: invoke_tasklib
-    options:
-      members:
-        - make_ns
-        - __version__
+options:
+members: - make_ns - **version**

@@ -152,7 +152,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `env`      | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
 | `env`      | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
 | `release`  | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
-| `release`  | `release.publish`                | Build and publish the package to PyPI                                                    |    ✅    |
+| `release`  | `release.publish`             | Build and publish the package to PyPI                                                    |    ✅    |
 | `doc`      | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
 | `doc`      | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
 | `doc`      | `doc.build`                   | Build the docs, failing on warnings (`mkdocs build --strict`)                            |    ❌    |

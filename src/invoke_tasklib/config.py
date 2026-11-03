@@ -637,8 +637,9 @@ def _validate_bool(key: str, value: object) -> bool:
 
 @dataclass(frozen=True)
 class Option:
-    r"""One key of the ``tasklib`` config: the single place that
-    declares it.
+    r"""Declaration of one key of the ``tasklib`` config.
+
+    It is the single place that declares the key.
 
     Attributes:
         default: The default value. ``None`` means that the default is
@@ -808,8 +809,9 @@ SCHEMA: dict[str, dict[str, Option]] = {
 }
 r"""The declaration of every key of the ``tasklib`` config, by section.
 
-It is the single source of the known keys, the defaults, the
-validation and the JSON schema."""
+It is the single source of the known keys, the defaults, the validation
+and the JSON schema.
+"""
 
 _SECTION_CLASSES: dict[str, type] = {
     "package": PackageConfig,
