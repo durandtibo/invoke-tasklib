@@ -162,7 +162,6 @@ lint.ignore = [
   "A003",    # Class attribute `{name}` is shadowing a python builtin
   "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed.
   "E501",    # Line lengths are recommended to be no greater than 79 characters.
-  "W505",    # Doc line too long
   "PLR0913", # Too many arguments in function definition (8 > 5)
   "PLR2004", # Magic value used in comparison, consider replacing 0.0 with a constant variable
 

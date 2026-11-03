@@ -41,7 +41,8 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
     >>> from invoke.config import Config
     >>> from invoke.context import Context
     >>> from invoke_tasklib.testing import _directory_exists
-    >>> _ = _directory_exists(Context(config=Config()), "no/such/dir", "benchmarks")
+    >>> c = Context(config=Config())
+    >>> _ = _directory_exists(c, "no/such/dir", "benchmarks")
     ⏭️  No 'no/such/dir' directory: skipping benchmarks
 
     ```
@@ -98,8 +99,8 @@ def _run_pytest(
     r"""Run pytest on a directory of tests.
 
     The command is ``python -m pytest [--xdoctest] --timeout <timeout>``
-    followed by the coverage options and the path. ``--xdoctest`` is used
-    unless ``tasklib.test.xdoctest`` is false, and
+    followed by the coverage options and the path. ``--xdoctest`` is
+    used unless ``tasklib.test.xdoctest`` is false, and
     ``--cov-fail-under`` is used with ``cov`` if
     ``tasklib.test.cov_fail_under`` is set.
 
@@ -109,8 +110,8 @@ def _run_pytest(
         label: The name of the scope, used in the messages, e.g.
             ``"unit tests"``.
         timeout: The timeout in seconds of each test.
-        cov: If True, generate coverage reports in HTML, XML and terminal
-            formats.
+        cov: If True, generate coverage reports in HTML, XML and
+            terminal formats.
         append: If True and ``cov`` is True, append to the coverage data
             of the previous runs instead of replacing it.
         skip_missing: If True, a message is written and nothing is run
@@ -130,7 +131,9 @@ def _run_pytest(
     >>> from invoke_tasklib.testing import _run_pytest
     >>> cfg = {"tasklib": {"package": {"name": "mypkg"}}}
     >>> c = MockContext(config=Config(overrides=cfg), run=True)
-    >>> _run_pytest(c, "tests/unit", label="unit tests", timeout=10)  # doctest: +ELLIPSIS
+    >>> _run_pytest(
+    ...     c, "tests/unit", label="unit tests", timeout=10
+    ... )  # doctest: +ELLIPSIS
     🧪 Running unit tests...
     ...
     ✅ Unit tests complete
@@ -169,8 +172,8 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports in HTML, XML, and terminal
-            formats. Default is False.
+        cov: If True, generate coverage reports in HTML, XML, and
+            terminal formats. Default is False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests
             directory.

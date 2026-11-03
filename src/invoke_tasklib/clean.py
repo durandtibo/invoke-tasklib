@@ -81,7 +81,8 @@ def _find_pycache_dirs(root: Path) -> list[Path]:
     >>> with tempfile.TemporaryDirectory() as tmp:
     ...     (Path(tmp) / "pkg" / "__pycache__").mkdir(parents=True)
     ...     (Path(tmp) / ".venv" / "__pycache__").mkdir(parents=True)
-    ...     [p.relative_to(tmp).as_posix() for p in _find_pycache_dirs(Path(tmp))]
+    ...     found = _find_pycache_dirs(Path(tmp))
+    ...     [p.relative_to(tmp).as_posix() for p in found]
     ...
     ['pkg/__pycache__']
 

@@ -23,8 +23,8 @@ def discover_modules(name: str) -> list[str]:
     The package is located with ``importlib.util.find_spec`` and its
     submodules are found by walking the directories of the package, so
     no module code is executed. A cyclic import is therefore reported
-    when each module is imported by the caller, not as a traceback during
-    the discovery.
+    when each module is imported by the caller, not as a traceback
+    during the discovery.
 
     Args:
         name: The name of the top-level package (or module).

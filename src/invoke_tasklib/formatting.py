@@ -74,8 +74,8 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
             project (``.``).
 
     Note:
-        This modifies files in place. Ensure your work is committed before
-        running this task.
+        This modifies files in place. Ensure your work is committed
+        before running this task.
     """
     say(c, "🎨 Formatting code with ruff...")
     run(c, build_command("ruff format", args=args, paths=paths, default_paths=["."]))
@@ -93,8 +93,8 @@ def fix_docstrings(c: Context, args: str | None = None, paths: str | None = None
             ``paths.src``.
 
     Note:
-        This modifies files in place. Ensure your work is committed before
-        running this task.
+        This modifies files in place. Ensure your work is committed
+        before running this task.
     """
     cfg = load_config(c)
     src = cfg.paths.src
@@ -117,8 +117,8 @@ def fix_shell(c: Context) -> None:
     r"""Format shell scripts in place with shfmt.
 
     Note:
-        This modifies files in place. Ensure your work is committed before
-        running this task.
+        This modifies files in place. Ensure your work is committed
+        before running this task.
     """
     say(c, "🔧 Running shfmt to format shell scripts...")
     run(c, f"{_FIND_SH} | xargs -0 -r shfmt -l -w --")

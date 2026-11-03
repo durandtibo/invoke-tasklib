@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class _SubprocessContext(Context):
-    r"""A context that really runs the commands, without Invoke's runner.
+    r"""A context that really runs the commands, not Invoke's runner.
 
     Invoke's local runner leaves file handles open under pytest, which
     pytest reports as unraisable warnings in unrelated tests.

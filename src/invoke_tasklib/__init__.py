@@ -20,10 +20,10 @@ of the ``test`` tasks is ``testing``, so its collection needs the name
 >>> from invoke_tasklib import lint, testing
 >>> ns = Collection(lint, Collection.from_module(testing, name="test"))
 >>> sorted(ns.task_names)
-['lint.check-python', 'lint.check-spelling', 'lint.fix-python', 'lint.pre-commit',
- 'test.all', 'test.benchmark', 'test.coverage-report', 'test.doctest',
- 'test.doctest-markdown', 'test.doctest-src', 'test.functional',
- 'test.integration', 'test.unit']
+['lint.check-python', 'lint.check-spelling', 'lint.fix-python',
+ 'lint.pre-commit', 'test.all', 'test.benchmark',
+ 'test.coverage-report', 'test.doctest', 'test.doctest-markdown',
+ 'test.doctest-src', 'test.functional', 'test.integration', 'test.unit']
 
 ```
 """
