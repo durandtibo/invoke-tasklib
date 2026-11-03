@@ -51,8 +51,7 @@ ns.add_task(check_complexity)
   directly. For `python -m <module>`, the module is checked only when the command uses the running
   interpreter (`python_executable()`, the one that runs `invoke`): for another interpreter or a
   `python` found on the `PATH`, a missing module is reported by Python itself
-  (`No module named ...`), without a hint. Use `python_executable()` in your commands. Pass
-  `check=False` to `run` to skip the check of a command.
+  (`No module named ...`), without a hint. Use `python_executable()` in your commands.
 - **Report the step with `step`**: it prints the start message, then the done message, or
   `❌ Failed: <what was being done>` if the block raises (the exception is raised again, so the exit
   code is unchanged). Use `say` for any other message; neither fails on a terminal that cannot encode
