@@ -1,4 +1,4 @@
-r"""Documentation publishing tasks (versioned docs via mike)."""
+r"""Documentation build and publishing tasks (mkdocs and mike)."""
 
 from __future__ import annotations
 
@@ -52,6 +52,36 @@ def _parse_release(version: str) -> tuple[str, bool]:
         raise ValueError(msg)
     is_prerelease = _PRERELEASE_PATTERN.match(match.group("rest")) is not None
     return f"{match.group('major')}.{match.group('minor')}", is_prerelease
+
+
+@task
+def build(c: Context) -> None:
+    r"""Build the documentation and fail on any warning.
+
+    The documentation is built with ``mkdocs build --strict`` from
+    ``paths.docs_config``, so a broken link or a missing reference fails
+    the task. It does not publish anything.
+
+    Raises:
+        UnexpectedExit: If mkdocs reports a warning or an error.
+    """
+    cfg = load_config(c)
+    docs_config = cfg["paths"]["docs_config"]
+    say(c, "📚 Building the documentation...")
+    run(c, f"mkdocs build --strict --config-file {docs_config}")
+    say(c, "✅ Documentation built")
+
+
+@task
+def serve(c: Context) -> None:
+    r"""Serve the documentation locally with live reload.
+
+    The server runs until it is interrupted (``Ctrl+C``).
+    """
+    cfg = load_config(c)
+    docs_config = cfg["paths"]["docs_config"]
+    say(c, "📚 Serving the documentation...")
+    run(c, f"mkdocs serve --config-file {docs_config}")
 
 
 @task

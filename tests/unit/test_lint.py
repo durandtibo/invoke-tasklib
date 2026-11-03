@@ -98,3 +98,43 @@ def test_fix_python_paths() -> None:
     c = _context()
     lint.fix_python(c, paths="a.py")
     assert _commands(c) == ["ruff check --fix a.py"]
+
+
+###################################
+#     Tests for check_spelling     #
+###################################
+
+
+def test_check_spelling() -> None:
+    c = _context()
+    lint.check_spelling(c)
+    assert _commands(c) == ["codespell ."]
+
+
+def test_check_spelling_args() -> None:
+    c = _context()
+    lint.check_spelling(c, args="--ignore-words-list foo")
+    assert _commands(c) == ["codespell --ignore-words-list foo ."]
+
+
+def test_check_spelling_paths() -> None:
+    c = _context()
+    lint.check_spelling(c, paths="docs README.md")
+    assert _commands(c) == ["codespell docs README.md"]
+
+
+################################
+#     Tests for pre_commit     #
+################################
+
+
+def test_pre_commit() -> None:
+    c = _context()
+    lint.pre_commit(c)
+    assert _commands(c) == ["pre-commit run --all-files"]
+
+
+def test_pre_commit_args() -> None:
+    c = _context()
+    lint.pre_commit(c, args="ruff-format")
+    assert _commands(c) == ["pre-commit run --all-files ruff-format"]

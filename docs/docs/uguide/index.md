@@ -18,6 +18,8 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Format](format.md)     | `format.fix-shell`            | Format shell scripts with shfmt                     |    ✅    |
 | [Lint](lint.md)         | `lint.check-python`           | Check code linting with ruff                        |    ❌    |
 | [Lint](lint.md)         | `lint.fix-python`             | Fix auto-fixable linting issues with ruff           |    ✅    |
+| [Lint](lint.md)         | `lint.check-spelling`         | Check the spelling with codespell                   |    ❌    |
+| [Lint](lint.md)         | `lint.pre-commit`             | Run all the pre-commit hooks                        |    ✅    |
 | [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
 | [Types](types.md)       | `types.check`                 | Check type hints with ty                            |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
@@ -36,9 +38,12 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Env](env.md)           | `env.show-python-config`      | Show the Python configuration                       |    ❌    |
 | [Release](release.md)   | `release.build`               | Build the package and verify installation           |    ✅    |
 | [Release](release.md)   | `release.pypi`                | Build and publish the package to PyPI               |    ✅    |
+| [Doc](doc.md)           | `doc.build`                   | Build the docs, failing on warnings                 |    ❌    |
+| [Doc](doc.md)           | `doc.serve`                   | Serve the docs locally                              |    ❌    |
 | [Doc](doc.md)           | `doc.publish-dev`             | Publish development (unstable) docs                 |    ✅    |
 | [Doc](doc.md)           | `doc.publish-latest`          | Publish latest (stable) docs                        |    ✅    |
 | [Security](security.md) | `security.audit`              | Audit dependencies for known vulnerabilities        |    ❌    |
+| [Check](check.md)       | `check.all` (or `check`)      | Run the main read-only checks                       |    ❌    |
 | [Clean](clean.md)       | `clean.all` (or `clean`)      | Remove build artifacts and caches                   |    ✅    |
 | [Clean](clean.md)       | `clean.pycache`               | Remove all `__pycache__` directories                |    ✅    |
 | [Config](config.md)     | _(none — shared config)_      | Config resolution used by all tasks above           |    —     |
@@ -99,7 +104,10 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)  | `test.benchmark`                                                |
 | [`uv`](https://docs.astral.sh/uv/)                              | `env.*`, `release.*`                                            |
 | [`twine`](https://twine.readthedocs.io/) (via `uvx`)            | `release.build --check`                                         |
-| [`mike`](https://github.com/jimporter/mike)                     | `doc.*`                                                         |
+| [`codespell`](https://github.com/codespell-project/codespell)   | `lint.check-spelling`                                           |
+| [`pre-commit`](https://pre-commit.com/)                         | `lint.pre-commit`                                               |
+| [`mkdocs`](https://www.mkdocs.org/)                             | `doc.build`, `doc.serve`                                        |
+| [`mike`](https://github.com/jimporter/mike)                     | `doc.publish-dev`, `doc.publish-latest`                         |
 | [`feu`](https://github.com/durandtibo/feu)                      | `doc.publish-latest`                                            |
 | [`pip-audit`](https://github.com/pypa/pip-audit) (via `uv run`) | `security.audit`                                                |
 

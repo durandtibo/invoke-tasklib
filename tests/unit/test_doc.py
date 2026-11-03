@@ -187,3 +187,37 @@ def test_parse_release_pre_release(version: str) -> None:
 def test_parse_release_invalid(version: str) -> None:
     with pytest.raises(ValueError, match=r"Cannot parse the version"):
         _parse_release(version)
+
+
+###########################
+#     Tests for build     #
+###########################
+
+
+def test_build() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    doc.build(c)
+    assert _commands(c) == ["mkdocs build --strict --config-file docs/mkdocs.yml"]
+
+
+def test_build_uses_configured_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
+    doc.build(c)
+    assert _commands(c) == ["mkdocs build --strict --config-file mkdocs.yml"]
+
+
+###########################
+#     Tests for serve     #
+###########################
+
+
+def test_serve() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    doc.serve(c)
+    assert _commands(c) == ["mkdocs serve --config-file docs/mkdocs.yml"]
+
+
+def test_serve_uses_configured_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
+    doc.serve(c)
+    assert _commands(c) == ["mkdocs serve --config-file mkdocs.yml"]

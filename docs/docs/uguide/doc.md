@@ -8,6 +8,8 @@ versioned documentation with [`mike`](https://github.com/jimporter/mike), on top
 
 | Task                 | Behavior                              |
 | -------------------- | ------------------------------------- |
+| `doc.build`          | Builds the docs, failing on warnings  |
+| `doc.serve`          | Serves the docs locally               |
 | `doc.publish-dev`    | Publishes development (unstable) docs |
 | `doc.publish-latest` | Publishes latest (stable) docs        |
 
@@ -52,12 +54,17 @@ Reading the git tag requires the `feu` package. Install documentation dependenci
 
 ## Local Preview
 
-These tasks are meant for CI (they `--push` to the remote). To preview docs locally, run MkDocs
-directly:
+The publishing tasks are meant for CI (they `--push` to the remote). To check and preview docs
+locally:
 
 ```shell
-mkdocs serve -f docs/mkdocs.yml
+invoke doc.build
+invoke doc.serve
 ```
+
+`doc.build` runs `mkdocs build --strict`, so a broken link or a missing reference fails the task
+(unlike a `mike deploy` into a throw-away branch, which does not). `doc.serve` runs `mkdocs serve`
+with live reload. Both use `paths.docs_config` and need the `docs` dependency group.
 
 ## See Also
 

@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING
 from invoke.collection import Collection
 
 from invoke_tasklib import (
+    check,
     clean,
     doc,
     env,
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 __all__ = [
+    "check",
     "clean",
     "doc",
     "env",
@@ -73,6 +75,7 @@ _MODULES = {
     "doc": doc,
     "security": security,
     "clean": clean,
+    "check": check,
 }
 r"""The task modules of the default collection, by namespace name."""
 
