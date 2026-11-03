@@ -7,14 +7,12 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import EXCLUDED_DIRS, get_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import python_executable
 
 if TYPE_CHECKING:
     from invoke.context import Context
-
-MARKDOWN_DOCTEST_EXCLUDE_DIRS = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
 
 
 @task
@@ -31,9 +29,7 @@ def doctest_src(c: Context) -> None:
 def doctest_markdown(c: Context) -> None:
     r"""Run doctests on Python code examples embedded in markdown
     files."""
-    md_files = sorted(
-        p for p in Path().rglob("*.md") if not MARKDOWN_DOCTEST_EXCLUDE_DIRS.intersection(p.parts)
-    )
+    md_files = sorted(p for p in Path().rglob("*.md") if not EXCLUDED_DIRS.intersection(p.parts))
     say(c, f"📚 Found {len(md_files)} markdown files")
     for f in md_files:
         say(c, f"🔍 Checking: {f}")
