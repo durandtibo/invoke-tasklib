@@ -40,62 +40,62 @@ def _mkdir(*parts: str) -> Callable[[Path], Path]:
 def test_all_removes_artifact_dirs(project: Path) -> None:
     _mkdir("dist")(project)
     _mkdir("htmlcov")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert not (project / "dist").exists()
     assert not (project / "htmlcov").exists()
 
 
 def test_all_removes_mypy_cache(project: Path) -> None:
     _mkdir(".mypy_cache")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert not (project / ".mypy_cache").exists()
 
 
 def test_all_removes_artifact_files(project: Path) -> None:
     (project / ".coverage").write_text("")
     (project / "coverage.xml").write_text("")
-    clean.all(_context())
+    clean.all_(_context())
     assert [p.name for p in project.iterdir()] == []
 
 
 def test_all_removes_egg_info(project: Path) -> None:
     _mkdir("pkg.egg-info")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert not (project / "pkg.egg-info").exists()
 
 
 def test_all_removes_nested_pycache(project: Path) -> None:
     _mkdir("src", "pkg", "__pycache__")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert not (project / "src" / "pkg" / "__pycache__").exists()
 
 
 def test_all_keeps_other_files(project: Path) -> None:
     (project / "README.md").write_text("")
-    clean.all(_context())
+    clean.all_(_context())
     assert (project / "README.md").exists()
 
 
 def test_all_does_not_touch_pycache_in_venv(project: Path) -> None:
     venv_cache = _mkdir(".venv", "lib", "__pycache__")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert venv_cache.exists()
 
 
 def test_all_does_not_touch_pycache_in_node_modules(project: Path) -> None:
     cache = _mkdir("node_modules", "pkg", "__pycache__")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert cache.exists()
 
 
 def test_all_no_artifacts_keeps_empty_project_unchanged(project: Path) -> None:
-    clean.all(_context())
+    clean.all_(_context())
     assert list(project.iterdir()) == []
 
 
 def test_all_reports_progress(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _mkdir("dist")(project)
-    clean.all(_context())
+    clean.all_(_context())
     assert capsys.readouterr().out == (
         "🧹 Cleaning build artifacts and caches...\n🗑️  Removing dist\n✅ Cleanup complete\n"
     )

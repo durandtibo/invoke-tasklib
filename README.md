@@ -113,38 +113,39 @@ Tasks are grouped into namespaces, one per module. Each task either
 **checks/reports** (read-only, exits non-zero on violations) or
 **mutates** (formats, builds, publishes) — the table below flags which.
 
-| Namespace     | Task                          | Behavior                                                                                 | Mutates? |
-| ------------- | ----------------------------- | ---------------------------------------------------------------------------------------- | :------: |
-| `format`      | `format.check-python`         | Check Python formatting with ruff                                                        |    ❌    |
-| `format`      | `format.fix-python`           | Format Python code with ruff                                                             |    ✅    |
-| `format`      | `format.check-docstrings`     | Check docstring formatting with docformatter                                             |    ❌    |
-| `format`      | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
-| `format`      | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
-| `format`      | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
-| `lint`        | `lint.check-python`           | Check linting with ruff                                                                  |    ❌    |
-| `lint`        | `lint.fix-python`             | Fix auto-fixable linting issues with ruff                                                |    ✅    |
-| `imports`     | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
-| `types`       | `types.check`                 | Check type hints with ty                                                                 |    ❌    |
-| `test`        | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
-| `test`        | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
-| `test`        | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
-| `test`        | `test.unit`                   | Run unit tests                                                                           |    ❌    |
-| `test`        | `test.integration`            | Run integration tests                                                                    |    ❌    |
-| `test`        | `test.functional`             | Run functional tests                                                                     |    ❌    |
-| `test`        | `test.all`                    | Run unit, integration, and functional tests                                              |    ❌    |
-| `test`        | `test.coverage-report`        | Generate an HTML/terminal report from existing coverage data                             |    ❌    |
-| `test`        | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
-| `env`         | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
-| `env`         | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
-| `env`         | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
-| `env`         | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
-| `env`         | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
-| `release`     | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
-| `release`     | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
-| `doc`         | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
-| `doc`         | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
-| `security`    | `security.audit`              | Audit installed dependencies for known vulnerabilities with pip-audit                    |    ❌    |
-| _(top-level)_ | `clean`                       | Remove build artifacts and caches                                                        |    ✅    |
+| Namespace  | Task                          | Behavior                                                                                 | Mutates? |
+| ---------- | ----------------------------- | ---------------------------------------------------------------------------------------- | :------: |
+| `format`   | `format.check-python`         | Check Python formatting with ruff                                                        |    ❌    |
+| `format`   | `format.fix-python`           | Format Python code with ruff                                                             |    ✅    |
+| `format`   | `format.check-docstrings`     | Check docstring formatting with docformatter                                             |    ❌    |
+| `format`   | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
+| `format`   | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
+| `format`   | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
+| `lint`     | `lint.check-python`           | Check linting with ruff                                                                  |    ❌    |
+| `lint`     | `lint.fix-python`             | Fix auto-fixable linting issues with ruff                                                |    ✅    |
+| `imports`  | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
+| `types`    | `types.check`                 | Check type hints with ty                                                                 |    ❌    |
+| `test`     | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
+| `test`     | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
+| `test`     | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
+| `test`     | `test.unit`                   | Run unit tests                                                                           |    ❌    |
+| `test`     | `test.integration`            | Run integration tests                                                                    |    ❌    |
+| `test`     | `test.functional`             | Run functional tests                                                                     |    ❌    |
+| `test`     | `test.all`                    | Run unit, integration, and functional tests                                              |    ❌    |
+| `test`     | `test.coverage-report`        | Generate an HTML/terminal report from existing coverage data                             |    ❌    |
+| `test`     | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
+| `env`      | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
+| `env`      | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
+| `env`      | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
+| `env`      | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
+| `env`      | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
+| `release`  | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
+| `release`  | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
+| `doc`      | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
+| `doc`      | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
+| `security` | `security.audit`              | Audit installed dependencies for known vulnerabilities with pip-audit                    |    ❌    |
+| `clean`    | `clean.all` (or `clean`)      | Remove build artifacts and caches                                                        |    ✅    |
+| `clean`    | `clean.pycache`               | Remove all `__pycache__` directories                                                     |    ✅    |
 
 `format.*` and `lint.*` follow a naming convention: read-only checks are
 named `check_<target>`, and the matching in-place fixer is named
@@ -182,13 +183,25 @@ for how each path default is derived.
 ## Composing a custom subset of tasks
 
 Need a different set of tasks, or a one-off task alongside the shared ones?
-Import individual task modules instead of the pre-built `ns`:
+Use `make_ns`, which returns a new collection each time, so adding or removing tasks never affects
+other importers. Leave out the tasks you do not use (for example the ones that publish):
+
+```python
+from invoke_tasklib import make_ns
+
+from . import my_custom_task
+
+ns = make_ns(exclude=["release.pypi", "doc"])
+ns.add_task(my_custom_task)
+```
+
+or keep only some of them with `include`, e.g. `make_ns(include=["lint", "test.unit"])`. The names
+are namespaces (`"doc"`) or tasks (`"release.pypi"`); an unknown name raises a `ValueError`. The
+pre-built `ns` is `make_ns()`. Individual task modules can also be composed by hand:
 
 ```python
 from invoke import Collection
 from invoke_tasklib import lint, test
-
-from . import my_custom_task
 
 ns = Collection(lint, test, my_custom_task)
 ```

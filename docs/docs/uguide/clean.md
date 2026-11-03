@@ -6,11 +6,10 @@
 
 | Task            | Behavior                                              |
 | --------------- | ----------------------------------------------------- |
-| `clean`         | Removes build artifacts and caches from the repo root |
-| `clean-pycache` | Removes all `__pycache__` directories                 |
+| `clean.all`     | Removes build artifacts and caches from the repo root |
+| `clean.pycache` | Removes all `__pycache__` directories                 |
 
-Unlike the other namespaces, the clean tasks are registered as single top-level tasks (not
-`clean.something`), since they are one-off maintenance commands.
+`clean.all` is the default task of the `clean` namespace, so `invoke clean` runs it.
 
 ## Usage
 
@@ -33,7 +32,7 @@ repeatedly (it's idempotent) and doesn't fail on an already-clean checkout.
 To remove only the `__pycache__` directories:
 
 ```shell
-invoke clean-pycache
+invoke clean.pycache
 ```
 
 ## See Also

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import pytest
 from invoke.collection import Collection
+from invoke.tasks import Task
 
-from invoke_tasklib import ns
+from invoke_tasklib import _matches, make_ns, ns
 
 
 def test_ns_is_collection() -> None:
@@ -21,11 +22,105 @@ def test_ns_contains_expected_subcollections() -> None:
         "release",
         "doc",
         "security",
+        "clean",
     }
 
 
-def test_ns_contains_clean_task() -> None:
-    assert "clean" in ns.tasks
+def test_ns_contains_clean_namespace() -> None:
+    assert set(ns.collections["clean"].tasks) == {"all", "pycache"}
+
+
+def test_ns_clean_is_the_default_task_of_the_clean_namespace() -> None:
+    assert ns.collections["clean"].default == "all"
+
+
+def test_ns_contains_clean_task_alias() -> None:
+    assert ns.task_names["clean.all"] == ["clean"]
+
+
+#############################
+#     Tests for make_ns     #
+#############################
+
+
+def test_make_ns_returns_a_new_collection_each_time() -> None:
+    assert make_ns() is not make_ns()
+
+
+def test_make_ns_default_has_the_same_tasks_as_ns() -> None:
+    assert set(make_ns().task_names) == set(ns.task_names)
+
+
+def test_make_ns_adding_a_task_does_not_change_other_collections() -> None:
+    other = make_ns()
+    other.add_task(Task(lambda _c: None, name="extra"))
+    assert "extra" not in make_ns().tasks
+
+
+def test_make_ns_exclude_a_namespace() -> None:
+    assert "doc" not in make_ns(exclude=["doc"]).collections
+
+
+def test_make_ns_exclude_a_task() -> None:
+    assert "release.pypi" not in make_ns(exclude=["release.pypi"]).task_names
+
+
+def test_make_ns_exclude_a_task_keeps_its_siblings() -> None:
+    assert "release.build" in make_ns(exclude=["release.pypi"]).task_names
+
+
+def test_make_ns_exclude_all_tasks_of_a_namespace_removes_it() -> None:
+    assert "types" not in make_ns(exclude=["types.check"]).collections
+
+
+def test_make_ns_include_a_namespace() -> None:
+    assert set(make_ns(include=["lint"]).task_names) == {"lint.check-python", "lint.fix-python"}
+
+
+def test_make_ns_include_a_task() -> None:
+    assert set(make_ns(include=["test.unit"]).task_names) == {"test.unit"}
+
+
+def test_make_ns_include_then_exclude() -> None:
+    ns_ = make_ns(include=["lint"], exclude=["lint.fix-python"])
+    assert set(ns_.task_names) == {"lint.check-python"}
+
+
+def test_make_ns_include_empty_is_an_empty_collection() -> None:
+    assert make_ns(include=[]).task_names == {}
+
+
+def test_make_ns_keeps_the_default_task_of_clean() -> None:
+    assert make_ns(include=["clean"]).collections["clean"].default == "all"
+
+
+def test_make_ns_unknown_name_in_exclude() -> None:
+    with pytest.raises(ValueError, match=r"Unknown task or namespace \['relese'\]"):
+        make_ns(exclude=["relese"])
+
+
+def test_make_ns_unknown_name_in_include() -> None:
+    with pytest.raises(ValueError, match=r"Unknown task or namespace \['lnt'\]"):
+        make_ns(include=["lnt"])
+
+
+############################
+#     Tests for _matches   #
+############################
+
+
+@pytest.mark.parametrize(
+    ("name", "patterns", "expected"),
+    [
+        ("release.pypi", ["release"], True),
+        ("release.pypi", ["release.pypi"], True),
+        ("release.pypi", ["release.build"], False),
+        ("release.pypi", ["rel"], False),
+        ("release.pypi", [], False),
+    ],
+)
+def test_matches(name: str, patterns: list[str], expected: bool) -> None:
+    assert _matches(name, patterns) is expected
 
 
 ####################################
