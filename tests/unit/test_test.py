@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
@@ -12,6 +13,11 @@ from invoke_tasklib import test as test_tasks
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
+
+
+@pytest.fixture(autouse=True)
+def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "executable", "/venv/bin/python")
 
 
 def _context(tasklib_config: dict | None = None) -> MockContext:
@@ -32,8 +38,8 @@ def test_doctest_markdown(monkeypatch: MonkeyPatch) -> None:
     c = _context()
     test_tasks.doctest_markdown(c)
     assert _commands(c) == [
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/index.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/index.md",
     ]
 
 
@@ -61,7 +67,7 @@ def test_doctest_markdown_excludes_dir(monkeypatch: MonkeyPatch, excluded: Path)
     c = _context()
     test_tasks.doctest_markdown(c)
     assert _commands(c) == [
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md"
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md"
     ]
 
 
@@ -72,16 +78,16 @@ def test_doctest_markdown_sorts_files(monkeypatch: MonkeyPatch) -> None:
     c = _context()
     test_tasks.doctest_markdown(c)
     assert _commands(c) == [
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/a.md",
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/z.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/a.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/z.md",
     ]
 
 
 def test_doctest_src() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest_src(c)
-    assert _commands(c) == ["python -m pytest --xdoctest src/mypkg"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest src/mypkg"]
 
 
 def test_doctest(monkeypatch: MonkeyPatch) -> None:
@@ -91,15 +97,15 @@ def test_doctest(monkeypatch: MonkeyPatch) -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest(c)
     assert _commands(c) == [
-        "python -m pytest --xdoctest src/mypkg",
-        "python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
+        "/venv/bin/python -m pytest --xdoctest src/mypkg",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
     ]
 
 
 def test_all_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.all(c)
-    assert _commands(c) == ["python -m pytest --xdoctest --timeout 10 tests"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 tests"]
 
 
 def test_all_with_coverage() -> None:
@@ -107,7 +113,7 @@ def test_all_with_coverage() -> None:
     test_tasks.all(c, cov=True)
     assert _commands(c) == [
         (
-            "python -m pytest --xdoctest --timeout 10 "
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
             "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests"
         )
     ]
@@ -116,7 +122,7 @@ def test_all_with_coverage() -> None:
 def test_unit_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.unit(c)
-    assert _commands(c) == ["python -m pytest --xdoctest --timeout 10 tests/unit"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"]
 
 
 def test_unit_with_coverage() -> None:
@@ -124,7 +130,7 @@ def test_unit_with_coverage() -> None:
     test_tasks.unit(c, cov=True)
     assert _commands(c) == [
         (
-            "python -m pytest --xdoctest --timeout 10 "
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
             "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests/unit"
         )
     ]
@@ -133,7 +139,7 @@ def test_unit_with_coverage() -> None:
 def test_integration_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.integration(c)
-    assert _commands(c) == ["python -m pytest --xdoctest --timeout 60 tests/integration"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
 def test_integration_with_coverage() -> None:
@@ -141,7 +147,7 @@ def test_integration_with_coverage() -> None:
     test_tasks.integration(c, cov=True)
     assert _commands(c) == [
         (
-            "python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/integration"
         )
     ]
@@ -150,7 +156,7 @@ def test_integration_with_coverage() -> None:
 def test_functional_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.functional(c)
-    assert _commands(c) == ["python -m pytest --xdoctest --timeout 60 tests/functional"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
 def test_functional_with_coverage() -> None:
@@ -158,7 +164,7 @@ def test_functional_with_coverage() -> None:
     test_tasks.functional(c, cov=True)
     assert _commands(c) == [
         (
-            "python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/functional"
         )
     ]
@@ -176,11 +182,11 @@ def test_coverage_report_open_browser() -> None:
     assert _commands(c) == [
         "coverage html",
         "coverage report",
-        "python -m webbrowser -t htmlcov/index.html",
+        "/venv/bin/python -m webbrowser -t htmlcov/index.html",
     ]
 
 
 def test_benchmark() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
-    assert _commands(c) == ["python -m pytest tests/benchmarks/ --benchmark-only"]
+    assert _commands(c) == ["/venv/bin/python -m pytest tests/benchmarks/ --benchmark-only"]

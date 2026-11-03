@@ -9,6 +9,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import python_executable
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -22,7 +23,7 @@ def doctest_src(c: Context) -> None:
     cfg = get_config(c)
     src = cfg["paths"]["src"]
     say(c, "📚 Running doctests on source code...")
-    c.run(f"python -m pytest --xdoctest {src}", pty=True)
+    c.run(f"{python_executable()} -m pytest --xdoctest {src}", pty=True)
     say(c, "✅ Doctest validation complete")
 
 
@@ -37,7 +38,8 @@ def doctest_markdown(c: Context) -> None:
     for f in md_files:
         say(c, f"🔍 Checking: {f}")
         c.run(
-            f"python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF {f}", pty=True
+            f"{python_executable()} -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF {f}",
+            pty=True,
         )
     say(c, f"✅ All {len(md_files)} markdown files have been checked")
 
@@ -62,7 +64,7 @@ def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matche
     name = cfg["package"]["name"]
     tests = cfg["paths"]["tests"]
     say(c, "🧪 Running all tests...")
-    cmd = ["python -m pytest --xdoctest --timeout 10"]
+    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 10"]
     if cov:
         cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
         say(c, "📊 Coverage reports will be generated")
@@ -83,7 +85,7 @@ def unit(c: Context, cov: bool = False) -> None:
     name = cfg["package"]["name"]
     unit_tests = cfg["paths"]["unit_tests"]
     say(c, "🧪 Running unit tests...")
-    cmd = ["python -m pytest --xdoctest --timeout 10"]
+    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 10"]
     if cov:
         cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
         say(c, "📊 Coverage reports will be generated")
@@ -104,7 +106,7 @@ def integration(c: Context, cov: bool = False) -> None:
     name = cfg["package"]["name"]
     integration_tests = cfg["paths"]["integration_tests"]
     say(c, "🧪 Running integration tests...")
-    cmd = ["python -m pytest --xdoctest --timeout 60"]
+    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
     if cov:
         cmd.append(
             f"--cov-report html --cov-report xml --cov-report term --cov-append --cov={name}"
@@ -127,7 +129,7 @@ def functional(c: Context, cov: bool = False) -> None:
     name = cfg["package"]["name"]
     functional_tests = cfg["paths"]["functional_tests"]
     say(c, "🧪 Running functional tests...")
-    cmd = ["python -m pytest --xdoctest --timeout 60"]
+    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
     if cov:
         cmd.append(
             f"--cov-report html --cov-report xml --cov-report term --cov-append --cov={name}"
@@ -153,7 +155,7 @@ def coverage_report(c: Context, open_browser: bool = False) -> None:
     c.run("coverage report", pty=True)
     if open_browser:
         say(c, "🌐 Opening coverage report in the browser...")
-        c.run("python -m webbrowser -t htmlcov/index.html")
+        c.run(f"{python_executable()} -m webbrowser -t htmlcov/index.html")
     say(c, "✅ Coverage report generated in htmlcov/")
 
 
@@ -163,5 +165,5 @@ def benchmark(c: Context) -> None:
     cfg = get_config(c)
     benchmarks = cfg["paths"]["benchmarks"]
     say(c, "⏱️  Running benchmarks...")
-    c.run(f"python -m pytest {benchmarks}/ --benchmark-only", pty=True)
+    c.run(f"{python_executable()} -m pytest {benchmarks}/ --benchmark-only", pty=True)
     say(c, "✅ Benchmarks complete")
