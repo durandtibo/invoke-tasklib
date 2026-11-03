@@ -148,6 +148,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `test`     | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
 | `env`      | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
 | `env`      | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
+| `env`      | `env.check-tools`             | Check which tools (ruff, pyright, ...) are available                                     |    ❌    |
 | `env`      | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
 | `env`      | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
 | `env`      | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |

@@ -2,15 +2,18 @@ r"""Environment and dependency management tasks."""
 
 from __future__ import annotations
 
+import importlib.util
 import shlex
+import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import run
+from invoke_tasklib.runner import DEFAULT_HINT, PROGRAM_HINTS, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -131,3 +134,93 @@ def show_python_config(c: Context) -> None:
     run(c, "uv python list --only-installed")
     run(c, "uv python find")
     run(c, "command -v python", warn=True)
+
+
+TOOL_PROGRAMS: tuple[str, ...] = (
+    "uv",
+    "uvx",
+    "git",
+    "ruff",
+    "ty",
+    "pyright",
+    "docformatter",
+    "codespell",
+    "pre-commit",
+    "shellcheck",
+    "shfmt",
+    "mkdocs",
+    "mike",
+)
+r"""The programs that the tasks run, looked up on the ``PATH``."""
+
+TOOL_MODULES: tuple[str, ...] = (
+    "pytest",
+    "coverage",
+    "xdoctest",
+    "pytest_timeout",
+    "pytest_cov",
+)
+r"""The Python modules and pytest plugins that the tasks need."""
+
+
+def _find_tool(name: str, *, module: bool = False) -> str | None:
+    r"""Find a program on the ``PATH`` or a module of the interpreter.
+
+    Args:
+        name: The name of the program, or of the module.
+        module: If True, look ``name`` up as a Python module of the
+            running interpreter instead of as a program.
+
+    Returns:
+        The path of the program or of the module, or ``None`` if it is
+        not available.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.env import _find_tool
+    >>> _find_tool("no-such-program") is None
+    True
+    >>> _find_tool("no_such_module", module=True) is None
+    True
+
+    ```
+    """
+    if module:
+        spec = importlib.util.find_spec(name)
+        return None if spec is None else (spec.origin or name)
+    return shutil.which(name)
+
+
+@task
+def check_tools(c: Context) -> None:
+    r"""Check which tools of the tasks are available.
+
+    Every program (``ruff``, ``ty``, ``pyright``, ``uv``, ...) and every
+    Python module (``pytest``, ``coverage`` and the pytest plugins) that
+    the tasks run is looked up, and one line per tool says where it was
+    found, or how to install it. All the tools are listed, so one run
+    shows everything that is missing. The config of the project is not
+    needed, so the task can be run before anything is set up.
+
+    Args:
+        c: The invoke context.
+
+    Raises:
+        Exit: With the code 127 if a tool is missing.
+    """
+    say(c, "🧰 Checking the tools of the tasks...")
+    lookups = [(name, False) for name in TOOL_PROGRAMS] + [(name, True) for name in TOOL_MODULES]
+    missing: list[str] = []
+    for name, module in lookups:
+        found = _find_tool(name, module=module)
+        if found is not None:
+            say(c, f"✅ {name}: {found}")
+            continue
+        missing.append(name)
+        kind = "Python module" if module else "program"
+        say(c, f"❌ {name}: {kind} not found. {PROGRAM_HINTS.get(name, DEFAULT_HINT)}")
+    if missing:
+        msg = f"{len(missing)} of {len(lookups)} tool(s) missing: {', '.join(missing)}"
+        raise Exit(msg, code=127)
+    say(c, f"✅ All the {len(lookups)} tools are available")
