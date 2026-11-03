@@ -8,7 +8,7 @@ from invoke.config import Config
 from invoke.context import MockContext
 from invoke.exceptions import Exit
 
-from invoke_tasklib.runner import check_program, python_executable, run
+from invoke_tasklib.runner import _split, build_command, check_program, python_executable, run
 
 #######################################
 #     Tests for python_executable     #
@@ -147,3 +147,77 @@ def test_run_missing_program_does_not_run_the_command(monkeypatch: pytest.Monkey
     with pytest.raises(Exit, match=r"'ruff' was not found"):
         run(c, "ruff check .")
     assert not _run_mock(c).called
+
+
+###################################
+#     Tests for build_command     #
+###################################
+
+
+def test_build_command_uses_default_paths() -> None:
+    assert build_command("ruff check", default_paths=["."]) == "ruff check ."
+
+
+def test_build_command_without_paths_has_only_the_program() -> None:
+    assert build_command("ty check") == "ty check"
+
+
+def test_build_command_adds_args_before_paths() -> None:
+    assert build_command("ruff check", args="--select E", default_paths=["."]) == (
+        "ruff check --select E ."
+    )
+
+
+def test_build_command_paths_replace_default_paths() -> None:
+    assert build_command("ruff check", paths="a.py b.py", default_paths=["."]) == (
+        "ruff check a.py b.py"
+    )
+
+
+def test_build_command_quotes_args_with_spaces() -> None:
+    assert build_command("pytest", args='-k "a or b"') == "pytest -k 'a or b'"
+
+
+def test_build_command_quotes_paths_with_spaces() -> None:
+    assert build_command("ruff check", paths="'my dir/a.py'") == "ruff check 'my dir/a.py'"
+
+
+def test_build_command_quotes_shell_metacharacters() -> None:
+    assert build_command("ruff check", args="--x ';rm -rf /'") == "ruff check --x ';rm -rf /'"
+
+
+def test_build_command_does_not_quote_the_program() -> None:
+    assert build_command("uv run pip-audit") == "uv run pip-audit"
+
+
+def test_build_command_unclosed_quote_exits() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --args"):
+        build_command("pytest", args="-k 'a")
+
+
+def test_build_command_unclosed_quote_in_paths_exits() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --paths"):
+        build_command("pytest", paths="'a")
+
+
+##############################
+#     Tests for _split     #
+##############################
+
+
+def test_split_none() -> None:
+    assert _split(None, "--args") == []
+
+
+def test_split_empty_string() -> None:
+    assert _split("", "--args") == []
+
+
+def test_split_keeps_quoted_words_together() -> None:
+    assert _split("-k 'a b' -x", "--args") == ["-k", "a b", "-x"]
+
+
+def test_split_unclosed_quote_exit_code() -> None:
+    with pytest.raises(Exit) as excinfo:
+        _split("'a", "--args")
+    assert excinfo.value.code == 2

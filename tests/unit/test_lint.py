@@ -68,3 +68,33 @@ def test_fix_python() -> None:
     c = _context()
     lint.fix_python(c)
     assert _commands(c) == ["ruff check --fix ."]
+
+
+def test_check_python_args() -> None:
+    c = _context()
+    lint.check_python(c, args="--select E")
+    assert _commands(c) == ["ruff check --select E ."]
+
+
+def test_check_python_paths() -> None:
+    c = _context()
+    lint.check_python(c, paths="a.py b.py")
+    assert _commands(c) == ["ruff check a.py b.py"]
+
+
+def test_check_python_args_and_format_and_paths() -> None:
+    c = _context()
+    lint.check_python(c, output_format="full", args="--select E", paths="a.py")
+    assert _commands(c) == ["ruff check --output-format=full --select E a.py"]
+
+
+def test_fix_python_args() -> None:
+    c = _context()
+    lint.fix_python(c, args="--select I")
+    assert _commands(c) == ["ruff check --fix --select I ."]
+
+
+def test_fix_python_paths() -> None:
+    c = _context()
+    lint.fix_python(c, paths="a.py")
+    assert _commands(c) == ["ruff check --fix a.py"]

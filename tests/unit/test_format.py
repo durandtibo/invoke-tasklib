@@ -73,3 +73,55 @@ def test_find_sh_command() -> None:
         "-o -name dist -o -name node_modules -o -name site \\) -type d -prune "
         "-o -name '*.sh' -type f -print0"
     )
+
+
+def test_check_python_args() -> None:
+    c = _context()
+    format.check_python(c, args="--diff")
+    assert _commands(c) == ["ruff format --check --diff ."]
+
+
+def test_check_python_paths() -> None:
+    c = _context()
+    format.check_python(c, paths="a.py")
+    assert _commands(c) == ["ruff format --check a.py"]
+
+
+def test_fix_python_args() -> None:
+    c = _context()
+    format.fix_python(c, args="--diff")
+    assert _commands(c) == ["ruff format --diff ."]
+
+
+def test_fix_python_paths() -> None:
+    c = _context()
+    format.fix_python(c, paths="a.py")
+    assert _commands(c) == ["ruff format a.py"]
+
+
+def test_check_docstrings_paths_replace_src() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    format.check_docstrings(c, paths="src/mypkg/a.py")
+    assert _commands(c) == ["docformatter --config ./pyproject.toml --check src/mypkg/a.py"]
+
+
+def test_check_docstrings_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    format.check_docstrings(c, args="--wrap-summaries 80")
+    assert _commands(c) == [
+        "docformatter --config ./pyproject.toml --check --wrap-summaries 80 src/mypkg"
+    ]
+
+
+def test_fix_docstrings_paths_replace_src() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    format.fix_docstrings(c, paths="src/mypkg/a.py")
+    assert _commands(c) == ["docformatter --config ./pyproject.toml --in-place src/mypkg/a.py"]
+
+
+def test_fix_docstrings_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    format.fix_docstrings(c, args="--wrap-summaries 80")
+    assert _commands(c) == [
+        "docformatter --config ./pyproject.toml --in-place --wrap-summaries 80 src/mypkg"
+    ]
