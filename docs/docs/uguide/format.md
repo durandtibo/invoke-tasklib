@@ -49,8 +49,10 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 
 ## Shell Scripts
 
-`format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project, excluding
-`.git/`.
+`format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project. The
+`.git`, `.venv`, `.pytest_cache`, `node_modules`, `build`, `dist` and `site` directories are not
+searched, so third-party scripts (for example the activation scripts of a virtual environment) are
+never checked or rewritten.
 
 !!! note
 `shellcheck` and `shfmt` are not Python packages, so they aren't installed by

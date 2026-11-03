@@ -6,17 +6,25 @@ without modifying files); ``fix_<target>`` tasks modify files in place.
 
 from __future__ import annotations
 
+import shlex
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import EXCLUDED_DIRS, get_config
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
     from invoke.context import Context
 
-_FIND_SH = "find . -name '*.sh' -type f -not -path './.git/*'"
+SHELL_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {"build", "dist", "site"}
+r"""Directories whose shell scripts are never checked or formatted."""
+
+_FIND_SH = (
+    "find . \\( "
+    + " -o ".join(f"-name {shlex.quote(d)}" for d in sorted(SHELL_EXCLUDED_DIRS))
+    + " \\) -type d -prune -o -name '*.sh' -type f -print0"
+)
 
 
 @task
@@ -70,7 +78,7 @@ def fix_docstrings(c: Context) -> None:
 def check_shell(c: Context) -> None:
     r"""Check shell scripts with shellcheck."""
     say(c, "🐚 Running shellcheck on shell scripts...")
-    c.run(f"{_FIND_SH} -print0 | xargs -0 -r shellcheck --", pty=True)
+    c.run(f"{_FIND_SH} | xargs -0 -r shellcheck --", pty=True)
     say(c, "✅ Shellcheck passed")
 
 
@@ -83,5 +91,5 @@ def fix_shell(c: Context) -> None:
         running this task.
     """
     say(c, "🔧 Running shfmt to format shell scripts...")
-    c.run(f"{_FIND_SH} -print0 | xargs -0 -r shfmt -l -w --", pty=True)
+    c.run(f"{_FIND_SH} | xargs -0 -r shfmt -l -w --", pty=True)
     say(c, "✅ Shell formatting complete")

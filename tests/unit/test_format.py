@@ -46,12 +46,23 @@ def test_fix_docstrings_uses_configured_src_path() -> None:
 def test_check_shell() -> None:
     c = _context()
     format.check_shell(c)
-    find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
-    assert _commands(c) == [f"{find_sh} -print0 | xargs -0 -r shellcheck --"]
+    assert _commands(c) == [f"{format._FIND_SH} | xargs -0 -r shellcheck --"]
 
 
 def test_fix_shell() -> None:
     c = _context()
     format.fix_shell(c)
-    find_sh = "find . -name '*.sh' -type f -not -path './.git/*'"
-    assert _commands(c) == [f"{find_sh} -print0 | xargs -0 -r shfmt -l -w --"]
+    assert _commands(c) == [f"{format._FIND_SH} | xargs -0 -r shfmt -l -w --"]
+
+
+##############################
+#     Tests for _FIND_SH     #
+##############################
+
+
+def test_find_sh_command() -> None:
+    assert format._FIND_SH == (
+        "find . \\( -name .git -o -name .pytest_cache -o -name .venv -o -name build "
+        "-o -name dist -o -name node_modules -o -name site \\) -type d -prune "
+        "-o -name '*.sh' -type f -print0"
+    )
