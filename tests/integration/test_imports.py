@@ -23,12 +23,12 @@ class _SubprocessContext(Context):
     pytest reports as unraisable warnings in unrelated tests.
     """
 
-    def run(self, command: str, **_kwargs: object) -> Result:
+    def run(self, command: str, **kwargs: object) -> Result:
         proc = subprocess.run(  # noqa: S603 (commands are built by the tasks under test)
             shlex.split(command), capture_output=True, text=True, check=False
         )
         result = Result(stdout=proc.stdout, stderr=proc.stderr, exited=proc.returncode)
-        if proc.returncode:
+        if proc.returncode and not kwargs.get("warn"):
             raise UnexpectedExit(result)
         return result
 

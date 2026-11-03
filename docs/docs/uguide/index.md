@@ -37,7 +37,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Env](env.md)           | `env.show-installed-packages` | Show installed packages                             |    ❌    |
 | [Env](env.md)           | `env.show-python-config`      | Show the Python configuration                       |    ❌    |
 | [Release](release.md)   | `release.build`               | Build the package and verify installation           |    ✅    |
-| [Release](release.md)   | `release.pypi`                | Build and publish the package to PyPI               |    ✅    |
+| [Release](release.md)   | `release.publish`                | Build and publish the package to PyPI               |    ✅    |
 | [Doc](doc.md)           | `doc.build`                   | Build the docs, failing on warnings                 |    ❌    |
 | [Doc](doc.md)           | `doc.serve`                   | Serve the docs locally                              |    ❌    |
 | [Doc](doc.md)           | `doc.publish-dev`             | Publish development (unstable) docs                 |    ✅    |
@@ -94,7 +94,7 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
 | `security.audit`                                                                     | `pip-audit`            |    ❌     |
 | `doc.build`, `doc.serve`                                                             | `mkdocs`               |    ❌     |
 | `release.build`                                                                      | `uv build`             |    ❌     |
-| `release.pypi`                                                                       | `uv publish`           |    ❌     |
+| `release.publish`                                                                    | `uv publish`           |    ❌     |
 
 The tasks that have no option are the composite tasks (`check.all`, `test.doctest`), the tasks
 that run no external tool (`clean.*`, `imports.check-cycles`) and the tasks with their own options

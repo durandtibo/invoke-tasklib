@@ -50,7 +50,7 @@ commands (`ruff`, `uv`, `pytest`, `mike`, ...) on your machine, with your permis
 
 - **Tasks run shell commands by design**: tasks call `Context.run` to execute external tools, and
   some of them change or publish things (`clean` deletes files, `doc.publish-dev` and
-  `doc.publish-latest` push to the repository, `release.pypi` publishes a package). Read what a
+  `doc.publish-latest` push to the repository, `release.publish` publishes a package). Read what a
   task does (see the user guide) before running it, and only run tasks from a `tasks.py` you trust.
 - **Configuration values are quoted, but still come from you**: values read from the `tasklib`
   section of `invoke.yaml` (the paths, the documentation configuration file, the dependency groups)
@@ -58,7 +58,7 @@ commands (`ruff`, `uv`, `pytest`, `mike`, ...) on your machine, with your permis
   space or a `;` in a value does not split or inject a command. They still choose which files and
   options the tools use, so **only use a configuration file that you trust**, and never build it
   from untrusted input (a pull request from a fork, a user-supplied value, a network payload).
-- **Credentials for publishing**: `release.pypi` and the documentation publishing tasks rely on the
+- **Credentials for publishing**: `release.publish` and the documentation publishing tasks rely on the
   credentials available in your environment (PyPI token, Git remote access). Prefer short-lived
   credentials or [trusted publishing](https://docs.pypi.org/trusted-publishers/), and do not
   expose them to jobs that run untrusted code.
