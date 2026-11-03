@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 import pytest
@@ -35,7 +36,7 @@ def test_get_config_requires_package_name() -> None:
 
 def test_get_config_defaults() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}}))
-    assert cfg == {
+    assert asdict(cfg) == {
         "package": {"name": "mypkg", "import_name": "mypkg", "python_version": "3.14"},
         "paths": {
             "src": "src/mypkg",
@@ -72,7 +73,7 @@ def test_get_config_test_overrides() -> None:
             }
         )
     )
-    assert cfg["test"] == {
+    assert asdict(cfg.test) == {
         "unit_timeout": 5,
         "integration_timeout": 120,
         "functional_timeout": 300,
@@ -83,7 +84,7 @@ def test_get_config_test_overrides() -> None:
 
 def test_get_config_test_partial_override_keeps_other_defaults() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": 5}}))
-    assert cfg["test"]["integration_timeout"] == 60
+    assert cfg.test.integration_timeout == 60
 
 
 def test_get_config_test_unknown_key() -> None:
@@ -115,28 +116,38 @@ def test_get_config_test_invalid_cov_fail_under() -> None:
 
 def test_get_config_import_name_replaces_hyphens() -> None:
     cfg = get_config(_context({"package": {"name": "my-pkg"}}))
-    assert cfg["package"]["import_name"] == "my_pkg"
+    assert cfg.package.import_name == "my_pkg"
 
 
 def test_get_config_import_name_override() -> None:
     cfg = get_config(_context({"package": {"name": "my-pkg", "import_name": "other"}}))
-    assert cfg["package"]["import_name"] == "other"
+    assert cfg.package.import_name == "other"
 
 
 def test_get_config_src_uses_the_import_name() -> None:
     cfg = get_config(_context({"package": {"name": "my-pkg"}}))
-    assert cfg["paths"]["src"] == "src/my_pkg"
+    assert cfg.paths.src == "src/my_pkg"
 
 
 def test_get_config_explicit_src_wins_over_import_name() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}, "paths": {"src": "lib"}}))
-    assert cfg["paths"]["src"] == "lib"
+    assert cfg.paths.src == "lib"
 
 
 def test_get_config_invalid_import_name() -> None:
     c = _context({"package": {"name": "mypkg", "import_name": "my-pkg"}})
     with pytest.raises(ValueError, match=r"'tasklib.package.import_name' must be a Python module"):
         get_config(c)
+
+
+def test_get_config_empty_src_is_kept() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "paths": {"src": ""}}))
+    assert cfg.paths.src == ""
+
+
+def test_get_config_empty_unit_tests_is_kept() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "paths": {"unit_tests": ""}}))
+    assert cfg.paths.unit_tests == ""
 
 
 def test_get_config_overrides() -> None:
@@ -148,10 +159,10 @@ def test_get_config_overrides() -> None:
             }
         )
     )
-    assert cfg["package"]["python_version"] == "3.11"
-    assert cfg["paths"]["src"] == "mypkg"
-    assert cfg["paths"]["docs_config"] == "mkdocs.yml"
-    assert cfg["paths"]["unit_tests"] == "tests/unit"
+    assert cfg.package.python_version == "3.11"
+    assert cfg.paths.src == "mypkg"
+    assert cfg.paths.docs_config == "mkdocs.yml"
+    assert cfg.paths.unit_tests == "tests/unit"
 
 
 def test_get_config_all_paths_overridden() -> None:
@@ -169,7 +180,7 @@ def test_get_config_all_paths_overridden() -> None:
             }
         )
     )
-    assert cfg["paths"] == {
+    assert asdict(cfg.paths) == {
         "src": "mypkg",
         "tests": "tests",
         "unit_tests": "tests/u",
@@ -189,8 +200,8 @@ def test_get_config_groups_overrides() -> None:
             }
         )
     )
-    assert cfg["groups"]["install"] == "dev,test"
-    assert cfg["groups"]["update"] == "dev,test,docs"
+    assert cfg.groups.install == "dev,test"
+    assert cfg.groups.update == "dev,test,docs"
 
 
 ###############################################
@@ -221,7 +232,7 @@ def test_get_config_rejects_malformed_python_version(version: str) -> None:
 @pytest.mark.parametrize("version", ["3.10", "3.9", "3.10.4", "3.14"])
 def test_get_config_accepts_quoted_python_version(version: str) -> None:
     c = _context({"package": {"name": "mypkg", "python_version": version}})
-    assert get_config(c)["package"]["python_version"] == version
+    assert get_config(c).package.python_version == version
 
 
 ##############################################
@@ -245,22 +256,22 @@ def test_validate_python_version_rejects_float() -> None:
 
 def test_get_config_groups_install_as_list() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": ["dev", "docs"]}})
-    assert get_config(c)["groups"]["install"] == "dev,docs"
+    assert get_config(c).groups.install == "dev,docs"
 
 
 def test_get_config_groups_update_as_list() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"update": ["dev", "test"]}})
-    assert get_config(c)["groups"]["update"] == "dev,test"
+    assert get_config(c).groups.update == "dev,test"
 
 
 def test_get_config_groups_as_string_is_unchanged() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": "dev,test"}})
-    assert get_config(c)["groups"] == {"install": "dev,test", "update": "dev,docs"}
+    assert asdict(get_config(c).groups) == {"install": "dev,test", "update": "dev,docs"}
 
 
 def test_get_config_groups_as_empty_list_installs_no_group() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": []}})
-    assert get_config(c)["groups"]["install"] == ""
+    assert get_config(c).groups.install == ""
 
 
 @pytest.mark.parametrize("value", [1, None, ["dev", 1], {"dev": True}])
@@ -346,7 +357,7 @@ def test_get_config_accepts_every_known_key() -> None:
             "groups": {"install": "dev", "update": "dev"},
         }
     )
-    assert get_config(c)["paths"]["benchmarks"] == "f"
+    assert get_config(c).paths.benchmarks == "f"
 
 
 #################################

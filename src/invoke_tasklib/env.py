@@ -24,7 +24,7 @@ def create_venv(c: Context) -> None:
         ``invoke``, so ``invoke`` must already be available to run it.
     """
     cfg = load_config(c)
-    python_version = cfg["package"]["python_version"]
+    python_version = cfg.package.python_version
     say(c, f"🐍 Creating virtual environment with Python {python_version}...")
     run(c, f"uv venv --python {python_version} --clear")
     say(c, "📦 Installing invoke...")
@@ -51,7 +51,7 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
             overridden in ``invoke.yaml``).
     """
     if groups is None:
-        groups = load_config(c)["groups"]["install"]
+        groups = load_config(c).groups.install
     say(c, "📦 Installing project dependencies...")
     cmd = ["uv sync --locked"]
     if optional_deps:
@@ -89,7 +89,7 @@ def update(c: Context, groups: str | None = None) -> None:
         after updating.
     """
     if groups is None:
-        groups = load_config(c)["groups"]["update"]
+        groups = load_config(c).groups.update
     say(c, "🔄 Updating dependencies...")
     run(c, "uv lock --upgrade")
     say(c, "🛠️  Upgrading uv tools...")
