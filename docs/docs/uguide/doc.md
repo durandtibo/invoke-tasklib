@@ -13,8 +13,9 @@ versioned documentation with [`mike`](https://github.com/jimporter/mike), on top
 | `doc.publish-dev`    | Publishes development (unstable) docs |
 | `doc.publish-latest` | Publishes latest (stable) docs        |
 
-Both tasks read `paths.docs_config` from the [resolved config](config.md) (default:
-`docs/mkdocs.yml`) and pass it to `mike` via `--config-file`.
+All four tasks read `paths.docs_config` from the [resolved config](config.md) (default:
+`docs/mkdocs.yml`). The two publish tasks pass it to `mike` via `--config-file`, and `doc.build` and
+`doc.serve` pass it to `mkdocs`.
 
 ## Publishing Development Docs
 
