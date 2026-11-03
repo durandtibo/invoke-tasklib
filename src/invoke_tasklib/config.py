@@ -463,8 +463,8 @@ def get_config(c: Context) -> TasklibConfig:
             or if ``tasklib.package.python_version`` is not a string
             such as ``"3.10"`` (an unquoted ``3.10`` is read by YAML as
             the float ``3.1``), or if ``tasklib.package.import_name`` is
-            not a Python module name, or if a ``tasklib.groups`` value is
-            neither a string nor a list of strings, or if the
+            not a Python module name, or if a ``tasklib.groups`` value
+            is neither a string nor a list of strings, or if the
             ``package``, ``paths``, ``groups`` or ``test`` section has
             an unknown key (for example a typo such as ``unit_test`` for
             ``unit_tests``), or if a ``tasklib.test`` value is invalid
