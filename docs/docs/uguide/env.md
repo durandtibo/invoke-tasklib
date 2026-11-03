@@ -23,8 +23,9 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 [resolved config](config.md), and installs `invoke` into it with `uv pip install invoke`. The task is run with `invoke`, so
 `invoke` must already be available (for example through `uv tool install invoke`) to run it.
 
+<!-- prettier-ignore -->
 !!! warning
-This clears any existing `.venv`.
+    This clears any existing `.venv`.
 
 ## Installing Dependencies
 
@@ -68,9 +69,10 @@ the [resolved config](config.md)'s `groups.update`, `"dev,docs"` unless overridd
 invoke env.update --groups dev,docs,test
 ```
 
+<!-- prettier-ignore -->
 !!! warning
-Updating dependencies may introduce breaking changes. Review the changes and run the test
-suite afterward.
+    Updating dependencies may introduce breaking changes. Review the changes and run the test
+    suite afterward.
 
 ## Inspecting the Environment
 
