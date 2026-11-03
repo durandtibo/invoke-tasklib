@@ -3,6 +3,7 @@ r"""Helpers to build the commands run by the tasks."""
 from __future__ import annotations
 
 import importlib.util
+import re
 import shlex
 import shutil
 import sys
@@ -47,9 +48,12 @@ r"""Help of the ``--args`` option of the tasks."""
 PATHS_HELP = "Files or directories to run on, as one string, instead of the default."
 r"""Help of the ``--paths`` option of the tasks."""
 
-UNCHECKED_PROGRAMS: frozenset[str] = frozenset({"command", "find"})
+UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
+    {"command", "find", "cd", "export", "test", "[", "exec", "source", ".", ":"}
+)
 r"""First words of a command that are not looked up on the ``PATH``
-(shell builtins and tools that every system has)."""
+(shell builtins and tools that every system has). Some of them have an
+executable on some systems only (for example ``cd`` on macOS)."""
 
 PROGRAM_HINTS: dict[str, str] = {
     "uv": "Install uv, see https://docs.astral.sh/uv/getting-started/installation/.",
@@ -96,6 +100,8 @@ r"""The hint of the programs that are in neither ``PROGRAM_HINTS`` nor
 ``PROGRAM_GROUPS``."""
 
 _SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
+
+_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 
 
 def build_command(
@@ -207,18 +213,46 @@ def _stages(command: str) -> list[list[str]]:
     return [words for words in stages if words]
 
 
-def _program_of(words: Sequence[str]) -> str | None:
-    r"""Return the program that a command really runs.
-
-    ``xargs`` runs the command that follows its options, so that command
-    is the one that has to be installed.
+def _strip_assignments(words: Sequence[str]) -> list[str]:
+    r"""Remove the leading ``NAME=value`` words of a command.
 
     Args:
         words: The words of a command.
 
     Returns:
+        The words from the first one that is not an assignment of an
+        environment variable.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _strip_assignments
+    >>> _strip_assignments(["FOO=1", "BAR=", "ruff", "check"])
+    ['ruff', 'check']
+
+    ```
+    """
+    start = 0
+    while start < len(words) and _ASSIGNMENT.match(words[start]):
+        start += 1
+    return list(words[start:])
+
+
+def _program_of(words: Sequence[str]) -> str | None:
+    r"""Return the program that a command really runs.
+
+    ``xargs`` runs the command that follows its options, so that command
+    is the one that has to be installed. A command that starts a
+    subshell or a group (``(``, ``{``, ``}``) or a substitution (``$(``) has no
+    program that can be looked up.
+
+    Args:
+        words: The words of a command, without the assignments of
+            variables, see ``_strip_assignments``.
+
+    Returns:
         The program, or ``None`` if there is none (``xargs`` with no
-        command).
+        command, a subshell or a group).
 
     Example usage:
 
@@ -228,9 +262,13 @@ def _program_of(words: Sequence[str]) -> str | None:
     'ruff'
     >>> _program_of(["xargs", "-0", "-r", "shellcheck", "--"])
     'shellcheck'
+    >>> _program_of(["(", "ls", ")"]) is None
+    True
 
     ```
     """
+    if words[0] in {"(", "{", "}"} or words[0].startswith("$"):
+        return None
     if words[0] != "xargs":
         return words[0]
     return next((w for w in words[1:] if not w.startswith("-")), None)
@@ -304,8 +342,11 @@ def check_program(command: str) -> None:
     the command run by ``xargs`` is checked instead of ``xargs``. A
     program is not checked when it is an absolute path (for example the
     running interpreter, see ``python_executable``) or one of
-    ``UNCHECKED_PROGRAMS``. For ``python -m <module>`` with the running
-    interpreter, the module is checked.
+    ``UNCHECKED_PROGRAMS`` (the shell builtins). The ``NAME=value``
+    words before a program are ignored, and so is a command that starts
+    a subshell, a group or a substitution (``(``, ``{``, ``$(``). For
+    ``python -m <module>`` with the running interpreter, the module is
+    checked.
 
     Args:
         command: The command line.
@@ -326,7 +367,10 @@ def check_program(command: str) -> None:
 
     ```
     """
-    for words in _stages(command):
+    for stage in _stages(command):
+        words = _strip_assignments(stage)
+        if not words:
+            continue
         program = _program_of(words)
         if program is None or program.startswith("/") or program in UNCHECKED_PROGRAMS:
             _check_module(words)
@@ -336,11 +380,13 @@ def check_program(command: str) -> None:
             raise Exit(msg, code=127)
 
 
-def run(c: Context, command: str, **kwargs: Any) -> Result:
+def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Result:
     r"""Run a command, echoing it and using a pty only on a terminal.
 
     The program of the command must be on the ``PATH``, see
-    ``check_program``.
+    ``check_program``. Pass ``check=False`` to skip that check when the
+    caller knows better, for example for a command that is defined by a
+    shell function or alias.
 
     All the tasks run their commands through this helper so that they
     behave alike:
@@ -355,6 +401,7 @@ def run(c: Context, command: str, **kwargs: Any) -> Result:
     Args:
         c: The invoke context.
         command: The command to run.
+        check: If False, do not check that the program is available.
         **kwargs: Additional keyword arguments passed to ``c.run``. They
             take precedence over the defaults of this helper.
 
@@ -362,7 +409,8 @@ def run(c: Context, command: str, **kwargs: Any) -> Result:
         The result of ``c.run``.
 
     Raises:
-        Exit: If the program of the command is not found.
+        Exit: If ``check`` is True and the program of the command is not
+            found.
 
     Example usage:
 
@@ -377,7 +425,8 @@ def run(c: Context, command: str, **kwargs: Any) -> Result:
 
     ```
     """
-    check_program(command)
+    if check:
+        check_program(command)
     kwargs.setdefault("echo", True)
     kwargs.setdefault("pty", bool(c.config.run.pty) or sys.stdout.isatty())
     return c.run(command, **kwargs)
