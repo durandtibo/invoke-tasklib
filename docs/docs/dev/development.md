@@ -101,7 +101,7 @@ invoke-tasklib/
 │       ├── __init__.py       # Public API: `make_ns` and individual task modules
 │       ├── config.py         # Shared config resolution (`get_config`, `load_config`)
 │       ├── runner.py         # Shared command runner (`run`, `build_command`)
-│       ├── output.py         # Progress messages (`say`)
+│       ├── output.py         # Progress messages (`say`, `step`)
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
 │       ├── imports.py        # imports.* tasks

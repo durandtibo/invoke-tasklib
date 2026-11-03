@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.output import say
+from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -37,9 +37,8 @@ def check(
         paths: The files or directories to check instead of the project
             default, passed to ``ty`` and ``pyright``.
     """
-    say(c, "🔬 Checking type hints with ty...")
-    run(c, build_command("ty check", args=args, paths=paths))
-    if complete:
-        say(c, "🔬 Checking type hints with pyright...")
-        run(c, build_command("pyright", paths=paths))
-    say(c, "✅ Type check passed")
+    with step(c, "🔬 Checking type hints with ty...", "✅ Type check passed"):
+        run(c, build_command("ty check", args=args, paths=paths))
+        if complete:
+            say(c, "🔬 Checking type hints with pyright...")
+            run(c, build_command("pyright", paths=paths))

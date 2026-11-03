@@ -14,6 +14,7 @@ documented in the reference pages ([`runner`](../refs/runner.md), [`output`](../
 | `invoke_tasklib.runner.run`           | Run a command: echo, pty only on a terminal, program check         |
 | `invoke_tasklib.runner.check_program` | Check that the programs of a command are installed                  |
 | `invoke_tasklib.output.say`           | Print a progress message                                            |
+| `invoke_tasklib.output.step`          | Print the start and the end of a step, and `❌ Failed: ...` on error |
 
 ## Example
 
@@ -23,7 +24,7 @@ from invoke.tasks import task
 
 from invoke_tasklib import make_ns
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 
@@ -31,9 +32,8 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 def check_complexity(c, args=None, paths=None):
     r"""Check the complexity of the code with radon."""
     cfg = load_config(c)
-    say(c, "🔍 Checking the complexity...")
-    run(c, build_command("radon cc", args=args, paths=paths, default_paths=[cfg.paths.src]))
-    say(c, "✅ Complexity check passed")
+    with step(c, "🔍 Checking the complexity...", "✅ Complexity check passed"):
+        run(c, build_command("radon cc", args=args, paths=paths, default_paths=[cfg.paths.src]))
 
 
 ns = make_ns()
@@ -49,7 +49,10 @@ ns.add_task(check_complexity)
 - **Run it with `run`**: it echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the `PATH` (with an installation hint if it is not). Do not call `c.run`
   directly.
-- **Print progress with `say`**: it never fails on a terminal that cannot encode an emoji.
+- **Report the step with `step`**: it prints the start message, then the done message, or
+  `❌ Failed: <what was being done>` if the block raises (the exception is raised again, so the exit
+  code is unchanged). Use `say` for any other message; neither fails on a terminal that cannot encode
+  an emoji.
 
 Follow the naming convention of the shared tasks: `check_<target>` never modifies a file and
 `fix_<target>` does. Add the task to a `make_ns()` result, as above, so it does not leak into other
