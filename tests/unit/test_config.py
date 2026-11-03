@@ -9,13 +9,19 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib.config import (
+    DEFAULT_GROUPS,
+    DEFAULT_PACKAGE,
+    DEFAULT_PATHS,
+    DEFAULT_TEST,
     _check_keys,
     _default_src,
+    _int_from_text,
     _normalize_groups,
     _validate_bool,
     _validate_import_name,
     _validate_int,
     _validate_python_version,
+    default_config,
     get_config,
     load_config,
 )
@@ -472,9 +478,9 @@ def test_validate_import_name_rejects_invalid_names(value: object) -> None:
         _validate_import_name(value)
 
 
-#################################
+##################################
 #     Tests for _default_src     #
-#################################
+##################################
 
 
 def test_default_src_prefers_the_src_layout(
@@ -497,3 +503,55 @@ def test_default_src_falls_back_to_the_src_layout(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert _default_src("mypkg") == "src/mypkg"
+
+
+####################################
+#     Tests for default_config     #
+####################################
+
+
+def test_default_config_has_the_four_sections() -> None:
+    assert sorted(default_config()) == ["groups", "package", "paths", "test"]
+
+
+def test_default_config_is_the_defaults() -> None:
+    assert default_config() == {
+        "package": DEFAULT_PACKAGE,
+        "paths": DEFAULT_PATHS,
+        "groups": DEFAULT_GROUPS,
+        "test": DEFAULT_TEST,
+    }
+
+
+def test_default_config_returns_new_dicts() -> None:
+    default_config()["paths"]["src"] = "changed"
+    assert DEFAULT_PATHS["src"] is None
+
+
+def test_default_config_is_deterministic() -> None:
+    assert default_config() == default_config()
+
+
+####################################
+#     Tests for _int_from_text     #
+####################################
+
+
+def test_int_from_text_converts_digits() -> None:
+    assert _int_from_text("90") == 90
+
+
+@pytest.mark.parametrize("value", [90, None, True, "9.5", "-1", "", " 90", "ninety", "٩٠", ["90"]])
+def test_int_from_text_keeps_other_values(value: object) -> None:
+    assert _int_from_text(value) == value
+
+
+def test_get_config_accepts_cov_fail_under_given_as_text() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": "90"}})
+    assert get_config(c).test.cov_fail_under == 90
+
+
+def test_get_config_rejects_cov_fail_under_that_is_not_a_number_text() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": "high"}})
+    with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer"):
+        get_config(c)
