@@ -66,6 +66,18 @@ def test_install_with_explicit_groups() -> None:
     assert commands(c) == ["uv sync --locked --all-extras --group dev --group docs"]
 
 
+def test_install_installs_a_duplicate_group_once() -> None:
+    c = make_context()
+    env.install(c, groups="dev,dev")
+    assert commands(c) == ["uv sync --locked --all-extras --group dev"]
+
+
+def test_install_keeps_the_order_of_the_groups_without_duplicates() -> None:
+    c = make_context()
+    env.install(c, groups="docs,dev,docs")
+    assert commands(c) == ["uv sync --locked --all-extras --group docs --group dev"]
+
+
 def test_install_with_custom_groups() -> None:
     c = make_context()
     env.install(c, groups="dev, test, lint")
