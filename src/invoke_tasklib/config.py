@@ -15,10 +15,13 @@ from it.
 
 from __future__ import annotations
 
+import difflib
 import re
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+
     from invoke.context import Context
 
 
@@ -119,6 +122,49 @@ def _validate_python_version(value: object) -> str:
     return value
 
 
+def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) -> None:
+    r"""Check that a user config section only has known keys.
+
+    Args:
+        section: The name of the section (``package``, ``paths`` or
+            ``groups``), used in the error message.
+        user: The user values of the section.
+        valid: The valid keys of the section.
+
+    Raises:
+        ValueError: If ``user`` has keys that are not in ``valid``. The
+            message lists the unknown keys, with the closest valid key
+            when there is one, and the valid keys.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _check_keys
+    >>> _check_keys("paths", {"src": "x"}, ["src", "tests"])
+    >>> _check_keys("paths", {"sr": "x"}, ["src", "tests"])
+    Traceback (most recent call last):
+        ...
+    ValueError: Unknown key 'sr' (did you mean 'src'?) in 'tasklib.paths'. Valid keys: src, tests
+
+    ```
+    """
+    valid_keys = sorted(valid)
+    unknown = sorted(set(user) - set(valid_keys))
+    if not unknown:
+        return
+    details = []
+    for key in unknown:
+        close = difflib.get_close_matches(key, valid_keys, n=1)
+        hint = f" (did you mean '{close[0]}'?)" if close else ""
+        details.append(f"'{key}'{hint}")
+    noun = "key" if len(unknown) == 1 else "keys"
+    msg = (
+        f"Unknown {noun} {', '.join(details)} in 'tasklib.{section}'. "
+        f"Valid keys: {', '.join(valid_keys)}"
+    )
+    raise ValueError(msg)
+
+
 def _normalize_groups(key: str, value: object) -> str:
     r"""Normalize a ``groups`` config value to a comma-separated string.
 
@@ -171,7 +217,9 @@ def get_config(c: Context) -> TasklibConfig:
             ``tasklib.package.python_version`` is not a string such as
             ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
             float ``3.1``), or if a ``tasklib.groups`` value is neither
-            a string nor a list of strings.
+            a string nor a list of strings, or if the ``package``,
+            ``paths`` or ``groups`` section has an unknown key (for
+            example a typo such as ``unit_test`` for ``unit_tests``).
 
     Example usage:
 
@@ -191,6 +239,9 @@ def get_config(c: Context) -> TasklibConfig:
     ```
     """
     user = dict(c.config.get("tasklib", {}))
+    _check_keys("package", user.get("package", {}), DEFAULT_PACKAGE)
+    _check_keys("paths", user.get("paths", {}), DEFAULT_PATHS)
+    _check_keys("groups", user.get("groups", {}), DEFAULT_GROUPS)
     package = {**DEFAULT_PACKAGE, **user.get("package", {})}
     paths = {**DEFAULT_PATHS, **user.get("paths", {})}
     groups = {**DEFAULT_GROUPS, **user.get("groups", {})}

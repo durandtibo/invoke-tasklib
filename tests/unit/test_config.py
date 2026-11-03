@@ -4,7 +4,12 @@ import pytest
 from invoke.config import Config
 from invoke.context import Context
 
-from invoke_tasklib.config import _normalize_groups, _validate_python_version, get_config
+from invoke_tasklib.config import (
+    _check_keys,
+    _normalize_groups,
+    _validate_python_version,
+    get_config,
+)
 
 
 def _context(tasklib_config: dict | None = None) -> Context:
@@ -185,3 +190,88 @@ def test_normalize_groups_accepts_tuple() -> None:
 def test_normalize_groups_error_names_the_key() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.groups\.update'"):
         _normalize_groups("update", 3)
+
+
+##################################
+#     Tests for unknown keys     #
+##################################
+
+
+def test_get_config_rejects_unknown_paths_key() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"unit_test": "x"}})
+    with pytest.raises(
+        ValueError, match=r"Unknown key 'unit_test' \(did you mean 'unit_tests'\?\)"
+    ):
+        get_config(c)
+
+
+def test_get_config_rejects_unknown_package_key() -> None:
+    c = _context({"package": {"name": "mypkg", "python_versoin": "3.11"}})
+    with pytest.raises(
+        ValueError, match=r"Unknown key 'python_versoin' \(did you mean 'python_version'"
+    ):
+        get_config(c)
+
+
+def test_get_config_rejects_unknown_groups_key() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"instal": "dev"}})
+    with pytest.raises(ValueError, match=r"Unknown key 'instal' \(did you mean 'install'"):
+        get_config(c)
+
+
+def test_get_config_error_names_the_section() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"nope": "x"}})
+    with pytest.raises(ValueError, match=r"in 'tasklib\.paths'"):
+        get_config(c)
+
+
+def test_get_config_accepts_every_known_key() -> None:
+    c = _context(
+        {
+            "package": {"name": "mypkg", "python_version": "3.11"},
+            "paths": {
+                "src": "a",
+                "tests": "b",
+                "unit_tests": "c",
+                "integration_tests": "d",
+                "functional_tests": "e",
+                "benchmarks": "f",
+                "docs_config": "g",
+            },
+            "groups": {"install": "dev", "update": "dev"},
+        }
+    )
+    assert get_config(c)["paths"]["benchmarks"] == "f"
+
+
+#################################
+#     Tests for _check_keys     #
+#################################
+
+
+def test_check_keys_accepts_known_keys() -> None:
+    assert _check_keys("paths", {"src": "x"}, ["src", "tests"]) is None
+
+
+def test_check_keys_accepts_empty_section() -> None:
+    assert _check_keys("paths", {}, ["src", "tests"]) is None
+
+
+def test_check_keys_lists_valid_keys_sorted() -> None:
+    with pytest.raises(ValueError, match=r"Valid keys: src, tests$"):
+        _check_keys("paths", {"zzz": "x"}, ["tests", "src"])
+
+
+def test_check_keys_without_close_match_has_no_hint() -> None:
+    with pytest.raises(ValueError, match=r"^Unknown key 'zzz' in 'tasklib\.paths'\. Valid"):
+        _check_keys("paths", {"zzz": "x"}, ["src", "tests"])
+
+
+def test_check_keys_reports_all_unknown_keys() -> None:
+    with pytest.raises(ValueError, match=r"Unknown keys 'aaa', 'zzz' in"):
+        _check_keys("paths", {"zzz": 1, "aaa": 2}, ["src", "tests"])
+
+
+def test_check_keys_suggests_closest_key() -> None:
+    with pytest.raises(ValueError, match=r"\(did you mean 'tests'\?\)"):
+        _check_keys("paths", {"test": "x"}, ["src", "tests"])
