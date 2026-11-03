@@ -47,8 +47,7 @@ def test_doctest_markdown(monkeypatch: MonkeyPatch) -> None:
     c = _context()
     test_tasks.doctest_markdown(c)
     assert _commands(c) == [
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/index.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md docs/index.md",
     ]
 
 
@@ -87,9 +86,7 @@ def test_doctest_markdown_sorts_files(monkeypatch: MonkeyPatch) -> None:
     c = _context()
     test_tasks.doctest_markdown(c)
     assert _commands(c) == [
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md",
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/a.md",
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/z.md",
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md docs/a.md docs/z.md",
     ]
 
 

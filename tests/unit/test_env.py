@@ -49,6 +49,15 @@ def test_install_default_groups_from_config() -> None:
     ]
 
 
+def test_install_quotes_the_groups() -> None:
+    c = _context()
+    env.install(c, groups="dev;echo INJECTED")
+    assert _commands(c) == [
+        "uv sync --locked --all-extras --group 'dev;echo INJECTED'",
+        "uv pip install -e .",
+    ]
+
+
 def test_install_no_optional_no_groups() -> None:
     c = _context()
     env.install(c, optional_deps=False, groups="")
