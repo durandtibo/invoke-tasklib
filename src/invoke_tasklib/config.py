@@ -131,6 +131,38 @@ DEFAULT_TEST: dict[str, int | bool | str | None] = {
 }
 
 
+def default_config() -> dict[str, dict[str, object]]:
+    r"""Return the defaults of the ``tasklib`` config section.
+
+    The defaults are registered with Invoke (see ``make_ns``) so that
+    the keys can also be set with the ``INVOKE_TASKLIB_<SECTION>_<KEY>``
+    environment variables, for example ``INVOKE_TASKLIB_PATHS_SRC``.
+    Invoke only reads an environment variable for a key that exists in
+    the defaults.
+
+    Returns:
+        A new dict with the ``package``, ``paths``, ``groups`` and
+        ``test`` sections, each a copy of its ``DEFAULT_*`` dict.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import default_config
+    >>> sorted(default_config())
+    ['groups', 'package', 'paths', 'test']
+    >>> default_config()["groups"]
+    {'install': 'dev', 'update': 'dev,docs'}
+
+    ```
+    """
+    return {
+        "package": dict(DEFAULT_PACKAGE),
+        "paths": dict(DEFAULT_PATHS),
+        "groups": dict(DEFAULT_GROUPS),
+        "test": dict(DEFAULT_TEST),
+    }
+
+
 _TEST_SCOPES: dict[str, str] = {
     "unit_tests": "unit",
     "integration_tests": "integration",
@@ -421,6 +453,37 @@ def _validate_str(section: str, key: str, value: object) -> str:
     return value
 
 
+def _int_from_text(value: object) -> object:
+    r"""Convert a string of digits to an integer.
+
+    Invoke reads an environment variable as a string, unless the default
+    of the key is a number or a boolean. The ``cov_fail_under`` key has
+    no default, so ``INVOKE_TASKLIB_TEST_COV_FAIL_UNDER=90`` is the
+    string ``"90"``.
+
+    Args:
+        value: The raw config value.
+
+    Returns:
+        The integer if ``value`` is a string of ASCII digits, ``value``
+        unchanged otherwise.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _int_from_text
+    >>> _int_from_text("90")
+    90
+    >>> _int_from_text(90)
+    90
+
+    ```
+    """
+    if isinstance(value, str) and value.isascii() and value.isdigit():
+        return int(value)
+    return value
+
+
 def _validate_cov_reports(value: object) -> tuple[str, ...]:
     r"""Validate the ``test.cov_reports`` config value.
 
@@ -604,7 +667,12 @@ def get_config(c: Context) -> TasklibConfig:
             cov_fail_under=(
                 None
                 if test["cov_fail_under"] is None
-                else _validate_int("cov_fail_under", test["cov_fail_under"], minimum=0, maximum=100)
+                else _validate_int(
+                    "cov_fail_under",
+                    _int_from_text(test["cov_fail_under"]),
+                    minimum=0,
+                    maximum=100,
+                )
             ),
             cov_reports=_validate_cov_reports(test["cov_reports"]),
         ),

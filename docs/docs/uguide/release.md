@@ -45,9 +45,10 @@ only one: a CI workflow can build the package with `release.build` and publish i
 no token at all. This repository releases that way (see `.github/workflows/release-pypi.yaml`),
 and does not use `release.pypi`.
 
+<!-- prettier-ignore -->
 !!! warning
-This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
-and that you are releasing the intended version before running this task.
+    This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
+    and that you are releasing the intended version before running this task.
 
 ## See Also
 

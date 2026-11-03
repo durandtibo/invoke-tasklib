@@ -23,8 +23,9 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 [resolved config](config.md), and installs `invoke` into it with `uv pip install invoke`. The task is run with `invoke`, so
 `invoke` must already be available (for example through `uv tool install invoke`) to run it.
 
+<!-- prettier-ignore -->
 !!! warning
-This clears any existing `.venv`.
+    This clears any existing `.venv`.
 
 ## Installing Dependencies
 
@@ -32,7 +33,7 @@ This clears any existing `.venv`.
 invoke env.install
 ```
 
-Runs `uv sync --locked` and installs the package in editable mode. `--locked` fails if `uv.lock`
+Runs `uv sync --locked`, which also installs the package itself in editable mode. `--locked` fails if `uv.lock`
 is out of date with `pyproject.toml` instead of silently using it (run `uv lock` to refresh it).
 
 | Flag              | Default                          | Adds to `uv sync`                               |
@@ -60,17 +61,18 @@ than `dev`/`docs` can change the default once instead of passing `--groups` on e
 invoke env.update
 ```
 
-Runs `uv lock --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
-(`pre-commit autoupdate`), and reinstalls the project with the groups from `--groups` (default:
+Runs `uv lock --upgrade`, updates the pre-commit hooks (`pre-commit autoupdate`, only if the
+project has a `.pre-commit-config.yaml` file), and reinstalls the project with the groups from `--groups` (default:
 the [resolved config](config.md)'s `groups.update`, `"dev,docs"` unless overridden).
 
 ```shell
 invoke env.update --groups dev,docs,test
 ```
 
+<!-- prettier-ignore -->
 !!! warning
-Updating dependencies may introduce breaking changes. Review the changes and run the test
-suite afterward.
+    Updating dependencies may introduce breaking changes. Review the changes and run the test
+    suite afterward.
 
 ## Inspecting the Environment
 
@@ -80,7 +82,8 @@ invoke env.show-python-config
 ```
 
 `env.show-python-config` prints the installed Python versions known to `uv`, the interpreter `uv`
-would select, and the interpreter currently on `PATH`.
+would select, and the interpreter currently on `PATH`. It does not fail when no `python` is on
+the `PATH`.
 
 ## See Also
 

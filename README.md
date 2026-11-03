@@ -198,21 +198,40 @@ Use `make_ns`, which returns a new collection each time, so adding or removing t
 other importers. Leave out the tasks you do not use (for example the ones that publish):
 
 ```python
+# tasks.py
+from invoke import task
 from invoke_tasklib import make_ns
 
-from . import my_custom_task
+
+@task
+def my_custom_task(c):
+    r"""Run a one-off command."""
+    c.run("echo hello")
+
 
 ns = make_ns(exclude=["release.pypi", "doc"])
 ns.add_task(my_custom_task)
 ```
+
+`tasks.py` is imported by Invoke as a top-level module, so a task defined in another file of the
+project is imported with an absolute import (`from my_tasks import my_custom_task`), not a
+relative one (`from . import my_custom_task`), which fails with an `ImportError`.
 
 or keep only some of them with `include`, e.g. `make_ns(include=["lint", "test.unit"])`. The names
 are namespaces (`"doc"`) or tasks (`"release.pypi"`); an unknown name raises a `ValueError`. The
 pre-built `ns` is `make_ns()`. Individual task modules can also be composed by hand:
 
 ```python
-from invoke import Collection
+# tasks.py
+from invoke import Collection, task
 from invoke_tasklib import lint, testing
+
+
+@task
+def my_custom_task(c):
+    r"""Run a one-off command."""
+    c.run("echo hello")
+
 
 ns = Collection(lint, Collection.from_module(testing, name="test"), my_custom_task)
 ```
