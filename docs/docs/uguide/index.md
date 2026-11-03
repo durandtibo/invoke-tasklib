@@ -79,7 +79,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`uv`](https://docs.astral.sh/uv/)                              | `env.*`, `release.*`                                            |
 | [`twine`](https://twine.readthedocs.io/) (via `uvx`)            | `release.build --check`                                         |
 | [`mike`](https://github.com/jimporter/mike)                     | `doc.*`                                                         |
-| [`feu`](https://github.com/durandtibo/feu) + `packaging`        | `doc.publish-latest`                                            |
+| [`feu`](https://github.com/durandtibo/feu)                      | `doc.publish-latest`                                            |
 | [`pip-audit`](https://github.com/pypa/pip-audit) (via `uv run`) | `security.audit`                                                |
 
 Most of these come from your project's own dev/docs dependency groups; see

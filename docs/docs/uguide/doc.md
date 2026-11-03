@@ -30,16 +30,25 @@ the `main` version with the `dev` alias, then pushes to the configured remote (t
 invoke doc.publish-latest
 ```
 
-Determines the latest released version from the most recent git version tag (via
+Determines the version to publish from the most recent git version tag (via
 [`feu.local_git.get_last_version_tag_name`](https://github.com/durandtibo/feu)), truncated to
-`<major>.<minor>` (e.g. `1.2`). If no tag is found, it falls back to `0.0`.
+`<major>.<minor>` (e.g. `1.2`). It then deploys the current docs under that tag with the `latest`
+alias, and sets `latest` as the default version shown to visitors.
 
-It then deletes any previously published version with that tag, deploys the current docs under
-that tag with the `latest` alias, and sets `latest` as the default version shown to visitors.
+To publish a specific version without looking at the git tags, pass it explicitly (this does not
+need `feu`):
+
+```shell
+invoke doc.publish-latest --version 1.2
+```
+
+The task fails if there is no version tag and no `--version`, because publishing under a made-up
+version would be a setup error. Pre-release versions (`1.2.0rc1`, `1.2.0a1`, `1.2.0.dev1`, ...) are
+skipped, so they never become `latest`.
 
 !!! note
-`doc.publish-latest` requires the `feu` and `packaging` packages. Install documentation
-dependencies with `invoke env.install --groups dev,docs` before running it.
+Reading the git tag requires the `feu` package. Install documentation dependencies with
+`invoke env.install --groups dev,docs` before running it, or pass `--version`.
 
 ## Local Preview
 
@@ -54,4 +63,4 @@ mkdocs serve -f docs/mkdocs.yml
 
 - [Config](config.md): where `paths.docs_config` comes from.
 - [`invoke_tasklib.doc` reference](../refs/doc.md)
-- [Troubleshooting](../troubleshooting.md): fixes for missing `feu`/`packaging` errors.
+- [Troubleshooting](../troubleshooting.md): fixes for missing `feu` errors.
