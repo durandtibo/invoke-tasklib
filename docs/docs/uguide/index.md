@@ -21,6 +21,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Lint](lint.md)         | `lint.check-spelling`         | Check the spelling with codespell                   |    ❌    |
 | [Lint](lint.md)         | `lint.pre-commit`             | Run all the pre-commit hooks                        |    ✅    |
 | [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
+| [Imports](imports.md)   | `imports.check-isolated`      | Check that every module imports on its own          |    ❌    |
 | [Types](types.md)       | `types.check`                 | Check type hints with ty (`--complete`: + pyright)  |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
 | [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                         |    ❌    |
@@ -97,7 +98,7 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
 | `release.publish`                                                                    | `uv publish`           |    ❌     |
 
 The tasks that have no option are the composite tasks (`check.all`, `test.doctest`), the tasks
-that run no external tool (`clean.*`, `imports.check-cycles`) and the tasks with their own options
+that run no external tool (`clean.*`, `imports.*`) and the tasks with their own options
 (`env.*`, `doc.publish-*`).
 
 ```shell

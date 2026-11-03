@@ -198,6 +198,7 @@ _WITHOUT_ARGS = frozenset(
         "clean.all",
         "clean.pycache",
         "imports.check-cycles",
+        "imports.check-isolated",
         # Tasks with their own, specific options.
         "doc.publish-dev",
         "doc.publish-latest",

@@ -1,6 +1,6 @@
 r"""Discover the modules of a package without importing them.
 
-It is run in a subprocess by ``imports.check-cycles``::
+It is run in a subprocess by ``imports.check-isolated``::
 
     python -m invoke_tasklib._discover <package>
 

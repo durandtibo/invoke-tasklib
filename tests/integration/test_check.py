@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from invoke.exceptions import Exit, UnexpectedExit
+from invoke.exceptions import Exit
 
 from invoke_tasklib import check
 from tests.integration.test_imports import _context, _write
@@ -15,13 +15,21 @@ if TYPE_CHECKING:
 @pytest.fixture
 def broken_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.chdir(tmp_path)
-    _write(tmp_path, {"badpkg/__init__.py": "", "badpkg/a.py": "import missing_module\n"})
+    monkeypatch.syspath_prepend(str(tmp_path))
+    _write(
+        tmp_path,
+        {
+            "badpkg/__init__.py": "",
+            "badpkg/a.py": "import badpkg.b\n",
+            "badpkg/b.py": "import badpkg.a\n",
+        },
+    )
     return tmp_path
 
 
 @pytest.mark.usefixtures("broken_project")
 def test_all_stops_with_the_error_of_the_step() -> None:
-    with pytest.raises(UnexpectedExit):
+    with pytest.raises(Exit, match=r"badpkg\.a -> badpkg\.b -> badpkg\.a"):
         check.all_(_context("badpkg"), only="imports")
 
 
