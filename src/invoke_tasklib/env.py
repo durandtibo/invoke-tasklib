@@ -2,6 +2,7 @@ r"""Environment and dependency management tasks."""
 
 from __future__ import annotations
 
+import shlex
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
@@ -56,7 +57,10 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     cmd = ["uv sync --locked"]
     if optional_deps:
         cmd.append("--all-extras")
-    cmd.extend(f"--group {group}" for group in filter(None, (g.strip() for g in groups.split(","))))
+    cmd.extend(
+        f"--group {shlex.quote(group)}"
+        for group in filter(None, (g.strip() for g in groups.split(",")))
+    )
     run(c, " ".join(cmd))
     say(c, "🔧 Installing package in editable mode...")
     run(c, "uv pip install -e .")

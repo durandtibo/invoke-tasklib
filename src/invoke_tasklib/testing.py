@@ -2,6 +2,7 @@ r"""Test and benchmark tasks."""
 
 from __future__ import annotations
 
+import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 COV_HELP = "Generate coverage reports (html, xml and terminal)."
+_DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
 PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
 
 
@@ -58,7 +60,7 @@ def doctest_src(c: Context) -> None:
     cfg = load_config(c)
     src = cfg.paths.src
     say(c, "📚 Running doctests on source code...")
-    run(c, f"{python_executable()} -m pytest --xdoctest {src}")
+    run(c, f"{python_executable()} -m pytest --xdoctest {shlex.quote(src)}")
     say(c, "✅ Doctest validation complete")
 
 
@@ -67,12 +69,9 @@ def doctest_markdown(c: Context) -> None:
     r"""Run doctests on the Python examples of the markdown files."""
     md_files = sorted(p for p in Path().rglob("*.md") if not EXCLUDED_DIRS.intersection(p.parts))
     say(c, f"📚 Found {len(md_files)} markdown files")
-    for f in md_files:
-        say(c, f"🔍 Checking: {f}")
-        run(
-            c,
-            f"{python_executable()} -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF {f}",
-        )
+    if md_files:
+        files = " ".join(shlex.quote(str(f)) for f in md_files)
+        run(c, f"{python_executable()} -m doctest {_DOCTEST_OPTIONS} {files}")
     say(c, f"✅ All {len(md_files)} markdown files have been checked")
 
 
@@ -306,5 +305,5 @@ def benchmark(c: Context) -> None:
     if not _directory_exists(c, benchmarks, "benchmarks"):
         return
     say(c, "⏱️  Running benchmarks...")
-    run(c, f"{python_executable()} -m pytest {benchmarks}/ --benchmark-only")
+    run(c, f"{python_executable()} -m pytest {shlex.quote(benchmarks + '/')} --benchmark-only")
     say(c, "✅ Benchmarks complete")
