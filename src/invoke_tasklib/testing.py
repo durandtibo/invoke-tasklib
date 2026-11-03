@@ -29,6 +29,7 @@ MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
     ".ruff_cache",
 }
 r"""Directories whose markdown files are never checked."""
+
 PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
 
 

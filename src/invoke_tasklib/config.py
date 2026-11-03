@@ -118,8 +118,8 @@ DEFAULT_GROUPS: dict[str, str] = {
 COV_REPORTS: frozenset[str] = frozenset(
     {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
 )
-r"""The valid values of ``test.cov_reports`` (the formats of
-``--cov-report`` of pytest-cov)."""
+r"""The valid values of ``test.cov_reports`` (the formats of ``--cov-
+report`` of pytest-cov)."""
 
 DEFAULT_TEST: dict[str, int | bool | str | None] = {
     "unit_timeout": 10,

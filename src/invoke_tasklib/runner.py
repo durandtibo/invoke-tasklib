@@ -51,7 +51,6 @@ UNCHECKED_PROGRAMS: frozenset[str] = frozenset({"command", "find"})
 r"""First words of a command that are not looked up on the ``PATH``
 (shell builtins and tools that every system has)."""
 
-
 PROGRAM_HINTS: dict[str, str] = {
     "uv": "Install uv, see https://docs.astral.sh/uv/getting-started/installation/.",
     "shellcheck": (

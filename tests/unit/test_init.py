@@ -76,8 +76,10 @@ def test_make_ns_include_a_bare_string_is_one_name() -> None:
 
 
 def test_make_ns_unknown_bare_string_names_the_whole_string() -> None:
-    with pytest.raises(ValueError, match=r"Unknown task or namespace \['relese'\]"):
-        make_ns(exclude="relese")
+    with pytest.raises(
+        ValueError, match=r"Unknown task or namespace \['relese'\]"
+    ):  # codespell:ignore relese
+        make_ns(exclude="relese")  # codespell:ignore relese
 
 
 def test_make_ns_exclude_a_task() -> None:
