@@ -28,8 +28,10 @@ source .venv/bin/activate
 ### 3. Install Dependencies
 
 ```shell
-uv sync --group dev
+uv sync --group dev --group docs
 ```
+
+The `docs` group is needed to build the documentation (`mkdocs`, `mike`).
 
 ### 4. Set Up Pre-commit Hooks
 
@@ -42,13 +44,13 @@ pre-commit install
 ### Running Tests
 
 ```shell
-python -m pytest tests/
+.venv/bin/pytest tests -q
 ```
 
 With coverage:
 
 ```shell
-python -m pytest --cov=invoke_tasklib --cov-report term tests/
+.venv/bin/pytest tests --cov=invoke_tasklib --cov-report=term-missing
 ```
 
 Since `invoke-tasklib` itself uses `invoke` as its build tool, the project's own `tasks.py` (which
@@ -59,10 +61,12 @@ mode - see the [Makefile](https://github.com/durandtibo/invoke-tasklib/blob/main
 ### Code Quality
 
 ```shell
-ruff format --check .   # format.check-python equivalent
-ruff check .             # lint.check-python equivalent
-ty check
+.venv/bin/ruff format --check src tests   # format.check-python equivalent
+.venv/bin/ruff check src tests            # lint.check-python equivalent
+.venv/bin/ty check
 ```
+
+The doctests of the source and of the Markdown files are run with `.venv/bin/inv test.doctest`.
 
 Or, once the package is installed:
 
@@ -70,6 +74,7 @@ Or, once the package is installed:
 invoke format.check-python
 invoke lint.check-python
 invoke types.check
+invoke check          # the main checks in one command
 ```
 
 ### Documentation
@@ -93,6 +98,7 @@ mkdocs build -f docs/mkdocs.yml
 ```text
 invoke-tasklib/
 ├── .github/                  # GitHub configuration (workflows, etc.)
+├── dev/                      # Scripts used by the repository itself
 ├── docs/                     # Documentation
 │   ├── docs/                # Documentation source
 │   └── mkdocs.yml            # MkDocs configuration
@@ -102,6 +108,7 @@ invoke-tasklib/
 │       ├── config.py         # Shared config resolution (`get_config`, `load_config`)
 │       ├── runner.py         # Shared command runner (`run`, `build_command`)
 │       ├── output.py         # Progress messages (`say`, `step`)
+│       ├── _discover.py      # Module discovery run by `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
 │       ├── imports.py        # imports.* tasks
@@ -116,6 +123,7 @@ invoke-tasklib/
 ├── tests/
 │   ├── unit/                 # Unit tests, one module per source module
 │   └── integration/          # Tests that run the real tools
+├── review/                   # Review notes of the repository
 ├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `make_ns`)
 ├── invoke.yaml                # invoke-tasklib's own tasklib config
 ├── pyproject.toml             # Project configuration
@@ -129,10 +137,14 @@ invoke-tasklib/
    if the task doesn't fit an existing namespace.
 2. Follow the `check_<target>`/`fix_<target>` naming convention when applicable (see
    [Format](../uguide/format.md)).
-3. Call `get_config(c)` if the task needs project-specific paths or the package name, rather than
-   hardcoding them.
-4. Write a docstring (Google style) describing the task; it is used both by `invoke --list --help`
-   and by the [reference docs](../refs/format.md).
+3. Call `load_config(c)` if the task needs project-specific paths or the package name, rather than
+   hardcoding them. Run the external commands with `invoke_tasklib.runner.run` and build them
+   with `build_command` (it quotes the arguments), and print the progress with
+   `invoke_tasklib.output.say`; do not call `c.run` or `print` in a task.
+4. Write a docstring (Google style) describing the task; its first line, one sentence, is the
+   summary shown by `invoke --list`. Give each option a `help` entry in `@task`, and add
+   `--args` (`ARGS_HELP`) and `--paths` (`PATHS_HELP`) when the tool accepts extra arguments or
+   paths. The docstring is also used by the [reference docs](../refs/format.md).
 5. Add unit tests using `invoke.context.MockContext` (see existing tests for the pattern).
 6. If the module is new, register it in `src/invoke_tasklib/__init__.py` (`_MODULES` and
    `__all__`).
