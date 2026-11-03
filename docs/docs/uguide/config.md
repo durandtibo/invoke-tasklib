@@ -97,6 +97,17 @@ tasklib:
     update: dev,test,docs
 ```
 
+Each value can also be written as a YAML list, which is joined with commas:
+
+```yaml
+tasklib:
+  groups:
+    install: [dev, test]
+    update: [dev, test, docs]
+```
+
+The `--groups` flag of the tasks stays a comma-separated string (`--groups dev,docs`).
+
 ## Using `get_config` in a Custom Task
 
 `get_config` is the same function every built-in task uses, so a project-specific task can read

@@ -31,6 +31,15 @@ def test_install_default_options() -> None:
     assert _commands(c) == ["uv sync --frozen --all-extras --group dev", "uv pip install -e ."]
 
 
+def test_install_groups_from_config_list() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"install": ["dev", "test"]}})
+    env.install(c)
+    assert _commands(c) == [
+        "uv sync --frozen --all-extras --group dev --group test",
+        "uv pip install -e .",
+    ]
+
+
 def test_install_default_groups_from_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": "dev,test"}})
     env.install(c)

@@ -119,6 +119,43 @@ def _validate_python_version(value: object) -> str:
     return value
 
 
+def _normalize_groups(key: str, value: object) -> str:
+    r"""Normalize a ``groups`` config value to a comma-separated string.
+
+    Args:
+        key: The name of the config key, used in the error message.
+        value: The raw config value: a comma-separated string or a list
+            of group names.
+
+    Returns:
+        The groups as a comma-separated string.
+
+    Raises:
+        ValueError: If the value is neither a string nor a list of
+            strings.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _normalize_groups
+    >>> _normalize_groups("install", ["dev", "docs"])
+    'dev,docs'
+    >>> _normalize_groups("install", "dev,docs")
+    'dev,docs'
+
+    ```
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (list, tuple)) and all(isinstance(g, str) for g in value):
+        return ",".join(value)
+    msg = (
+        f"'tasklib.groups.{key}' must be a comma-separated string or a list of strings, "
+        f"got {value!r}"
+    )
+    raise ValueError(msg)
+
+
 def get_config(c: Context) -> TasklibConfig:
     r"""Return the effective tasklib config, merging user overrides from
     ``invoke.yaml`` (under the ``tasklib`` key) on top of the defaults.
@@ -133,7 +170,8 @@ def get_config(c: Context) -> TasklibConfig:
         ValueError: If ``tasklib.package.name`` is not set, or if
             ``tasklib.package.python_version`` is not a string such as
             ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
-            float ``3.1``).
+            float ``3.1``), or if a ``tasklib.groups`` value is neither
+            a string nor a list of strings.
 
     Example usage:
 
@@ -186,5 +224,8 @@ def get_config(c: Context) -> TasklibConfig:
             benchmarks=str(paths["benchmarks"]),
             docs_config=str(paths["docs_config"]),
         ),
-        "groups": GroupsConfig(install=groups["install"], update=groups["update"]),
+        "groups": GroupsConfig(
+            install=_normalize_groups("install", groups["install"]),
+            update=_normalize_groups("update", groups["update"]),
+        ),
     }

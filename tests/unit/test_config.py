@@ -4,7 +4,7 @@ import pytest
 from invoke.config import Config
 from invoke.context import Context
 
-from invoke_tasklib.config import _validate_python_version, get_config
+from invoke_tasklib.config import _normalize_groups, _validate_python_version, get_config
 
 
 def _context(tasklib_config: dict | None = None) -> Context:
@@ -131,3 +131,57 @@ def test_validate_python_version_returns_valid_string() -> None:
 def test_validate_python_version_rejects_float() -> None:
     with pytest.raises(ValueError, match=r"got 3\.1\."):
         _validate_python_version(3.1)
+
+
+######################################
+#     Tests for groups as a list     #
+######################################
+
+
+def test_get_config_groups_install_as_list() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"install": ["dev", "docs"]}})
+    assert get_config(c)["groups"]["install"] == "dev,docs"
+
+
+def test_get_config_groups_update_as_list() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"update": ["dev", "test"]}})
+    assert get_config(c)["groups"]["update"] == "dev,test"
+
+
+def test_get_config_groups_as_string_is_unchanged() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"install": "dev,test"}})
+    assert get_config(c)["groups"] == {"install": "dev,test", "update": "dev,docs"}
+
+
+def test_get_config_groups_as_empty_list_installs_no_group() -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"install": []}})
+    assert get_config(c)["groups"]["install"] == ""
+
+
+@pytest.mark.parametrize("value", [1, None, ["dev", 1], {"dev": True}])
+def test_get_config_rejects_invalid_groups(value: object) -> None:
+    c = _context({"package": {"name": "mypkg"}, "groups": {"install": value}})
+    with pytest.raises(ValueError, match=r"'tasklib\.groups\.install' must be a comma-separated"):
+        get_config(c)
+
+
+#######################################
+#     Tests for _normalize_groups     #
+#######################################
+
+
+def test_normalize_groups_joins_list() -> None:
+    assert _normalize_groups("install", ["dev", "docs"]) == "dev,docs"
+
+
+def test_normalize_groups_keeps_string() -> None:
+    assert _normalize_groups("install", "dev") == "dev"
+
+
+def test_normalize_groups_accepts_tuple() -> None:
+    assert _normalize_groups("update", ("dev", "docs")) == "dev,docs"
+
+
+def test_normalize_groups_error_names_the_key() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.groups\.update'"):
+        _normalize_groups("update", 3)
