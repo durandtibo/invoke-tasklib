@@ -17,21 +17,21 @@ the name with ``-`` replaced by ``_``.
 from __future__ import annotations
 
 import difflib
+import json
 import re
-from collections.abc import Mapping
+import sys
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from invoke.exceptions import Exit
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from invoke.context import Context
-
-
-_SECTIONS = ("package", "paths", "groups", "test", "check")
 
 
 @dataclass(frozen=True)
@@ -60,8 +60,8 @@ class PathsConfig:
 class GroupsConfig:
     r"""Resolved ``groups`` config section."""
 
-    install: str
-    update: str
+    install: tuple[str, ...]
+    update: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -102,42 +102,11 @@ PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
 r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 ``3.10.4``)."""
 
-DEFAULT_PACKAGE: dict[str, str | None] = {
-    "name": None,
-    "import_name": None,
-    "python_version": "3.14",
-}
-
-DEFAULT_PATHS: dict[str, str | None] = {
-    "src": None,
-    "tests": "tests",
-    "unit_tests": None,
-    "integration_tests": None,
-    "functional_tests": None,
-    "benchmarks": None,
-    "docs_config": "docs/mkdocs.yml",
-}
-
-DEFAULT_GROUPS: dict[str, str] = {
-    "install": "dev",
-    "update": "dev,docs",
-}
-
 COV_REPORTS: frozenset[str] = frozenset(
     {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
 )
 r"""The valid values of ``test.cov_reports`` (the formats of ``--cov-
 report`` of pytest-cov)."""
-
-DEFAULT_TEST: dict[str, int | bool | str | None] = {
-    "unit_timeout": 10,
-    "integration_timeout": 60,
-    "functional_timeout": 60,
-    "xdoctest": True,
-    "cov_fail_under": None,
-    "cov_reports": "html,xml,term",
-}
-
 
 CHECK_STEPS: tuple[str, ...] = (
     "format-python",
@@ -153,10 +122,6 @@ CHECK_STEPS: tuple[str, ...] = (
     "audit",
 )
 r"""The steps that ``check.all`` can run (``tasklib.check.tasks``)."""
-
-DEFAULT_CHECK: dict[str, str] = {
-    "tasks": "format-python,format-docstrings,lint,types,imports,unit",
-}
 
 
 def default_config() -> dict[str, dict[str, object]]:
@@ -319,8 +284,8 @@ def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) 
     raise ValueError(msg)
 
 
-def _normalize_groups(key: str, value: object) -> str:
-    r"""Normalize a ``groups`` config value to a comma-separated string.
+def _normalize_groups(key: str, value: object) -> tuple[str, ...]:
+    r"""Normalize a ``groups`` config value to a tuple of names.
 
     Args:
         key: The name of the config key, used in the error message.
@@ -328,7 +293,7 @@ def _normalize_groups(key: str, value: object) -> str:
             of group names.
 
     Returns:
-        The groups as a comma-separated string.
+        The group names, stripped, without the empty ones.
 
     Raises:
         ValueError: If the value is neither a string nor a list of
@@ -339,21 +304,23 @@ def _normalize_groups(key: str, value: object) -> str:
     ```pycon
     >>> from invoke_tasklib.config import _normalize_groups
     >>> _normalize_groups("install", ["dev", "docs"])
-    'dev,docs'
-    >>> _normalize_groups("install", "dev,docs")
-    'dev,docs'
+    ('dev', 'docs')
+    >>> _normalize_groups("install", "dev, docs")
+    ('dev', 'docs')
 
     ```
     """
     if isinstance(value, str):
-        return value
-    if isinstance(value, (list, tuple)) and all(isinstance(g, str) for g in value):
-        return ",".join(value)
-    msg = (
-        f"'tasklib.groups.{key}' must be a comma-separated string or a list of strings, "
-        f"got {value!r}"
-    )
-    raise ValueError(msg)
+        names = value.split(",")
+    elif isinstance(value, (list, tuple)) and all(isinstance(g, str) for g in value):
+        names = list(value)
+    else:
+        msg = (
+            f"'tasklib.groups.{key}' must be a comma-separated string or a list of strings, "
+            f"got {value!r}"
+        )
+        raise ValueError(msg)
+    return tuple(name.strip() for name in names if name.strip())
 
 
 def _validate_import_name(value: object) -> str:
@@ -611,6 +578,35 @@ def _validate_check_tasks(value: object) -> tuple[str, ...]:
     return tuple(names)
 
 
+def _validate_cov_fail_under(value: object) -> int | None:
+    r"""Validate the ``test.cov_fail_under`` config value.
+
+    Args:
+        value: The raw config value: ``None``, an integer, or a string
+            of digits (an environment variable).
+
+    Returns:
+        ``None`` if the threshold is not set, else the percentage.
+
+    Raises:
+        ValueError: If the value is not an integer between 0 and 100.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_cov_fail_under
+    >>> _validate_cov_fail_under("90")
+    90
+    >>> _validate_cov_fail_under(None) is None
+    True
+
+    ```
+    """
+    if value is None:
+        return None
+    return _validate_int("cov_fail_under", _int_from_text(value), minimum=0, maximum=100)
+
+
 def _validate_bool(key: str, value: object) -> bool:
     r"""Validate a boolean value of the ``test`` config section.
 
@@ -637,6 +633,307 @@ def _validate_bool(key: str, value: object) -> bool:
         msg = f"'tasklib.test.{key}' must be a boolean (true or false), got {value!r}"
         raise ValueError(msg)
     return value
+
+
+@dataclass(frozen=True)
+class Option:
+    r"""One key of the ``tasklib`` config: the single place that
+    declares it.
+
+    Attributes:
+        default: The default value. ``None`` means that the default is
+            derived from other values (see ``get_config``) or that the
+            key is required. A default is a string for a list, so that
+            ``INVOKE_TASKLIB_<SECTION>_<KEY>`` can override it.
+        validate: Check a raw value and return the resolved one. It
+            raises ``ValueError`` with a message that names the key.
+        json_schema: The JSON schema of the key, without ``default``.
+        doc: One-line description, used by the JSON schema.
+    """
+
+    default: object
+    validate: Callable[[object], object]
+    json_schema: Mapping[str, object]
+    doc: str = ""
+
+
+_STRING = {"type": "string", "minLength": 1}
+_NAMES = {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]}
+
+
+def _timeout(key: str, default: int, doc: str) -> Option:
+    r"""Declare a per-test timeout key of the ``test`` section.
+
+    Args:
+        key: The name of the key.
+        default: The timeout in seconds.
+        doc: The description of the key.
+
+    Returns:
+        The option.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _timeout
+    >>> _timeout("unit_timeout", 10, "Timeout.").default
+    10
+
+    ```
+    """
+    return Option(
+        default,
+        partial(_validate_int, key, minimum=1),
+        {"type": "integer", "minimum": 1},
+        doc,
+    )
+
+
+def _path(key: str, default: str | None, doc: str) -> Option:
+    r"""Declare a key of the ``paths`` section.
+
+    Args:
+        key: The name of the key.
+        default: The default path, or ``None`` if it is derived.
+        doc: The description of the key.
+
+    Returns:
+        The option.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _path
+    >>> _path("tests", "tests", "Tests.").default
+    'tests'
+
+    ```
+    """
+    return Option(default, partial(_validate_str, "paths", key), _STRING, doc)
+
+
+SCHEMA: dict[str, dict[str, Option]] = {
+    "package": {
+        "name": Option(
+            None,
+            partial(_validate_str, "package", "name"),
+            _STRING,
+            "Distribution name, as on PyPI (required).",
+        ),
+        "import_name": Option(
+            None,
+            _validate_import_name,
+            _STRING,
+            "Name used to import the package (default: name with - replaced by _).",
+        ),
+        "python_version": Option(
+            "3.14",
+            _validate_python_version,
+            {"type": "string", "pattern": PYTHON_VERSION_PATTERN.pattern},
+            "Python version of the virtual environment (quote it in YAML).",
+        ),
+    },
+    "paths": {
+        "src": _path("src", None, "Source directory (default: src/<import_name>)."),
+        "tests": _path("tests", "tests", "Tests directory."),
+        "unit_tests": _path("unit_tests", None, "Unit tests (default: <tests>/unit)."),
+        "integration_tests": _path(
+            "integration_tests", None, "Integration tests (default: <tests>/integration)."
+        ),
+        "functional_tests": _path(
+            "functional_tests", None, "Functional tests (default: <tests>/functional)."
+        ),
+        "benchmarks": _path("benchmarks", None, "Benchmarks (default: <tests>/benchmarks)."),
+        "docs_config": _path("docs_config", "docs/mkdocs.yml", "MkDocs configuration file."),
+    },
+    "groups": {
+        "install": Option(
+            "dev",
+            partial(_normalize_groups, "install"),
+            _NAMES,
+            "Dependency groups of env.install (comma-separated string or list).",
+        ),
+        "update": Option(
+            "dev,docs",
+            partial(_normalize_groups, "update"),
+            _NAMES,
+            "Dependency groups of env.update (comma-separated string or list).",
+        ),
+    },
+    "test": {
+        "unit_timeout": _timeout("unit_timeout", 10, "Timeout in seconds of each unit test."),
+        "integration_timeout": _timeout(
+            "integration_timeout", 60, "Timeout in seconds of each integration test."
+        ),
+        "functional_timeout": _timeout(
+            "functional_timeout", 60, "Timeout in seconds of each functional test."
+        ),
+        "xdoctest": Option(
+            True,
+            partial(_validate_bool, "xdoctest"),
+            {"type": "boolean"},
+            "Run pytest with --xdoctest.",
+        ),
+        "cov_fail_under": Option(
+            None,
+            _validate_cov_fail_under,
+            {"type": ["integer", "null"], "minimum": 0, "maximum": 100},
+            "Coverage threshold passed to --cov-fail-under.",
+        ),
+        "cov_reports": Option(
+            "html,xml,term",
+            _validate_cov_reports,
+            {
+                "anyOf": [
+                    {"type": "string"},
+                    {"type": "array", "items": {"enum": sorted(COV_REPORTS)}},
+                ]
+            },
+            "Coverage report formats generated by --cov.",
+        ),
+    },
+    "check": {
+        "tasks": Option(
+            "format-python,format-docstrings,lint,types,imports,unit",
+            _validate_check_tasks,
+            {
+                "anyOf": [
+                    {"type": "string"},
+                    {"type": "array", "items": {"enum": list(CHECK_STEPS)}},
+                ]
+            },
+            "Steps of check.all (comma-separated string or list).",
+        ),
+    },
+}
+r"""The declaration of every key of the ``tasklib`` config, by section.
+
+It is the single source of the known keys, the defaults, the
+validation and the JSON schema."""
+
+_SECTION_CLASSES: dict[str, type] = {
+    "package": PackageConfig,
+    "paths": PathsConfig,
+    "groups": GroupsConfig,
+    "test": TestConfig,
+    "check": CheckConfig,
+}
+r"""The dataclass of each section of ``SCHEMA``."""
+
+
+def _defaults(section: str) -> dict[str, object]:
+    r"""Return the defaults of a section of ``SCHEMA``.
+
+    Args:
+        section: The name of the section.
+
+    Returns:
+        A new dict with the default of each key.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _defaults
+    >>> _defaults("groups")
+    {'install': 'dev', 'update': 'dev,docs'}
+
+    ```
+    """
+    return {key: option.default for key, option in SCHEMA[section].items()}
+
+
+DEFAULT_PACKAGE: dict[str, object] = _defaults("package")
+r"""Defaults of the ``package`` section."""
+
+DEFAULT_PATHS: dict[str, object] = _defaults("paths")
+r"""Defaults of the ``paths`` section."""
+
+DEFAULT_GROUPS: dict[str, object] = _defaults("groups")
+r"""Defaults of the ``groups`` section."""
+
+DEFAULT_TEST: dict[str, object] = _defaults("test")
+r"""Defaults of the ``test`` section."""
+
+DEFAULT_CHECK: dict[str, object] = _defaults("check")
+r"""Defaults of the ``check`` section."""
+
+
+def json_schema() -> dict[str, Any]:
+    r"""Return the JSON schema of the ``tasklib`` config.
+
+    The schema is generated from ``SCHEMA``, so it cannot drift from
+    the keys and the defaults. It lets an editor complete and check the
+    ``invoke.yaml`` file. Other top-level keys (the config of Invoke
+    itself) are allowed.
+
+    Returns:
+        The schema, as a dict that can be dumped as JSON.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import json_schema
+    >>> schema = json_schema()
+    >>> sorted(schema["properties"]["tasklib"]["properties"])
+    ['check', 'groups', 'package', 'paths', 'test']
+
+    ```
+    """
+    sections: dict[str, dict[str, Any]] = {}
+    for section, options in SCHEMA.items():
+        properties = {}
+        for key, option in options.items():
+            entry: dict[str, object] = {**option.json_schema, "description": option.doc}
+            if option.default is not None:
+                entry["default"] = option.default
+            properties[key] = entry
+        sections[section] = {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": properties,
+        }
+    sections["package"]["required"] = ["name"]
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "invoke.yaml of invoke-tasklib",
+        "type": "object",
+        "properties": {
+            "tasklib": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["package"],
+                "properties": sections,
+            }
+        },
+    }
+
+
+def main(argv: Sequence[str]) -> int:
+    r"""Print the JSON schema of the ``tasklib`` config.
+
+    It is run with ``python -m invoke_tasklib.config``.
+
+    Args:
+        argv: The command line arguments, without the program name.
+            There must be none.
+
+    Returns:
+        The exit code: 0 on success, 2 if there are arguments.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import main
+    >>> _ = main(["--bad"])
+    usage: python -m invoke_tasklib.config
+
+    ```
+    """
+    if argv:
+        sys.stdout.write("usage: python -m invoke_tasklib.config\n")
+        return 2
+    sys.stdout.write(json.dumps(json_schema(), indent=2) + "\n")
+    return 0
 
 
 def get_config(c: Context) -> TasklibConfig:
@@ -685,7 +982,7 @@ def get_config(c: Context) -> TasklibConfig:
     >>> cfg.paths.src
     'src/mypkg'
     >>> cfg.groups
-    GroupsConfig(install='dev', update='dev,docs')
+    GroupsConfig(install=('dev',), update=('dev', 'docs'))
     >>> cfg.test.unit_timeout
     10
     >>> cfg.check.tasks[0]
@@ -694,77 +991,33 @@ def get_config(c: Context) -> TasklibConfig:
     ```
     """
     user = _as_mapping("tasklib", c.config.get("tasklib", {}))
-    _check_keys("", user, _SECTIONS)
-    sections = {name: _as_mapping(f"tasklib.{name}", user.get(name, {})) for name in _SECTIONS}
-    _check_keys("package", sections["package"], DEFAULT_PACKAGE)
-    _check_keys("paths", sections["paths"], DEFAULT_PATHS)
-    _check_keys("groups", sections["groups"], DEFAULT_GROUPS)
-    _check_keys("test", sections["test"], DEFAULT_TEST)
-    _check_keys("check", sections["check"], DEFAULT_CHECK)
-    package = {**DEFAULT_PACKAGE, **sections["package"]}
-    paths = {**DEFAULT_PATHS, **sections["paths"]}
-    groups = {**DEFAULT_GROUPS, **sections["groups"]}
-    test = {**DEFAULT_TEST, **sections["test"]}
-    check = {**DEFAULT_CHECK, **sections["check"]}
+    _check_keys("", user, SCHEMA)
+    merged: dict[str, dict[str, object]] = {}
+    for section, options in SCHEMA.items():
+        given = _as_mapping(f"tasklib.{section}", user.get(section, {}))
+        _check_keys(section, given, options)
+        merged[section] = {**_defaults(section), **given}
+    package, paths = merged["package"], merged["paths"]
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
         raise ValueError(msg)
     name = _validate_str("package", "name", package["name"])
-
-    import_name = _validate_import_name(
-        package["import_name"] if package["import_name"] is not None else name.replace("-", "_")
-    )
+    if package["import_name"] is None:
+        package["import_name"] = name.replace("-", "_")
     if paths["src"] is None:
-        paths["src"] = _default_src(import_name)
+        paths["src"] = _default_src(_validate_import_name(package["import_name"]))
     for key, scope in _TEST_SCOPES.items():
         if paths[key] is None:
             paths[key] = f"{paths['tests']}/{scope}"
 
-    return TasklibConfig(
-        package=PackageConfig(
-            name=name,
-            import_name=import_name,
-            python_version=_validate_python_version(package["python_version"]),
-        ),
-        paths=PathsConfig(
-            src=_validate_str("paths", "src", paths["src"]),
-            tests=_validate_str("paths", "tests", paths["tests"]),
-            unit_tests=_validate_str("paths", "unit_tests", paths["unit_tests"]),
-            integration_tests=_validate_str(
-                "paths", "integration_tests", paths["integration_tests"]
-            ),
-            functional_tests=_validate_str("paths", "functional_tests", paths["functional_tests"]),
-            benchmarks=_validate_str("paths", "benchmarks", paths["benchmarks"]),
-            docs_config=_validate_str("paths", "docs_config", paths["docs_config"]),
-        ),
-        groups=GroupsConfig(
-            install=_normalize_groups("install", groups["install"]),
-            update=_normalize_groups("update", groups["update"]),
-        ),
-        test=TestConfig(
-            unit_timeout=_validate_int("unit_timeout", test["unit_timeout"], minimum=1),
-            integration_timeout=_validate_int(
-                "integration_timeout", test["integration_timeout"], minimum=1
-            ),
-            functional_timeout=_validate_int(
-                "functional_timeout", test["functional_timeout"], minimum=1
-            ),
-            xdoctest=_validate_bool("xdoctest", test["xdoctest"]),
-            cov_fail_under=(
-                None
-                if test["cov_fail_under"] is None
-                else _validate_int(
-                    "cov_fail_under",
-                    _int_from_text(test["cov_fail_under"]),
-                    minimum=0,
-                    maximum=100,
-                )
-            ),
-            cov_reports=_validate_cov_reports(test["cov_reports"]),
-        ),
-        check=CheckConfig(tasks=_validate_check_tasks(check["tasks"])),
-    )
+    resolved = {
+        section: _SECTION_CLASSES[section](
+            **{key: option.validate(merged[section][key]) for key, option in options.items()}
+        )
+        for section, options in SCHEMA.items()
+    }
+    return TasklibConfig(**resolved)
 
 
 def load_config(c: Context) -> TasklibConfig:
@@ -803,3 +1056,7 @@ def load_config(c: Context) -> TasklibConfig:
         return get_config(c)
     except ValueError as exc:
         raise Exit(str(exc), code=2) from exc
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

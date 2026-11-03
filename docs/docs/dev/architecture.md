@@ -26,13 +26,19 @@ It:
 
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
   `invoke.yaml`.
-- Merges it on top of `DEFAULT_PACKAGE`, `DEFAULT_PATHS`, `DEFAULT_GROUPS`, `DEFAULT_TEST` and `DEFAULT_CHECK`.
+- Merges it on top of the defaults declared in `SCHEMA` (also exposed as `DEFAULT_PACKAGE`,
+  `DEFAULT_PATHS`, `DEFAULT_GROUPS`, `DEFAULT_TEST` and `DEFAULT_CHECK`).
 - Rejects unknown keys and validates the values (`package.python_version`, `package.import_name`,
   `groups.*`, `test.*`, `check.tasks`).
 - Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
   `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
 - Raises `ValueError` if `package.name` is missing, since nearly every task needs it, or if a
   value is invalid. Tasks call `load_config`, which turns the `ValueError` into an `Exit`.
+
+Adding a key means adding one `Option(default, validate, json_schema, doc)` to `SCHEMA` and the
+field to the dataclass of its section (a test checks that they match), then one row in the
+`uguide/config.md` table (a test checks that too). The known keys, the defaults, the validation, the
+environment variable names and the JSON schema (`python -m invoke_tasklib.config`) follow from it.
 
 ```python
 @dataclass(frozen=True)

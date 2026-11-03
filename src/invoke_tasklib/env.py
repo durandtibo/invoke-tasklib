@@ -59,7 +59,7 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
             value (``"dev"`` unless overridden in ``invoke.yaml``).
     """
     if groups is None:
-        groups = load_config(c).groups.install
+        groups = ",".join(load_config(c).groups.install)
     say(c, "📦 Installing project dependencies...")
     cmd = ["uv sync --locked"]
     if optional_deps:
@@ -101,7 +101,7 @@ def update(c: Context, groups: str | None = None) -> None:
         tests after updating.
     """
     if groups is None:
-        groups = load_config(c).groups.update
+        groups = ",".join(load_config(c).groups.update)
     say(c, "🔄 Updating dependencies...")
     run(c, "uv lock --upgrade")
     if Path(PRE_COMMIT_CONFIG).is_file():

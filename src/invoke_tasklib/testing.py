@@ -15,6 +15,8 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, python_e
 if TYPE_CHECKING:
     from invoke.context import Context
 
+    from invoke_tasklib.config import TasklibConfig
+
 COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
 MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
@@ -158,6 +160,7 @@ def _run_pytest(
     skip_missing: bool = False,
     args: str | None = None,
     paths: str | None = None,
+    cfg: TasklibConfig | None = None,
 ) -> None:
     r"""Run pytest on a directory of tests.
 
@@ -182,6 +185,8 @@ def _run_pytest(
             when ``paths`` is set.
         args: Extra arguments passed to pytest, placed before the paths.
         paths: Paths of the user that replace ``path``.
+        cfg: The resolved config, if the caller already has it. If not
+            set, the config is loaded.
 
     Raises:
         UnexpectedExit: If pytest fails.
@@ -203,7 +208,7 @@ def _run_pytest(
 
     ```
     """
-    cfg = load_config(c)
+    cfg = cfg or load_config(c)
     if skip_missing and not paths and not _directory_exists(c, path, label):
         return
     options = cfg.test
@@ -247,6 +252,7 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
         c,
         cfg.paths.tests,
         label="all tests",
+        cfg=cfg,
         timeout=timeout,
         cov=cov,
         args=args,
@@ -279,6 +285,7 @@ def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | No
         c,
         path,
         label="unit tests",
+        cfg=cfg,
         timeout=cfg.test.unit_timeout,
         cov=cov,
         args=args,
@@ -309,6 +316,7 @@ def integration(
         c,
         cfg.paths.integration_tests,
         label="integration tests",
+        cfg=cfg,
         timeout=cfg.test.integration_timeout,
         cov=cov,
         args=args,
@@ -340,6 +348,7 @@ def functional(
         c,
         cfg.paths.functional_tests,
         label="functional tests",
+        cfg=cfg,
         timeout=cfg.test.functional_timeout,
         cov=cov,
         args=args,
