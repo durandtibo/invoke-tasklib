@@ -39,6 +39,12 @@ uploaded) and then runs `uv publish`. The token is read from the `PYPI_TOKEN` en
 (or `UV_PUBLISH_TOKEN`) and handed to `uv publish` through its environment, so it never appears on
 the command line. The task fails before building if no token is set.
 
+`release.pypi` is the token-based way to publish, for example from a local machine. It is not the
+only one: a CI workflow can build the package with `release.build` and publish it with
+[PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), which needs
+no token at all. This repository releases that way (see `.github/workflows/release-pypi.yaml`),
+and does not use `release.pypi`.
+
 !!! warning
 This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
 and that you are releasing the intended version before running this task.
