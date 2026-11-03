@@ -42,7 +42,8 @@ is out of date with `pyproject.toml` instead of silently using it (run `uv lock`
 | `--groups`        | `groups.install` (default `dev`) | `--group <name>` for each comma-separated group |
 
 `--groups` takes a comma-separated list of [dependency groups](https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups)
-to install, e.g. `dev,docs`. Pass an empty string to skip installing any group.
+to install, e.g. `dev,docs`. A group listed twice is installed once. Pass an empty string to skip
+installing any group.
 
 Disable the on-by-default optional deps, or override the groups, with:
 
