@@ -63,6 +63,23 @@ def test_make_ns_exclude_a_namespace() -> None:
     assert "doc" not in make_ns(exclude=["doc"]).collections
 
 
+def test_make_ns_exclude_a_bare_string_is_one_name() -> None:
+    assert "doc" not in make_ns(exclude="doc").collections
+
+
+def test_make_ns_exclude_a_bare_string_keeps_the_other_namespaces() -> None:
+    assert "lint" in make_ns(exclude="doc").collections
+
+
+def test_make_ns_include_a_bare_string_is_one_name() -> None:
+    assert set(make_ns(include="lint").collections) == {"lint"}
+
+
+def test_make_ns_unknown_bare_string_names_the_whole_string() -> None:
+    with pytest.raises(ValueError, match=r"Unknown task or namespace \['relese'\]"):
+        make_ns(exclude="relese")
+
+
 def test_make_ns_exclude_a_task() -> None:
     assert "release.pypi" not in make_ns(exclude=["release.pypi"]).task_names
 

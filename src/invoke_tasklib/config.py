@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import difflib
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,9 +26,12 @@ from typing import TYPE_CHECKING
 from invoke.exceptions import Exit
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Iterable
 
     from invoke.context import Context
+
+
+_SECTIONS = ("package", "paths", "groups", "test")
 
 
 @dataclass(frozen=True)
@@ -196,12 +200,49 @@ def _validate_python_version(value: object) -> str:
     return value
 
 
+def _as_mapping(name: str, value: object) -> Mapping[str, object]:
+    r"""Check that a config section is a mapping.
+
+    Without this check, a string given instead of a section would be
+    read character by character by the key validation.
+
+    Args:
+        name: The dotted name of the section (``tasklib`` or
+            ``tasklib.paths``), used in the error message.
+        value: The raw value of the section.
+
+    Returns:
+        The section, unchanged.
+
+    Raises:
+        ValueError: If ``value`` is not a mapping.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _as_mapping
+    >>> _as_mapping("tasklib.paths", {"src": "x"})
+    {'src': 'x'}
+    >>> _as_mapping("tasklib.paths", "foo")
+    Traceback (most recent call last):
+        ...
+    ValueError: 'tasklib.paths' must be a mapping, got 'foo'
+
+    ```
+    """
+    if isinstance(value, Mapping):
+        return value
+    msg = f"'{name}' must be a mapping, got {value!r}"
+    raise ValueError(msg)
+
+
 def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) -> None:
     r"""Check that a user config section only has known keys.
 
     Args:
-        section: The name of the section (``package``, ``paths`` or
-            ``groups``), used in the error message.
+        section: The name of the section (``package``, ``paths``,
+            ``groups`` or ``test``), used in the error message. An
+            empty string stands for the ``tasklib`` section itself.
         user: The user values of the section.
         valid: The valid keys of the section.
 
@@ -232,9 +273,9 @@ def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) 
         hint = f" (did you mean '{close[0]}'?)" if close else ""
         details.append(f"'{key}'{hint}")
     noun = "key" if len(unknown) == 1 else "keys"
+    location = f"tasklib.{section}" if section else "tasklib"
     msg = (
-        f"Unknown {noun} {', '.join(details)} in 'tasklib.{section}'. "
-        f"Valid keys: {', '.join(valid_keys)}"
+        f"Unknown {noun} {', '.join(details)} in '{location}'. Valid keys: {', '.join(valid_keys)}"
     )
     raise ValueError(msg)
 
@@ -336,20 +377,22 @@ def _default_src(import_name: str) -> str:
     return src_layout
 
 
-def _validate_int(key: str, value: object, *, minimum: int) -> int:
+def _validate_int(key: str, value: object, *, minimum: int, maximum: int | None = None) -> int:
     r"""Validate an integer value of the ``test`` config section.
 
     Args:
         key: The name of the config key, used in the error message.
         value: The raw config value.
         minimum: The smallest valid value.
+        maximum: The largest valid value, or ``None`` for no limit.
 
     Returns:
         The validated integer.
 
     Raises:
         ValueError: If the value is not an integer (a boolean is not
-            accepted) or is smaller than ``minimum``.
+            accepted), is smaller than ``minimum`` or is larger than
+            ``maximum``.
 
     Example usage:
 
@@ -360,8 +403,44 @@ def _validate_int(key: str, value: object, *, minimum: int) -> int:
 
     ```
     """
-    if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
-        msg = f"'tasklib.test.{key}' must be an integer >= {minimum}, got {value!r}"
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or value < minimum
+        or (maximum is not None and value > maximum)
+    ):
+        bounds = f">= {minimum}" if maximum is None else f"between {minimum} and {maximum}"
+        msg = f"'tasklib.test.{key}' must be an integer {bounds}, got {value!r}"
+        raise ValueError(msg)
+    return value
+
+
+def _validate_str(section: str, key: str, value: object) -> str:
+    r"""Validate a string value of the ``package`` or ``paths`` section.
+
+    Args:
+        section: The name of the config section, used in the error
+            message.
+        key: The name of the config key, used in the error message.
+        value: The raw config value.
+
+    Returns:
+        The validated string.
+
+    Raises:
+        ValueError: If the value is not a string, or is empty.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_str
+    >>> _validate_str("paths", "src", "src/mypkg")
+    'src/mypkg'
+
+    ```
+    """
+    if not isinstance(value, str) or not value:
+        msg = f"'tasklib.{section}.{key}' must be a non-empty string, got {value!r}"
         raise ValueError(msg)
     return value
 
@@ -438,7 +517,12 @@ def get_config(c: Context) -> TasklibConfig:
         e.g. ``cfg.paths.src``.
 
     Raises:
-        ValueError: If ``tasklib.package.name`` is not set, or if
+        ValueError: If ``tasklib`` or one of its ``package``, ``paths``,
+            ``groups`` and ``test`` sections is not a mapping, or if
+            ``tasklib`` has a key that is not one of these sections, or
+            if ``tasklib.package.name`` is not set or is not a string,
+            or if a ``tasklib.paths`` value is not a non-empty string,
+            or if
             ``tasklib.package.python_version`` is not a string such as
             ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
             float ``3.1``), or if ``tasklib.package.import_name`` is not
@@ -448,7 +532,7 @@ def get_config(c: Context) -> TasklibConfig:
             example a typo such as ``unit_test`` for ``unit_tests``), or
             if a ``tasklib.test`` value is invalid (a timeout and
             ``cov_fail_under`` must be integers, with a timeout > 0 and
-            ``cov_fail_under`` >= 0, and ``xdoctest`` must be a
+            ``cov_fail_under`` between 0 and 100, and ``xdoctest`` must be a
             boolean).
 
     Example usage:
@@ -470,24 +554,25 @@ def get_config(c: Context) -> TasklibConfig:
 
     ```
     """
-    user = dict(c.config.get("tasklib", {}))
-    _check_keys("package", user.get("package", {}), DEFAULT_PACKAGE)
-    _check_keys("paths", user.get("paths", {}), DEFAULT_PATHS)
-    _check_keys("groups", user.get("groups", {}), DEFAULT_GROUPS)
-    _check_keys("test", user.get("test", {}), DEFAULT_TEST)
-    package = {**DEFAULT_PACKAGE, **user.get("package", {})}
-    paths = {**DEFAULT_PATHS, **user.get("paths", {})}
-    groups = {**DEFAULT_GROUPS, **user.get("groups", {})}
-    test = {**DEFAULT_TEST, **user.get("test", {})}
+    user = _as_mapping("tasklib", c.config.get("tasklib", {}))
+    _check_keys("", user, _SECTIONS)
+    sections = {name: _as_mapping(f"tasklib.{name}", user.get(name, {})) for name in _SECTIONS}
+    _check_keys("package", sections["package"], DEFAULT_PACKAGE)
+    _check_keys("paths", sections["paths"], DEFAULT_PATHS)
+    _check_keys("groups", sections["groups"], DEFAULT_GROUPS)
+    _check_keys("test", sections["test"], DEFAULT_TEST)
+    package = {**DEFAULT_PACKAGE, **sections["package"]}
+    paths = {**DEFAULT_PATHS, **sections["paths"]}
+    groups = {**DEFAULT_GROUPS, **sections["groups"]}
+    test = {**DEFAULT_TEST, **sections["test"]}
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
         raise ValueError(msg)
+    name = _validate_str("package", "name", package["name"])
 
     import_name = _validate_import_name(
-        package["import_name"]
-        if package["import_name"] is not None
-        else str(package["name"]).replace("-", "_")
+        package["import_name"] if package["import_name"] is not None else name.replace("-", "_")
     )
     if paths["src"] is None:
         paths["src"] = _default_src(import_name)
@@ -497,18 +582,20 @@ def get_config(c: Context) -> TasklibConfig:
 
     return TasklibConfig(
         package=PackageConfig(
-            name=package["name"],
+            name=name,
             import_name=import_name,
             python_version=_validate_python_version(package["python_version"]),
         ),
         paths=PathsConfig(
-            src=str(paths["src"]),
-            tests=str(paths["tests"]),
-            unit_tests=str(paths["unit_tests"]),
-            integration_tests=str(paths["integration_tests"]),
-            functional_tests=str(paths["functional_tests"]),
-            benchmarks=str(paths["benchmarks"]),
-            docs_config=str(paths["docs_config"]),
+            src=_validate_str("paths", "src", paths["src"]),
+            tests=_validate_str("paths", "tests", paths["tests"]),
+            unit_tests=_validate_str("paths", "unit_tests", paths["unit_tests"]),
+            integration_tests=_validate_str(
+                "paths", "integration_tests", paths["integration_tests"]
+            ),
+            functional_tests=_validate_str("paths", "functional_tests", paths["functional_tests"]),
+            benchmarks=_validate_str("paths", "benchmarks", paths["benchmarks"]),
+            docs_config=_validate_str("paths", "docs_config", paths["docs_config"]),
         ),
         groups=GroupsConfig(
             install=_normalize_groups("install", groups["install"]),
@@ -527,7 +614,10 @@ def get_config(c: Context) -> TasklibConfig:
                 None
                 if test["cov_fail_under"] is None
                 else _validate_int(
-                    "cov_fail_under", _int_from_text(test["cov_fail_under"]), minimum=0
+                    "cov_fail_under",
+                    _int_from_text(test["cov_fail_under"]),
+                    minimum=0,
+                    maximum=100,
                 )
             ),
         ),

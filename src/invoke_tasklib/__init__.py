@@ -110,7 +110,11 @@ def _matches(name: str, patterns: Iterable[str]) -> bool:
     return any(name == p or name.startswith(f"{p}.") for p in patterns)
 
 
-def make_ns(*, exclude: Iterable[str] = (), include: Iterable[str] | None = None) -> Collection:
+def make_ns(
+    *,
+    exclude: str | Iterable[str] = (),
+    include: str | Iterable[str] | None = None,
+) -> Collection:
     r"""Build a new collection of the tasks, optionally restricted.
 
     Each call returns a new collection, so a project can add its own
@@ -119,10 +123,11 @@ def make_ns(*, exclude: Iterable[str] = (), include: Iterable[str] | None = None
 
     Args:
         exclude: Names of the namespaces (``"doc"``) or of the tasks
-            (``"release.pypi"``) to leave out.
+            (``"release.pypi"``) to leave out. A single string is one
+            name.
         include: Names of the namespaces or of the tasks to keep. If
             ``None``, all the tasks are kept. ``exclude`` is applied
-            to what ``include`` keeps.
+            to what ``include`` keeps. A single string is one name.
 
     Returns:
         A new collection. The defaults of the ``tasklib`` config are
@@ -144,7 +149,9 @@ def make_ns(*, exclude: Iterable[str] = (), include: Iterable[str] | None = None
 
     ```
     """
-    exclude = tuple(exclude)
+    exclude = (exclude,) if isinstance(exclude, str) else tuple(exclude)
+    if isinstance(include, str):
+        include = (include,)
     include = None if include is None else tuple(include)
     modules = {
         namespace: Collection.from_module(module, name=namespace)

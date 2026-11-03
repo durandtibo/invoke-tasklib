@@ -25,6 +25,8 @@ def _docs_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "mkdocs.yml").write_text("")
     (tmp_path / "mkdocs.yml").write_text("")
+    (tmp_path / "d d").mkdir()
+    (tmp_path / "d d" / "mkdocs.yml").write_text("")
     monkeypatch.chdir(tmp_path)
 
 
@@ -42,6 +44,15 @@ def _commands(c: MockContext) -> list[str]:
 #################################
 #     Tests for publish_dev     #
 #################################
+
+
+def test_publish_dev_quotes_the_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    doc.publish_dev(c)
+    assert _commands(c) == [
+        "mike delete --config-file 'd d/mkdocs.yml' main",
+        "mike deploy --config-file 'd d/mkdocs.yml' --push --update-aliases main dev",
+    ]
 
 
 def test_publish_dev() -> None:
@@ -86,6 +97,15 @@ def test_publish_latest_uses_last_version_tag(monkeypatch: MonkeyPatch) -> None:
     c = _context(_DOCS)
     doc.publish_latest(c)
     assert _commands(c) == _DEPLOY_1_2
+
+
+def test_publish_latest_quotes_the_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    doc.publish_latest(c, version="1.2.3")
+    assert _commands(c) == [
+        "mike deploy --config-file 'd d/mkdocs.yml' --push --update-aliases 1.2 latest",
+        "mike set-default --config-file 'd d/mkdocs.yml' --push --allow-empty latest",
+    ]
 
 
 def test_publish_latest_does_not_delete_the_version_first(monkeypatch: MonkeyPatch) -> None:
@@ -217,6 +237,12 @@ def test_build_uses_configured_docs_config() -> None:
     assert _commands(c) == ["mkdocs build --strict --config-file mkdocs.yml"]
 
 
+def test_build_quotes_the_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    doc.build(c)
+    assert _commands(c) == ["mkdocs build --strict --config-file 'd d/mkdocs.yml'"]
+
+
 ###########################
 #     Tests for serve     #
 ###########################
@@ -232,6 +258,12 @@ def test_serve_uses_configured_docs_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
     doc.serve(c)
     assert _commands(c) == ["mkdocs serve --config-file mkdocs.yml"]
+
+
+def test_serve_quotes_the_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    doc.serve(c)
+    assert _commands(c) == ["mkdocs serve --config-file 'd d/mkdocs.yml'"]
 
 
 ##################################

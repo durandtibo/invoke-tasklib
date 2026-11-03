@@ -52,13 +52,12 @@ commands (`ruff`, `uv`, `pytest`, `mike`, ...) on your machine, with your permis
   some of them change or publish things (`clean` deletes files, `doc.publish-dev` and
   `doc.publish-latest` push to the repository, `release.pypi` publishes a package). Read what a
   task does (see the user guide) before running it, and only run tasks from a `tasks.py` you trust.
-- **Configuration values are interpolated into shell commands**: values read from the
-  `tasklib` section of `invoke.yaml` (for example the package name, the paths, the Python version
-  or the documentation configuration file) and from environment variables or command line flags
-  are inserted into shell command lines without quoting. **Only use a configuration file, and
-  environment variables, that you fully trust.** Never build them from untrusted input (a
-  pull request from a fork, a user-supplied value, a network payload). Treat them the same way
-  you would treat a shell script.
+- **Configuration values are quoted, but still come from you**: values read from the `tasklib`
+  section of `invoke.yaml` (the paths, the documentation configuration file, the dependency groups)
+  and from command line flags are quoted before they are inserted into a shell command line, so a
+  space or a `;` in a value does not split or inject a command. They still choose which files and
+  options the tools use, so **only use a configuration file that you trust**, and never build it
+  from untrusted input (a pull request from a fork, a user-supplied value, a network payload).
 - **Credentials for publishing**: `release.pypi` and the documentation publishing tasks rely on the
   credentials available in your environment (PyPI token, Git remote access). Prefer short-lived
   credentials or [trusted publishing](https://docs.pypi.org/trusted-publishers/), and do not

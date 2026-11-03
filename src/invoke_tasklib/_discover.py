@@ -109,10 +109,9 @@ def main(argv: list[str]) -> int:
 
     ```pycon
     >>> from invoke_tasklib._discover import main
-    >>> main(["invoke_tasklib"])  # doctest: +ELLIPSIS
+    >>> _ = main(["invoke_tasklib"])  # doctest: +ELLIPSIS
     invoke_tasklib
     ...
-    0
 
     ```
     """
