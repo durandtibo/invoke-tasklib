@@ -102,7 +102,7 @@ def test_make_ns_keeps_the_default_task_of_clean() -> None:
 
 def test_make_ns_unknown_name_in_exclude() -> None:
     with pytest.raises(ValueError, match=r"Unknown task or namespace \['relese'\]"):
-        make_ns(exclude=["relese"])
+        make_ns(exclude=["relese"])  # codespell:ignore relese
 
 
 def test_make_ns_unknown_name_in_include() -> None:
