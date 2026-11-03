@@ -33,7 +33,7 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 invoke env.install
 ```
 
-Runs `uv sync --locked` and installs the package in editable mode. `--locked` fails if `uv.lock`
+Runs `uv sync --locked`, which also installs the package itself in editable mode. `--locked` fails if `uv.lock`
 is out of date with `pyproject.toml` instead of silently using it (run `uv lock` to refresh it).
 
 | Flag              | Default                          | Adds to `uv sync`                               |
@@ -61,8 +61,8 @@ than `dev`/`docs` can change the default once instead of passing `--groups` on e
 invoke env.update
 ```
 
-Runs `uv lock --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
-(`pre-commit autoupdate`), and reinstalls the project with the groups from `--groups` (default:
+Runs `uv lock --upgrade`, updates the pre-commit hooks (`pre-commit autoupdate`, only if the
+project has a `.pre-commit-config.yaml` file), and reinstalls the project with the groups from `--groups` (default:
 the [resolved config](config.md)'s `groups.update`, `"dev,docs"` unless overridden).
 
 ```shell
