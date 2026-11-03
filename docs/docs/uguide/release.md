@@ -16,8 +16,10 @@ publish the package to PyPI using [`uv`](https://docs.astral.sh/uv/).
 invoke release.build
 ```
 
-Runs `uv build`, then verifies the built wheel can actually be installed and imported by running
-it in an isolated `uv run` environment.
+Runs `uv build`, then verifies the artifacts it produced: the newest wheel and the newest source
+distribution in `dist/` are each installed in an isolated `uv run` environment
+(`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it.
+The task fails if the build did not produce a wheel or a source distribution.
 
 Pass `--check` to additionally validate the package's PyPI metadata with
 [`twine check`](https://twine.readthedocs.io/):
