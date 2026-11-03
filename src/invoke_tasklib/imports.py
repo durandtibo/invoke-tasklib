@@ -27,7 +27,7 @@ def check_cycles(c: Context) -> None:
     """
     cfg = get_config(c)
     name = cfg["package"]["name"]
-    logger.info(f"🔍 Discovering subpackages of {name}...")
+    logger.info("🔍 Discovering subpackages of %s...", name)
     discover_script = (
         "import importlib, pkgutil, sys\n"
         "name = sys.argv[1]\n"
@@ -40,8 +40,8 @@ def check_cycles(c: Context) -> None:
     )
     discover = c.run(f"python -c {shlex.quote(discover_script)} {name}", hide=True)
     modules = [line for line in discover.stdout.splitlines() if line]
-    logger.info(f"🔍 Checking {len(modules)} module(s) for cyclic imports...")
+    logger.info("🔍 Checking %s module(s) for cyclic imports...", len(modules))
     for module in modules:
-        logger.info(f"🔍 Checking: {module}")
+        logger.info("🔍 Checking: %s", module)
         c.run(f"python -c {shlex.quote(f'import {module}')}", pty=True)
-    logger.info(f"✅ All {len(modules)} module(s) imported without cyclic dependency errors")
+    logger.info("✅ All %s module(s) imported without cyclic dependency errors", len(modules))

@@ -53,11 +53,11 @@ def publish_latest(c: Context) -> None:
     else:
         version = Version(tag_name)
         tag = f"{version.major}.{version.minor}"
-        logger.info(f"📌 Using version tag: {tag}")
+        logger.info("📌 Using version tag: %s", tag)
 
-    logger.info(f"🗑️  Deleting previous '{tag}' version if it exists...")
+    logger.info("🗑️  Deleting previous '%s' version if it exists...", tag)
     c.run(f"mike delete --config-file {docs_config} {tag}", pty=True, warn=True)
-    logger.info(f"🚀 Deploying '{tag}' and 'latest' aliases...")
+    logger.info("🚀 Deploying '%s' and 'latest' aliases...", tag)
     c.run(f"mike deploy --config-file {docs_config} --push --update-aliases {tag} latest", pty=True)
     logger.info("🎯 Setting 'latest' as default...")
     c.run(f"mike set-default --config-file {docs_config} --push --allow-empty latest", pty=True)
