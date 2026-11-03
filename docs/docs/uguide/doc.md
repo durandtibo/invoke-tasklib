@@ -48,9 +48,10 @@ The task fails if there is no version tag and no `--version`, because publishing
 version would be a setup error. Pre-release versions (`1.2.0rc1`, `1.2.0a1`, `1.2.0.dev1`, ...) are
 skipped, so they never become `latest`.
 
+<!-- prettier-ignore -->
 !!! note
-Reading the git tag requires the `feu` package. Install documentation dependencies with
-`invoke env.install --groups dev,docs` before running it, or pass `--version`.
+    Reading the git tag requires the `feu` package. Install documentation dependencies with
+    `invoke env.install --groups dev,docs` before running it, or pass `--version`.
 
 ## Local Preview
 

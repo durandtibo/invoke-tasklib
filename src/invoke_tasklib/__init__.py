@@ -47,6 +47,7 @@ from invoke_tasklib import (
     testing,
     typecheck,
 )
+from invoke_tasklib.config import default_config
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -129,7 +130,10 @@ def make_ns(
             to what ``include`` keeps. A single string is one name.
 
     Returns:
-        A new collection.
+        A new collection. The defaults of the ``tasklib`` config are
+        registered on it, so that they can be overridden with the
+        ``INVOKE_TASKLIB_<SECTION>_<KEY>`` environment variables (for
+        example ``INVOKE_TASKLIB_PATHS_SRC``).
 
     Raises:
         ValueError: If a name of ``exclude`` or ``include`` is not a
@@ -170,6 +174,7 @@ def make_ns(
             selected.add_task(task, name=task_name, default=sub.default == task_name)
         if selected.tasks:
             ns.add_collection(selected)
+    ns.configure({"tasklib": default_config()})
     return ns
 
 

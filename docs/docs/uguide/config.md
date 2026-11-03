@@ -77,6 +77,21 @@ non-empty string, and `test.cov_fail_under` must be between 0 and 100.
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.
 
+## Environment Variables
+
+Every key can also be set with an `INVOKE_TASKLIB_<SECTION>_<KEY>` environment variable, for example
+`INVOKE_TASKLIB_PATHS_SRC=lib` or `INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30`. This is handy in CI. It
+works because `make_ns` (and so `ns`) registers the defaults of the `tasklib` section with Invoke,
+which only reads the environment variables of the keys that it knows. The usual Invoke order
+applies: the environment variables win over `invoke.yaml`.
+
+Invoke reads an environment variable as a string and converts it to the type of the default value:
+an integer for the timeouts, and, for a boolean such as `INVOKE_TASKLIB_TEST_XDOCTEST`, `0` or an
+empty value is false and anything else (including `false`) is true. `test.cov_fail_under` accepts a
+string of digits. A collection built by hand (`Collection(lint, ...)`) has no defaults, so it does
+not read the environment variables unless you call
+`ns.configure({"tasklib": invoke_tasklib.config.default_config()})`.
+
 ## Minimal Config
 
 The smallest valid `invoke.yaml` only sets the package name:

@@ -3,6 +3,7 @@ r"""Environment and dependency management tasks."""
 from __future__ import annotations
 
 import shlex
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
@@ -13,6 +14,8 @@ from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
+
+PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
 
 
 @task
@@ -43,6 +46,9 @@ def create_venv(c: Context) -> None:
 def install(c: Context, optional_deps: bool = True, groups: str | None = None) -> None:
     r"""Install the dependencies and the package (editable).
 
+    ``uv sync`` installs the project itself in editable mode, so no
+    other command is needed.
+
     Args:
         c: The invoke context.
         optional_deps: If True, install all optional dependencies
@@ -63,8 +69,6 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
         for group in filter(None, (g.strip() for g in groups.split(",")))
     )
     run(c, " ".join(cmd))
-    say(c, "🔧 Installing package in editable mode...")
-    run(c, "uv pip install -e .")
     say(c, "✅ Installation complete")
 
 
@@ -77,6 +81,9 @@ def update(c: Context, groups: str | None = None) -> None:
     r"""Update dependencies and pre-commit hooks.
 
     The dependencies and the hooks are updated to their latest versions.
+    The hooks are only updated if the project has a
+    ``.pre-commit-config.yaml`` file. The ``uv`` tools installed on the
+    machine are not touched: they are not part of the project.
 
     Args:
         c: The invoke context.
@@ -97,10 +104,11 @@ def update(c: Context, groups: str | None = None) -> None:
         groups = load_config(c).groups.update
     say(c, "🔄 Updating dependencies...")
     run(c, "uv lock --upgrade")
-    say(c, "🛠️  Upgrading uv tools...")
-    run(c, "uv tool upgrade --all")
-    say(c, "🪝 Updating pre-commit hooks...")
-    run(c, "pre-commit autoupdate")
+    if Path(PRE_COMMIT_CONFIG).is_file():
+        say(c, "🪝 Updating pre-commit hooks...")
+        run(c, "pre-commit autoupdate")
+    else:
+        say(c, f"⏭️  No {PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
     say(c, f"📦 Reinstalling with dependency groups: {groups}...")
     install(c, groups=groups)
     say(c, "✅ Update complete")
@@ -115,8 +123,12 @@ def show_installed_packages(c: Context) -> None:
 
 @task
 def show_python_config(c: Context) -> None:
-    r"""Show the python configuration."""
+    r"""Show the python configuration.
+
+    ``command -v python`` is allowed to fail: it exits with 1 when no
+    ``python`` is on the ``PATH``, which is not an error of the task.
+    """
     say(c, "🐍 Python configuration:")
     run(c, "uv python list --only-installed")
     run(c, "uv python find")
-    run(c, "command -v python")
+    run(c, "command -v python", warn=True)

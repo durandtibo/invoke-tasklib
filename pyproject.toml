@@ -37,6 +37,7 @@ dependencies = ["invoke>=3.0,<4.0"]
 
 [dependency-groups]
 dev = [
+  "codespell>=2.4,<3.0",
   "coverage[toml]>=7.17.0,<8.0",
   "docformatter>=1.7.8,<2.0",
   "feu[all]>=0.8.4,<1.0",
