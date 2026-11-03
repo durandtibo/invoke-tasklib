@@ -48,6 +48,10 @@ defaults are derived from `package.name` or from `paths.tests`.
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`.
 
+`package.python_version` must be a quoted string such as `"3.10"` or `"3.10.4"`. YAML reads an
+unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
+malformed value instead of silently creating a virtual environment with the wrong Python.
+
 ## Minimal Config
 
 The smallest valid `invoke.yaml` only sets the package name:
