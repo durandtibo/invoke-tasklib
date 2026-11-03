@@ -17,6 +17,7 @@ from invoke_tasklib.config import (
     _validate_import_name,
     _validate_int,
     _validate_python_version,
+    _validate_str,
     get_config,
     load_config,
 )
@@ -109,10 +110,20 @@ def test_get_config_test_invalid_xdoctest() -> None:
         get_config(c)
 
 
-def test_get_config_test_invalid_cov_fail_under() -> None:
-    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": -1}})
-    with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer >= 0"):
+@pytest.mark.parametrize("value", [-1, 101, 1000])
+def test_get_config_test_invalid_cov_fail_under(value: int) -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": value}})
+    with pytest.raises(
+        ValueError,
+        match=r"'tasklib.test.cov_fail_under' must be an integer between 0 and 100",
+    ):
         get_config(c)
+
+
+@pytest.mark.parametrize("value", [0, 100])
+def test_get_config_test_cov_fail_under_bounds_are_valid(value: int) -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": value}})
+    assert get_config(c).test.cov_fail_under == value
 
 
 def test_get_config_import_name_replaces_hyphens() -> None:
@@ -141,14 +152,55 @@ def test_get_config_invalid_import_name() -> None:
         get_config(c)
 
 
-def test_get_config_empty_src_is_kept() -> None:
-    cfg = get_config(_context({"package": {"name": "mypkg"}, "paths": {"src": ""}}))
-    assert cfg.paths.src == ""
+@pytest.mark.parametrize(
+    "key",
+    [
+        "src",
+        "tests",
+        "unit_tests",
+        "integration_tests",
+        "functional_tests",
+        "benchmarks",
+        "docs_config",
+    ],
+)
+def test_get_config_rejects_an_empty_path(key: str) -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {key: ""}})
+    with pytest.raises(ValueError, match=rf"'tasklib\.paths\.{key}' must be a non-empty string"):
+        get_config(c)
 
 
-def test_get_config_empty_unit_tests_is_kept() -> None:
-    cfg = get_config(_context({"package": {"name": "mypkg"}, "paths": {"unit_tests": ""}}))
-    assert cfg.paths.unit_tests == ""
+@pytest.mark.parametrize("value", [5, ["src"], True, 1.5])
+def test_get_config_rejects_a_path_that_is_not_a_string(value: object) -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"tests": value}})
+    with pytest.raises(ValueError, match=r"'tasklib\.paths\.tests' must be a non-empty string"):
+        get_config(c)
+
+
+@pytest.mark.parametrize("value", [["a"], 5, True])
+def test_get_config_rejects_a_package_name_that_is_not_a_string(value: object) -> None:
+    c = _context({"package": {"name": value}})
+    with pytest.raises(ValueError, match=r"'tasklib\.package\.name' must be a non-empty string"):
+        get_config(c)
+
+
+def test_get_config_rejects_an_unknown_top_level_key() -> None:
+    c = _context({"package": {"name": "mypkg"}, "path": {"src": "x"}})
+    with pytest.raises(
+        ValueError, match=r"Unknown key 'path' \(did you mean 'paths'\?\) in 'tasklib'"
+    ):
+        get_config(c)
+
+
+def test_get_config_top_level_error_lists_the_valid_sections() -> None:
+    c = _context({"package": {"name": "mypkg"}, "zzz": {}})
+    with pytest.raises(ValueError, match=r"Valid keys: groups, package, paths, test"):
+        get_config(c)
+
+
+def test_get_config_a_missing_name_is_still_reported_as_unset() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.package\.name' must be set"):
+        get_config(_context({"package": {"name": ""}}))
 
 
 def test_get_config_overrides() -> None:
@@ -533,9 +585,9 @@ def test_validate_import_name_rejects_invalid_names(value: object) -> None:
         _validate_import_name(value)
 
 
-#################################
+##################################
 #     Tests for _default_src     #
-#################################
+##################################
 
 
 def test_default_src_prefers_the_src_layout(
@@ -558,3 +610,41 @@ def test_default_src_falls_back_to_the_src_layout(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert _default_src("mypkg") == "src/mypkg"
+
+
+###################################
+#     Tests for _validate_str     #
+###################################
+
+
+def test_validate_str_returns_a_non_empty_string() -> None:
+    assert _validate_str("paths", "src", "src/mypkg") == "src/mypkg"
+
+
+@pytest.mark.parametrize("value", ["", 5, None, ["a"], True])
+def test_validate_str_rejects_other_values(value: object) -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.paths\.src' must be a non-empty string, got "):
+        _validate_str("paths", "src", value)
+
+
+def test_validate_str_error_names_the_section_and_the_key() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.package\.name' must be"):
+        _validate_str("package", "name", "")
+
+
+##################################################
+#     Tests for _validate_int with a maximum     #
+##################################################
+
+
+def test_validate_int_accepts_the_maximum() -> None:
+    assert _validate_int("cov_fail_under", 100, minimum=0, maximum=100) == 100
+
+
+def test_validate_int_rejects_above_the_maximum() -> None:
+    with pytest.raises(ValueError, match=r"must be an integer between 0 and 100, got 101"):
+        _validate_int("cov_fail_under", 101, minimum=0, maximum=100)
+
+
+def test_validate_int_without_maximum_has_no_upper_limit() -> None:
+    assert _validate_int("unit_timeout", 10**9, minimum=1) == 10**9
