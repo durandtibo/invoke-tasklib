@@ -9,14 +9,16 @@ their ``invoke.yaml``, e.g.::
       paths:
         docs_config: docs/mkdocs.yml
 
-Only ``package.name`` is required; everything else has a default derived
-from it.
+Only ``package.name`` (the distribution name) is required; everything
+else has a default derived from it. ``package.import_name`` defaults to
+the name with ``-`` replaced by ``_``.
 """
 
 from __future__ import annotations
 
 import difflib
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
 from invoke.exceptions import Exit
@@ -31,6 +33,7 @@ class PackageConfig(TypedDict):
     r"""Resolved ``package`` config section."""
 
     name: str
+    import_name: str
     python_version: str
 
 
@@ -82,6 +85,7 @@ r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 
 DEFAULT_PACKAGE: dict[str, str | None] = {
     "name": None,
+    "import_name": None,
     "python_version": "3.14",
 }
 
@@ -225,6 +229,66 @@ def _normalize_groups(key: str, value: object) -> str:
     raise ValueError(msg)
 
 
+def _validate_import_name(value: object) -> str:
+    r"""Validate the ``package.import_name`` config value.
+
+    Args:
+        value: The raw config value.
+
+    Returns:
+        The validated import name.
+
+    Raises:
+        ValueError: If the value is not a string of Python identifiers
+            separated by dots, e.g. ``"my_package"``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_import_name
+    >>> _validate_import_name("my_package")
+    'my_package'
+
+    ```
+    """
+    if not isinstance(value, str) or not all(part.isidentifier() for part in value.split(".")):
+        msg = (
+            "'tasklib.package.import_name' must be a Python module name such as "
+            f'"my_package", got {value!r}'
+        )
+        raise ValueError(msg)
+    return value
+
+
+def _default_src(import_name: str) -> str:
+    r"""Return the default source directory of a package.
+
+    The ``src`` layout (``src/<import_name>``) is used unless only the
+    flat layout (``<import_name>`` at the project root) exists on disk.
+
+    Args:
+        import_name: The import name of the package.
+
+    Returns:
+        ``"<import_name>"`` if that directory exists and
+        ``src/<import_name>`` does not, ``"src/<import_name>"``
+        otherwise.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _default_src
+    >>> _default_src("no_such_package")
+    'src/no_such_package'
+
+    ```
+    """
+    src_layout = f"src/{import_name}"
+    if not Path(src_layout).is_dir() and Path(import_name).is_dir():
+        return import_name
+    return src_layout
+
+
 def _validate_int(key: str, value: object, *, minimum: int) -> int:
     r"""Validate an integer value of the ``test`` config section.
 
@@ -298,7 +362,8 @@ def get_config(c: Context) -> TasklibConfig:
         ValueError: If ``tasklib.package.name`` is not set, or if
             ``tasklib.package.python_version`` is not a string such as
             ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
-            float ``3.1``), or if a ``tasklib.groups`` value is neither
+            float ``3.1``), or if ``tasklib.package.import_name`` is not
+            a Python module name, or if a ``tasklib.groups`` value is neither
             a string nor a list of strings, or if the ``package``,
             ``paths``, ``groups`` or ``test`` section has an unknown key (for
             example a typo such as ``unit_test`` for ``unit_tests``), or
@@ -316,7 +381,7 @@ def get_config(c: Context) -> TasklibConfig:
     >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
     >>> cfg = get_config(c)
     >>> cfg["package"]
-    {'name': 'mypkg', 'python_version': '3.14'}
+    {'name': 'mypkg', 'import_name': 'mypkg', 'python_version': '3.14'}
     >>> cfg["paths"]["src"]
     'src/mypkg'
     >>> cfg["groups"]
@@ -340,8 +405,13 @@ def get_config(c: Context) -> TasklibConfig:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
         raise ValueError(msg)
 
+    import_name = _validate_import_name(
+        package["import_name"]
+        if package["import_name"] is not None
+        else str(package["name"]).replace("-", "_")
+    )
     if not paths["src"]:
-        paths["src"] = f"src/{package['name']}"
+        paths["src"] = _default_src(import_name)
     if not paths["unit_tests"]:
         paths["unit_tests"] = f"{paths['tests']}/unit"
     if not paths["integration_tests"]:
@@ -354,6 +424,7 @@ def get_config(c: Context) -> TasklibConfig:
     return {
         "package": PackageConfig(
             name=package["name"],
+            import_name=import_name,
             python_version=_validate_python_version(package["python_version"]),
         ),
         "paths": PathsConfig(

@@ -56,9 +56,10 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
 def build(c: Context, check: bool = False) -> None:
     r"""Build the package and verify the built artifacts.
 
-    The artifacts are checked to be installable. The newest wheel and the newest source distribution in ``dist/`` are
-    each installed in an isolated environment and the package is
-    imported from it.
+    The artifacts are checked to be installable. The newest wheel and the
+    newest source distribution in ``dist/`` are each installed in an
+    isolated environment and the package is imported from it, using
+    ``package.import_name``.
 
     Args:
         c: The invoke context.
@@ -66,7 +67,7 @@ def build(c: Context, check: bool = False) -> None:
             twine. Default is False.
     """
     cfg = load_config(c)
-    name = cfg["package"]["name"]
+    import_name = cfg["package"]["import_name"]
     say(c, "📦 Building package...")
     run(c, "uv build --clear")
     say(c, "🔍 Verifying package installation...")
@@ -76,7 +77,7 @@ def build(c: Context, check: bool = False) -> None:
         run(
             c,
             f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
-            f"python -c {shlex.quote(f'import {name}')}",
+            f"python -c {shlex.quote(f'import {import_name}')}",
         )
     if check:
         say(c, "🔍 Checking package metadata with twine...")

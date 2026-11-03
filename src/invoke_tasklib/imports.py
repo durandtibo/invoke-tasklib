@@ -30,7 +30,7 @@ def check_cycles(c: Context) -> None:
             cannot be found) or a module fails to import.
     """
     cfg = load_config(c)
-    name = cfg["package"]["name"]
+    name = cfg["package"]["import_name"]
     python = python_executable()
     say(c, f"🔍 Discovering modules of {name}...")
     discover = run(

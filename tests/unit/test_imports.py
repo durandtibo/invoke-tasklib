@@ -65,10 +65,20 @@ def test_check_cycles_does_not_embed_a_script() -> None:
     assert _commands(c) == [_DISCOVER_CMD]
 
 
-def test_check_cycles_quotes_package_name() -> None:
-    cmd = "/venv/bin/python -m invoke_tasklib._discover 'my pkg'"
+def test_check_cycles_uses_the_import_name() -> None:
+    cmd = "/venv/bin/python -m invoke_tasklib._discover my_pkg"
     c = _context(
-        tasklib_config={"package": {"name": "my pkg"}},
+        tasklib_config={"package": {"name": "my-pkg"}},
+        run={cmd: Result(stdout="")},
+    )
+    imports.check_cycles(c)
+    assert _commands(c) == [cmd]
+
+
+def test_check_cycles_uses_the_configured_import_name() -> None:
+    cmd = "/venv/bin/python -m invoke_tasklib._discover other"
+    c = _context(
+        tasklib_config={"package": {"name": "my-pkg", "import_name": "other"}},
         run={cmd: Result(stdout="")},
     )
     imports.check_cycles(c)

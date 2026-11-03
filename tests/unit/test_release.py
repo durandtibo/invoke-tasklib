@@ -57,6 +57,20 @@ def test_build_without_check() -> None:
 
 
 @pytest.mark.usefixtures("dist")
+def test_build_imports_the_import_name() -> None:
+    c = _context({"package": {"name": "my-pkg"}})
+    release.build(c)
+    assert _commands(c)[1].endswith("-- python -c 'import my_pkg'")
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_imports_the_configured_import_name() -> None:
+    c = _context({"package": {"name": "my-pkg", "import_name": "other"}})
+    release.build(c)
+    assert _commands(c)[2].endswith("-- python -c 'import other'")
+
+
+@pytest.mark.usefixtures("dist")
 def test_build_with_check() -> None:
     c = _context({"package": {"name": "mypkg"}})
     release.build(c, check=True)
