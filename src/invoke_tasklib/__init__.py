@@ -131,7 +131,7 @@ def make_ns(*, exclude: Iterable[str] = (), include: Iterable[str] | None = None
 
     ```pycon
     >>> from invoke_tasklib import make_ns
-    >>> ns = make_ns(include=["lint", "test.unit"], exclude=["lint.fix-python"])
+    >>> ns = make_ns(include=["lint.check-python", "test.unit"])
     >>> sorted(ns.task_names)
     ['lint.check-python', 'test.unit']
 

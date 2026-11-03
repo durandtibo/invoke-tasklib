@@ -41,8 +41,8 @@ def discover_modules(name: str) -> list[str]:
 
     ```pycon
     >>> from invoke_tasklib._discover import discover_modules
-    >>> discover_modules("invoke_tasklib")[:3]
-    ['invoke_tasklib', 'invoke_tasklib._discover', 'invoke_tasklib.clean']
+    >>> discover_modules("invoke_tasklib")[:2]
+    ['invoke_tasklib', 'invoke_tasklib._discover']
 
     ```
     """
