@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from invoke.config import Config
 from invoke.context import MockContext
@@ -19,7 +19,36 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in run.call_args_list]
 
 
-def test_audit() -> None:
+###########################
+#     Tests for audit     #
+###########################
+
+
+def _audit_commands() -> list[str]:
     c = _context()
-    security.audit(c)
-    assert _commands(c) == ["uv run pip-audit"]
+    with patch("tempfile.TemporaryDirectory") as tmp:
+        tmp.return_value.__enter__.return_value = "/work/x"
+        security.audit(c)
+    return _commands(c)
+
+
+def test_audit_commands() -> None:
+    assert _audit_commands() == [
+        (
+            "uv export --locked --no-emit-project --no-hashes --all-groups "
+            "--quiet -o /work/x/requirements.txt"
+        ),
+        "uvx pip-audit -r /work/x/requirements.txt --no-deps --disable-pip",
+    ]
+
+
+def test_audit_does_not_sync_the_environment() -> None:
+    assert not any(cmd.startswith("uv run") for cmd in _audit_commands())
+
+
+def test_audit_quotes_the_requirements_path() -> None:
+    c = _context()
+    with patch("tempfile.TemporaryDirectory") as tmp:
+        tmp.return_value.__enter__.return_value = "/work/a b"
+        security.audit(c)
+    assert "'/work/a b/requirements.txt'" in _commands(c)[1]
