@@ -134,6 +134,22 @@ def test_show_python_config() -> None:
     ]
 
 
+def test_show_python_config_tolerates_a_missing_python_on_the_path() -> None:
+    c = _context()
+    env.show_python_config(c)
+    run = c.run
+    assert isinstance(run, Mock)
+    assert run.call_args_list[-1].kwargs["warn"] is True
+
+
+def test_show_python_config_other_commands_must_succeed() -> None:
+    c = _context()
+    env.show_python_config(c)
+    run = c.run
+    assert isinstance(run, Mock)
+    assert [call.kwargs.get("warn", False) for call in run.call_args_list] == [False, False, True]
+
+
 ############################################
 #     Tests for the lock file handling     #
 ############################################

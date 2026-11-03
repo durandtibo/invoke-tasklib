@@ -114,8 +114,12 @@ def show_installed_packages(c: Context) -> None:
 
 @task
 def show_python_config(c: Context) -> None:
-    r"""Show the python configuration."""
+    r"""Show the python configuration.
+
+    ``command -v python`` is allowed to fail: it exits with 1 when no
+    ``python`` is on the ``PATH``, which is not an error of the task.
+    """
     say(c, "🐍 Python configuration:")
     run(c, "uv python list --only-installed")
     run(c, "uv python find")
-    run(c, "command -v python")
+    run(c, "command -v python", warn=True)
