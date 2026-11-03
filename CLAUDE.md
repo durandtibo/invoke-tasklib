@@ -8,8 +8,9 @@
   Fix the issues raised by ruff. Ignoring an issue (`noqa`, a changed rule set) is not fixing it.
 - Type check with `.venv/bin/ty check`. Fix the issues raised by ty. Ignoring an issue
   (`type: ignore`, `ty: ignore`, a cast that hides the problem) is not fixing it.
-- Run the unit tests of the packages you changed (for example `.venv/bin/pytest tests/unit/hashing -q`).
-  Some tests fail on `main`; check with `git stash` before blaming your change.
+- Run the unit tests of the modules you changed (for example `.venv/bin/pytest tests/unit/test_lint.py -q`),
+  then the whole suite (`.venv/bin/pytest tests -q`) and the doctests (`.venv/bin/inv test.doctest`).
+  All the tests pass on `main`; if one fails, check with `git stash` before blaming your change.
 
 ## Workflow
 
@@ -35,47 +36,50 @@
 
 ## Code
 
+- The source is in `src/invoke_tasklib/`: one module per task namespace (`formatting.py`,
+  `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
+  `imports.py`, `clean.py`, `check.py`), plus `config.py` (config resolution), `runner.py` (the
+  command runner) and `output.py` (progress messages). The namespaces are registered in
+  `_MODULES` of `src/invoke_tasklib/__init__.py`.
 - Match the surrounding code: comment density, naming, docstring style (Google style with
-  `Args:`, `Returns:`, `Raises:` and a `pycon` example that runs as a doctest).
+  `Args:`, `Returns:`, `Raises:` and, where useful, an `Example usage:` with a `pycon` block that
+  runs as a doctest).
 - Follow the current style of the repository in everything you add (source, tests, docs, commit
   messages, PR descriptions). Look at a few neighbouring files first, and do not introduce a new
   convention or reformat code you do not otherwise change.
-- Shared helpers belong in `coola.utils` as public functions (no leading underscore) with their
-  own tests, not as private functions imported across modules.
-- Validate an argument with `coola.validation`; do not write `raise ValueError` for a type, range
-  or membership check, and do not add a validator that is one `isinstance` or one comparison.
-- Prefer `LazySingleton` for lazily built process-wide objects, not `functools.cache`.
-- Keep new options keyword-only (`*`), as `hash_object` does.
-- Optional libraries (numpy, torch, pandas, polars, ...) are imported lazily; do not import them
-  at module level in `src`.
+- Read the config with `load_config(c)` (it exits with a message on an invalid config), never from
+  `c.config` directly. Run external commands with `invoke_tasklib.runner.run` and build them with
+  `build_command` (it quotes the arguments), and print progress with `invoke_tasklib.output.say`;
+  do not call `c.run` or `print` in a task.
+- Validate the `invoke.yaml` values in `config.py`, next to the existing `_validate_*` helpers.
+- Keep new task options keyword-only where the signature allows it, and give each option a `help`
+  entry in `@task`.
+- Keep the read-only/mutating naming: `check_<target>` never modifies a file and `fix_<target>`
+  does.
 - Every function, public or private (leading underscore), needs a docstring and its own unit
-  tests. Private functions are not exempt. An override that adds nothing to the docstring of the
-  method it overrides (same behaviour, arguments and exceptions) has no docstring: it inherits the
-  parent's. Document an override only when it adds something (for example a `Raises:` section).
-- Document the constructor arguments (`Args:`, `Raises:`) in the class docstring, not in a
-  docstring of `__init__`, as the existing classes do. Do not add a docstring to `__init__`
-  or to the other dunder methods (`__repr__`, `__str__`, `__eq__`, ...).
+  tests. Private functions are not exempt. Tasks are documented by their docstring: the first line
+  is the one-line summary shown by `invoke --list`, so keep it to one sentence.
 - Keep docstrings and documentation up to date and comprehensive: update them whenever the
-  behaviour, signature or options of the code change.
+  behaviour, signature or options of the code change. A new or changed task also updates the
+  README task table, `docs/docs/uguide/index.md`, the page of the namespace in `docs/docs/uguide/`
+  and `docs/docs/index.md`.
+- Docstrings and comments are at most 72 characters wide, code at most 100 (`ruff` enforces it).
 
 ## Tests
 
-- Always write tests for the code in `src/`, including every private function. Unit tests must be fast and efficient; move big or
-  slow tests to `tests/integration/` if needed.
-- Unit tests mirror the source tree (`tests/unit/<package>/test_<module>.py`). Cross-thread
-  behaviour goes in `tests/integration/`, using `run_threads` from `tests/integration/helpers.py`,
-  a lock around the shared list, and a docstring starting with "Test that ...".
-- Do not use local imports inside tests (for example `import polars as pl` in a test body). Import
-  at the top of the module; use the `*_available` fixtures from `coola.testing.marks` for
-  optional libraries.
-- One behaviour per test: a test has one `assert` or one `pytest.raises`. Split a test that checks
-  several things (equal, different, negative, ...) into several tests. Thread-safety tests may
-  assert the count and the uniqueness together, as the existing ones do.
-- Keep the unit tests simple and fast: no sleeps, no large data, no real network or heavy I/O,
-  and no logic (loops, branches) in the test body. Anything slow or concurrent belongs in
+- Always write tests for the code in `src/`, including every private function. Unit tests must be
+  fast and efficient; tests that run the real tools (subprocess, files) go in
   `tests/integration/`.
+- Unit tests mirror the source tree (`tests/unit/test_<module>.py`) and use
+  `invoke.context.MockContext` to record the commands, with the `_context` and `_commands` helpers
+  of the neighbouring test modules. Do not call a real tool in a unit test.
+- Do not use local imports inside tests. Import at the top of the module.
+- One behaviour per test: a test has one `assert` or one `pytest.raises`. Split a test that checks
+  several things into several tests.
+- Keep the unit tests simple and fast: no sleeps, no large data, no real network or heavy I/O,
+  and no logic (loops, branches) in the test body.
 - Add the missing tests to get 100% coverage of the code you add or change
-  (`.venv/bin/pytest <tests> --cov=coola --cov-report=term-missing`). Do not use
+  (`.venv/bin/pytest tests --cov=invoke_tasklib --cov-report=term-missing`). Do not use
   `# pragma: no cover` to skip a line that can be tested.
 - Use `pytest.mark.parametrize` for the same check on several values.
 - Every `pytest.raises` (and `pytest.warns`) must define `match` with a regular expression for the
@@ -104,17 +108,12 @@
 
 ### Test assertions
 
-- When asserting an expected value, write the final computed number, not the arithmetic
-  expression that produces it (for example `0.6666666666666666`, not `1.0 * 0.4 + 0.0 * 0.2`).
-  If the derivation is not obvious, keep the expression as a comment above the assertion.
+- When asserting an expected value, write the final computed value, not the expression that
+  produces it. If the derivation is not obvious, keep the expression as a comment above the
+  assertion.
 - When a function returns a composite value (a dict, a list, ...), include at least one test that
   asserts the entire output against a fully-specified literal, not only individual keys or fields.
-  This catches unexpected extra or missing entries that per-field assertions miss:
-
-  ```python
-  result = compute(...)
-  assert result == {...}
-  ```
+  For a task, assert the whole list of commands (`assert _commands(c) == [...]`).
 
 ### Test coverage
 
@@ -127,9 +126,8 @@ check. Cover, where applicable:
 - Error conditions: inputs that should raise, with the right exception type and message
   (including errors raised by collaborators the function calls).
 - Interactions between parameters, for example a cross-product of two input lists, or the order
-  of output keys or entries.
-- Side effects: the function does not mutate its inputs, is deterministic across repeated calls,
-  and does not leak state when given reused or stateful collaborators.
+  of the commands.
+- Side effects: the function does not mutate its inputs and is deterministic across repeated calls.
 
 Prefer many small, precisely named tests (one behavior per test) over a few broad ones, so a
 failure points at the specific behavior that broke.
