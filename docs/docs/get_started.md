@@ -94,7 +94,9 @@ Available tasks:
                                 docformatter.
   format.fix-python             Format code in place with ruff.
   format.fix-shell              Format shell scripts in place with shfmt.
-  imports.check-cycles          Check for cyclic imports, one module at a time.
+  imports.check-cycles          Check for cyclic imports with a static import
+                                graph.
+  imports.check-isolated        Check that every module imports on its own.
   lint.check-python             Check code linting with ruff.
   lint.check-spelling           Check the spelling with codespell.
   lint.fix-python               Fix auto-fixable linting issues in place with

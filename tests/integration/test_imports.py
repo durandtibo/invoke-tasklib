@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from invoke.config import Config
 from invoke.context import Context
-from invoke.exceptions import UnexpectedExit
+from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import imports
@@ -50,12 +50,12 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
-##################################
-#     Tests for check_cycles     #
-##################################
+####################################
+#     Tests for check_isolated     #
+####################################
 
 
-def test_check_cycles_passes_without_cycle(project: Path) -> None:
+def test_check_isolated_passes_without_cycle(project: Path) -> None:
     _write(
         project,
         {
@@ -64,10 +64,10 @@ def test_check_cycles_passes_without_cycle(project: Path) -> None:
             "okpkg/b.py": "X = 1\n",
         },
     )
-    imports.check_cycles(_context("okpkg"))
+    imports.check_isolated(_context("okpkg"))
 
 
-def test_check_cycles_detects_cycle_between_sibling_modules(project: Path) -> None:
+def test_check_isolated_detects_cycle_between_sibling_modules(project: Path) -> None:
     _write(
         project,
         {
@@ -77,4 +77,42 @@ def test_check_cycles_detects_cycle_between_sibling_modules(project: Path) -> No
         },
     )
     with pytest.raises(UnexpectedExit):
-        imports.check_cycles(_context("cycpkg"))
+        imports.check_isolated(_context("cycpkg"))
+
+
+##################################
+#     Tests for check_cycles     #
+##################################
+
+
+def test_check_cycles_reports_a_cycle_without_importing_anything(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write(
+        project,
+        {
+            "stcpkg/__init__.py": "raise RuntimeError('imported')\n",
+            "stcpkg/a.py": "from stcpkg import b\n",
+            "stcpkg/b.py": "from stcpkg import a\n",
+        },
+    )
+    monkeypatch.syspath_prepend(str(project))
+    with pytest.raises(Exit, match=r"stcpkg\.a -> stcpkg\.b -> stcpkg\.a"):
+        imports.check_cycles(_context("stcpkg"))
+
+
+def test_check_cycles_reports_the_cycle_that_import_order_hides(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write(
+        project,
+        {
+            "hidpkg/__init__.py": "",
+            "hidpkg/a.py": "import hidpkg.b\nX = 1\n",
+            "hidpkg/b.py": "import hidpkg.a\nY = 2\n",
+        },
+    )
+    monkeypatch.syspath_prepend(str(project))
+    imports.check_isolated(_context("hidpkg"))
+    with pytest.raises(Exit, match=r"Found 1 import cycle"):
+        imports.check_cycles(_context("hidpkg"))

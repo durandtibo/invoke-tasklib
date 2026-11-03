@@ -133,6 +133,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `lint`     | `lint.check-spelling`         | Check the spelling with codespell                                                        |    ❌    |
 | `lint`     | `lint.pre-commit`             | Run all the pre-commit hooks                                                             |    ✅    |
 | `imports`  | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
+| `imports`  | `imports.check-isolated`      | Check that every module imports on its own                                               |    ❌    |
 | `types`    | `types.check`                 | Check type hints with ty (`--complete` also runs pyright)                                |    ❌    |
 | `test`     | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
 | `test`     | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |

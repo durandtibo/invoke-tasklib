@@ -89,7 +89,8 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 🔁 **Cyclic Imports**
 
-- `imports.check-cycles`: check for cyclic import dependencies
+- `imports.check-cycles`: check for cyclic import dependencies (static import graph)
+- `imports.check-isolated`: check that every module imports on its own
 
 [Learn more →](uguide/imports.md)
 

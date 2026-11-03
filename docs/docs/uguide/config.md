@@ -73,7 +73,7 @@ value passes no `--cov-report`, so pytest-cov uses its default.
 `format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,
 `spelling`, `docs` and `audit`. It must have at least one step and no unknown step.
 
-`package.import_name` is the name used to import the package. It is used by `imports.check-cycles`,
+`package.import_name` is the name used to import the package. It is used by `imports.check-cycles`, `imports.check-isolated`,
 `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
 Set it when it is not the distribution name with `-` replaced by `_`. It must be a Python module
 name.

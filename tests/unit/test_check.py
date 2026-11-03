@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
@@ -12,10 +13,21 @@ from invoke.runners import Result
 from invoke_tasklib import check
 from invoke_tasklib.config import CHECK_STEPS
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 @pytest.fixture(autouse=True)
 def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
+
+
+@pytest.fixture(autouse=True)
+def _package(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Make ``mypkg`` findable, for the static import check."""
+    (tmp_path / "mypkg").mkdir()
+    (tmp_path / "mypkg" / "__init__.py").write_text("")
+    monkeypatch.syspath_prepend(str(tmp_path))
 
 
 def _context(check_config: dict | None = None) -> MockContext:
