@@ -5,6 +5,7 @@ from invoke.collection import Collection
 from invoke.tasks import Task
 
 from invoke_tasklib import _matches, make_ns, ns
+from invoke_tasklib.config import default_config
 
 
 def test_ns_is_collection() -> None:
@@ -172,3 +173,11 @@ def test_task_summary_is_a_sentence(name: str) -> None:
 @pytest.mark.parametrize("name", sorted(ns.task_names))
 def test_task_options_are_documented(name: str) -> None:
     assert all(arg.help for arg in ns[name].get_arguments())
+
+
+def test_make_ns_registers_the_tasklib_defaults() -> None:
+    assert make_ns().configuration()["tasklib"] == default_config()
+
+
+def test_make_ns_registers_the_defaults_when_tasks_are_excluded() -> None:
+    assert make_ns(include=[]).configuration()["tasklib"] == default_config()
