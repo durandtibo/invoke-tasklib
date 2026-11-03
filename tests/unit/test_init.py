@@ -183,3 +183,42 @@ def test_make_ns_registers_the_tasklib_defaults() -> None:
 
 def test_make_ns_registers_the_defaults_when_tasks_are_excluded() -> None:
     assert make_ns(include=[]).configuration()["tasklib"] == default_config()
+
+
+###################################
+#     Tests for the args option     #
+###################################
+
+_WITHOUT_ARGS = frozenset(
+    {
+        # Composite tasks: the options would be ambiguous.
+        "check.all",
+        "test.doctest",
+        # No external tool to give arguments to.
+        "clean.all",
+        "clean.pycache",
+        "imports.check-cycles",
+        # Tasks with their own, specific options.
+        "doc.publish-dev",
+        "doc.publish-latest",
+        "env.create-venv",
+        "env.install",
+        "env.show-installed-packages",
+        "env.show-python-config",
+        "env.update",
+    }
+)
+
+
+def _option_names(name: str) -> list[str]:
+    return [arg.name for arg in ns[name].get_arguments()]
+
+
+@pytest.mark.parametrize("name", sorted(set(ns.task_names) - _WITHOUT_ARGS))
+def test_task_has_the_args_option(name: str) -> None:
+    assert "args" in _option_names(name)
+
+
+@pytest.mark.parametrize("name", sorted(_WITHOUT_ARGS))
+def test_exception_of_the_args_option_has_no_args_option(name: str) -> None:
+    assert "args" not in _option_names(name)

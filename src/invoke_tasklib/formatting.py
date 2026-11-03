@@ -104,22 +104,63 @@ def fix_docstrings(c: Context, args: str | None = None, paths: str | None = None
     say(c, "✅ Docstring formatting complete")
 
 
-@task
-def check_shell(c: Context) -> None:
-    r"""Check shell scripts with shellcheck."""
+def _shell_command(tool: str, args: str | None, paths: str | None) -> str:
+    r"""Build the command of a shell script tool.
+
+    Args:
+        tool: The program and its fixed options, e.g. ``"shellcheck"``.
+        args: Extra arguments of the user, placed before ``--``.
+        paths: Scripts of the user. If not set, the ``*.sh`` files
+            found under the current directory (without
+            ``SHELL_EXCLUDED_DIRS``) are used.
+
+    Returns:
+        The command line.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.formatting import _shell_command
+    >>> _shell_command("shellcheck", "-x", "a.sh")
+    'shellcheck -x -- a.sh'
+
+    ```
+    """
+    base = build_command(tool, args=args)
+    if paths:
+        return build_command(f"{base} --", paths=paths)
+    return f"{_FIND_SH} | xargs -0 -r {base} --"
+
+
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def check_shell(c: Context, args: str | None = None, paths: str | None = None) -> None:
+    r"""Check shell scripts with shellcheck.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to shellcheck.
+        paths: The scripts to check instead of every ``*.sh`` file of
+            the project.
+    """
     say(c, "🐚 Running shellcheck on shell scripts...")
-    run(c, f"{_FIND_SH} | xargs -0 -r shellcheck --")
+    run(c, _shell_command("shellcheck", args, paths))
     say(c, "✅ Shellcheck passed")
 
 
-@task
-def fix_shell(c: Context) -> None:
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def fix_shell(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Format shell scripts in place with shfmt.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to shfmt.
+        paths: The scripts to format instead of every ``*.sh`` file of
+            the project.
 
     Note:
         This modifies files in place. Ensure your work is committed
         before running this task.
     """
     say(c, "🔧 Running shfmt to format shell scripts...")
-    run(c, f"{_FIND_SH} | xargs -0 -r shfmt -l -w --")
+    run(c, _shell_command("shfmt -l -w", args, paths))
     say(c, "✅ Shell formatting complete")

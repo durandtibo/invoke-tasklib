@@ -65,6 +65,9 @@ invoke doc.serve
 (unlike a `mike deploy` into a throw-away branch, which does not). `doc.serve` runs `mkdocs serve`
 with live reload. Both use `paths.docs_config` and need the `docs` dependency group.
 
+`doc.build` and `doc.serve` take `--args` for `mkdocs`, for example
+`invoke doc.serve --args "--dev-addr 127.0.0.1:8001"`.
+
 ## See Also
 
 - [Config](config.md): where `paths.docs_config` comes from.

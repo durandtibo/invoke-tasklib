@@ -3,7 +3,6 @@ r"""Test and benchmark tasks."""
 from __future__ import annotations
 
 import os
-import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -68,13 +67,21 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
     return False
 
 
-@task
-def doctest_src(c: Context) -> None:
-    r"""Run doctests on source code."""
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def doctest_src(c: Context, args: str | None = None, paths: str | None = None) -> None:
+    r"""Run doctests on source code.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to pytest.
+        paths: The files or directories to run on instead of
+            ``paths.src``.
+    """
     cfg = load_config(c)
     src = cfg.paths.src
     say(c, "📚 Running doctests on source code...")
-    run(c, f"{python_executable()} -m pytest --xdoctest {shlex.quote(src)}")
+    cmd = f"{python_executable()} -m pytest --xdoctest"
+    run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
     say(c, "✅ Doctest validation complete")
 
 
@@ -116,14 +123,21 @@ def _find_markdown_files(root: Path) -> list[Path]:
     return sorted(found)
 
 
-@task
-def doctest_markdown(c: Context) -> None:
-    r"""Run doctests on the Python examples of the markdown files."""
-    md_files = _find_markdown_files(Path())
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def doctest_markdown(c: Context, args: str | None = None, paths: str | None = None) -> None:
+    r"""Run doctests on the Python examples of the markdown files.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to ``python -m doctest``.
+        paths: The markdown files to check instead of every markdown
+            file of the project.
+    """
+    md_files = [str(f) for f in _find_markdown_files(Path())]
     say(c, f"📚 Found {len(md_files)} markdown files")
     if md_files:
-        files = " ".join(shlex.quote(str(f)) for f in md_files)
-        run(c, f"{python_executable()} -m doctest {_DOCTEST_OPTIONS} {files}")
+        cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=md_files))
     say(c, f"✅ All {len(md_files)} markdown files have been checked")
 
 
@@ -337,8 +351,8 @@ def functional(
     )
 
 
-@task(help={"open_browser": "Open the HTML report in the default web browser."})
-def coverage_report(c: Context, open_browser: bool = False) -> None:
+@task(help={"open_browser": "Open the HTML report in the default web browser.", "args": ARGS_HELP})
+def coverage_report(c: Context, open_browser: bool = False, args: str | None = None) -> None:
     r"""Generate an HTML coverage report.
 
     The report is built from the last recorded coverage data, and the
@@ -348,23 +362,33 @@ def coverage_report(c: Context, open_browser: bool = False) -> None:
         c: The invoke context.
         open_browser: If True, open the generated HTML report in the
             default web browser. Default is False.
+        args: Extra arguments passed to ``coverage report``, e.g.
+            ``"--fail-under=90"``.
     """
     say(c, "📊 Generating coverage report...")
     run(c, f"{python_executable()} -m coverage html")
-    run(c, f"{python_executable()} -m coverage report")
+    run(c, build_command(f"{python_executable()} -m coverage report", args=args))
     if open_browser:
         say(c, "🌐 Opening coverage report in the browser...")
         run(c, f"{python_executable()} -m webbrowser -t htmlcov/index.html")
     say(c, "✅ Coverage report generated in htmlcov/")
 
 
-@task
-def benchmark(c: Context) -> None:
-    r"""Run performance benchmarks."""
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def benchmark(c: Context, args: str | None = None, paths: str | None = None) -> None:
+    r"""Run performance benchmarks.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to pytest.
+        paths: The files or directories to run on instead of
+            ``paths.benchmarks``.
+    """
     cfg = load_config(c)
     benchmarks = cfg.paths.benchmarks
-    if not _directory_exists(c, benchmarks, "benchmarks"):
+    if not paths and not _directory_exists(c, benchmarks, "benchmarks"):
         return
     say(c, "⏱️  Running benchmarks...")
-    run(c, f"{python_executable()} -m pytest {shlex.quote(benchmarks + '/')} --benchmark-only")
+    cmd = f"{python_executable()} -m pytest --benchmark-only"
+    run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
     say(c, "✅ Benchmarks complete")
