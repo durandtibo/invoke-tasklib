@@ -92,14 +92,14 @@ what CI runs. Key mappings:
 
 | Workflow job                | Invoke task                                            |
 | --------------------------- | ------------------------------------------------------ |
-| `ci-format.yaml` / `format` | `format.check-python`, `format.check-docstrings`       |
-| `ci-format.yaml` / `shell`  | `format.check-shell` (+ `shfmt -d`, no task wraps it)  |
+| `ci-format.yaml` / `format` | `format.check-python`, `lint.check-python`             |
+| `ci-format.yaml` / `shell`  | `make check-format-shell`, `make lint-shell` (no task) |
 | `ci-lint.yaml`              | `lint.check-python`                                    |
 | `ci-type-checking.yaml`     | `types.check`                                          |
 | `ci-doctest.yaml`           | `test.doctest`                                         |
 | `ci-test.yaml`              | `test.all --cov`                                       |
 | `ci-build.yaml`             | `release.build --check`                                |
-| `release-pypi.yaml`         | `build-package` (via `durandtibo/pypi-release-action`) |
+| `release-pypi.yaml`         | `build-package` (via `durandtibo/build-pypi-package-action`) |
 | `release-docs-publish.yaml` | `doc.publish-latest`, `doc.publish-dev`                |
 
 `ci-pre-commit.yaml` runs `.pre-commit-config.yaml` directly via

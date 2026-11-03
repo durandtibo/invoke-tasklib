@@ -81,6 +81,7 @@ Other kinds of tests:
 ```shell
 inv test.doctest  # doctests of the source code and of the Markdown files
 inv test.all      # all the tests
+inv check         # the main read-only checks: format, lint, types, imports, unit tests
 ```
 
 ### Code Quality
@@ -261,13 +262,16 @@ def my_function(param1: int, param2: str) -> bool:
     Raises:
         ValueError: When param1 is negative.
 
-    Example:
-        ```pycon
-        >>> from my_package import my_function  # doctest: +SKIP
-        >>> my_function(42, "hello")  # doctest: +SKIP
-        True
+    Example usage:
 
-        ```
+    ```pycon
+    >>> def my_function(param1: int, param2: str) -> bool:
+    ...     return param2.startswith("h")
+    ...
+    >>> my_function(42, "hello")
+    True
+
+    ```
     """
     if param1 < 0:
         raise ValueError("param1 must be non-negative")
