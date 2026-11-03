@@ -29,33 +29,39 @@ tasklib:
     update: dev,docs
 ```
 
-Only `tasklib.package.name` is required. Everything else has a default, and most of the `paths`
+Only `tasklib.package.name` (the distribution name, as on PyPI) is required. Everything else has a default, and most of the `paths`
 defaults are derived from `package.name` or from `paths.tests`.
 
 ## Defaults
 
-| Key                        | Default                     |
-| -------------------------- | --------------------------- |
-| `package.python_version`   | `"3.14"`                    |
-| `paths.src`                | `src/<package.name>`        |
-| `paths.tests`              | `tests`                     |
-| `paths.unit_tests`         | `<paths.tests>/unit`        |
-| `paths.integration_tests`  | `<paths.tests>/integration` |
-| `paths.functional_tests`   | `<paths.tests>/functional`  |
-| `paths.benchmarks`         | `<paths.tests>/benchmarks`  |
-| `paths.docs_config`        | `docs/mkdocs.yml`           |
-| `groups.install`           | `dev`                       |
-| `groups.update`            | `dev,docs`                  |
-| `test.unit_timeout`        | `10`                        |
-| `test.integration_timeout` | `60`                        |
-| `test.functional_timeout`  | `60`                        |
-| `test.xdoctest`            | `true`                      |
-| `test.cov_fail_under`      | not set                     |
+| Key                        | Default                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `package.import_name`      | `<package.name>` with `-` replaced by `_`                                             |
+| `package.python_version`   | `"3.14"`                                                                              |
+| `paths.src`                | `src/<package.import_name>`, or `<package.import_name>` if only that directory exists |
+| `paths.tests`              | `tests`                                                                               |
+| `paths.unit_tests`         | `<paths.tests>/unit`                                                                  |
+| `paths.integration_tests`  | `<paths.tests>/integration`                                                           |
+| `paths.functional_tests`   | `<paths.tests>/functional`                                                            |
+| `paths.benchmarks`         | `<paths.tests>/benchmarks`                                                            |
+| `paths.docs_config`        | `docs/mkdocs.yml`                                                                     |
+| `groups.install`           | `dev`                                                                                 |
+| `groups.update`            | `dev,docs`                                                                            |
+| `test.unit_timeout`        | `10`                                                                                  |
+| `test.integration_timeout` | `60`                                                                                  |
+| `test.functional_timeout`  | `60`                                                                                  |
+| `test.xdoctest`            | `true`                                                                                |
+| `test.cov_fail_under`      | not set                                                                               |
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
 with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
 not have it), and a coverage threshold: with `--cov`, `cov_fail_under` is forwarded as
 `--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
+
+`package.import_name` is the name used to import the package. It is used by `imports.check-cycles`,
+`release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
+Set it when it is not the distribution name with `-` replaced by `_`. It must be a Python module
+name.
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the tasks use
 `load_config`, which turns it into an `invoke.exceptions.Exit` with the same message and the exit

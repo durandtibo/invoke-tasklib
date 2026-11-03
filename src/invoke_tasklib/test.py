@@ -151,7 +151,7 @@ def _run_pytest(
         cmd.append("--cov-report html --cov-report xml --cov-report term")
         if append:
             cmd.append("--cov-append")
-        cmd.append(f"--cov={cfg['package']['name']}")
+        cmd.append(f"--cov={cfg['package']['import_name']}")
         if options["cov_fail_under"] is not None:
             cmd.append(f"--cov-fail-under={options['cov_fail_under']}")
         say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))

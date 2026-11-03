@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from invoke.config import Config
 from invoke.context import Context
@@ -7,13 +9,18 @@ from invoke.exceptions import Exit
 
 from invoke_tasklib.config import (
     _check_keys,
+    _default_src,
     _normalize_groups,
     _validate_bool,
+    _validate_import_name,
     _validate_int,
     _validate_python_version,
     get_config,
     load_config,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _context(tasklib_config: dict | None = None) -> Context:
@@ -29,7 +36,7 @@ def test_get_config_requires_package_name() -> None:
 def test_get_config_defaults() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}}))
     assert cfg == {
-        "package": {"name": "mypkg", "python_version": "3.14"},
+        "package": {"name": "mypkg", "import_name": "mypkg", "python_version": "3.14"},
         "paths": {
             "src": "src/mypkg",
             "tests": "tests",
@@ -103,6 +110,32 @@ def test_get_config_test_invalid_xdoctest() -> None:
 def test_get_config_test_invalid_cov_fail_under() -> None:
     c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": -1}})
     with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer >= 0"):
+        get_config(c)
+
+
+def test_get_config_import_name_replaces_hyphens() -> None:
+    cfg = get_config(_context({"package": {"name": "my-pkg"}}))
+    assert cfg["package"]["import_name"] == "my_pkg"
+
+
+def test_get_config_import_name_override() -> None:
+    cfg = get_config(_context({"package": {"name": "my-pkg", "import_name": "other"}}))
+    assert cfg["package"]["import_name"] == "other"
+
+
+def test_get_config_src_uses_the_import_name() -> None:
+    cfg = get_config(_context({"package": {"name": "my-pkg"}}))
+    assert cfg["paths"]["src"] == "src/my_pkg"
+
+
+def test_get_config_explicit_src_wins_over_import_name() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "paths": {"src": "lib"}}))
+    assert cfg["paths"]["src"] == "lib"
+
+
+def test_get_config_invalid_import_name() -> None:
+    c = _context({"package": {"name": "mypkg", "import_name": "my-pkg"}})
+    with pytest.raises(ValueError, match=r"'tasklib.package.import_name' must be a Python module"):
         get_config(c)
 
 
@@ -410,3 +443,46 @@ def test_validate_bool_accepts_booleans(value: bool) -> None:
 def test_validate_bool_rejects_non_booleans(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
         _validate_bool("xdoctest", value)
+
+
+###########################################
+#     Tests for _validate_import_name     #
+###########################################
+
+
+@pytest.mark.parametrize("value", ["mypkg", "my_pkg", "ns.mypkg"])
+def test_validate_import_name_accepts_module_names(value: str) -> None:
+    assert _validate_import_name(value) == value
+
+
+@pytest.mark.parametrize("value", ["my-pkg", "", "1pkg", "a..b", "my pkg", 3, None])
+def test_validate_import_name_rejects_invalid_names(value: object) -> None:
+    with pytest.raises(ValueError, match=r"must be a Python module name"):
+        _validate_import_name(value)
+
+
+#################################
+#     Tests for _default_src     #
+#################################
+
+
+def test_default_src_prefers_the_src_layout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "src" / "mypkg").mkdir(parents=True)
+    (tmp_path / "mypkg").mkdir()
+    assert _default_src("mypkg") == "src/mypkg"
+
+
+def test_default_src_uses_the_flat_layout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "mypkg").mkdir()
+    assert _default_src("mypkg") == "mypkg"
+
+
+def test_default_src_falls_back_to_the_src_layout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert _default_src("mypkg") == "src/mypkg"

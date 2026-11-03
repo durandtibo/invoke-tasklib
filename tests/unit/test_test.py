@@ -239,6 +239,12 @@ def test_fail_under_zero_is_forwarded() -> None:
     assert "--cov-fail-under=0" in _commands(c)[0]
 
 
+def test_unit_coverage_uses_the_import_name() -> None:
+    c = _context({"package": {"name": "my-pkg"}})
+    test_tasks.unit(c, cov=True)
+    assert "--cov=my_pkg" in _commands(c)[0]
+
+
 def test_unit_args() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.unit(c, args="-k foo -x")
