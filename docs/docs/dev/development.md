@@ -99,15 +99,23 @@ invoke-tasklib/
 ├── src/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `ns` and individual task modules
-│       ├── config.py         # Shared config resolution (`get_config`)
+│       ├── config.py         # Shared config resolution (`get_config`, `load_config`)
+│       ├── runner.py         # Shared command runner (`run`, `build_command`)
+│       ├── output.py         # Progress messages (`say`)
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
+│       ├── imports.py        # imports.* tasks
 │       ├── typecheck.py      # types.* tasks
 │       ├── testing.py        # test.* tasks
 │       ├── env.py            # env.* tasks
 │       ├── release.py        # release.* tasks
-│       └── doc.py            # doc.* tasks
-├── tests/                    # Test files, one module per task module
+│       ├── doc.py            # doc.* tasks
+│       ├── security.py       # security.* tasks
+│       ├── clean.py          # clean.* tasks
+│       └── check.py          # check.* tasks
+├── tests/
+│   ├── unit/                 # Unit tests, one module per source module
+│   └── integration/          # Tests that run the real tools
 ├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `ns`)
 ├── invoke.yaml                # invoke-tasklib's own tasklib config
 ├── pyproject.toml             # Project configuration
@@ -116,8 +124,9 @@ invoke-tasklib/
 
 ## Adding a New Task
 
-1. Pick the right module (`formatting.py`, `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`,
-   or `doc.py`), or create a new one if the task doesn't fit an existing namespace.
+1. Pick the right module (`formatting.py`, `lint.py`, `imports.py`, `typecheck.py`, `testing.py`,
+   `env.py`, `release.py`, `doc.py`, `security.py`, `clean.py` or `check.py`), or create a new one
+   if the task doesn't fit an existing namespace.
 2. Follow the `check_<target>`/`fix_<target>` naming convention when applicable (see
    [Format](../uguide/format.md)).
 3. Call `get_config(c)` if the task needs project-specific paths or the package name, rather than
@@ -125,27 +134,47 @@ invoke-tasklib/
 4. Write a docstring (Google style) describing the task; it is used both by `invoke --list --help`
    and by the [reference docs](../refs/format.md).
 5. Add unit tests using `invoke.context.MockContext` (see existing tests for the pattern).
-6. If the module is new, register it in `src/invoke_tasklib/__init__.py`'s `ns` and `__all__`.
+6. If the module is new, register it in `src/invoke_tasklib/__init__.py` (`_MODULES` and
+   `__all__`).
 7. Update the [README](https://github.com/durandtibo/invoke-tasklib/blob/main/README.md) task
    table and the corresponding [user guide](../uguide/format.md) page.
 
 ## Testing Guidelines
 
 Tests use `invoke.context.MockContext` to capture the shell commands a task would run, without
-actually running them:
+actually running them. Each test module has two small helpers: `_context` builds a `MockContext`
+with an optional `tasklib` config, and `_commands` returns the commands passed to `c.run`
+(`run=True` makes `MockContext` record the calls in a `Mock`, hence the `isinstance` assertion):
 
 ```python
+from unittest.mock import Mock
+
 from invoke.config import Config
 from invoke.context import MockContext
 
 from invoke_tasklib import lint
 
 
+def _context(tasklib_config: dict | None = None) -> MockContext:
+    overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
+    return MockContext(config=Config(overrides=overrides), run=True)
+
+
+def _commands(c: MockContext) -> list[str]:
+    run = c.run
+    assert isinstance(run, Mock)
+    return [call.args[0] for call in run.call_args_list]
+
+
 def test_check_python() -> None:
-    c = MockContext(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}), run=True)
+    c = _context({"package": {"name": "mypkg"}})
     lint.check_python(c)
-    assert c.run.call_args.args[0] == "ruff check --output-format=github ."
+    assert _commands(c) == ["ruff check ."]
 ```
+
+The `tests/unit/conftest.py` fixture makes every program look available on the `PATH`, so the unit
+tests do not depend on the tools installed on the machine. Tests that run the real tools go in
+`tests/integration/`.
 
 ## Continuous Integration
 
