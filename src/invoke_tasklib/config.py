@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import difflib
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
 
@@ -29,7 +30,8 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
-class PackageConfig(TypedDict):
+@dataclass(frozen=True)
+class PackageConfig:
     r"""Resolved ``package`` config section."""
 
     name: str
@@ -37,7 +39,8 @@ class PackageConfig(TypedDict):
     python_version: str
 
 
-class PathsConfig(TypedDict):
+@dataclass(frozen=True)
+class PathsConfig:
     r"""Resolved ``paths`` config section."""
 
     src: str
@@ -49,14 +52,16 @@ class PathsConfig(TypedDict):
     docs_config: str
 
 
-class GroupsConfig(TypedDict):
+@dataclass(frozen=True)
+class GroupsConfig:
     r"""Resolved ``groups`` config section."""
 
     install: str
     update: str
 
 
-class TestConfig(TypedDict):
+@dataclass(frozen=True)
+class TestConfig:
     r"""Resolved ``test`` config section."""
 
     unit_timeout: int
@@ -66,7 +71,8 @@ class TestConfig(TypedDict):
     cov_fail_under: int | None
 
 
-class TasklibConfig(TypedDict):
+@dataclass(frozen=True)
+class TasklibConfig:
     r"""Resolved tasklib config."""
 
     package: PackageConfig
@@ -111,6 +117,15 @@ DEFAULT_TEST: dict[str, int | bool | None] = {
     "xdoctest": True,
     "cov_fail_under": None,
 }
+
+
+_TEST_SCOPES: dict[str, str] = {
+    "unit_tests": "unit",
+    "integration_tests": "integration",
+    "functional_tests": "functional",
+    "benchmarks": "benchmarks",
+}
+r"""Default sub-directory of ``paths.tests`` of each test path."""
 
 
 def _validate_python_version(value: object) -> str:
@@ -355,8 +370,9 @@ def get_config(c: Context) -> TasklibConfig:
         c: The invoke context.
 
     Returns:
-        A dict with the resolved ``package``, ``paths``, ``groups`` and
-        ``test`` sections.
+        A frozen dataclass with the resolved ``package``, ``paths``,
+        ``groups`` and ``test`` sections, each a frozen dataclass too,
+        e.g. ``cfg.paths.src``.
 
     Raises:
         ValueError: If ``tasklib.package.name`` is not set, or if
@@ -380,13 +396,13 @@ def get_config(c: Context) -> TasklibConfig:
     >>> from invoke_tasklib.config import get_config
     >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
     >>> cfg = get_config(c)
-    >>> cfg["package"]
-    {'name': 'mypkg', 'import_name': 'mypkg', 'python_version': '3.14'}
-    >>> cfg["paths"]["src"]
+    >>> cfg.package
+    PackageConfig(name='mypkg', import_name='mypkg', python_version='3.14')
+    >>> cfg.paths.src
     'src/mypkg'
-    >>> cfg["groups"]
-    {'install': 'dev', 'update': 'dev,docs'}
-    >>> cfg["test"]["unit_timeout"]
+    >>> cfg.groups
+    GroupsConfig(install='dev', update='dev,docs')
+    >>> cfg.test.unit_timeout
     10
 
     ```
@@ -410,24 +426,19 @@ def get_config(c: Context) -> TasklibConfig:
         if package["import_name"] is not None
         else str(package["name"]).replace("-", "_")
     )
-    if not paths["src"]:
+    if paths["src"] is None:
         paths["src"] = _default_src(import_name)
-    if not paths["unit_tests"]:
-        paths["unit_tests"] = f"{paths['tests']}/unit"
-    if not paths["integration_tests"]:
-        paths["integration_tests"] = f"{paths['tests']}/integration"
-    if not paths["functional_tests"]:
-        paths["functional_tests"] = f"{paths['tests']}/functional"
-    if not paths["benchmarks"]:
-        paths["benchmarks"] = f"{paths['tests']}/benchmarks"
+    for key, scope in _TEST_SCOPES.items():
+        if paths[key] is None:
+            paths[key] = f"{paths['tests']}/{scope}"
 
-    return {
-        "package": PackageConfig(
+    return TasklibConfig(
+        package=PackageConfig(
             name=package["name"],
             import_name=import_name,
             python_version=_validate_python_version(package["python_version"]),
         ),
-        "paths": PathsConfig(
+        paths=PathsConfig(
             src=str(paths["src"]),
             tests=str(paths["tests"]),
             unit_tests=str(paths["unit_tests"]),
@@ -436,11 +447,11 @@ def get_config(c: Context) -> TasklibConfig:
             benchmarks=str(paths["benchmarks"]),
             docs_config=str(paths["docs_config"]),
         ),
-        "groups": GroupsConfig(
+        groups=GroupsConfig(
             install=_normalize_groups("install", groups["install"]),
             update=_normalize_groups("update", groups["update"]),
         ),
-        "test": TestConfig(
+        test=TestConfig(
             unit_timeout=_validate_int("unit_timeout", test["unit_timeout"], minimum=1),
             integration_timeout=_validate_int(
                 "integration_timeout", test["integration_timeout"], minimum=1
@@ -455,7 +466,7 @@ def get_config(c: Context) -> TasklibConfig:
                 else _validate_int("cov_fail_under", test["cov_fail_under"], minimum=0)
             ),
         ),
-    }
+    )
 
 
 def load_config(c: Context) -> TasklibConfig:
@@ -484,7 +495,7 @@ def load_config(c: Context) -> TasklibConfig:
     >>> from invoke.context import Context
     >>> from invoke_tasklib.config import load_config
     >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
-    >>> load_config(c)["package"]["name"]
+    >>> load_config(c).package.name
     'mypkg'
 
     ```

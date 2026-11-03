@@ -11,10 +11,21 @@ from invoke.context import MockContext
 from invoke.exceptions import Exit
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
     from _pytest.monkeypatch import MonkeyPatch
 
 from invoke_tasklib import doc
-from invoke_tasklib.doc import _parse_release
+from invoke_tasklib.doc import _docs_config, _parse_release
+
+
+@pytest.fixture(autouse=True)
+def _docs_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "mkdocs.yml").write_text("")
+    (tmp_path / "mkdocs.yml").write_text("")
+    monkeypatch.chdir(tmp_path)
 
 
 def _context(tasklib_config: dict | None = None) -> MockContext:
@@ -221,3 +232,46 @@ def test_serve_uses_configured_docs_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
     doc.serve(c)
     assert _commands(c) == ["mkdocs serve --config-file mkdocs.yml"]
+
+
+##################################
+#     Tests for _docs_config     #
+##################################
+
+
+def test_docs_config_returns_the_path() -> None:
+    assert _docs_config(_context({"package": {"name": "mypkg"}})) == "docs/mkdocs.yml"
+
+
+def test_docs_config_missing_file_exits() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    with pytest.raises(Exit, match=r"'no/such.yml' \(tasklib.paths.docs_config\) does not exist"):
+        _docs_config(c)
+
+
+def test_docs_config_missing_file_exit_code() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    with pytest.raises(Exit) as excinfo:
+        _docs_config(c)
+    assert excinfo.value.code == 2
+
+
+def test_docs_config_directory_is_not_a_file() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs"}})
+    with pytest.raises(Exit, match=r"'docs' \(tasklib.paths.docs_config\) does not exist"):
+        _docs_config(c)
+
+
+@pytest.mark.parametrize("task", [doc.build, doc.serve, doc.publish_dev])
+def test_doc_tasks_with_a_missing_config_run_nothing(task: Callable[..., None]) -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    with pytest.raises(Exit, match=r"does not exist"):
+        task(c)
+    assert _commands(c) == []
+
+
+def test_publish_latest_with_a_missing_config_runs_nothing() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    with pytest.raises(Exit, match=r"does not exist"):
+        doc.publish_latest(c, version="1.2")
+    assert _commands(c) == []

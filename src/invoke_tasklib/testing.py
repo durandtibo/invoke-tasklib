@@ -57,7 +57,7 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
 def doctest_src(c: Context) -> None:
     r"""Run doctests on source code."""
     cfg = load_config(c)
-    src = cfg["paths"]["src"]
+    src = cfg.paths.src
     say(c, "📚 Running doctests on source code...")
     run(c, f"{python_executable()} -m pytest --xdoctest {src}")
     say(c, "✅ Doctest validation complete")
@@ -141,19 +141,19 @@ def _run_pytest(
     cfg = load_config(c)
     if skip_missing and not paths and not _directory_exists(c, path, label):
         return
-    options = cfg["test"]
+    options = cfg.test
     say(c, f"🧪 Running {label}...")
     cmd = [f"{python_executable()} -m pytest"]
-    if options["xdoctest"]:
+    if options.xdoctest:
         cmd.append("--xdoctest")
     cmd.append(f"--timeout {timeout}")
     if cov:
         cmd.append("--cov-report html --cov-report xml --cov-report term")
         if append:
             cmd.append("--cov-append")
-        cmd.append(f"--cov={cfg['package']['import_name']}")
-        if options["cov_fail_under"] is not None:
-            cmd.append(f"--cov-fail-under={options['cov_fail_under']}")
+        cmd.append(f"--cov={cfg.package.import_name}")
+        if options.cov_fail_under is not None:
+            cmd.append(f"--cov-fail-under={options.cov_fail_under}")
         say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))
     run(c, build_command(" ".join(cmd), args=args, paths=paths, default_paths=[path]))
     say(c, f"✅ {label.capitalize()} complete")
@@ -177,13 +177,11 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
             directory.
     """
     cfg = load_config(c)
-    options = cfg["test"]
-    timeout = max(
-        options["unit_timeout"], options["integration_timeout"], options["functional_timeout"]
-    )
+    options = cfg.test
+    timeout = max(options.unit_timeout, options.integration_timeout, options.functional_timeout)
     _run_pytest(
         c,
-        cfg["paths"]["tests"],
+        cfg.paths.tests,
         label="all tests",
         timeout=timeout,
         cov=cov,
@@ -209,9 +207,9 @@ def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | No
     cfg = load_config(c)
     _run_pytest(
         c,
-        cfg["paths"]["unit_tests"],
+        cfg.paths.unit_tests,
         label="unit tests",
-        timeout=cfg["test"]["unit_timeout"],
+        timeout=cfg.test.unit_timeout,
         cov=cov,
         args=args,
         paths=paths,
@@ -238,9 +236,9 @@ def integration(
     cfg = load_config(c)
     _run_pytest(
         c,
-        cfg["paths"]["integration_tests"],
+        cfg.paths.integration_tests,
         label="integration tests",
-        timeout=cfg["test"]["integration_timeout"],
+        timeout=cfg.test.integration_timeout,
         cov=cov,
         args=args,
         paths=paths,
@@ -269,9 +267,9 @@ def functional(
     cfg = load_config(c)
     _run_pytest(
         c,
-        cfg["paths"]["functional_tests"],
+        cfg.paths.functional_tests,
         label="functional tests",
-        timeout=cfg["test"]["functional_timeout"],
+        timeout=cfg.test.functional_timeout,
         cov=cov,
         args=args,
         paths=paths,
@@ -305,7 +303,7 @@ def coverage_report(c: Context, open_browser: bool = False) -> None:
 def benchmark(c: Context) -> None:
     r"""Run performance benchmarks."""
     cfg = load_config(c)
-    benchmarks = cfg["paths"]["benchmarks"]
+    benchmarks = cfg.paths.benchmarks
     if not _directory_exists(c, benchmarks, "benchmarks"):
         return
     say(c, "⏱️  Running benchmarks...")

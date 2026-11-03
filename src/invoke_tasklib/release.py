@@ -67,7 +67,7 @@ def build(c: Context, check: bool = False) -> None:
             twine. Default is False.
     """
     cfg = load_config(c)
-    import_name = cfg["package"]["import_name"]
+    import_name = cfg.package.import_name
     say(c, "📦 Building package...")
     run(c, "uv build --clear")
     say(c, "🔍 Verifying package installation...")

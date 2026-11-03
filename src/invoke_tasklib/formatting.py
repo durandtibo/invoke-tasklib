@@ -56,7 +56,7 @@ def check_docstrings(c: Context, args: str | None = None, paths: str | None = No
             ``paths.src``.
     """
     cfg = load_config(c)
-    src = cfg["paths"]["src"]
+    src = cfg.paths.src
     say(c, "📖 Checking docstring formatting...")
     cmd = "docformatter --config ./pyproject.toml --check"
     run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
@@ -97,7 +97,7 @@ def fix_docstrings(c: Context, args: str | None = None, paths: str | None = None
         running this task.
     """
     cfg = load_config(c)
-    src = cfg["paths"]["src"]
+    src = cfg.paths.src
     say(c, "📖 Formatting docstrings...")
     cmd = "docformatter --config ./pyproject.toml --in-place"
     run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))

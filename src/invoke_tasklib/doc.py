@@ -3,6 +3,7 @@ r"""Documentation build and publishing tasks (mkdocs and mike)."""
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
@@ -54,6 +55,45 @@ def _parse_release(version: str) -> tuple[str, bool]:
     return f"{match.group('major')}.{match.group('minor')}", is_prerelease
 
 
+def _docs_config(c: Context) -> str:
+    r"""Return the path of the mkdocs config file, checking that it exists.
+
+    Only the tasks that use the documentation call this function, so a
+    project without documentation can use all the other tasks.
+
+    Args:
+        c: The invoke context.
+
+    Returns:
+        The value of ``paths.docs_config``.
+
+    Raises:
+        Exit: If the config is invalid, or if the file does not exist.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.doc import _docs_config
+    >>> cfg = {"tasklib": {"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}}}
+    >>> _docs_config(Context(config=Config(overrides=cfg)))
+    Traceback (most recent call last):
+        ...
+    invoke.exceptions.Exit: 'no/such.yml' (tasklib.paths.docs_config) does not exist: ...
+
+    ```
+    """
+    docs_config = load_config(c).paths.docs_config
+    if not Path(docs_config).is_file():
+        msg = (
+            f"'{docs_config}' (tasklib.paths.docs_config) does not exist: "
+            "set the path of the mkdocs config file in invoke.yaml"
+        )
+        raise Exit(msg, code=2)
+    return docs_config
+
+
 @task
 def build(c: Context) -> None:
     r"""Build the documentation and fail on any warning.
@@ -65,8 +105,7 @@ def build(c: Context) -> None:
     Raises:
         UnexpectedExit: If mkdocs reports a warning or an error.
     """
-    cfg = load_config(c)
-    docs_config = cfg["paths"]["docs_config"]
+    docs_config = _docs_config(c)
     say(c, "📚 Building the documentation...")
     run(c, f"mkdocs build --strict --config-file {docs_config}")
     say(c, "✅ Documentation built")
@@ -78,8 +117,7 @@ def serve(c: Context) -> None:
 
     The server runs until it is interrupted (``Ctrl+C``).
     """
-    cfg = load_config(c)
-    docs_config = cfg["paths"]["docs_config"]
+    docs_config = _docs_config(c)
     say(c, "📚 Serving the documentation...")
     run(c, f"mkdocs serve --config-file {docs_config}")
 
@@ -87,8 +125,7 @@ def serve(c: Context) -> None:
 @task
 def publish_dev(c: Context) -> None:
     r"""Publish development (e.g. unstable) docs."""
-    cfg = load_config(c)
-    docs_config = cfg["paths"]["docs_config"]
+    docs_config = _docs_config(c)
     say(c, "📚 Publishing development documentation...")
     say(c, "🗑️  Deleting previous 'main' version if it exists...")
     run(c, f"mike delete --config-file {docs_config} main", warn=True)
@@ -122,8 +159,7 @@ def publish_latest(c: Context, version: str | None = None) -> None:
         Exit: If no version is given and no version tag exists, or if the
             version cannot be parsed.
     """
-    cfg = load_config(c)
-    docs_config = cfg["paths"]["docs_config"]
+    docs_config = _docs_config(c)
     if version is None:
         from feu.local_git import get_last_version_tag_name  # noqa: PLC0415 (optional dependency)
 

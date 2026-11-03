@@ -37,8 +37,8 @@ class TasklibConfig(TypedDict):
     paths: PathsConfig
 ```
 
-Returning a `TypedDict` rather than a raw dict gives task authors static typing on
-`cfg["package"]["name"]` and similar accesses.
+Returning frozen dataclasses rather than a raw dict gives task authors static typing on
+`cfg.package.name` and similar accesses, and the values cannot be modified by a task.
 
 ### 2. Task Modules
 
@@ -100,13 +100,15 @@ lets CI safely run every `check_*` task without risk of it modifying the working
 **Trade-off**: Slightly more verbose task names than a single `format` task with a `--fix` flag,
 but the split keeps `invoke --list` self-documenting.
 
-### Why `TypedDict` for Config?
+### Why Frozen Dataclasses for Config?
 
-**Rationale**: Static type checking (via ty) catches typos like `cfg["path"]["src"]` at
-development time, without requiring a runtime schema validation dependency.
+**Rationale**: Static type checking (via ty) catches typos like `cfg.path.src` at development
+time, and attribute access reads better than nested keys, without requiring a runtime schema
+validation dependency.
 
-**Trade-off**: `TypedDict` doesn't validate values at runtime beyond what `get_config` does
-explicitly (e.g. the `package.name` check).
+**Trade-off**: The dataclasses don't validate values on construction; the validation is done by
+`get_config` (e.g. the `package.name` check). It runs when a task starts, not when the collection
+is loaded, because the `invoke.yaml` values are only known once Invoke has built the context.
 
 ## Testing Strategy
 
