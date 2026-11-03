@@ -67,9 +67,11 @@ If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the ta
 `load_config`, which turns it into an `invoke.exceptions.Exit` with the same message and the exit
 code 2 (no traceback).
 
-Unknown keys in the `package`, `paths`, `groups` or `test` sections (typically a typo such as
-`paths.unit_test`) also raise a `ValueError` that lists the valid keys and suggests the closest one,
-instead of being silently ignored.
+Unknown keys in `tasklib` itself (typically a typo of a section such as `path`) and in the
+`package`, `paths`, `groups` or `test` sections (such as `paths.unit_test`) also raise a
+`ValueError` that lists the valid keys and suggests the closest one, instead of being silently
+ignored. Each section must be a mapping, `package.name` and every `paths.*` value must be a
+non-empty string, and `test.cov_fail_under` must be between 0 and 100.
 
 `package.python_version` must be a quoted string such as `"3.10"` or `"3.10.4"`. YAML reads an
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
