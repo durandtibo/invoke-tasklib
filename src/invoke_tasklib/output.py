@@ -17,6 +17,10 @@ def say(c: Context, message: str) -> None:
     configured. Unlike ``logging``, it needs no logging setup to be
     visible.
 
+    A message never fails a task: if the stream cannot encode a
+    character (for example an emoji on an ASCII terminal), the
+    character is replaced by ``?``.
+
     Args:
         c: The invoke context.
         message: The message to write.
@@ -33,5 +37,10 @@ def say(c: Context, message: str) -> None:
     ```
     """
     stream = c.config.run.out_stream or sys.stdout
-    stream.write(f"{message}\n")
+    text = f"{message}\n"
+    try:
+        stream.write(text)
+    except UnicodeEncodeError:
+        encoding = getattr(stream, "encoding", None) or "ascii"
+        stream.write(text.encode(encoding, "replace").decode(encoding))
     stream.flush()
