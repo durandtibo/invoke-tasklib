@@ -4,7 +4,7 @@ import pytest
 from invoke.config import Config
 from invoke.context import Context
 
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import _validate_python_version, get_config
 
 
 def _context(tasklib_config: dict | None = None) -> Context:
@@ -86,3 +86,48 @@ def test_get_config_groups_overrides() -> None:
     )
     assert cfg["groups"]["install"] == "dev,test"
     assert cfg["groups"]["update"] == "dev,test,docs"
+
+
+###############################################
+#     Tests for python_version validation     #
+###############################################
+
+
+@pytest.mark.parametrize("version", [3.1, 3.14, 3, True, None, ["3.10"]])
+def test_get_config_rejects_non_string_python_version(version: object) -> None:
+    c = _context({"package": {"name": "mypkg", "python_version": version}})
+    with pytest.raises(ValueError, match=r"must be a string like"):
+        get_config(c)
+
+
+def test_get_config_python_version_error_mentions_quoting() -> None:
+    c = _context({"package": {"name": "mypkg", "python_version": 3.1}})
+    with pytest.raises(ValueError, match=r"Quote the value in invoke\.yaml"):
+        get_config(c)
+
+
+@pytest.mark.parametrize("version", ["3", "3.", "py3.10", "3.10-dev", "3.x", " 3.10", ""])
+def test_get_config_rejects_malformed_python_version(version: str) -> None:
+    c = _context({"package": {"name": "mypkg", "python_version": version}})
+    with pytest.raises(ValueError, match=r"must be a string like"):
+        get_config(c)
+
+
+@pytest.mark.parametrize("version", ["3.10", "3.9", "3.10.4", "3.14"])
+def test_get_config_accepts_quoted_python_version(version: str) -> None:
+    c = _context({"package": {"name": "mypkg", "python_version": version}})
+    assert get_config(c)["package"]["python_version"] == version
+
+
+##############################################
+#     Tests for _validate_python_version     #
+##############################################
+
+
+def test_validate_python_version_returns_valid_string() -> None:
+    assert _validate_python_version("3.10") == "3.10"
+
+
+def test_validate_python_version_rejects_float() -> None:
+    with pytest.raises(ValueError, match=r"got 3\.1\."):
+        _validate_python_version(3.1)

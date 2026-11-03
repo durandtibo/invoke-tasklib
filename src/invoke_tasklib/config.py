@@ -15,6 +15,7 @@ from it.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
@@ -58,6 +59,9 @@ class TasklibConfig(TypedDict):
 EXCLUDED_DIRS: frozenset[str] = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
 r"""Directories that the tasks never walk into (not owned by the project)."""
 
+PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
+r"""Pattern of a valid ``package.python_version`` (``3.10`` or ``3.10.4``)."""
+
 DEFAULT_PACKAGE: dict[str, str | None] = {
     "name": None,
     "python_version": "3.14",
@@ -79,6 +83,42 @@ DEFAULT_GROUPS: dict[str, str] = {
 }
 
 
+def _validate_python_version(value: object) -> str:
+    r"""Validate the ``package.python_version`` config value.
+
+    YAML reads an unquoted ``3.10`` as the float ``3.1``, which would
+    silently select the wrong Python version, so only quoted strings
+    such as ``"3.10"`` or ``"3.10.4"`` are accepted.
+
+    Args:
+        value: The raw config value.
+
+    Returns:
+        The validated version string.
+
+    Raises:
+        ValueError: If the value is not a string like ``"3.10"`` or
+            ``"3.10.4"``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_python_version
+    >>> _validate_python_version("3.10")
+    '3.10'
+
+    ```
+    """
+    if not isinstance(value, str) or not PYTHON_VERSION_PATTERN.fullmatch(value):
+        msg = (
+            f'\'tasklib.package.python_version\' must be a string like "3.10" or "3.10.4", '
+            f"got {value!r}. Quote the value in invoke.yaml: YAML reads an unquoted 3.10 "
+            "as the number 3.1."
+        )
+        raise ValueError(msg)
+    return value
+
+
 def get_config(c: Context) -> TasklibConfig:
     r"""Return the effective tasklib config, merging user overrides from
     ``invoke.yaml`` (under the ``tasklib`` key) on top of the defaults.
@@ -90,7 +130,10 @@ def get_config(c: Context) -> TasklibConfig:
         A dict with resolved ``package`` and ``paths`` sections.
 
     Raises:
-        ValueError: If ``tasklib.package.name`` is not set.
+        ValueError: If ``tasklib.package.name`` is not set, or if
+            ``tasklib.package.python_version`` is not a string such as
+            ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
+            float ``3.1``).
 
     Example usage:
 
@@ -131,7 +174,8 @@ def get_config(c: Context) -> TasklibConfig:
 
     return {
         "package": PackageConfig(
-            name=package["name"], python_version=str(package["python_version"])
+            name=package["name"],
+            python_version=_validate_python_version(package["python_version"]),
         ),
         "paths": PathsConfig(
             src=str(paths["src"]),
