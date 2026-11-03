@@ -190,6 +190,12 @@ tasklib:
   groups:
     install: dev # dependency groups of env.install
     update: dev,docs # dependency groups of env.update
+  test:
+    unit_timeout: 10 # seconds, also integration_timeout and functional_timeout
+    xdoctest: true
+    cov_reports: html,xml,term
+  check:
+    tasks: format-python,format-docstrings,lint,types,imports,unit # steps of check.all
 ```
 
 See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)

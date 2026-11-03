@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
-_SECTIONS = ("package", "paths", "groups", "test")
+_SECTIONS = ("package", "paths", "groups", "test", "check")
 
 
 @dataclass(frozen=True)
@@ -77,6 +77,13 @@ class TestConfig:
 
 
 @dataclass(frozen=True)
+class CheckConfig:
+    r"""Resolved ``check`` config section."""
+
+    tasks: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class TasklibConfig:
     r"""Resolved tasklib config."""
 
@@ -84,6 +91,7 @@ class TasklibConfig:
     paths: PathsConfig
     groups: GroupsConfig
     test: TestConfig
+    check: CheckConfig
 
 
 EXCLUDED_DIRS: frozenset[str] = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
@@ -131,6 +139,26 @@ DEFAULT_TEST: dict[str, int | bool | str | None] = {
 }
 
 
+CHECK_STEPS: tuple[str, ...] = (
+    "format-python",
+    "format-docstrings",
+    "lint",
+    "types",
+    "imports",
+    "unit",
+    "doctest",
+    "shell",
+    "spelling",
+    "docs",
+    "audit",
+)
+r"""The steps that ``check.all`` can run (``tasklib.check.tasks``)."""
+
+DEFAULT_CHECK: dict[str, str] = {
+    "tasks": "format-python,format-docstrings,lint,types,imports,unit",
+}
+
+
 def default_config() -> dict[str, dict[str, object]]:
     r"""Return the defaults of the ``tasklib`` config section.
 
@@ -142,14 +170,15 @@ def default_config() -> dict[str, dict[str, object]]:
 
     Returns:
         A new dict with the ``package``, ``paths``, ``groups`` and
-        ``test`` sections, each a copy of its ``DEFAULT_*`` dict.
+        ``test`` and ``check`` sections, each a copy of its
+        ``DEFAULT_*`` dict.
 
     Example usage:
 
     ```pycon
     >>> from invoke_tasklib.config import default_config
     >>> sorted(default_config())
-    ['groups', 'package', 'paths', 'test']
+    ['check', 'groups', 'package', 'paths', 'test']
     >>> default_config()["groups"]
     {'install': 'dev', 'update': 'dev,docs'}
 
@@ -160,6 +189,7 @@ def default_config() -> dict[str, dict[str, object]]:
         "paths": dict(DEFAULT_PATHS),
         "groups": dict(DEFAULT_GROUPS),
         "test": dict(DEFAULT_TEST),
+        "check": dict(DEFAULT_CHECK),
     }
 
 
@@ -531,6 +561,56 @@ def _validate_cov_reports(value: object) -> tuple[str, ...]:
     return tuple(names)
 
 
+def _validate_check_tasks(value: object) -> tuple[str, ...]:
+    r"""Validate the ``check.tasks`` config value.
+
+    Args:
+        value: The raw config value: a comma-separated string or a list
+            of step names.
+
+    Returns:
+        The step names, without duplicates, in the order given.
+
+    Raises:
+        ValueError: If the value is neither a string nor a list of
+            strings, if it is empty, or if a name is not one of
+            ``CHECK_STEPS``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_check_tasks
+    >>> _validate_check_tasks("lint, unit")
+    ('lint', 'unit')
+    >>> _validate_check_tasks(["types"])
+    ('types',)
+
+    ```
+    """
+    if isinstance(value, str):
+        names = [name.strip() for name in value.split(",")]
+    elif isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value):
+        names = [name.strip() for name in value]
+    else:
+        msg = (
+            "'tasklib.check.tasks' must be a comma-separated string or a list of "
+            f"strings, got {value!r}"
+        )
+        raise ValueError(msg)
+    names = list(dict.fromkeys(name for name in names if name))
+    if not names:
+        msg = "'tasklib.check.tasks' must contain at least one step"
+        raise ValueError(msg)
+    unknown = [name for name in names if name not in CHECK_STEPS]
+    if unknown:
+        msg = (
+            f"Unknown check step {unknown} in 'tasklib.check.tasks'. "
+            f"Valid steps: {', '.join(CHECK_STEPS)}"
+        )
+        raise ValueError(msg)
+    return tuple(names)
+
+
 def _validate_bool(key: str, value: object) -> bool:
     r"""Validate a boolean value of the ``test`` config section.
 
@@ -568,27 +648,28 @@ def get_config(c: Context) -> TasklibConfig:
 
     Returns:
         A frozen dataclass with the resolved ``package``, ``paths``,
-        ``groups`` and ``test`` sections, each a frozen dataclass too,
+        ``groups``, ``test`` and ``check`` sections, each a frozen
+        dataclass too,
         e.g. ``cfg.paths.src``.
 
     Raises:
-        ValueError: If ``tasklib`` or one of its ``package``, ``paths``,
-            ``groups`` and ``test`` sections is not a mapping, or if
-            ``tasklib`` has a key that is not one of these sections, or
-            if ``tasklib.package.name`` is not set or is not a string,
-            or if a ``tasklib.paths`` value is not a non-empty string,
-            or if ``tasklib.package.python_version`` is not a string
-            such as ``"3.10"`` (an unquoted ``3.10`` is read by YAML as
-            the float ``3.1``), or if ``tasklib.package.import_name`` is
-            not a Python module name, or if a ``tasklib.groups`` value
-            is neither a string nor a list of strings, or if the
-            ``package``, ``paths``, ``groups`` or ``test`` section has
-            an unknown key (for example a typo such as ``unit_test`` for
-            ``unit_tests``), or if a ``tasklib.test`` value is invalid
-            (a timeout and ``cov_fail_under`` must be integers, with a
-            timeout > 0 and ``cov_fail_under`` between 0 and 100,
-            ``cov_reports`` must be report formats, and ``xdoctest``
-            must be a boolean).
+        ValueError: If ``tasklib`` or one of its sections (``package``,
+            ``paths``, ``groups``, ``test`` and ``check``) is not a
+            mapping, or if ``tasklib`` or a section has an unknown key
+            (for example a typo such as ``unit_test`` for
+            ``unit_tests``), or if ``tasklib.package.name`` is not set
+            or is not a string, or if a ``tasklib.paths`` value is not
+            a non-empty string, or if ``tasklib.package.python_version``
+            is not a string such as ``"3.10"`` (an unquoted ``3.10`` is
+            read by YAML as the float ``3.1``), or if
+            ``tasklib.package.import_name`` is not a Python module
+            name, or if a ``tasklib.groups`` value is neither a string
+            nor a list of strings, or if a ``tasklib.test`` value is
+            invalid (a timeout and ``cov_fail_under`` must be integers,
+            with a timeout > 0 and ``cov_fail_under`` between 0 and
+            100, ``cov_reports`` must be report formats, and
+            ``xdoctest`` must be a boolean), or if
+            ``tasklib.check.tasks`` is empty or has an unknown step.
 
     Example usage:
 
@@ -607,6 +688,8 @@ def get_config(c: Context) -> TasklibConfig:
     GroupsConfig(install='dev', update='dev,docs')
     >>> cfg.test.unit_timeout
     10
+    >>> cfg.check.tasks[0]
+    'format-python'
 
     ```
     """
@@ -617,10 +700,12 @@ def get_config(c: Context) -> TasklibConfig:
     _check_keys("paths", sections["paths"], DEFAULT_PATHS)
     _check_keys("groups", sections["groups"], DEFAULT_GROUPS)
     _check_keys("test", sections["test"], DEFAULT_TEST)
+    _check_keys("check", sections["check"], DEFAULT_CHECK)
     package = {**DEFAULT_PACKAGE, **sections["package"]}
     paths = {**DEFAULT_PATHS, **sections["paths"]}
     groups = {**DEFAULT_GROUPS, **sections["groups"]}
     test = {**DEFAULT_TEST, **sections["test"]}
+    check = {**DEFAULT_CHECK, **sections["check"]}
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
@@ -678,6 +763,7 @@ def get_config(c: Context) -> TasklibConfig:
             ),
             cov_reports=_validate_cov_reports(test["cov_reports"]),
         ),
+        check=CheckConfig(tasks=_validate_check_tasks(check["tasks"])),
     )
 
 
