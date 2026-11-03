@@ -81,7 +81,9 @@ See the [user guide](uguide/config.md) for the full config schema.
   docformatter
 - `format.check-shell` / `format.fix-shell`: check shell scripts with shellcheck, or format them
   with shfmt
-- `lint.check-python`: check linting with ruff
+- `lint.check-python` / `lint.fix-python`: check or fix linting with ruff
+- `lint.check-spelling`: check the spelling with codespell
+- `lint.pre-commit`: run all the pre-commit hooks
 
 [Learn more →](uguide/format.md)
 
@@ -93,14 +95,14 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 🔬 **Type Checking**
 
-- `types.check`: check type hints with ty
+- `types.check`: check type hints with ty (`--complete` also runs pyright)
 
 [Learn more →](uguide/types.md)
 
 ### 🧪 **Testing**
 
 - `test.doctest`, `test.doctest-src`, `test.doctest-markdown`, `test.unit`, `test.integration`,
-  `test.functional`, `test.all`, `test.benchmark`
+  `test.functional`, `test.all`, `test.coverage-report`, `test.benchmark`
 
 [Learn more →](uguide/test.md)
 
@@ -119,9 +121,28 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 📚 **Documentation**
 
-- `doc.publish-dev`, `doc.publish-latest`
+- `doc.build`, `doc.serve`, `doc.publish-dev`, `doc.publish-latest`
 
 [Learn more →](uguide/doc.md)
+
+### 🔒 **Security**
+
+- `security.audit`: audit the dependencies for known vulnerabilities with pip-audit
+
+[Learn more →](uguide/security.md)
+
+### ✅ **Check**
+
+- `check.all` (or `check`): run the main read-only checks
+
+[Learn more →](uguide/check.md)
+
+### 🧹 **Clean**
+
+- `clean.all` (or `clean`): remove build artifacts and caches
+- `clean.pycache`: remove all `__pycache__` directories
+
+[Learn more →](uguide/clean.md)
 
 ## Contributing
 
