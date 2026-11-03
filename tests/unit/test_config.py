@@ -213,9 +213,14 @@ def test_get_config_rejects_unknown_package_key() -> None:
         get_config(c)
 
 
+_MISSPELLED_INSTALL = "instal"  # codespell:ignore instal
+
+
 def test_get_config_rejects_unknown_groups_key() -> None:
-    c = _context({"package": {"name": "mypkg"}, "groups": {"instal": "dev"}})
-    with pytest.raises(ValueError, match=r"Unknown key 'instal' \(did you mean 'install'"):
+    c = _context({"package": {"name": "mypkg"}, "groups": {_MISSPELLED_INSTALL: "dev"}})
+    with pytest.raises(
+        ValueError, match=rf"Unknown key '{_MISSPELLED_INSTALL}' \(did you mean 'install'"
+    ):
         get_config(c)
 
 
