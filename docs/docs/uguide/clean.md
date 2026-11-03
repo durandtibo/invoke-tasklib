@@ -20,14 +20,16 @@ invoke clean
 Removes, if present, at the repository root:
 
 - Directories: `build`, `dist`, `.pytest_cache`, `.ruff_cache`, `.coverage_html`, `htmlcov`,
-  `.benchmarks`, `.mypy_cache`, `site`
-- Glob-matched directories: `*.egg-info` (at the root) and every `__pycache__` directory of the
-  project. The `.venv`, `.git`, `.pytest_cache` and `node_modules` directories are never walked
+  `.benchmarks`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`, and `site` only if the project has a
+  `mkdocs.yml` or `docs/mkdocs.yml` file (what produces it)
+- Glob-matched directories: `*.egg-info` (at the root and in `src`) and every `__pycache__`
+  directory of the project. The `.venv`, `.git`, `.pytest_cache` and `node_modules` directories are never walked
   into, so nothing inside them is removed.
-- Files: `.coverage`, `coverage.xml`
+- Files: `.coverage`, `.coverage.*` (parallel coverage data), `coverage.xml`
 
 Nothing is removed if the corresponding directory or file doesn't exist, so `clean` is safe to run
-repeatedly (it's idempotent) and doesn't fail on an already-clean checkout.
+repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a
+directory is removed as a link, and the directory it points to is left untouched.
 
 To remove only the `__pycache__` directories:
 
