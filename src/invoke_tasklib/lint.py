@@ -68,3 +68,38 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
     say(c, "🔧 Fixing linting issues with ruff...")
     run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))
     say(c, "✅ Linting fix complete")
+
+
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def check_spelling(c: Context, args: str | None = None, paths: str | None = None) -> None:
+    r"""Check the spelling with codespell.
+
+    The configuration of codespell is read from the project
+    (``pyproject.toml``). The files are not modified.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to codespell.
+        paths: The files or directories to check instead of the whole
+            project (``.``).
+    """
+    say(c, "🔤 Checking spelling with codespell...")
+    run(c, build_command("codespell", args=args, paths=paths, default_paths=["."]))
+    say(c, "✅ Spelling check passed")
+
+
+@task(help={"args": ARGS_HELP})
+def pre_commit(c: Context, args: str | None = None) -> None:
+    r"""Run all the pre-commit hooks on all the files.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to ``pre-commit run``, e.g.
+            ``"ruff-format"`` to run one hook.
+
+    Note:
+        The hooks may modify files in place.
+    """
+    say(c, "🪝 Running the pre-commit hooks...")
+    run(c, build_command("pre-commit run --all-files", args=args))
+    say(c, "✅ Pre-commit hooks passed")

@@ -23,6 +23,7 @@ def test_ns_contains_expected_subcollections() -> None:
         "doc",
         "security",
         "clean",
+        "check",
     }
 
 
@@ -74,7 +75,12 @@ def test_make_ns_exclude_all_tasks_of_a_namespace_removes_it() -> None:
 
 
 def test_make_ns_include_a_namespace() -> None:
-    assert set(make_ns(include=["lint"]).task_names) == {"lint.check-python", "lint.fix-python"}
+    assert set(make_ns(include=["lint"]).task_names) == {
+        "lint.check-python",
+        "lint.check-spelling",
+        "lint.fix-python",
+        "lint.pre-commit",
+    }
 
 
 def test_make_ns_include_a_task() -> None:
@@ -82,8 +88,8 @@ def test_make_ns_include_a_task() -> None:
 
 
 def test_make_ns_include_then_exclude() -> None:
-    ns_ = make_ns(include=["lint"], exclude=["lint.fix-python"])
-    assert set(ns_.task_names) == {"lint.check-python"}
+    ns_ = make_ns(include=["lint"], exclude=["lint.fix-python", "lint.pre-commit"])
+    assert set(ns_.task_names) == {"lint.check-python", "lint.check-spelling"}
 
 
 def test_make_ns_include_empty_is_an_empty_collection() -> None:

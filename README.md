@@ -123,6 +123,8 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `format`   | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
 | `lint`     | `lint.check-python`           | Check linting with ruff                                                                  |    ❌    |
 | `lint`     | `lint.fix-python`             | Fix auto-fixable linting issues with ruff                                                |    ✅    |
+| `lint`     | `lint.check-spelling`         | Check the spelling with codespell                                                        |    ❌    |
+| `lint`     | `lint.pre-commit`             | Run all the pre-commit hooks                                                             |    ✅    |
 | `imports`  | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
 | `types`    | `types.check`                 | Check type hints with ty                                                                 |    ❌    |
 | `test`     | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
@@ -143,7 +145,10 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `release`  | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
 | `doc`      | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
 | `doc`      | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
+| `doc`      | `doc.build`                   | Build the docs, failing on warnings (`mkdocs build --strict`)                            |    ❌    |
+| `doc`      | `doc.serve`                   | Serve the docs locally                                                                   |    ❌    |
 | `security` | `security.audit`              | Audit installed dependencies for known vulnerabilities with pip-audit                    |    ❌    |
+| `check`    | `check.all` (or `check`)      | Run the main read-only checks                                                            |    ❌    |
 | `clean`    | `clean.all` (or `clean`)      | Remove build artifacts and caches                                                        |    ✅    |
 | `clean`    | `clean.pycache`               | Remove all `__pycache__` directories                                                     |    ✅    |
 

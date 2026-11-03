@@ -18,9 +18,10 @@ To compose a custom subset of tasks instead of using the default
 >>> from invoke_tasklib import lint, test
 >>> ns = Collection(lint, test)
 >>> sorted(ns.task_names)
-['lint.check-python', 'lint.fix-python', 'test.all', 'test.benchmark',
- 'test.coverage-report', 'test.doctest', 'test.doctest-markdown',
- 'test.doctest-src', 'test.functional', 'test.integration', 'test.unit']
+['lint.check-python', 'lint.check-spelling', 'lint.fix-python', 'lint.pre-commit',
+ 'test.all', 'test.benchmark', 'test.coverage-report', 'test.doctest',
+ 'test.doctest-markdown', 'test.doctest-src', 'test.functional',
+ 'test.integration', 'test.unit']
 
 ```
 """
@@ -32,6 +33,7 @@ from typing import TYPE_CHECKING
 from invoke.collection import Collection
 
 from invoke_tasklib import (
+    check,
     clean,
     doc,
     env,
@@ -48,6 +50,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 __all__ = [
+    "check",
     "clean",
     "doc",
     "env",
@@ -73,6 +76,7 @@ _MODULES = {
     "doc": doc,
     "security": security,
     "clean": clean,
+    "check": check,
 }
 r"""The task modules of the default collection, by namespace name."""
 
@@ -128,7 +132,7 @@ def make_ns(*, exclude: Iterable[str] = (), include: Iterable[str] | None = None
 
     ```pycon
     >>> from invoke_tasklib import make_ns
-    >>> ns = make_ns(include=["lint", "test.unit"], exclude=["lint.fix-python"])
+    >>> ns = make_ns(include=["lint.check-python", "test.unit"])
     >>> sorted(ns.task_names)
     ['lint.check-python', 'test.unit']
 

@@ -4,10 +4,12 @@
 
 ## Overview
 
-| Task                | Behavior                                                                  |
-| ------------------- | ------------------------------------------------------------------------- |
-| `lint.check-python` | Checks code linting with [ruff](https://docs.astral.sh/ruff/) (read-only) |
-| `lint.fix-python`   | Fixes auto-fixable linting issues in place with ruff                      |
+| Task                  | Behavior                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| `lint.check-python`   | Checks code linting with [ruff](https://docs.astral.sh/ruff/) (read-only)                        |
+| `lint.fix-python`     | Fixes auto-fixable linting issues in place with ruff                                             |
+| `lint.check-spelling` | Checks the spelling with [codespell](https://github.com/codespell-project/codespell) (read-only) |
+| `lint.pre-commit`     | Runs all the [pre-commit](https://pre-commit.com/) hooks on all the files                        |
 
 ## Usage
 
@@ -33,6 +35,22 @@ that need a manual fix.
 
 !!! warning
 `lint.fix-python` modifies files in place. Commit your work before running it.
+
+## Spelling and Pre-commit Hooks
+
+```shell
+invoke lint.check-spelling
+```
+
+This runs `codespell .` (the configuration is read from `pyproject.toml`). `--args` and `--paths`
+work as for the other tasks.
+
+```shell
+invoke lint.pre-commit
+```
+
+This runs `pre-commit run --all-files`. Pass `--args` to select a hook, e.g.
+`--args ruff-format`. The hooks may modify files.
 
 ## See Also
 
