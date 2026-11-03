@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
 
 import pytest
 
 from invoke_tasklib import env
-from tests.helpers import commands, make_context
+from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -125,17 +124,13 @@ def test_show_python_config() -> None:
 def test_show_python_config_tolerates_a_missing_python_on_the_path() -> None:
     c = make_context()
     env.show_python_config(c)
-    run = c.run
-    assert isinstance(run, Mock)
-    assert run.call_args_list[-1].kwargs["warn"] is True
+    assert run_kwargs(c)[-1]["warn"] is True
 
 
 def test_show_python_config_other_commands_must_succeed() -> None:
     c = make_context()
     env.show_python_config(c)
-    run = c.run
-    assert isinstance(run, Mock)
-    assert [call.kwargs.get("warn", False) for call in run.call_args_list] == [False, False, True]
+    assert [kwargs.get("warn", False) for kwargs in run_kwargs(c)] == [False, False, True]
 
 
 ############################################

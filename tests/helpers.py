@@ -22,6 +22,20 @@ def make_context(tasklib_config: dict | None = None, run: object = True) -> Mock
     return MockContext(config=Config(overrides=overrides), run=run)
 
 
+def run_kwargs(c: MockContext) -> list[dict]:
+    r"""Return the keyword arguments passed to ``c.run``, in order.
+
+    Args:
+        c: A context created by ``make_context`` with ``run=True``.
+
+    Returns:
+        One dictionary of keyword arguments per call.
+    """
+    run = c.run
+    assert isinstance(run, Mock)
+    return [call.kwargs for call in run.call_args_list]
+
+
 def commands(c: MockContext) -> list[str]:
     r"""Return the commands passed to ``c.run``, in order.
 

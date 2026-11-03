@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from invoke.runners import Result
 
-from tests.helpers import commands, make_context
+from tests.helpers import commands, make_context, run_kwargs
 
 ##################################
 #     Tests for make_context     #
@@ -44,3 +44,19 @@ def test_commands_keeps_the_order_of_the_calls() -> None:
     c.run("b")
     c.run("a")
     assert commands(c) == ["b", "a"]
+
+
+###############################
+#     Tests for run_kwargs    #
+###############################
+
+
+def test_run_kwargs_without_calls_is_empty() -> None:
+    assert run_kwargs(make_context()) == []
+
+
+def test_run_kwargs_keeps_the_order_of_the_calls() -> None:
+    c = make_context()
+    c.run("a", warn=True)
+    c.run("b", env={"X": "1"})
+    assert run_kwargs(c) == [{"warn": True}, {"env": {"X": "1"}}]

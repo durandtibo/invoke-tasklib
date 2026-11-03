@@ -234,19 +234,26 @@ def test_get_config_a_missing_name_is_still_reported_as_unset() -> None:
         get_config(_context({"package": {"name": ""}}))
 
 
-def test_get_config_overrides() -> None:
-    cfg = get_config(
-        _context(
-            {
-                "package": {"name": "mypkg", "python_version": "3.11"},
-                "paths": {"src": "mypkg", "docs_config": "mkdocs.yml"},
-            }
-        )
-    )
-    assert cfg.package.python_version == "3.11"
-    assert cfg.paths.src == "mypkg"
-    assert cfg.paths.docs_config == "mkdocs.yml"
-    assert cfg.paths.unit_tests == "tests/unit"
+_OVERRIDES = {
+    "package": {"name": "mypkg", "python_version": "3.11"},
+    "paths": {"src": "mypkg", "docs_config": "mkdocs.yml"},
+}
+
+
+def test_get_config_overrides_the_python_version() -> None:
+    assert get_config(_context(_OVERRIDES)).package.python_version == "3.11"
+
+
+def test_get_config_overrides_the_src_path() -> None:
+    assert get_config(_context(_OVERRIDES)).paths.src == "mypkg"
+
+
+def test_get_config_overrides_the_docs_config_path() -> None:
+    assert get_config(_context(_OVERRIDES)).paths.docs_config == "mkdocs.yml"
+
+
+def test_get_config_keeps_the_default_of_a_path_not_overridden() -> None:
+    assert get_config(_context(_OVERRIDES)).paths.unit_tests == "tests/unit"
 
 
 def test_get_config_all_paths_overridden() -> None:
@@ -275,17 +282,18 @@ def test_get_config_all_paths_overridden() -> None:
     }
 
 
-def test_get_config_groups_overrides() -> None:
-    cfg = get_config(
-        _context(
-            {
-                "package": {"name": "mypkg"},
-                "groups": {"install": "dev,test", "update": "dev,test,docs"},
-            }
-        )
-    )
-    assert cfg.groups.install == ("dev", "test")
-    assert cfg.groups.update == ("dev", "test", "docs")
+_GROUPS = {
+    "package": {"name": "mypkg"},
+    "groups": {"install": "dev,test", "update": "dev,test,docs"},
+}
+
+
+def test_get_config_groups_overrides_install() -> None:
+    assert get_config(_context(_GROUPS)).groups.install == ("dev", "test")
+
+
+def test_get_config_groups_overrides_update() -> None:
+    assert get_config(_context(_GROUPS)).groups.update == ("dev", "test", "docs")
 
 
 ########################################
@@ -1058,13 +1066,23 @@ def test_json_schema_is_deterministic() -> None:
 ###########################
 
 
-def test_main_prints_the_schema(capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_returns_0() -> None:
     assert main([]) == 0
+
+
+def test_main_prints_the_schema(capsys: pytest.CaptureFixture[str]) -> None:
+    main([])
     assert json.loads(capsys.readouterr().out) == json_schema()
 
 
-def test_main_rejects_arguments(capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_rejects_arguments() -> None:
     assert main(["--bad"]) == 2
+
+
+def test_main_prints_the_usage_when_it_rejects_arguments(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    main(["--bad"])
     assert capsys.readouterr().out == "usage: python -m invoke_tasklib.config\n"
 
 

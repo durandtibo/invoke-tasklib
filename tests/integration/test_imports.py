@@ -55,7 +55,9 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 ####################################
 
 
-def test_check_isolated_passes_without_cycle(project: Path) -> None:
+def test_check_isolated_passes_without_cycle(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     _write(
         project,
         {
@@ -65,6 +67,7 @@ def test_check_isolated_passes_without_cycle(project: Path) -> None:
         },
     )
     imports.check_isolated(_context("okpkg"))
+    assert "✅ All 3 module(s) imported on their own" in capsys.readouterr().out
 
 
 def test_check_isolated_detects_cycle_between_sibling_modules(project: Path) -> None:

@@ -28,11 +28,14 @@ def flat_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
-def test_unit_runs_a_flat_tests_directory(
-    flat_project: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+@pytest.mark.usefixtures("flat_project")
+def test_unit_runs_a_flat_tests_directory(capsys: pytest.CaptureFixture[str]) -> None:
     testing.unit(_context(), args="-p no:cacheprovider")
     assert "✅ Unit tests complete" in capsys.readouterr().out
+
+
+def test_unit_does_not_create_the_unit_tests_directory(flat_project: Path) -> None:
+    testing.unit(_context(), args="-p no:cacheprovider")
     assert not (flat_project / "tests" / "unit").exists()
 
 
