@@ -6,17 +6,15 @@ without modifying files); ``fix_<target>`` tasks modify files in place.
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
+from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
     from invoke.context import Context
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 _FIND_SH = "find . -name '*.sh' -type f -not -path './.git/*'"
 
@@ -24,9 +22,9 @@ _FIND_SH = "find . -name '*.sh' -type f -not -path './.git/*'"
 @task
 def check_python(c: Context) -> None:
     r"""Check code format with ruff without modifying files."""
-    logger.info("🎨 Checking code format with ruff...")
+    say(c, "🎨 Checking code format with ruff...")
     c.run("ruff format --check .", pty=True)
-    logger.info("✅ Code format check passed")
+    say(c, "✅ Code format check passed")
 
 
 @task
@@ -35,9 +33,9 @@ def check_docstrings(c: Context) -> None:
     files."""
     cfg = get_config(c)
     src = cfg["paths"]["src"]
-    logger.info("📖 Checking docstring formatting...")
+    say(c, "📖 Checking docstring formatting...")
     c.run(f"docformatter --config ./pyproject.toml --check {src}", pty=True)
-    logger.info("✅ Docstring format check passed")
+    say(c, "✅ Docstring format check passed")
 
 
 @task
@@ -48,9 +46,9 @@ def fix_python(c: Context) -> None:
         This modifies files in place. Ensure your work is committed before
         running this task.
     """
-    logger.info("🎨 Formatting code with ruff...")
+    say(c, "🎨 Formatting code with ruff...")
     c.run("ruff format .", pty=True)
-    logger.info("✅ Code formatting complete")
+    say(c, "✅ Code formatting complete")
 
 
 @task
@@ -63,17 +61,17 @@ def fix_docstrings(c: Context) -> None:
     """
     cfg = get_config(c)
     src = cfg["paths"]["src"]
-    logger.info("📖 Formatting docstrings...")
+    say(c, "📖 Formatting docstrings...")
     c.run(f"docformatter --config ./pyproject.toml --in-place {src}", pty=True)
-    logger.info("✅ Docstring formatting complete")
+    say(c, "✅ Docstring formatting complete")
 
 
 @task
 def check_shell(c: Context) -> None:
     r"""Check shell scripts with shellcheck."""
-    logger.info("🐚 Running shellcheck on shell scripts...")
+    say(c, "🐚 Running shellcheck on shell scripts...")
     c.run(f"{_FIND_SH} -print0 | xargs -0 -r shellcheck --", pty=True)
-    logger.info("✅ Shellcheck passed")
+    say(c, "✅ Shellcheck passed")
 
 
 @task
@@ -84,6 +82,6 @@ def fix_shell(c: Context) -> None:
         This modifies files in place. Ensure your work is committed before
         running this task.
     """
-    logger.info("🔧 Running shfmt to format shell scripts...")
+    say(c, "🔧 Running shfmt to format shell scripts...")
     c.run(f"{_FIND_SH} -print0 | xargs -0 -r shfmt -l -w --", pty=True)
-    logger.info("✅ Shell formatting complete")
+    say(c, "✅ Shell formatting complete")
