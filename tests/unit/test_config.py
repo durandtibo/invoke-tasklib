@@ -9,6 +9,7 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib.config import (
+    COV_REPORTS,
     DEFAULT_GROUPS,
     DEFAULT_PACKAGE,
     DEFAULT_PATHS,
@@ -19,6 +20,7 @@ from invoke_tasklib.config import (
     _int_from_text,
     _normalize_groups,
     _validate_bool,
+    _validate_cov_reports,
     _validate_import_name,
     _validate_int,
     _validate_python_version,
@@ -62,6 +64,7 @@ def test_get_config_defaults() -> None:
             "functional_timeout": 60,
             "xdoctest": True,
             "cov_fail_under": None,
+            "cov_reports": ("html", "xml", "term"),
         },
     }
 
@@ -77,6 +80,7 @@ def test_get_config_test_overrides() -> None:
                     "functional_timeout": 300,
                     "xdoctest": False,
                     "cov_fail_under": 90,
+                    "cov_reports": ["xml"],
                 },
             }
         )
@@ -87,6 +91,7 @@ def test_get_config_test_overrides() -> None:
         "functional_timeout": 300,
         "xdoctest": False,
         "cov_fail_under": 90,
+        "cov_reports": ("xml",),
     }
 
 
@@ -706,3 +711,62 @@ def test_validate_int_rejects_above_the_maximum() -> None:
 
 def test_validate_int_without_maximum_has_no_upper_limit() -> None:
     assert _validate_int("unit_timeout", 10**9, minimum=1) == 10**9
+
+
+###########################################
+#     Tests for _validate_cov_reports     #
+###########################################
+
+
+def test_validate_cov_reports_comma_separated_string() -> None:
+    assert _validate_cov_reports("html,xml,term") == ("html", "xml", "term")
+
+
+def test_validate_cov_reports_list() -> None:
+    assert _validate_cov_reports(["term-missing", "lcov"]) == ("term-missing", "lcov")
+
+
+def test_validate_cov_reports_tuple() -> None:
+    assert _validate_cov_reports(("json",)) == ("json",)
+
+
+def test_validate_cov_reports_strips_spaces() -> None:
+    assert _validate_cov_reports(" html , xml ") == ("html", "xml")
+
+
+def test_validate_cov_reports_removes_duplicates_and_keeps_the_order() -> None:
+    assert _validate_cov_reports("xml,html,xml") == ("xml", "html")
+
+
+@pytest.mark.parametrize("value", ["", ",", " ", []])
+def test_validate_cov_reports_empty_means_no_report_option(value: object) -> None:
+    assert _validate_cov_reports(value) == ()
+
+
+@pytest.mark.parametrize("report", sorted(COV_REPORTS))
+def test_validate_cov_reports_accepts_every_known_report(report: str) -> None:
+    assert _validate_cov_reports(report) == (report,)
+
+
+def test_validate_cov_reports_rejects_an_unknown_report() -> None:
+    with pytest.raises(ValueError, match=r"Unknown coverage report \['htlm'\]"):
+        _validate_cov_reports("html,htlm")
+
+
+def test_validate_cov_reports_error_lists_the_valid_reports() -> None:
+    with pytest.raises(
+        ValueError, match=r"Valid reports: annotate, html, json, lcov, term, term-missing, xml"
+    ):
+        _validate_cov_reports("nope")
+
+
+@pytest.mark.parametrize("value", [5, None, True, ["html", 5], {"html": 1}])
+def test_validate_cov_reports_rejects_other_types(value: object) -> None:
+    with pytest.raises(ValueError, match=r"'tasklib.test.cov_reports' must be a comma-separated"):
+        _validate_cov_reports(value)
+
+
+def test_get_config_cov_reports_error_is_reported() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_reports": "nope"}})
+    with pytest.raises(ValueError, match=r"Unknown coverage report \['nope'\]"):
+        get_config(c)

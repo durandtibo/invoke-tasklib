@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-import types
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -9,6 +8,7 @@ import pytest
 from invoke.config import Config
 from invoke.context import MockContext
 from invoke.exceptions import Exit
+from invoke.runners import Result
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
 
 from invoke_tasklib import doc
-from invoke_tasklib.doc import _docs_config, _parse_release
+from invoke_tasklib.doc import _docs_config, _parse_release, _parse_releases, _published_releases
 
 
 @pytest.fixture(autouse=True)
@@ -46,39 +46,32 @@ def _commands(c: MockContext) -> list[str]:
 #################################
 
 
-def test_publish_dev_quotes_the_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
-    doc.publish_dev(c)
-    assert _commands(c) == [
-        "mike delete --config-file 'd d/mkdocs.yml' main",
-        "mike deploy --config-file 'd d/mkdocs.yml' --push --update-aliases main dev",
-    ]
-
-
 def test_publish_dev() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_dev(c)
     assert _commands(c) == [
-        "mike delete --config-file docs/mkdocs.yml main",
-        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases main dev",
+        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases main dev"
     ]
 
 
-def _install_fake_feu_module(monkeypatch: MonkeyPatch, version: str | None) -> None:
-    def _get_last_version_tag_name() -> str:
-        if version is None:
-            msg = "no tags found"
-            raise RuntimeError(msg)
-        return version
+def test_publish_dev_does_not_delete_the_version_first() -> None:
+    c = _context(_DOCS)
+    doc.publish_dev(c)
+    assert not any(command.startswith("mike delete") for command in _commands(c))
 
-    fake_local_git = types.ModuleType("feu.local_git")
-    monkeypatch.setattr(
-        fake_local_git, "get_last_version_tag_name", _get_last_version_tag_name, raising=False
-    )
-    fake_feu = types.ModuleType("feu")
-    monkeypatch.setattr(fake_feu, "local_git", fake_local_git, raising=False)
-    monkeypatch.setitem(sys.modules, "feu", fake_feu)
-    monkeypatch.setitem(sys.modules, "feu.local_git", fake_local_git)
+
+def test_publish_dev_without_push() -> None:
+    c = _context(_DOCS)
+    doc.publish_dev(c, push=False)
+    assert _commands(c) == ["mike deploy --config-file docs/mkdocs.yml --update-aliases main dev"]
+
+
+def test_publish_dev_quotes_the_docs_config() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    doc.publish_dev(c)
+    assert _commands(c) == [
+        "mike deploy --config-file 'd d/mkdocs.yml' --push --update-aliases main dev"
+    ]
 
 
 ####################################
@@ -92,8 +85,21 @@ _DEPLOY_1_2 = [
 ]
 
 
+def _git_tag(monkeypatch: MonkeyPatch, tag: str | None) -> None:
+    monkeypatch.setattr(doc, "_last_version_tag", lambda _c: tag)
+
+
+def _published(monkeypatch: MonkeyPatch, *releases: tuple[int, int]) -> None:
+    monkeypatch.setattr(doc, "_published_releases", lambda _c, _config: list(releases))
+
+
+@pytest.fixture(autouse=True)
+def _nothing_published(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch)
+
+
 def test_publish_latest_uses_last_version_tag(monkeypatch: MonkeyPatch) -> None:
-    _install_fake_feu_module(monkeypatch, "1.2.3")
+    _git_tag(monkeypatch, "v1.2.3")
     c = _context(_DOCS)
     doc.publish_latest(c)
     assert _commands(c) == _DEPLOY_1_2
@@ -108,31 +114,40 @@ def test_publish_latest_quotes_the_docs_config() -> None:
     ]
 
 
+def test_publish_latest_without_push() -> None:
+    c = _context(_DOCS)
+    doc.publish_latest(c, version="1.2.3", push=False)
+    assert _commands(c) == [
+        "mike deploy --config-file docs/mkdocs.yml --update-aliases 1.2 latest",
+        "mike set-default --config-file docs/mkdocs.yml --allow-empty latest",
+    ]
+
+
 def test_publish_latest_does_not_delete_the_version_first(monkeypatch: MonkeyPatch) -> None:
-    _install_fake_feu_module(monkeypatch, "1.2.3")
+    _git_tag(monkeypatch, "v1.2.3")
     c = _context(_DOCS)
     doc.publish_latest(c)
-    assert not any(cmd.startswith("mike delete") for cmd in _commands(c))
+    assert not any(command.startswith("mike delete") for command in _commands(c))
 
 
 def test_publish_latest_fails_when_no_tag(monkeypatch: MonkeyPatch) -> None:
-    _install_fake_feu_module(monkeypatch, None)
+    _git_tag(monkeypatch, None)
     c = _context(_DOCS)
     with pytest.raises(Exit, match=r"No version tag found"):
         doc.publish_latest(c)
 
 
 def test_publish_latest_does_not_publish_when_no_tag(monkeypatch: MonkeyPatch) -> None:
-    _install_fake_feu_module(monkeypatch, None)
+    _git_tag(monkeypatch, None)
     c = _context(_DOCS)
     with pytest.raises(Exit, match=r"No version tag found"):
         doc.publish_latest(c)
     assert _commands(c) == []
 
 
-@pytest.mark.parametrize("tag", ["1.2.0rc1", "1.2.0a1", "1.2.0b2", "1.2.0.dev3"])
+@pytest.mark.parametrize("tag", ["v1.2.0rc1", "v1.2.0a1", "v1.2.0b2", "v1.2.0.dev3"])
 def test_publish_latest_skips_pre_release_tag(monkeypatch: MonkeyPatch, tag: str) -> None:
-    _install_fake_feu_module(monkeypatch, tag)
+    _git_tag(monkeypatch, tag)
     c = _context(_DOCS)
     doc.publish_latest(c)
     assert _commands(c) == []
@@ -141,25 +156,24 @@ def test_publish_latest_skips_pre_release_tag(monkeypatch: MonkeyPatch, tag: str
 def test_publish_latest_reports_skipped_pre_release(
     monkeypatch: MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    _install_fake_feu_module(monkeypatch, "1.2.0rc1")
+    _git_tag(monkeypatch, "v1.2.0rc1")
     doc.publish_latest(_context(_DOCS))
     assert capsys.readouterr().out == (
-        "⏭️  Skipping the pre-release version 1.2.0rc1: latest docs not published\n"
+        "⏭️  Skipping the pre-release version v1.2.0rc1: latest docs not published\n"
     )
 
 
-def test_publish_latest_with_explicit_version_does_not_need_feu(
+def test_publish_latest_with_explicit_version_does_not_read_the_git_tags(
     monkeypatch: MonkeyPatch,
 ) -> None:
-    monkeypatch.setitem(sys.modules, "feu", None)
-    monkeypatch.setitem(sys.modules, "feu.local_git", None)
+    monkeypatch.setattr(doc, "_last_version_tag", lambda _c: pytest.fail("tags were read"))
     c = _context(_DOCS)
     doc.publish_latest(c, version="1.2.3")
     assert _commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_explicit_version_wins_over_tag(monkeypatch: MonkeyPatch) -> None:
-    _install_fake_feu_module(monkeypatch, "3.0.0")
+    _git_tag(monkeypatch, "v3.0.0")
     c = _context(_DOCS)
     doc.publish_latest(c, version="1.2")
     assert _commands(c) == _DEPLOY_1_2
@@ -183,6 +197,171 @@ def test_publish_latest_does_not_import_packaging(monkeypatch: MonkeyPatch) -> N
     c = _context(_DOCS)
     doc.publish_latest(c, version="1.2.3")
     assert _commands(c) == _DEPLOY_1_2
+
+
+def test_publish_latest_refuses_to_move_latest_backwards(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 0), (1, 2))
+    c = _context(_DOCS)
+    with pytest.raises(
+        Exit, match=r"Refusing to publish 1\.1 as latest: 1\.2 is already published"
+    ):
+        doc.publish_latest(c, version="1.1.5")
+
+
+def test_publish_latest_refusal_runs_nothing(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 2))
+    c = _context(_DOCS)
+    with pytest.raises(Exit, match=r"Refusing to publish"):
+        doc.publish_latest(c, version="1.1.5")
+    assert _commands(c) == []
+
+
+def test_publish_latest_refusal_mentions_force(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 2))
+    with pytest.raises(Exit, match=r"Use --force"):
+        doc.publish_latest(_context(_DOCS), version="1.1.5")
+
+
+def test_publish_latest_force_publishes_an_older_version(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 2))
+    c = _context(_DOCS)
+    doc.publish_latest(c, version="1.1.5", force=True)
+    assert _commands(c) == [
+        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 1.1 latest",
+        "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest",
+    ]
+
+
+def test_publish_latest_republishes_the_newest_version(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 1), (1, 2))
+    c = _context(_DOCS)
+    doc.publish_latest(c, version="1.2.4")
+    assert _commands(c) == _DEPLOY_1_2
+
+
+def test_publish_latest_publishes_a_newer_version(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 1))
+    c = _context(_DOCS)
+    doc.publish_latest(c, version="1.2.0")
+    assert _commands(c) == _DEPLOY_1_2
+
+
+def test_publish_latest_compares_minor_versions_as_numbers(monkeypatch: MonkeyPatch) -> None:
+    _published(monkeypatch, (1, 9))
+    c = _context(_DOCS)
+    doc.publish_latest(c, version="1.10.0")
+    assert _commands(c) == [
+        "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 1.10 latest",
+        "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest",
+    ]
+
+
+def test_publish_latest_does_not_check_the_published_versions_of_a_pre_release(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(doc, "_published_releases", lambda _c, _config: pytest.fail("listed"))
+    doc.publish_latest(_context(_DOCS), version="1.0.0rc1")
+
+
+#######################################
+#     Tests for _last_version_tag     #
+#######################################
+
+_TAG_COMMAND = "git tag --list 'v[0-9]*' --sort=-v:refname"
+
+
+def _git(stdout: str) -> MockContext:
+    return MockContext(config=Config(), run={_TAG_COMMAND: Result(stdout=stdout)})
+
+
+def test_last_version_tag_returns_the_first_tag() -> None:
+    assert doc._last_version_tag(_git("v1.2.0\nv1.1.0\n")) == "v1.2.0"
+
+
+def test_last_version_tag_without_tag_is_none() -> None:
+    assert doc._last_version_tag(_git("")) is None
+
+
+def test_last_version_tag_skips_a_tag_that_is_not_a_version() -> None:
+    assert doc._last_version_tag(_git("v2beta\nv1.1.0\n")) == "v1.1.0"
+
+
+def test_last_version_tag_keeps_a_pre_release_tag() -> None:
+    assert doc._last_version_tag(_git("v1.3.0rc1\nv1.2.0\n")) == "v1.3.0rc1"
+
+
+#########################################
+#     Tests for _published_releases     #
+#########################################
+
+
+def _mike(stdout: str) -> MockContext:
+    command = "mike list --config-file docs/mkdocs.yml --json"
+    return MockContext(config=Config(), run={command: Result(stdout=stdout)})
+
+
+def test_published_releases_reads_the_versions() -> None:
+    out = '[{"version": "main", "aliases": ["dev"]}, {"version": "1.2"}, {"version": "1.10"}]'
+    assert _published_releases(_mike(out), "docs/mkdocs.yml") == [(1, 2), (1, 10)]
+
+
+def test_published_releases_without_output_is_empty() -> None:
+    assert _published_releases(_mike(""), "docs/mkdocs.yml") == []
+
+
+def test_published_releases_without_version_is_empty() -> None:
+    assert _published_releases(_mike("[]"), "docs/mkdocs.yml") == []
+
+
+@pytest.mark.parametrize("out", ["not json", '{"version": "1.2"}', '[{"title": "1.2"}]', "[1]"])
+def test_published_releases_rejects_an_unexpected_output(out: str) -> None:
+    with pytest.raises(Exit, match=r"Cannot read the output of 'mike list"):
+        _published_releases(_mike(out), "docs/mkdocs.yml")
+
+
+def test_parse_releases_reads_the_versions() -> None:
+    assert _parse_releases('[{"version": "1.2"}, {"version": "main"}]', "cmd") == [(1, 2)]
+
+
+def test_parse_releases_error_names_the_command() -> None:
+    with pytest.raises(Exit, match=r"Cannot read the output of 'mike list --json': 'oops'"):
+        _parse_releases("oops", "mike list --json")
+
+
+def test_parse_releases_keeps_the_order() -> None:
+    assert _parse_releases('[{"version": "1.10"}, {"version": "1.2"}]', "cmd") == [(1, 10), (1, 2)]
+
+
+def test_published_releases_quotes_the_docs_config() -> None:
+    command = "mike list --config-file 'd d/mkdocs.yml' --json"
+    c = MockContext(config=Config(), run={command: Result(stdout="[]")})
+    assert _published_releases(c, "d d/mkdocs.yml") == []
+
+
+##################################
+#     Tests for _release_key     #
+##################################
+
+
+@pytest.mark.parametrize(
+    ("tag", "expected"),
+    [("1.2", (1, 2)), ("1.10", (1, 10)), ("v2.0.1", (2, 0)), ("main", None), ("dev", None)],
+)
+def test_release_key(tag: str, expected: tuple[int, int] | None) -> None:
+    assert doc._release_key(tag) == expected
+
+
+##################################
+#     Tests for _push_option     #
+##################################
+
+
+def test_push_option_with_push() -> None:
+    assert doc._push_option(push=True) == " --push"
+
+
+def test_push_option_without_push() -> None:
+    assert doc._push_option(push=False) == ""
 
 
 ####################################
