@@ -59,6 +59,14 @@ invoke lint.check-python imports.check-cycles types.check  # check quality
 invoke test.unit --cov                            # run tests with coverage
 ```
 
+To run the main read-only checks (format, lint, types, imports and the unit tests) in one command:
+
+```shell
+invoke check
+```
+
+See [Check](check.md) for the steps and the options.
+
 And what CI typically runs (nothing should modify the working tree):
 
 ```shell
@@ -125,6 +133,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`shellcheck`](https://www.shellcheck.net/)                     | `format.check-shell`                                            |
 | [`shfmt`](https://github.com/mvdan/sh)                          | `format.fix-shell`                                              |
 | [`ty`](https://docs.astral.sh/ty/)                              | `types.check`                                                   |
+| [`pyright`](https://microsoft.github.io/pyright/)               | `types.check --complete`                                        |
 | [`pytest`](https://docs.pytest.org/)                            | `test.*` except `test.doctest` and `test.doctest-markdown`      |
 | [`pytest-timeout`](https://pypi.org/project/pytest-timeout/)    | `test.unit`, `test.integration`, `test.functional`, `test.all`  |
 | [`pytest-cov`](https://pytest-cov.readthedocs.io/)              | the `--cov` option of the `test.*` tasks                        |
@@ -136,6 +145,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`codespell`](https://github.com/codespell-project/codespell)   | `lint.check-spelling`                                           |
 | [`pre-commit`](https://pre-commit.com/)                         | `lint.pre-commit`                                               |
 | [`mkdocs`](https://www.mkdocs.org/)                             | `doc.build`, `doc.serve`                                        |
+| [`mkdocs-material`](https://squidfunk.github.io/mkdocs-material/) | the theme of the docs built by `doc.build`, `doc.serve`       |
 | [`mike`](https://github.com/jimporter/mike)                     | `doc.publish-dev`, `doc.publish-latest`                         |
 | [`git`](https://git-scm.com/)                                   | `doc.publish-latest`                                            |
 | [`pip-audit`](https://github.com/pypa/pip-audit) (via `uvx`)    | `security.audit`                                                |
