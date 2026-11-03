@@ -52,17 +52,14 @@ tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
 ### 3. The `ns` Namespace
 
-`invoke_tasklib/__init__.py` builds a single `Collection` (`ns`) by adding each task module as a
-sub-collection, named after the module:
-
-```python
-ns = Collection()
-ns.add_collection(Collection.from_module(format), name="format")
-...
-```
+`invoke_tasklib/__init__.py` has `make_ns(*, exclude=(), include=None)`, which builds a new
+`Collection` by adding each task module (`Collection.from_module(module, name=...)`) as a
+sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the
+tasks of `include` when it is set. `ns = make_ns()` is the pre-built collection.
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via a single
-`from invoke_tasklib import ns` in their `tasks.py`.
+`from invoke_tasklib import ns` in their `tasks.py`, or a trimmed copy with `make_ns(...)`. A
+project that adds its own tasks should do it on its own `make_ns()` result, not on the shared `ns`.
 
 ## Data Flow
 

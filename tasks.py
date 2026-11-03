@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib import ns
+from invoke_tasklib import make_ns
 from invoke_tasklib.release import build as release_build
 
 if TYPE_CHECKING:
@@ -27,4 +27,5 @@ def build_package(c: Context) -> None:
     release_build(c)
 
 
+ns = make_ns()
 ns.add_task(build_package)

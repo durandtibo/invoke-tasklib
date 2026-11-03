@@ -7,6 +7,8 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from invoke.tasks import task
+
 from invoke_tasklib.config import EXCLUDED_DIRS
 from invoke_tasklib.output import say
 
@@ -28,7 +30,8 @@ DIR_GLOBS = ("*.egg-info",)
 FILES = (".coverage", "coverage.xml")
 
 
-def all(c: Context) -> None:  # noqa: A001 (task name required by invoke)
+@task(name="all", default=True)
+def all_(c: Context) -> None:
     r"""Remove build artifacts and caches.
 
     The removed paths are ``dist``, ``build``, ``__pycache__``,
@@ -47,6 +50,7 @@ def all(c: Context) -> None:  # noqa: A001 (task name required by invoke)
     say(c, "✅ Cleanup complete")
 
 
+@task
 def pycache(c: Context) -> None:
     r"""Remove all ``__pycache__`` directories."""
     say(c, "🧹 Cleaning __pycache__ directories...")

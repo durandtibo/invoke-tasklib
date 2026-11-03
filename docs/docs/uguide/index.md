@@ -39,7 +39,8 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Doc](doc.md)           | `doc.publish-dev`             | Publish development (unstable) docs                 |    ✅    |
 | [Doc](doc.md)           | `doc.publish-latest`          | Publish latest (stable) docs                        |    ✅    |
 | [Security](security.md) | `security.audit`              | Audit dependencies for known vulnerabilities        |    ❌    |
-| [Clean](clean.md)       | `clean`                       | Remove build artifacts and caches                   |    ✅    |
+| [Clean](clean.md)       | `clean.all` (or `clean`)      | Remove build artifacts and caches                   |    ✅    |
+| [Clean](clean.md)       | `clean.pycache`               | Remove all `__pycache__` directories                |    ✅    |
 | [Config](config.md)     | _(none — shared config)_      | Config resolution used by all tasks above           |    —     |
 
 ## Everyday Workflow
