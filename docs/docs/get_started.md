@@ -4,6 +4,13 @@ We highly recommend installing `invoke-tasklib` in a
 [virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 to avoid dependency conflicts.
 
+## Prerequisite: uv
+
+Most tasks (`env.*`, `release.*` and `security.audit`) run
+[`uv`](https://docs.astral.sh/uv/getting-started/installation/), whichever
+way `invoke-tasklib` is installed. Install it first. A task that needs it
+and cannot find it stops with a hint that points to the same page.
+
 ## Using uv (recommended)
 
 [`uv`](https://docs.astral.sh/uv/) is a fast Python package installer and resolver:
@@ -14,7 +21,8 @@ uv add --dev invoke-tasklib
 
 ## Using pip
 
-Alternatively, you can use `pip`:
+Alternatively, you can use `pip` (`uv` is still needed to run the tasks
+listed above):
 
 ```shell
 pip install invoke-tasklib

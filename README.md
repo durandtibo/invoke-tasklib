@@ -76,6 +76,10 @@ or with `pip`:
 pip install invoke-tasklib
 ```
 
+**Prerequisite:** most tasks (`env.*`, `release.*`, `security.audit`) run
+[`uv`](https://docs.astral.sh/uv/getting-started/installation/), so install
+it even if you install `invoke-tasklib` with `pip`.
+
 **Platforms:** Linux and macOS. Windows is not supported: the tasks rely on
 POSIX tools (`which`, `find`, ...) and a POSIX shell.
 
