@@ -2,8 +2,11 @@ r"""Build and publish tasks (PyPI package)."""
 
 from __future__ import annotations
 
+import shlex
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
@@ -13,9 +16,47 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+def _latest_artifact(directory: Path, pattern: str) -> Path:
+    r"""Return the most recently modified file matching a pattern.
+
+    Args:
+        directory: The directory to search.
+        pattern: The glob pattern of the file name, e.g. ``"*.whl"``.
+
+    Returns:
+        The path of the most recently modified matching file.
+
+    Raises:
+        Exit: If no file matches the pattern.
+
+    Example usage:
+
+    ```pycon
+    >>> import tempfile
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.release import _latest_artifact
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     _ = (Path(tmp) / "pkg-1.0-py3-none-any.whl").write_text("")
+    ...     _latest_artifact(Path(tmp), "*.whl").name
+    ...
+    'pkg-1.0-py3-none-any.whl'
+
+    ```
+    """
+    candidates = sorted(directory.glob(pattern), key=lambda p: p.stat().st_mtime)
+    if not candidates:
+        msg = f"No file matching '{pattern}' found in '{directory}' after the build"
+        raise Exit(msg, code=1)
+    return candidates[-1]
+
+
 @task
 def build(c: Context, check: bool = False) -> None:
-    r"""Build the package and verify it can be installed.
+    r"""Build the package and verify the built artifacts can be installed.
+
+    The newest wheel and the newest source distribution in ``dist/`` are
+    each installed in an isolated environment and the package is
+    imported from it.
 
     Args:
         c: The invoke context.
@@ -27,10 +68,14 @@ def build(c: Context, check: bool = False) -> None:
     say(c, "📦 Building package...")
     c.run("uv build", pty=True)
     say(c, "🔍 Verifying package installation...")
-    c.run(
-        f'uv run --with {name} --refresh-package {name} --no-project -- python -c "import {name}"',
-        pty=True,
-    )
+    for pattern in ("*.whl", "*.tar.gz"):
+        artifact = _latest_artifact(Path("dist"), pattern)
+        say(c, f"🔍 Verifying {artifact}...")
+        c.run(
+            f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
+            f"python -c {shlex.quote(f'import {name}')}",
+            pty=True,
+        )
     if check:
         say(c, "🔍 Checking package metadata with twine...")
         c.run("uvx twine check dist/*", pty=True)
