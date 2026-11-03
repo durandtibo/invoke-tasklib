@@ -17,30 +17,26 @@ if TYPE_CHECKING:
 
 @task
 def check_cycles(c: Context) -> None:
-    r"""Check for cyclic import dependencies by importing each subpackage
-    in isolation.
+    r"""Check for cyclic imports by importing each module in isolation.
 
-    Subpackages are discovered dynamically instead of relying on a hand-
-    maintained list, so newly added subpackages are automatically
-    covered.
+    Every module of the package (not only the subpackages) is discovered
+    without being imported, then imported in its own interpreter. A
+    module that fails to import on its own depends on something that is
+    only initialized as a side effect of importing another module first,
+    which is the usual symptom of a cyclic import.
+
+    Raises:
+        UnexpectedExit: If the discovery fails (for example the package
+            cannot be found) or a module fails to import.
     """
     cfg = get_config(c)
     name = cfg["package"]["name"]
-    say(c, f"🔍 Discovering subpackages of {name}...")
-    discover_script = (
-        "import importlib, pkgutil, sys\n"
-        "name = sys.argv[1]\n"
-        "package = importlib.import_module(name)\n"
-        "names = [name] + sorted(\n"
-        "    n for _, n, ispkg in pkgutil.walk_packages(package.__path__, prefix=f'{name}.')\n"
-        "    if ispkg\n"
-        ")\n"
-        "print('\\n'.join(names))\n"
-    )
-    discover = c.run(f"{python_executable()} -c {shlex.quote(discover_script)} {name}", hide=True)
+    python = python_executable()
+    say(c, f"🔍 Discovering modules of {name}...")
+    discover = c.run(f"{python} -m invoke_tasklib._discover {shlex.quote(name)}", hide=True)
     modules = [line for line in discover.stdout.splitlines() if line]
     say(c, f"🔍 Checking {len(modules)} module(s) for cyclic imports...")
     for module in modules:
         say(c, f"🔍 Checking: {module}")
-        c.run(f"{python_executable()} -c {shlex.quote(f'import {module}')}", pty=True)
+        c.run(f"{python} -c {shlex.quote(f'import {module}')}", pty=True)
     say(c, f"✅ All {len(modules)} module(s) imported without cyclic dependency errors")
