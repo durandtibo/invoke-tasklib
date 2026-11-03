@@ -99,6 +99,18 @@ DEFAULT_HINT = (
 r"""The hint of the programs that are in neither ``PROGRAM_HINTS`` nor
 ``PROGRAM_GROUPS``."""
 
+PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
+    "--xdoctest": ("xdoctest", "xdoctest"),
+    "--timeout": ("pytest_timeout", "pytest-timeout"),
+    "--cov": ("pytest_cov", "pytest-cov"),
+    "--cov-report": ("pytest_cov", "pytest-cov"),
+    "--cov-append": ("pytest_cov", "pytest-cov"),
+    "--cov-fail-under": ("pytest_cov", "pytest-cov"),
+    "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
+}
+r"""The pytest options that come from a plugin, as a tuple of the
+module and of the package to install, by option."""
+
 _SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
 
 _ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
@@ -304,20 +316,60 @@ def hint(program: str) -> str:
     return f"Install it with the '{group}' group: `uv sync --group {group}`."
 
 
+def _check_plugin_options(words: Sequence[str]) -> None:
+    r"""Check the pytest plugins of the options of a pytest command.
+
+    Without this check, pytest reports a missing plugin as
+    ``unrecognized arguments: --xdoctest``, which does not say what to
+    install.
+
+    Args:
+        words: The words of the command, after ``python -m pytest``.
+
+    Raises:
+        Exit: If an option of ``PLUGIN_OPTIONS`` is used and the module
+            of its plugin is not installed.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _check_plugin_options
+    >>> _check_plugin_options(["-x", "tests"])
+
+    ```
+    """
+    for word in words:
+        if word == "--":
+            return
+        option = word.partition("=")[0]
+        if option not in PLUGIN_OPTIONS:
+            continue
+        module, package = PLUGIN_OPTIONS[option]
+        if importlib.util.find_spec(module) is None:
+            msg = (
+                f"The option {option} needs the pytest plugin '{package}', which is not "
+                f"installed for {sys.executable}. Add it to the dependencies of the project, "
+                f"e.g. `uv add --dev {package}`."
+            )
+            raise Exit(msg, code=127)
+
+
 def _check_module(words: Sequence[str]) -> None:
     r"""Check the module of a ``python -m <module>`` command.
 
     Only the running interpreter is checked, because the availability of
     a module is looked up for this interpreter. Without this check, a
     missing module is reported by Python as ``No module named ...``,
-    with no hint.
+    with no hint. For ``pytest``, the plugins of the options are checked
+    too, see ``PLUGIN_OPTIONS``.
 
     Args:
         words: The words of a command.
 
     Raises:
         Exit: If the command runs a module of the running interpreter
-            that is not installed.
+            that is not installed, or a pytest option whose plugin
+            is not installed.
 
     Example usage:
 
@@ -333,6 +385,8 @@ def _check_module(words: Sequence[str]) -> None:
     if importlib.util.find_spec(module) is None:
         msg = f"The Python module '{module}' is not installed for {words[0]}. {hint(module)}"
         raise Exit(msg, code=127)
+    if module == "pytest":
+        _check_plugin_options(words[3:])
 
 
 def check_program(command: str) -> None:
@@ -346,7 +400,8 @@ def check_program(command: str) -> None:
     words before a program are ignored, and so is a command that starts
     a subshell, a group or a substitution (``(``, ``{``, ``$(``). For
     ``python -m <module>`` with the running interpreter, the module is
-    checked.
+    checked, and so are the plugins of the pytest options (see
+    ``PLUGIN_OPTIONS``).
 
     Args:
         command: The command line.

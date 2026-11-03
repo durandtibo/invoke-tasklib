@@ -20,7 +20,9 @@ if TYPE_CHECKING:
 
 @pytest.fixture(autouse=True)
 def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Use a fixed interpreter and do not depend on the installed plugins."""
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: object())
 
 
 @pytest.fixture

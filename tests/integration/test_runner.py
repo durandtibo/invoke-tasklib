@@ -48,3 +48,8 @@ def test_run_executes_a_command_with_an_assignment_and_a_builtin() -> None:
         [sys.executable, "-c", code], capture_output=True, text=True, check=True
     )
     assert result.stdout == "hello\n"
+
+
+def test_check_program_accepts_the_installed_pytest_plugins() -> None:
+    command = f"{shlex.quote(sys.executable)} -m pytest --xdoctest --timeout 5 --cov=x tests"
+    assert check_program(command) is None
