@@ -36,8 +36,8 @@ dependencies = ["invoke>=3.0"]
 
 [dependency-groups]
 dev = [
-  "coverage[toml]>=7.15,<8.0",
-  "docformatter[tomli]>=1.7.8,<2.0",
+  "coverage[toml]>=7.17.0,<8.0",
+  "docformatter>=1.7.8,<2.0",
   "feu[all]>=0.8.4,<1.0",
   "invoke>=3.0,<4.0",
   "pip-audit>=2.10,<3.0",
@@ -48,7 +48,7 @@ dev = [
   "pytest>=9.1,<10.0",
   "pyright>=1.1.414,<2.0",
   "ruff>=0.16,<1.0",
-  "ty>=0.0.95",
+  "ty>=0.0.90,<1.0",
   "xdoctest>=1.3,<2.0",
 ]
 docs = [
@@ -80,7 +80,12 @@ source = ["invoke_tasklib"]
 
 [tool.coverage.report]
 show_missing = true
-exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "^\\s*\\.\\.\\.$",
+  "\\)( -> .+)?: \\.\\.\\.$",
+]
 
 [tool.pytest.ini_options]
 minversion = "9.0"
@@ -88,17 +93,20 @@ pythonpath = ["src"]
 testpaths = ["tests/"]
 log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 log_level = "DEBUG"
-addopts = ["--color", "yes", "--durations", "10", "-rf"]
+addopts = [
+  "--color",
+  "yes",
+  "--durations",
+  "10",
+  "-rf",
+  "--strict-markers",
+  "--strict-config",
+]
+xfail_strict = true
+timeout = 300
+filterwarnings = ["error"]
 # Configuration of the short test summary info
 # https://docs.pytest.org/en/stable/usage.html#detailed-summary-report
-
-[tool.black]
-line-length = 100
-target-version = ["py311", "py312", "py313", "py314"]
-include = '\.pyi?$'
-
-[tool.pylint.FORMAT]
-max-line-length = 100
 
 [tool.docformatter]
 recursive = true
@@ -115,6 +123,7 @@ lint.select = [
   "B",    # bugbear
   "BLE",  # flake8-blind-except
   "C4",   # flake8-comprehensions
+  "C90",  # mccabe complexity
   "D",    # pydocstyle
   "DTZ",  # flake8-datetimez
   "E",    # pycodestyle (Error)
@@ -176,6 +185,7 @@ lint.fixable = [
   "B",    # bugbear
   "BLE",  # flake8-blind-except
   "C4",   # flake8-comprehensions
+  "C90",  # mccabe complexity
   "D",    # pydocstyle
   "DTZ",  # flake8-datetimez
   "E",    # pycodestyle (Error)
@@ -249,9 +259,8 @@ src = ["src"]
 "tests/**" = [
   "D",    # pydocstyle
   "PL",   # Pylint
-  "S101", # flake8-bandit
+  "S101", # flake8-bandit: assert
 ]
-"tests/unit/hashing/test_pydantic.py" = ["S106"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -265,7 +274,15 @@ max-doc-length = 72
 [tool.ruff.lint.isort]
 force-sort-within-sections = false
 combine-as-imports = true
-known-first-party = ["src"]
+known-first-party = ["invoke_tasklib"]
+
+[tool.ruff.lint.flake8-import-conventions]
+[tool.ruff.lint.flake8-import-conventions.aliases]
+numpy = "np"
+pandas = "pd"
+polars = "pl"
+pyarrow = "pa"
+xarray = "xr"
 
 [tool.pyright]
 include = ["src"]
