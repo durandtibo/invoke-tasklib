@@ -122,7 +122,7 @@ git clone git@github.com:durandtibo/invoke-tasklib.git
 cd invoke-tasklib
 ```
 
-**Note**: `invoke-tasklib` requires Python 3.10 or higher.
+**Note**: `invoke-tasklib` requires Python 3.11 or higher.
 
 It is recommended to create a virtual environment (this step is optional):
 

@@ -24,7 +24,6 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: POSIX :: Linux",
   "Operating System :: MacOS",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -32,7 +31,7 @@ classifiers = [
   "Topic :: Software Development :: Build Tools",
 ]
 
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["invoke>=3.0"]
 
 [dependency-groups]
@@ -95,7 +94,7 @@ addopts = ["--color", "yes", "--durations", "10", "-rf"]
 
 [tool.black]
 line-length = 100
-target-version = ["py310", "py311", "py312", "py313", "py314"]
+target-version = ["py311", "py312", "py313", "py314"]
 include = '\.pyi?$'
 
 [tool.pylint.FORMAT]
@@ -156,7 +155,6 @@ lint.select = [
 lint.ignore = [
   "A003",    # Class attribute `{name}` is shadowing a python builtin
   "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed.
-  "B905",    # `zip()` without an explicit strict= parameter set. The `strict=` argument was added in Python 3.10
   "E501",    # Line lengths are recommended to be no greater than 79 characters.
   "W505",    # Doc line too long
   "PLR0913", # Too many arguments in function definition (8 > 5)
@@ -243,7 +241,7 @@ lint.exclude = [
 lint.extend-select = ["D400", "D401", "D404"]
 
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 src = ["src"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -271,7 +269,10 @@ known-first-party = ["src"]
 
 [tool.pyright]
 include = ["src"]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 
 [tool.ty.src]
 include = ["src"]
+
+[tool.ty.environment]
+python-version = "3.11"
