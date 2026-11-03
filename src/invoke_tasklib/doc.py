@@ -10,6 +10,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -60,9 +61,9 @@ def publish_dev(c: Context) -> None:
     docs_config = cfg["paths"]["docs_config"]
     say(c, "📚 Publishing development documentation...")
     say(c, "🗑️  Deleting previous 'main' version if it exists...")
-    c.run(f"mike delete --config-file {docs_config} main", pty=True, warn=True)
+    run(c, f"mike delete --config-file {docs_config} main", warn=True)
     say(c, "🚀 Deploying 'main' and 'dev' aliases...")
-    c.run(f"mike deploy --config-file {docs_config} --push --update-aliases main dev", pty=True)
+    run(c, f"mike deploy --config-file {docs_config} --push --update-aliases main dev")
     say(c, "✅ Development documentation published")
 
 
@@ -114,7 +115,7 @@ def publish_latest(c: Context, version: str | None = None) -> None:
     say(c, "📚 Publishing latest documentation...")
     say(c, f"📌 Using version tag: {tag}")
     say(c, f"🚀 Deploying '{tag}' and 'latest' aliases...")
-    c.run(f"mike deploy --config-file {docs_config} --push --update-aliases {tag} latest", pty=True)
+    run(c, f"mike deploy --config-file {docs_config} --push --update-aliases {tag} latest")
     say(c, "🎯 Setting 'latest' as default...")
-    c.run(f"mike set-default --config-file {docs_config} --push --allow-empty latest", pty=True)
+    run(c, f"mike set-default --config-file {docs_config} --push --allow-empty latest")
     say(c, "✅ Latest documentation published")

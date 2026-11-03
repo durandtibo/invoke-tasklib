@@ -9,7 +9,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, get_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import python_executable
+from invoke_tasklib.runner import python_executable, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -58,7 +58,7 @@ def doctest_src(c: Context) -> None:
     cfg = get_config(c)
     src = cfg["paths"]["src"]
     say(c, "📚 Running doctests on source code...")
-    c.run(f"{python_executable()} -m pytest --xdoctest {src}", pty=True)
+    run(c, f"{python_executable()} -m pytest --xdoctest {src}")
     say(c, "✅ Doctest validation complete")
 
 
@@ -69,9 +69,9 @@ def doctest_markdown(c: Context) -> None:
     say(c, f"📚 Found {len(md_files)} markdown files")
     for f in md_files:
         say(c, f"🔍 Checking: {f}")
-        c.run(
+        run(
+            c,
             f"{python_executable()} -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF {f}",
-            pty=True,
         )
     say(c, f"✅ All {len(md_files)} markdown files have been checked")
 
@@ -105,7 +105,7 @@ def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matche
         cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
         say(c, "📊 Coverage reports will be generated")
     cmd.append(tests)
-    c.run(" ".join(cmd), pty=True)
+    run(c, " ".join(cmd))
     say(c, "✅ All tests complete")
 
 
@@ -126,7 +126,7 @@ def unit(c: Context, cov: bool = False) -> None:
         cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
         say(c, "📊 Coverage reports will be generated")
     cmd.append(unit_tests)
-    c.run(" ".join(cmd), pty=True)
+    run(c, " ".join(cmd))
     say(c, "✅ Unit tests complete")
 
 
@@ -151,7 +151,7 @@ def integration(c: Context, cov: bool = False) -> None:
         )
         say(c, "📊 Coverage reports will be generated (appending)")
     cmd.append(integration_tests)
-    c.run(" ".join(cmd), pty=True)
+    run(c, " ".join(cmd))
     say(c, "✅ Integration tests complete")
 
 
@@ -176,7 +176,7 @@ def functional(c: Context, cov: bool = False) -> None:
         )
         say(c, "📊 Coverage reports will be generated (appending)")
     cmd.append(functional_tests)
-    c.run(" ".join(cmd), pty=True)
+    run(c, " ".join(cmd))
     say(c, "✅ Functional tests complete")
 
 
@@ -193,11 +193,11 @@ def coverage_report(c: Context, open_browser: bool = False) -> None:
             default web browser. Default is False.
     """
     say(c, "📊 Generating coverage report...")
-    c.run("coverage html", pty=True)
-    c.run("coverage report", pty=True)
+    run(c, "coverage html")
+    run(c, "coverage report")
     if open_browser:
         say(c, "🌐 Opening coverage report in the browser...")
-        c.run(f"{python_executable()} -m webbrowser -t htmlcov/index.html")
+        run(c, f"{python_executable()} -m webbrowser -t htmlcov/index.html")
     say(c, "✅ Coverage report generated in htmlcov/")
 
 
@@ -209,5 +209,5 @@ def benchmark(c: Context) -> None:
     if not _directory_exists(c, benchmarks, "benchmarks"):
         return
     say(c, "⏱️  Running benchmarks...")
-    c.run(f"{python_executable()} -m pytest {benchmarks}/ --benchmark-only", pty=True)
+    run(c, f"{python_executable()} -m pytest {benchmarks}/ --benchmark-only")
     say(c, "✅ Benchmarks complete")

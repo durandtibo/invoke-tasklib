@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -19,5 +20,5 @@ def audit(c: Context) -> None:
     The audit is done with ``pip-audit``.
     """
     say(c, "🔒 Auditing dependencies for known vulnerabilities...")
-    c.run("uv run pip-audit", pty=True)
+    run(c, "uv run pip-audit")
     say(c, "✅ Dependency audit passed")

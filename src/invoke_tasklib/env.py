@@ -8,6 +8,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -25,9 +26,9 @@ def create_venv(c: Context) -> None:
     cfg = get_config(c)
     python_version = cfg["package"]["python_version"]
     say(c, f"🐍 Creating virtual environment with Python {python_version}...")
-    c.run(f"uv venv --python {python_version} --clear", pty=True)
+    run(c, f"uv venv --python {python_version} --clear")
     say(c, "📦 Installing invoke...")
-    c.run("uv pip install invoke", pty=True)
+    run(c, "uv pip install invoke")
     say(c, "✅ Virtual environment created successfully")
 
 
@@ -56,9 +57,9 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     if optional_deps:
         cmd.append("--all-extras")
     cmd.extend(f"--group {group}" for group in filter(None, (g.strip() for g in groups.split(","))))
-    c.run(" ".join(cmd), pty=True)
+    run(c, " ".join(cmd))
     say(c, "🔧 Installing package in editable mode...")
-    c.run("uv pip install -e .", pty=True)
+    run(c, "uv pip install -e .")
     say(c, "✅ Installation complete")
 
 
@@ -90,11 +91,11 @@ def update(c: Context, groups: str | None = None) -> None:
     if groups is None:
         groups = get_config(c)["groups"]["update"]
     say(c, "🔄 Updating dependencies...")
-    c.run("uv lock --upgrade", pty=True)
+    run(c, "uv lock --upgrade")
     say(c, "🛠️  Upgrading uv tools...")
-    c.run("uv tool upgrade --all", pty=True)
+    run(c, "uv tool upgrade --all")
     say(c, "🪝 Updating pre-commit hooks...")
-    c.run("pre-commit autoupdate", pty=True)
+    run(c, "pre-commit autoupdate")
     say(c, f"📦 Reinstalling with dependency groups: {groups}...")
     install(c, groups=groups)
     say(c, "✅ Update complete")
@@ -104,13 +105,13 @@ def update(c: Context, groups: str | None = None) -> None:
 def show_installed_packages(c: Context) -> None:
     r"""Show the installed packages."""
     say(c, "📦 Listing installed packages...")
-    c.run("uv pip list", pty=True)
+    run(c, "uv pip list")
 
 
 @task
 def show_python_config(c: Context) -> None:
     r"""Show the python configuration."""
     say(c, "🐍 Python configuration:")
-    c.run("uv python list --only-installed", pty=True)
-    c.run("uv python find", pty=True)
-    c.run("command -v python", pty=True)
+    run(c, "uv python list --only-installed")
+    run(c, "uv python find")
+    run(c, "command -v python")
