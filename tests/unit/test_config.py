@@ -8,6 +8,8 @@ from invoke.exceptions import Exit
 from invoke_tasklib.config import (
     _check_keys,
     _normalize_groups,
+    _validate_bool,
+    _validate_int,
     _validate_python_version,
     get_config,
     load_config,
@@ -38,7 +40,70 @@ def test_get_config_defaults() -> None:
             "docs_config": "docs/mkdocs.yml",
         },
         "groups": {"install": "dev", "update": "dev,docs"},
+        "test": {
+            "unit_timeout": 10,
+            "integration_timeout": 60,
+            "functional_timeout": 60,
+            "xdoctest": True,
+            "cov_fail_under": None,
+        },
     }
+
+
+def test_get_config_test_overrides() -> None:
+    cfg = get_config(
+        _context(
+            {
+                "package": {"name": "mypkg"},
+                "test": {
+                    "unit_timeout": 5,
+                    "integration_timeout": 120,
+                    "functional_timeout": 300,
+                    "xdoctest": False,
+                    "cov_fail_under": 90,
+                },
+            }
+        )
+    )
+    assert cfg["test"] == {
+        "unit_timeout": 5,
+        "integration_timeout": 120,
+        "functional_timeout": 300,
+        "xdoctest": False,
+        "cov_fail_under": 90,
+    }
+
+
+def test_get_config_test_partial_override_keeps_other_defaults() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": 5}}))
+    assert cfg["test"]["integration_timeout"] == 60
+
+
+def test_get_config_test_unknown_key() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"unit_timout": 5}})
+    with pytest.raises(
+        ValueError,
+        match=r"Unknown key 'unit_timout' \(did you mean 'unit_timeout'\?\) in 'tasklib.test'",
+    ):
+        get_config(c)
+
+
+def test_get_config_test_invalid_timeout() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"unit_timeout": 0}})
+    with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer >= 1"):
+        get_config(c)
+
+
+def test_get_config_test_invalid_xdoctest() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"xdoctest": "no"}})
+    with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
+        get_config(c)
+
+
+def test_get_config_test_invalid_cov_fail_under() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": -1}})
+    with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer >= 0"):
+        get_config(c)
 
 
 def test_get_config_overrides() -> None:
@@ -309,3 +374,39 @@ def test_load_config_exits_on_unknown_key() -> None:
     c = Context(config=Config(overrides={"tasklib": {"paths": {"sr": "x"}}}))
     with pytest.raises(Exit, match=r"Unknown key 'sr'"):
         load_config(c)
+
+
+###################################
+#     Tests for _validate_int     #
+###################################
+
+
+def test_validate_int_accepts_the_minimum() -> None:
+    assert _validate_int("unit_timeout", 1, minimum=1) == 1
+
+
+def test_validate_int_rejects_below_the_minimum() -> None:
+    with pytest.raises(ValueError, match=r"must be an integer >= 1, got 0"):
+        _validate_int("unit_timeout", 0, minimum=1)
+
+
+@pytest.mark.parametrize("value", [True, 1.5, "10", None])
+def test_validate_int_rejects_non_integers(value: object) -> None:
+    with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer"):
+        _validate_int("unit_timeout", value, minimum=0)
+
+
+####################################
+#     Tests for _validate_bool     #
+####################################
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_validate_bool_accepts_booleans(value: bool) -> None:
+    assert _validate_bool("xdoctest", value) is value
+
+
+@pytest.mark.parametrize("value", [1, 0, "true", None])
+def test_validate_bool_rejects_non_booleans(value: object) -> None:
+    with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
+        _validate_bool("xdoctest", value)

@@ -113,13 +113,13 @@ def test_doctest(monkeypatch: MonkeyPatch) -> None:
 
 def test_all_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
-    test_tasks.all(c)
+    test_tasks.all_(c)
     assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests"]
 
 
 def test_all_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
-    test_tasks.all(c, cov=True)
+    test_tasks.all_(c, cov=True)
     assert _commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 "
@@ -181,6 +181,62 @@ def test_functional_with_coverage() -> None:
             "--cov-report term --cov-append --cov=mypkg tests/functional"
         )
     ]
+
+
+def test_all_uses_the_largest_timeout() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"functional_timeout": 300}})
+    test_tasks.all_(c)
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 300 tests"]
+
+
+def test_unit_uses_configured_timeout() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"unit_timeout": 3}})
+    test_tasks.unit(c)
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 3 tests/unit"]
+
+
+@pytest.mark.usefixtures("test_dirs")
+def test_integration_uses_configured_timeout() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"integration_timeout": 7}})
+    test_tasks.integration(c)
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 7 tests/integration"]
+
+
+@pytest.mark.usefixtures("test_dirs")
+def test_functional_uses_configured_timeout() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"functional_timeout": 9}})
+    test_tasks.functional(c)
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 9 tests/functional"]
+
+
+def test_unit_without_xdoctest() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"xdoctest": False}})
+    test_tasks.unit(c)
+    assert _commands(c) == ["/venv/bin/python -m pytest --timeout 10 tests/unit"]
+
+
+def test_unit_with_coverage_forwards_fail_under() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": 95}})
+    test_tasks.unit(c, cov=True)
+    assert _commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report html --cov-report xml --cov-report term --cov=mypkg "
+            "--cov-fail-under=95 tests/unit"
+        )
+    ]
+
+
+def test_unit_without_coverage_ignores_fail_under() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": 95}})
+    test_tasks.unit(c)
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"]
+
+
+def test_fail_under_zero_is_forwarded() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": 0}})
+    test_tasks.unit(c, cov=True)
+    assert "--cov-fail-under=0" in _commands(c)[0]
 
 
 def test_coverage_report() -> None:
@@ -269,3 +325,46 @@ def test_directory_exists_is_silent_when_present(
 ) -> None:
     test_tasks._directory_exists(_context(), str(tmp_path), "x")
     assert capsys.readouterr().out == ""
+
+
+#################################
+#     Tests for _run_pytest     #
+#################################
+
+
+def test_run_pytest_says_it_starts(capsys: pytest.CaptureFixture[str]) -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1)
+    assert capsys.readouterr().out == "🧪 Running x tests...\n✅ X tests complete\n"
+
+
+def test_run_pytest_says_coverage_is_generated(capsys: pytest.CaptureFixture[str]) -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, cov=True)
+    assert "📊 Coverage reports will be generated\n" in capsys.readouterr().out
+
+
+def test_run_pytest_says_coverage_is_appended(capsys: pytest.CaptureFixture[str]) -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, cov=True, append=True)
+    assert "📊 Coverage reports will be generated (appending)\n" in capsys.readouterr().out
+
+
+def test_run_pytest_append_without_cov_is_ignored() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, append=True)
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 1 tests/x"]
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_run_pytest_skip_missing_runs_nothing() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, skip_missing=True)
+    assert _commands(c) == []
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_run_pytest_without_skip_missing_runs_a_missing_directory() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1)
+    assert len(_commands(c)) == 1
