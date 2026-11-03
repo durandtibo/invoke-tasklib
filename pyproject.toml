@@ -90,8 +90,6 @@ exclude_lines = [
 minversion = "9.0"
 pythonpath = ["src"]
 testpaths = ["tests/"]
-log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-log_level = "DEBUG"
 addopts = [
   "--color",
   "yes",
