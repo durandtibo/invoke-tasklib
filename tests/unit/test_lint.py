@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
+import pytest
 from invoke.config import Config
 from invoke.context import MockContext
 
@@ -19,10 +20,48 @@ def _commands(c: MockContext) -> list[str]:
     return [call.args[0] for call in run.call_args_list]
 
 
+@pytest.fixture(autouse=True)
+def _outside_github_actions(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
+
 def test_check_python() -> None:
     c = _context()
     lint.check_python(c)
+    assert _commands(c) == ["ruff check ."]
+
+
+def test_check_python_uses_github_format_in_github_actions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    c = _context()
+    lint.check_python(c)
     assert _commands(c) == ["ruff check --output-format=github ."]
+
+
+def test_check_python_explicit_format_wins_in_github_actions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    c = _context()
+    lint.check_python(c, output_format="concise")
+    assert _commands(c) == ["ruff check --output-format=concise ."]
+
+
+def test_check_python_explicit_format() -> None:
+    c = _context()
+    lint.check_python(c, output_format="full")
+    assert _commands(c) == ["ruff check --output-format=full ."]
+
+
+def test_check_python_ignores_other_github_actions_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "false")
+    c = _context()
+    lint.check_python(c)
+    assert _commands(c) == ["ruff check ."]
 
 
 def test_fix_python() -> None:

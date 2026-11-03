@@ -20,7 +20,8 @@ invoke env.create-venv
 ```
 
 Creates (or recreates) a `.venv` using the `package.python_version` from the
-[resolved config](config.md), and installs `invoke` into it via `uv tool install`.
+[resolved config](config.md), and installs `invoke` into it with `uv pip install invoke`. The task is run with `invoke`, so
+`invoke` must already be available (for example through `uv tool install invoke`) to run it.
 
 !!! warning
 This clears any existing `.venv`.
@@ -31,7 +32,8 @@ This clears any existing `.venv`.
 invoke env.install
 ```
 
-Runs `uv sync --frozen` and installs the package in editable mode.
+Runs `uv sync --locked` and installs the package in editable mode. `--locked` fails if `uv.lock`
+is out of date with `pyproject.toml` instead of silently using it (run `uv lock` to refresh it).
 
 | Flag              | Default                          | Adds to `uv sync`                               |
 | ----------------- | -------------------------------- | ----------------------------------------------- |
@@ -58,7 +60,7 @@ than `dev`/`docs` can change the default once instead of passing `--groups` on e
 invoke env.update
 ```
 
-Runs `uv sync --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
+Runs `uv lock --upgrade`, upgrades all `uv` tools, updates pre-commit hooks
 (`pre-commit autoupdate`), and reinstalls the project with the groups from `--groups` (default:
 the [resolved config](config.md)'s `groups.update`, `"dev,docs"` unless overridden).
 
