@@ -142,34 +142,21 @@ invoke-tasklib/
 ## Testing Guidelines
 
 Tests use `invoke.context.MockContext` to capture the shell commands a task would run, without
-actually running them. Each test module has two small helpers: `_context` builds a `MockContext`
-with an optional `tasklib` config, and `_commands` returns the commands passed to `c.run`
-(`run=True` makes `MockContext` record the calls in a `Mock`, hence the `isinstance` assertion):
+actually running them. Two helpers of `tests/helpers.py` are shared by the test modules:
+`make_context` builds a `MockContext` with an optional `tasklib` config, and `commands` returns the
+commands passed to `c.run` (`run=True` makes `MockContext` record the calls in a `Mock`). Import
+them instead of defining a copy in the test module:
 
 ```python
-from unittest.mock import Mock
-
-from invoke.config import Config
-from invoke.context import MockContext
+from tests.helpers import commands, make_context
 
 from invoke_tasklib import lint
 
 
-def _context(tasklib_config: dict | None = None) -> MockContext:
-    overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
-    return MockContext(config=Config(overrides=overrides), run=True)
-
-
-def _commands(c: MockContext) -> list[str]:
-    run = c.run
-    assert isinstance(run, Mock)
-    return [call.args[0] for call in run.call_args_list]
-
-
 def test_check_python() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     lint.check_python(c)
-    assert _commands(c) == ["ruff check ."]
+    assert commands(c) == ["ruff check ."]
 ```
 
 The `tests/unit/conftest.py` fixture makes every program look available on the `PATH`, so the unit

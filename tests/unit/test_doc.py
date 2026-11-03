@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
 
 from invoke_tasklib import doc
 from invoke_tasklib.doc import _docs_config, _parse_release, _parse_releases, _published_releases
+from tests.helpers import commands, make_context
 
 
 @pytest.fixture(autouse=True)
@@ -30,46 +30,35 @@ def _docs_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
 
 
-def _context(tasklib_config: dict | None = None) -> MockContext:
-    overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
-    return MockContext(config=Config(overrides=overrides), run=True)
-
-
-def _commands(c: MockContext) -> list[str]:
-    run = c.run
-    assert isinstance(run, Mock)
-    return [call.args[0] for call in run.call_args_list]
-
-
 #################################
 #     Tests for publish_dev     #
 #################################
 
 
 def test_publish_dev() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs/mkdocs.yml"}})
     doc.publish_dev(c)
-    assert _commands(c) == [
+    assert commands(c) == [
         "mike deploy --config-file docs/mkdocs.yml --push --update-aliases main dev"
     ]
 
 
 def test_publish_dev_does_not_delete_the_version_first() -> None:
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_dev(c)
-    assert not any(command.startswith("mike delete") for command in _commands(c))
+    assert not any(command.startswith("mike delete") for command in commands(c))
 
 
 def test_publish_dev_without_push() -> None:
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_dev(c, push=False)
-    assert _commands(c) == ["mike deploy --config-file docs/mkdocs.yml --update-aliases main dev"]
+    assert commands(c) == ["mike deploy --config-file docs/mkdocs.yml --update-aliases main dev"]
 
 
 def test_publish_dev_quotes_the_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
     doc.publish_dev(c)
-    assert _commands(c) == [
+    assert commands(c) == [
         "mike deploy --config-file 'd d/mkdocs.yml' --push --update-aliases main dev"
     ]
 
@@ -100,24 +89,24 @@ def _nothing_published(monkeypatch: MonkeyPatch) -> None:
 
 def test_publish_latest_uses_last_version_tag(monkeypatch: MonkeyPatch) -> None:
     _git_tag(monkeypatch, "v1.2.3")
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c)
-    assert _commands(c) == _DEPLOY_1_2
+    assert commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_quotes_the_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
     doc.publish_latest(c, version="1.2.3")
-    assert _commands(c) == [
+    assert commands(c) == [
         "mike deploy --config-file 'd d/mkdocs.yml' --push --update-aliases 1.2 latest",
         "mike set-default --config-file 'd d/mkdocs.yml' --push --allow-empty latest",
     ]
 
 
 def test_publish_latest_without_push() -> None:
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2.3", push=False)
-    assert _commands(c) == [
+    assert commands(c) == [
         "mike deploy --config-file docs/mkdocs.yml --update-aliases 1.2 latest",
         "mike set-default --config-file docs/mkdocs.yml --allow-empty latest",
     ]
@@ -125,39 +114,39 @@ def test_publish_latest_without_push() -> None:
 
 def test_publish_latest_does_not_delete_the_version_first(monkeypatch: MonkeyPatch) -> None:
     _git_tag(monkeypatch, "v1.2.3")
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c)
-    assert not any(command.startswith("mike delete") for command in _commands(c))
+    assert not any(command.startswith("mike delete") for command in commands(c))
 
 
 def test_publish_latest_fails_when_no_tag(monkeypatch: MonkeyPatch) -> None:
     _git_tag(monkeypatch, None)
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     with pytest.raises(Exit, match=r"No version tag found"):
         doc.publish_latest(c)
 
 
 def test_publish_latest_does_not_publish_when_no_tag(monkeypatch: MonkeyPatch) -> None:
     _git_tag(monkeypatch, None)
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     with pytest.raises(Exit, match=r"No version tag found"):
         doc.publish_latest(c)
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 @pytest.mark.parametrize("tag", ["v1.2.0rc1", "v1.2.0a1", "v1.2.0b2", "v1.2.0.dev3"])
 def test_publish_latest_skips_pre_release_tag(monkeypatch: MonkeyPatch, tag: str) -> None:
     _git_tag(monkeypatch, tag)
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c)
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 def test_publish_latest_reports_skipped_pre_release(
     monkeypatch: MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     _git_tag(monkeypatch, "v1.2.0rc1")
-    doc.publish_latest(_context(_DOCS))
+    doc.publish_latest(make_context(_DOCS))
     assert capsys.readouterr().out == (
         "⏭️  Skipping the pre-release version v1.2.0rc1: latest docs not published\n"
     )
@@ -167,26 +156,26 @@ def test_publish_latest_with_explicit_version_does_not_read_the_git_tags(
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(doc, "_last_version_tag", lambda _c: pytest.fail("tags were read"))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2.3")
-    assert _commands(c) == _DEPLOY_1_2
+    assert commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_explicit_version_wins_over_tag(monkeypatch: MonkeyPatch) -> None:
     _git_tag(monkeypatch, "v3.0.0")
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2")
-    assert _commands(c) == _DEPLOY_1_2
+    assert commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_explicit_pre_release_is_skipped() -> None:
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2.0rc1")
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 def test_publish_latest_fails_on_unparsable_version() -> None:
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     with pytest.raises(Exit, match=r"Cannot parse the version 'latest'"):
         doc.publish_latest(c, version="latest")
 
@@ -194,14 +183,14 @@ def test_publish_latest_fails_on_unparsable_version() -> None:
 def test_publish_latest_does_not_import_packaging(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "packaging", None)
     monkeypatch.setitem(sys.modules, "packaging.version", None)
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2.3")
-    assert _commands(c) == _DEPLOY_1_2
+    assert commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_refuses_to_move_latest_backwards(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 0), (1, 2))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     with pytest.raises(
         Exit, match=r"Refusing to publish 1\.1 as latest: 1\.2 is already published"
     ):
@@ -210,23 +199,23 @@ def test_publish_latest_refuses_to_move_latest_backwards(monkeypatch: MonkeyPatc
 
 def test_publish_latest_refusal_runs_nothing(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 2))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     with pytest.raises(Exit, match=r"Refusing to publish"):
         doc.publish_latest(c, version="1.1.5")
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 def test_publish_latest_refusal_mentions_force(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 2))
     with pytest.raises(Exit, match=r"Use --force"):
-        doc.publish_latest(_context(_DOCS), version="1.1.5")
+        doc.publish_latest(make_context(_DOCS), version="1.1.5")
 
 
 def test_publish_latest_force_publishes_an_older_version(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 2))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.1.5", force=True)
-    assert _commands(c) == [
+    assert commands(c) == [
         "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 1.1 latest",
         "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest",
     ]
@@ -234,23 +223,23 @@ def test_publish_latest_force_publishes_an_older_version(monkeypatch: MonkeyPatc
 
 def test_publish_latest_republishes_the_newest_version(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 1), (1, 2))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2.4")
-    assert _commands(c) == _DEPLOY_1_2
+    assert commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_publishes_a_newer_version(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 1))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.2.0")
-    assert _commands(c) == _DEPLOY_1_2
+    assert commands(c) == _DEPLOY_1_2
 
 
 def test_publish_latest_compares_minor_versions_as_numbers(monkeypatch: MonkeyPatch) -> None:
     _published(monkeypatch, (1, 9))
-    c = _context(_DOCS)
+    c = make_context(_DOCS)
     doc.publish_latest(c, version="1.10.0")
-    assert _commands(c) == [
+    assert commands(c) == [
         "mike deploy --config-file docs/mkdocs.yml --push --update-aliases 1.10 latest",
         "mike set-default --config-file docs/mkdocs.yml --push --allow-empty latest",
     ]
@@ -260,7 +249,7 @@ def test_publish_latest_does_not_check_the_published_versions_of_a_pre_release(
     monkeypatch: MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(doc, "_published_releases", lambda _c, _config: pytest.fail("listed"))
-    doc.publish_latest(_context(_DOCS), version="1.0.0rc1")
+    doc.publish_latest(make_context(_DOCS), version="1.0.0rc1")
 
 
 #######################################
@@ -405,27 +394,27 @@ def test_parse_release_invalid(version: str) -> None:
 
 
 def test_build() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     doc.build(c)
-    assert _commands(c) == ["mkdocs build --strict --config-file docs/mkdocs.yml"]
+    assert commands(c) == ["mkdocs build --strict --config-file docs/mkdocs.yml"]
 
 
 def test_build_uses_configured_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
     doc.build(c)
-    assert _commands(c) == ["mkdocs build --strict --config-file mkdocs.yml"]
+    assert commands(c) == ["mkdocs build --strict --config-file mkdocs.yml"]
 
 
 def test_build_with_args() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     doc.build(c, args="--site-dir out")
-    assert _commands(c) == ["mkdocs build --strict --config-file docs/mkdocs.yml --site-dir out"]
+    assert commands(c) == ["mkdocs build --strict --config-file docs/mkdocs.yml --site-dir out"]
 
 
 def test_build_quotes_the_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
     doc.build(c)
-    assert _commands(c) == ["mkdocs build --strict --config-file 'd d/mkdocs.yml'"]
+    assert commands(c) == ["mkdocs build --strict --config-file 'd d/mkdocs.yml'"]
 
 
 ###########################
@@ -434,27 +423,27 @@ def test_build_quotes_the_docs_config() -> None:
 
 
 def test_serve() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     doc.serve(c)
-    assert _commands(c) == ["mkdocs serve --config-file docs/mkdocs.yml"]
+    assert commands(c) == ["mkdocs serve --config-file docs/mkdocs.yml"]
 
 
 def test_serve_uses_configured_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
     doc.serve(c)
-    assert _commands(c) == ["mkdocs serve --config-file mkdocs.yml"]
+    assert commands(c) == ["mkdocs serve --config-file mkdocs.yml"]
 
 
 def test_serve_with_args() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     doc.serve(c, args="--dev-addr 127.0.0.1:8001")
-    assert _commands(c) == ["mkdocs serve --config-file docs/mkdocs.yml --dev-addr 127.0.0.1:8001"]
+    assert commands(c) == ["mkdocs serve --config-file docs/mkdocs.yml --dev-addr 127.0.0.1:8001"]
 
 
 def test_serve_quotes_the_docs_config() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
     doc.serve(c)
-    assert _commands(c) == ["mkdocs serve --config-file 'd d/mkdocs.yml'"]
+    assert commands(c) == ["mkdocs serve --config-file 'd d/mkdocs.yml'"]
 
 
 ##################################
@@ -463,38 +452,38 @@ def test_serve_quotes_the_docs_config() -> None:
 
 
 def test_docs_config_returns_the_path() -> None:
-    assert _docs_config(_context({"package": {"name": "mypkg"}})) == "docs/mkdocs.yml"
+    assert _docs_config(make_context({"package": {"name": "mypkg"}})) == "docs/mkdocs.yml"
 
 
 def test_docs_config_missing_file_exits() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
     with pytest.raises(Exit, match=r"'no/such.yml' \(tasklib.paths.docs_config\) does not exist"):
         _docs_config(c)
 
 
 def test_docs_config_missing_file_exit_code() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
     with pytest.raises(Exit) as excinfo:
         _docs_config(c)
     assert excinfo.value.code == 2
 
 
 def test_docs_config_directory_is_not_a_file() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "docs"}})
     with pytest.raises(Exit, match=r"'docs' \(tasklib.paths.docs_config\) does not exist"):
         _docs_config(c)
 
 
 @pytest.mark.parametrize("task", [doc.build, doc.serve, doc.publish_dev])
 def test_doc_tasks_with_a_missing_config_run_nothing(task: Callable[..., None]) -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
     with pytest.raises(Exit, match=r"does not exist"):
         task(c)
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 def test_publish_latest_with_a_missing_config_runs_nothing() -> None:
-    c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
     with pytest.raises(Exit, match=r"does not exist"):
         doc.publish_latest(c, version="1.2")
-    assert _commands(c) == []
+    assert commands(c) == []
