@@ -40,7 +40,7 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
     ```pycon
     >>> from invoke.config import Config
     >>> from invoke.context import Context
-    >>> from invoke_tasklib.test import _directory_exists
+    >>> from invoke_tasklib.testing import _directory_exists
     >>> _directory_exists(Context(config=Config()), "no/such/dir", "benchmarks")
     ⏭️  No 'no/such/dir' directory: skipping benchmarks
     False
@@ -128,7 +128,7 @@ def _run_pytest(
     ```pycon
     >>> from invoke.config import Config
     >>> from invoke.context import MockContext
-    >>> from invoke_tasklib.test import _run_pytest
+    >>> from invoke_tasklib.testing import _run_pytest
     >>> cfg = {"tasklib": {"package": {"name": "mypkg"}}}
     >>> c = MockContext(config=Config(overrides=cfg), run=True)
     >>> _run_pytest(c, "tests/unit", label="unit tests", timeout=10)  # doctest: +ELLIPSIS

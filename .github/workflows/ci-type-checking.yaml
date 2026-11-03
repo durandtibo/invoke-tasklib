@@ -1,4 +1,4 @@
-# Type checking workflow. Maps to src/invoke_tasklib/types.py's check task
+# Type checking workflow. Maps to src/invoke_tasklib/typecheck.py's check task
 # (ty check).
 
 name: Type Checking

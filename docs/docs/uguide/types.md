@@ -1,6 +1,6 @@
 # Types
 
-:book: This page describes the `invoke_tasklib.types` module.
+:book: This page describes the `invoke_tasklib.typecheck` module.
 
 ## Overview
 
@@ -18,5 +18,5 @@ This runs `ty check`.
 
 ## See Also
 
-- [`invoke_tasklib.types` reference](../refs/types.md)
+- [`invoke_tasklib.typecheck` reference](../refs/types.md)
 - [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

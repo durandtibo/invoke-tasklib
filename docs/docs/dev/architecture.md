@@ -42,9 +42,9 @@ Returning a `TypedDict` rather than a raw dict gives task authors static typing 
 
 ### 2. Task Modules
 
-Each task module (`format.py`, `lint.py`, `types.py`, `test.py`, `env.py`, `release.py`, `doc.py`)
+Each task module (`formatting.py`, `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`)
 is a flat collection of `@task`-decorated functions. A module groups tasks that operate on the
-same underlying tool or concern (e.g. most of `test.py` wraps `pytest`, except
+same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, except
 `test.doctest-markdown`, which wraps the standard library's `doctest` module directly).
 
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
@@ -55,7 +55,9 @@ tasks that don't (e.g. `lint.check_python`) skip it entirely.
 `invoke_tasklib/__init__.py` has `make_ns(*, exclude=(), include=None)`, which builds a new
 `Collection` by adding each task module (`Collection.from_module(module, name=...)`) as a
 sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the
-tasks of `include` when it is set. `ns = make_ns()` is the pre-built collection.
+tasks of `include` when it is set. The modules whose names would shadow the standard library or a
+builtin (`format`, `types`, `test`) are named `formatting`, `typecheck` and `testing`; the
+namespace names come from `_MODULES`, not from the module names. `ns = make_ns()` is the pre-built collection.
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via a single
 `from invoke_tasklib import ns` in their `tasks.py`, or a trimmed copy with `make_ns(...)`. A

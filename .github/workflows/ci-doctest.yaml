@@ -1,5 +1,5 @@
 # Documentation testing workflow.
-# Runs doctests on code examples in docstrings (src/invoke_tasklib/test.py's
+# Runs doctests on code examples in docstrings (src/invoke_tasklib/testing.py's
 # doctest task) and validates the docs site builds without errors (mike).
 
 name: Doctest

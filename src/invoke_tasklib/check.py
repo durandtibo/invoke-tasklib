@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib import format, imports, lint, test, types  # noqa: A004
+from invoke_tasklib import formatting, imports, lint, testing, typecheck
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
@@ -29,10 +29,10 @@ def all_(c: Context) -> None:
         UnexpectedExit: If a check fails.
     """
     say(c, "🔎 Running all the checks...")
-    format.check_python(c)
-    format.check_docstrings(c)
+    formatting.check_python(c)
+    formatting.check_docstrings(c)
     lint.check_python(c)
-    types.check(c)
+    typecheck.check(c)
     imports.check_cycles(c)
-    test.unit(c)
+    testing.unit(c)
     say(c, "✅ All checks passed")

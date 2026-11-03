@@ -9,7 +9,7 @@ import pytest
 from invoke.config import Config
 from invoke.context import MockContext
 
-from invoke_tasklib import test as test_tasks
+from invoke_tasklib import testing as test_tasks
 
 if TYPE_CHECKING:
     from collections.abc import Callable

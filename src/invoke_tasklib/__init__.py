@@ -11,12 +11,14 @@ and an ``invoke.yaml`` at the project root::
         name: my_package
 
 To compose a custom subset of tasks instead of using the default
-``ns``, import individual task modules:
+``ns``, use ``make_ns``, or import individual task modules (the module
+of the ``test`` tasks is ``testing``, so its collection needs the name
+``test`` to keep the task names):
 
 ```pycon
 >>> from invoke.collection import Collection
->>> from invoke_tasklib import lint, test
->>> ns = Collection(lint, test)
+>>> from invoke_tasklib import lint, testing
+>>> ns = Collection(lint, Collection.from_module(testing, name="test"))
 >>> sorted(ns.task_names)
 ['lint.check-python', 'lint.check-spelling', 'lint.fix-python', 'lint.pre-commit',
  'test.all', 'test.benchmark', 'test.coverage-report', 'test.doctest',
@@ -37,13 +39,13 @@ from invoke_tasklib import (
     clean,
     doc,
     env,
-    format,  # noqa: A004
+    formatting,
     imports,
     lint,
     release,
     security,
-    test,
-    types,
+    testing,
+    typecheck,
 )
 
 if TYPE_CHECKING:
@@ -54,23 +56,23 @@ __all__ = [
     "clean",
     "doc",
     "env",
-    "format",
+    "formatting",
     "imports",
     "lint",
     "make_ns",
     "ns",
     "release",
     "security",
-    "test",
-    "types",
+    "testing",
+    "typecheck",
 ]
 
 _MODULES = {
-    "format": format,
+    "format": formatting,
     "lint": lint,
     "imports": imports,
-    "types": types,
-    "test": test,
+    "types": typecheck,
+    "test": testing,
     "env": env,
     "release": release,
     "doc": doc,

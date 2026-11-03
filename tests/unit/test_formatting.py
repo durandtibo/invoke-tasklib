@@ -7,7 +7,7 @@ from invoke.config import Config
 from invoke.context import MockContext
 from invoke.exceptions import Exit
 
-from invoke_tasklib import format  # noqa: A004
+from invoke_tasklib import formatting
 
 
 def _context(tasklib_config: dict | None = None) -> MockContext:
@@ -23,43 +23,43 @@ def _commands(c: MockContext) -> list[str]:
 
 def test_check_python() -> None:
     c = _context()
-    format.check_python(c)
+    formatting.check_python(c)
     assert _commands(c) == ["ruff format --check ."]
 
 
 def test_check_docstrings_uses_configured_src_path() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
-    format.check_docstrings(c)
+    formatting.check_docstrings(c)
     assert _commands(c) == ["docformatter --config ./pyproject.toml --check src/mypkg"]
 
 
 def test_check_docstrings_without_package_name_exits_with_a_message() -> None:
     with pytest.raises(Exit, match=r"'tasklib.package.name' must be set"):
-        format.check_docstrings(MockContext(config=Config(), run=True))
+        formatting.check_docstrings(MockContext(config=Config(), run=True))
 
 
 def test_fix_python() -> None:
     c = _context()
-    format.fix_python(c)
+    formatting.fix_python(c)
     assert _commands(c) == ["ruff format ."]
 
 
 def test_fix_docstrings_uses_configured_src_path() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
-    format.fix_docstrings(c)
+    formatting.fix_docstrings(c)
     assert _commands(c) == ["docformatter --config ./pyproject.toml --in-place src/mypkg"]
 
 
 def test_check_shell() -> None:
     c = _context()
-    format.check_shell(c)
-    assert _commands(c) == [f"{format._FIND_SH} | xargs -0 -r shellcheck --"]
+    formatting.check_shell(c)
+    assert _commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shellcheck --"]
 
 
 def test_fix_shell() -> None:
     c = _context()
-    format.fix_shell(c)
-    assert _commands(c) == [f"{format._FIND_SH} | xargs -0 -r shfmt -l -w --"]
+    formatting.fix_shell(c)
+    assert _commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shfmt -l -w --"]
 
 
 ##############################
@@ -68,7 +68,7 @@ def test_fix_shell() -> None:
 
 
 def test_find_sh_command() -> None:
-    assert format._FIND_SH == (
+    assert formatting._FIND_SH == (
         "find . \\( -name .git -o -name .pytest_cache -o -name .venv -o -name build "
         "-o -name dist -o -name node_modules -o -name site \\) -type d -prune "
         "-o -name '*.sh' -type f -print0"
@@ -77,37 +77,37 @@ def test_find_sh_command() -> None:
 
 def test_check_python_args() -> None:
     c = _context()
-    format.check_python(c, args="--diff")
+    formatting.check_python(c, args="--diff")
     assert _commands(c) == ["ruff format --check --diff ."]
 
 
 def test_check_python_paths() -> None:
     c = _context()
-    format.check_python(c, paths="a.py")
+    formatting.check_python(c, paths="a.py")
     assert _commands(c) == ["ruff format --check a.py"]
 
 
 def test_fix_python_args() -> None:
     c = _context()
-    format.fix_python(c, args="--diff")
+    formatting.fix_python(c, args="--diff")
     assert _commands(c) == ["ruff format --diff ."]
 
 
 def test_fix_python_paths() -> None:
     c = _context()
-    format.fix_python(c, paths="a.py")
+    formatting.fix_python(c, paths="a.py")
     assert _commands(c) == ["ruff format a.py"]
 
 
 def test_check_docstrings_paths_replace_src() -> None:
     c = _context({"package": {"name": "mypkg"}})
-    format.check_docstrings(c, paths="src/mypkg/a.py")
+    formatting.check_docstrings(c, paths="src/mypkg/a.py")
     assert _commands(c) == ["docformatter --config ./pyproject.toml --check src/mypkg/a.py"]
 
 
 def test_check_docstrings_args() -> None:
     c = _context({"package": {"name": "mypkg"}})
-    format.check_docstrings(c, args="--wrap-summaries 80")
+    formatting.check_docstrings(c, args="--wrap-summaries 80")
     assert _commands(c) == [
         "docformatter --config ./pyproject.toml --check --wrap-summaries 80 src/mypkg"
     ]
@@ -115,13 +115,13 @@ def test_check_docstrings_args() -> None:
 
 def test_fix_docstrings_paths_replace_src() -> None:
     c = _context({"package": {"name": "mypkg"}})
-    format.fix_docstrings(c, paths="src/mypkg/a.py")
+    formatting.fix_docstrings(c, paths="src/mypkg/a.py")
     assert _commands(c) == ["docformatter --config ./pyproject.toml --in-place src/mypkg/a.py"]
 
 
 def test_fix_docstrings_args() -> None:
     c = _context({"package": {"name": "mypkg"}})
-    format.fix_docstrings(c, args="--wrap-summaries 80")
+    formatting.fix_docstrings(c, args="--wrap-summaries 80")
     assert _commands(c) == [
         "docformatter --config ./pyproject.toml --in-place --wrap-summaries 80 src/mypkg"
     ]
