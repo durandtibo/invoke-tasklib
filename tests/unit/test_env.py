@@ -9,7 +9,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.runner import PROGRAM_HINTS
+from invoke_tasklib.runner import DEFAULT_HINT, PROGRAM_HINTS, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -296,8 +296,8 @@ def test_check_tools_missing_program_says_how_to_install_it(
         env.check_tools(make_context())
     assert capsys.readouterr().out == (
         "🧰 Checking the tools of the tasks...\n"
-        "❌ ruff: program not found. Install the project tools with `invoke env.install` "
-        "(see the troubleshooting page of the documentation).\n"
+        "❌ ruff: program not found. Install it with the 'dev' group: "
+        "`uv sync --group dev`.\n"
         "✅ pytest: /found/pytest\n"
     )
 
@@ -366,3 +366,8 @@ def test_check_tools_does_not_need_the_config(monkeypatch: pytest.MonkeyPatch) -
 
 def test_every_program_with_a_hint_is_checked() -> None:
     assert set(PROGRAM_HINTS) <= set(env.TOOL_PROGRAMS)
+
+
+@pytest.mark.parametrize("name", [*env.TOOL_PROGRAMS, *env.TOOL_MODULES])
+def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
+    assert hint(name) != DEFAULT_HINT

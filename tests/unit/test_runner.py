@@ -12,14 +12,15 @@ from invoke.exceptions import Exit
 
 from invoke_tasklib.runner import (
     DEFAULT_HINT,
+    PROGRAM_GROUPS,
     PROGRAM_HINTS,
     _check_module,
-    _hint,
     _program_of,
     _split,
     _stages,
     build_command,
     check_program,
+    hint,
     python_executable,
     run,
 )
@@ -124,14 +125,26 @@ def test_check_program_accepts_a_program_on_the_path() -> None:
 
 def test_check_program_missing_program_exits(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
-    with pytest.raises(Exit, match=r"'ruff' was not found on the PATH.*invoke env\.install"):
-        check_program("ruff check .")
+    with pytest.raises(Exit, match=r"'ruff' was not found on the PATH.*'dev' group"):
+        check_program("ruff --version")
+
+
+@pytest.mark.parametrize(
+    ("program", "group"),
+    [("ruff", "dev"), ("ty", "dev"), ("pre-commit", "dev"), ("mkdocs", "docs"), ("mike", "docs")],
+)
+def test_check_program_names_the_group_of_a_tool(
+    monkeypatch: pytest.MonkeyPatch, program: str, group: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=rf"'{group}' group: `uv sync --group {group}`"):
+        check_program(f"{program} --version")
 
 
 def test_check_program_missing_program_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
     with pytest.raises(Exit) as excinfo:
-        check_program("ruff check .")
+        check_program("no-such-program --version")
     assert excinfo.value.code == 127
 
 
@@ -249,7 +262,7 @@ def _only(*available: str) -> Callable[[str], str | None]:
     return lambda program: f"/bin/{program}" if program in available else None
 
 
-@pytest.mark.parametrize("program", ["uv", "shellcheck", "shfmt", "codespell"])
+@pytest.mark.parametrize("program", ["uv", "uvx", "git", "shellcheck", "shfmt", "codespell"])
 def test_check_program_uses_the_hint_of_the_program(
     monkeypatch: pytest.MonkeyPatch, program: str
 ) -> None:
@@ -271,7 +284,7 @@ def test_check_program_unknown_program_uses_the_default_hint(
 ) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
     with pytest.raises(Exit, match=re.escape(DEFAULT_HINT)):
-        check_program("ruff check .")
+        check_program("no-such-program --version")
 
 
 def test_check_program_checks_every_stage_of_a_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -364,20 +377,41 @@ def test_check_module_missing_module_uses_the_default_hint(monkeypatch: pytest.M
     monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
     monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
     with pytest.raises(Exit, match=re.escape(DEFAULT_HINT)):
+        _check_module(["/venv/bin/python", "-m", "no_such_module_xyz"])
+
+
+def test_check_module_missing_module_names_its_group(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
+    with pytest.raises(Exit, match=r"'dev' group: `uv sync --group dev`"):
         _check_module(["/venv/bin/python", "-m", "pytest"])
 
 
-###########################
-#     Tests for _hint     #
-###########################
+##########################
+#     Tests for hint     #
+##########################
 
 
 def test_hint_known_program() -> None:
-    assert _hint("shfmt") == PROGRAM_HINTS["shfmt"]
+    assert hint("shfmt") == PROGRAM_HINTS["shfmt"]
+
+
+def test_hint_program_of_a_group() -> None:
+    assert hint("mike") == "Install it with the 'docs' group: `uv sync --group docs`."
 
 
 def test_hint_unknown_program() -> None:
-    assert _hint("ruff") == DEFAULT_HINT
+    assert hint("no-such-program") == DEFAULT_HINT
+
+
+def test_hint_explicit_entry_wins_over_the_group(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(PROGRAM_GROUPS, "uv", "dev")
+    assert hint("uv") == PROGRAM_HINTS["uv"]
+
+
+@pytest.mark.parametrize("program", ["uvx", "git", "pre-commit"])
+def test_hint_is_not_the_default_for_a_program_env_install_cannot_provide(program: str) -> None:
+    assert hint(program) != DEFAULT_HINT
 
 
 #############################
