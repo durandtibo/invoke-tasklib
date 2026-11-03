@@ -229,7 +229,8 @@ For feature requests, please include:
 - Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/)
 - Use [Ruff](https://github.com/astral-sh/ruff) for linting and formatting
 - Use [ty](https://github.com/astral-sh/ty) for type checking
-- Maximum line length: 100 characters
+- Maximum line length: 100 characters (72 characters for docstrings and comments, enforced by
+  `ruff` with `max-doc-length`)
 - Fix the issues raised by ruff and ty instead of ignoring them (`noqa`, `type: ignore`)
 
 ### Docstring Style
