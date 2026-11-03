@@ -523,9 +523,8 @@ def get_config(c: Context) -> TasklibConfig:
             example a typo such as ``unit_test`` for ``unit_tests``), or
             if a ``tasklib.test`` value is invalid (a timeout and
             ``cov_fail_under`` must be integers, with a timeout > 0 and
-            ``cov_fail_under`` between 0 and 100, ``cov_reports`` must be
-            report formats, and ``xdoctest`` must be a
-            boolean).
+            ``cov_fail_under`` between 0 and 100, ``cov_reports`` must
+            be report formats, and ``xdoctest`` must be a boolean).
 
     Example usage:
 

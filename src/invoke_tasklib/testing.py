@@ -100,7 +100,8 @@ def _find_markdown_files(root: Path) -> list[Path]:
     ...     (Path(tmp) / ".venv").mkdir()
     ...     _ = (Path(tmp) / "docs" / "a.md").write_text("")
     ...     _ = (Path(tmp) / ".venv" / "b.md").write_text("")
-    ...     [p.relative_to(tmp).as_posix() for p in _find_markdown_files(Path(tmp))]
+    ...     found = _find_markdown_files(Path(tmp))
+    ...     [p.relative_to(tmp).as_posix() for p in found]
     ...
     ['docs/a.md']
 
