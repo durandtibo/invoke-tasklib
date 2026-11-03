@@ -98,7 +98,7 @@ invoke-tasklib/
 │   └── mkdocs.yml            # MkDocs configuration
 ├── src/
 │   └── invoke_tasklib/
-│       ├── __init__.py       # Public API: `ns` and individual task modules
+│       ├── __init__.py       # Public API: `make_ns` and individual task modules
 │       ├── config.py         # Shared config resolution (`get_config`, `load_config`)
 │       ├── runner.py         # Shared command runner (`run`, `build_command`)
 │       ├── output.py         # Progress messages (`say`)
@@ -116,7 +116,7 @@ invoke-tasklib/
 ├── tests/
 │   ├── unit/                 # Unit tests, one module per source module
 │   └── integration/          # Tests that run the real tools
-├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `ns`)
+├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `make_ns`)
 ├── invoke.yaml                # invoke-tasklib's own tasklib config
 ├── pyproject.toml             # Project configuration
 └── README.md

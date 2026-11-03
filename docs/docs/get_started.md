@@ -48,7 +48,9 @@ Add a `tasks.py` at the root of your project that imports the shared namespace:
 
 ```python
 # tasks.py
-from invoke_tasklib import ns
+from invoke_tasklib import make_ns
+
+ns = make_ns()
 ```
 
 ### 2. Add an `invoke.yaml`

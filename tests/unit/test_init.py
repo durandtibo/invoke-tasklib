@@ -4,8 +4,11 @@ import pytest
 from invoke.collection import Collection
 from invoke.tasks import Task
 
-from invoke_tasklib import _matches, make_ns, ns
+import invoke_tasklib
+from invoke_tasklib import _installed_version, _matches, _shared_ns, make_ns
 from invoke_tasklib.config import default_config
+
+ns = make_ns()
 
 
 def test_ns_is_collection() -> None:
@@ -223,3 +226,68 @@ def test_task_has_the_args_option(name: str) -> None:
 @pytest.mark.parametrize("name", sorted(_WITHOUT_ARGS))
 def test_exception_of_the_args_option_has_no_args_option(name: str) -> None:
     assert "args" not in _option_names(name)
+
+
+##########################################
+#     Tests for the deprecated `ns`      #
+##########################################
+
+
+def test_ns_attribute_is_deprecated() -> None:
+    with pytest.warns(DeprecationWarning, match=r"'invoke_tasklib\.ns' is deprecated"):
+        _ = invoke_tasklib.ns
+
+
+def test_ns_attribute_names_the_replacement() -> None:
+    with pytest.warns(DeprecationWarning, match=r"Use 'ns = make_ns\(\)'"):
+        _ = invoke_tasklib.ns
+
+
+def test_ns_attribute_is_a_collection_with_all_the_tasks() -> None:
+    with pytest.warns(DeprecationWarning, match=r"deprecated"):
+        deprecated = invoke_tasklib.ns
+    assert set(deprecated.task_names) == set(make_ns().task_names)
+
+
+def test_ns_attribute_is_the_same_collection_every_time() -> None:
+    with pytest.warns(DeprecationWarning, match=r"deprecated"):
+        first = invoke_tasklib.ns
+    with pytest.warns(DeprecationWarning, match=r"deprecated"):
+        second = invoke_tasklib.ns
+    assert first is second
+
+
+def test_ns_attribute_is_the_shared_collection() -> None:
+    with pytest.warns(DeprecationWarning, match=r"deprecated"):
+        deprecated = invoke_tasklib.ns
+    assert deprecated is _shared_ns()
+
+
+def test_unknown_attribute_raises() -> None:
+    with pytest.raises(AttributeError, match=r"module 'invoke_tasklib' has no attribute 'nope'"):
+        _ = invoke_tasklib.nope
+
+
+def test_make_ns_returns_a_new_collection_every_time() -> None:
+    assert make_ns() is not make_ns()
+
+
+##################################
+#     Tests for __version__      #
+##################################
+
+
+def test_version_is_the_installed_version() -> None:
+    assert invoke_tasklib.__version__ == _installed_version("invoke-tasklib")
+
+
+def test_version_is_a_string() -> None:
+    assert isinstance(invoke_tasklib.__version__, str)
+
+
+def test_installed_version_of_a_distribution() -> None:
+    assert _installed_version("pytest").split(".")[0].isdigit()
+
+
+def test_installed_version_of_a_missing_distribution() -> None:
+    assert _installed_version("no-such-distribution-xyz") == "0+unknown"

@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-DOCS = Path(__file__).parents[2] / "docs" / "docs"
+ROOT = Path(__file__).parents[2]
+DOCS = ROOT / "docs" / "docs"
+SRC = ROOT / "src" / "invoke_tasklib"
+REFERENCE_DIRECTIVE = re.compile(r"^::: (\S+)", flags=re.MULTILINE)
 ADMONITION = re.compile(r"!!! \w+")
 
 
@@ -64,3 +67,36 @@ def test_broken_admonitions_reports_every_broken_admonition() -> None:
 
 def test_broken_admonitions_ignores_text_without_admonition() -> None:
     assert _broken_admonitions("just text\n") == []
+
+
+##########################################
+#     Tests for the reference pages      #
+##########################################
+
+
+def _documented_modules() -> set[str]:
+    return {
+        name
+        for page in (DOCS / "refs").glob("*.md")
+        for name in REFERENCE_DIRECTIVE.findall(page.read_text())
+    }
+
+
+def _public_modules() -> set[str]:
+    return {"invoke_tasklib"} | {
+        f"invoke_tasklib.{path.stem}" for path in SRC.glob("*.py") if not path.stem.startswith("_")
+    }
+
+
+@pytest.mark.parametrize("module", sorted(_public_modules()))
+def test_public_module_has_a_reference_page(module: str) -> None:
+    assert module in _documented_modules()
+
+
+@pytest.mark.parametrize("page", sorted((DOCS / "refs").glob("*.md")), ids=lambda p: p.name)
+def test_reference_page_is_in_the_navigation(page: Path) -> None:
+    assert f"refs/{page.name}" in (ROOT / "docs" / "mkdocs.yml").read_text()
+
+
+def test_reference_directive_is_found_in_a_page() -> None:
+    assert REFERENCE_DIRECTIVE.findall("::: invoke_tasklib.runner\n") == ["invoke_tasklib.runner"]

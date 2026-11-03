@@ -96,7 +96,7 @@ malformed value instead of silently creating a virtual environment with the wron
 
 Every key can also be set with an `INVOKE_TASKLIB_<SECTION>_<KEY>` environment variable, for example
 `INVOKE_TASKLIB_PATHS_SRC=lib` or `INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30`. This is handy in CI. It
-works because `make_ns` (and so `ns`) registers the defaults of the `tasklib` section with Invoke,
+works because `make_ns` registers the defaults of the `tasklib` section with Invoke,
 which only reads the environment variables of the keys that it knows. The usual Invoke order
 applies: the environment variables win over `invoke.yaml`.
 

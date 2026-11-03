@@ -40,15 +40,18 @@ always put its console scripts on `PATH` the way you expect. Make sure:
 
 ## `invoke --list` shows no tasks / `ns` is empty
 
-Check that `tasks.py` actually imports and exposes `ns`:
+Check that `tasks.py` actually builds and exposes `ns`:
 
 ```python
 # tasks.py
-from invoke_tasklib import ns
+from invoke_tasklib import make_ns
+
+ns = make_ns()
 ```
 
 Invoke discovers tasks from a module-level `ns` (or `namespace`) variable in `tasks.py`; if you
-renamed the import or wrapped it, Invoke won't find it.
+renamed the variable or wrapped it, Invoke won't find it. (`from invoke_tasklib import ns` still
+works but is deprecated and warns.)
 
 ## A task fails with "command not found" (`ruff`, `ty`, `shellcheck`, ...)
 

@@ -148,4 +148,5 @@ Most of these come from your project's own dev/docs dependency groups; see
 
 - [Get Started](../get_started.md): installing `invoke-tasklib` and wiring up a new project.
 - [Config](config.md): the shared configuration all tasks read from.
+- [Writing a Custom Task](custom_tasks.md): the helpers to write a task like the shared ones.
 - [Troubleshooting](../troubleshooting.md): common errors and how to fix them.

@@ -89,7 +89,9 @@ POSIX tools (`which`, `find`, ...) and a POSIX shell.
 
 ```python
 # tasks.py
-from invoke_tasklib import ns
+from invoke_tasklib import make_ns
+
+ns = make_ns()
 ```
 
 **2. Add an `invoke.yaml`** with, at minimum, your package name:
@@ -230,7 +232,8 @@ relative one (`from . import my_custom_task`), which fails with an `ImportError`
 
 or keep only some of them with `include`, e.g. `make_ns(include=["lint", "test.unit"])`. The names
 are namespaces (`"doc"`) or tasks (`"release.publish"`); an unknown name raises a `ValueError`. The
-pre-built `ns` is `make_ns()`. Individual task modules can also be composed by hand:
+`make_ns()` with no argument has all the tasks (the former pre-built `invoke_tasklib.ns` is
+deprecated: it was one collection shared by every importer). Individual task modules can also be composed by hand:
 
 ```python
 # tasks.py
