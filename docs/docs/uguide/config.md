@@ -7,7 +7,8 @@ that all `invoke-tasklib` tasks read from.
 
 ## Overview
 
-Every task in `invoke-tasklib` calls `get_config(c)` to read project-specific values from an
+Every task in `invoke-tasklib` calls `load_config(c)` (`get_config(c)` with a clean exit on an
+invalid config, see below) to read project-specific values from an
 `invoke.yaml` at the root of the consuming project, under a `tasklib` key:
 
 ```yaml
@@ -46,7 +47,9 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `groups.install`          | `dev`                       |
 | `groups.update`           | `dev,docs`                  |
 
-If `tasklib.package.name` is missing, `get_config` raises a `ValueError`.
+If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the tasks use
+`load_config`, which turns it into an `invoke.exceptions.Exit` with the same message and the exit
+code 2 (no traceback).
 
 Unknown keys in the `package`, `paths` or `groups` sections (typically a typo such as
 `paths.unit_test`) also raise a `ValueError` that lists the valid keys and suggests the closest one,

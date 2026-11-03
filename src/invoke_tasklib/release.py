@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from invoke.exceptions import Exit
 from invoke.tasks import task
 
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import run
 
@@ -65,7 +65,7 @@ def build(c: Context, check: bool = False) -> None:
         check: If True, also check the package's PyPI metadata with
             twine. Default is False.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     name = cfg["package"]["name"]
     say(c, "📦 Building package...")
     run(c, "uv build --clear")

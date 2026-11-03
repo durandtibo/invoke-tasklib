@@ -1,9 +1,10 @@
 # Troubleshooting & FAQ
 
-## `ValueError: 'tasklib.package.name' must be set in invoke.yaml`
+## `'tasklib.package.name' must be set in invoke.yaml`
 
-Almost every task calls [`get_config`](uguide/config.md), which requires
-`tasklib.package.name`. Add an `invoke.yaml` at your project root (next to `tasks.py`) with at
+Almost every task reads the [config](uguide/config.md), which requires
+`tasklib.package.name`. An invalid config is reported with this one-line message and the exit
+code 2. Add an `invoke.yaml` at your project root (next to `tasks.py`) with at
 least:
 
 ```yaml
@@ -13,6 +14,13 @@ tasklib:
 ```
 
 See [Get Started](get_started.md) and [Config](uguide/config.md) for the full schema.
+
+## `'ruff' was not found on the PATH`
+
+Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on
+the `PATH` and exit with code 127 if it is not. Install the project tools with
+`invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`)
+or activate the virtual environment that has them.
 
 ## `invoke: command not found` after installing
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import EXCLUDED_DIRS, get_config
+from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import python_executable, run
 
@@ -55,7 +55,7 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
 @task
 def doctest_src(c: Context) -> None:
     r"""Run doctests on source code."""
-    cfg = get_config(c)
+    cfg = load_config(c)
     src = cfg["paths"]["src"]
     say(c, "📚 Running doctests on source code...")
     run(c, f"{python_executable()} -m pytest --xdoctest {src}")
@@ -96,7 +96,7 @@ def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matche
         cov: If True, generate coverage reports in HTML, XML, and terminal
             formats. Default is False.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     name = cfg["package"]["name"]
     tests = cfg["paths"]["tests"]
     say(c, "🧪 Running all tests...")
@@ -117,7 +117,7 @@ def unit(c: Context, cov: bool = False) -> None:
         c: The invoke context.
         cov: If True, generate coverage reports. Default is False.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     name = cfg["package"]["name"]
     unit_tests = cfg["paths"]["unit_tests"]
     say(c, "🧪 Running unit tests...")
@@ -138,7 +138,7 @@ def integration(c: Context, cov: bool = False) -> None:
         c: The invoke context.
         cov: If True, generate coverage reports (appended). Default is False.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     name = cfg["package"]["name"]
     integration_tests = cfg["paths"]["integration_tests"]
     if not _directory_exists(c, integration_tests, "integration tests"):
@@ -163,7 +163,7 @@ def functional(c: Context, cov: bool = False) -> None:
         c: The invoke context.
         cov: If True, generate coverage reports (appended). Default is False.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     name = cfg["package"]["name"]
     functional_tests = cfg["paths"]["functional_tests"]
     if not _directory_exists(c, functional_tests, "functional tests"):
@@ -204,7 +204,7 @@ def coverage_report(c: Context, open_browser: bool = False) -> None:
 @task
 def benchmark(c: Context) -> None:
     r"""Run performance benchmarks."""
-    cfg = get_config(c)
+    cfg = load_config(c)
     benchmarks = cfg["paths"]["benchmarks"]
     if not _directory_exists(c, benchmarks, "benchmarks"):
         return

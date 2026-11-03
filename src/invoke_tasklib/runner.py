@@ -3,8 +3,11 @@ r"""Helpers to build the commands run by the tasks."""
 from __future__ import annotations
 
 import shlex
+import shutil
 import sys
 from typing import TYPE_CHECKING, Any
+
+from invoke.exceptions import Exit
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -35,8 +38,53 @@ def python_executable() -> str:
     return shlex.quote(sys.executable)
 
 
+UNCHECKED_PROGRAMS: frozenset[str] = frozenset({"command", "find"})
+r"""First words of a command that are not looked up on the ``PATH``
+(shell builtins and tools that every system has)."""
+
+
+def check_program(command: str) -> None:
+    r"""Check that the program of a command is available.
+
+    The program is the first word of the command. It is not checked when
+    it is an absolute path (for example the running interpreter, see
+    ``python_executable``) or one of ``UNCHECKED_PROGRAMS``.
+
+    Args:
+        command: The command line.
+
+    Raises:
+        Exit: If the program is not found on the ``PATH``. The message
+            says how to install the project tools.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import check_program
+    >>> check_program("find . -name '*.sh'")
+    >>> check_program("no-such-program --version")
+    Traceback (most recent call last):
+        ...
+    invoke.exceptions.Exit: ...
+
+    ```
+    """
+    words = shlex.split(command)
+    if not words or words[0].startswith("/") or words[0] in UNCHECKED_PROGRAMS:
+        return
+    if shutil.which(words[0]) is None:
+        msg = (
+            f"'{words[0]}' was not found on the PATH. Install the project tools with "
+            "`invoke env.install` (see the troubleshooting page of the documentation)."
+        )
+        raise Exit(msg, code=127)
+
+
 def run(c: Context, command: str, **kwargs: Any) -> Result:
     r"""Run a command, echoing it and using a pty only on a terminal.
+
+    The program of the command must be on the ``PATH``, see
+    ``check_program``.
 
     All the tasks run their commands through this helper so that they
     behave alike:
@@ -57,6 +105,9 @@ def run(c: Context, command: str, **kwargs: Any) -> Result:
     Returns:
         The result of ``c.run``.
 
+    Raises:
+        Exit: If the program of the command is not found.
+
     Example usage:
 
     ```pycon
@@ -70,6 +121,7 @@ def run(c: Context, command: str, **kwargs: Any) -> Result:
 
     ```
     """
+    check_program(command)
     kwargs.setdefault("echo", True)
     kwargs.setdefault("pty", bool(c.config.run.pty) or sys.stdout.isatty())
     return c.run(command, **kwargs)

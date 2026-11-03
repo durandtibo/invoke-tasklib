@@ -47,7 +47,7 @@ is a flat collection of `@task`-decorated functions. A module groups tasks that 
 same underlying tool or concern (e.g. most of `test.py` wraps `pytest`, except
 `test.doctest-markdown`, which wraps the standard library's `doctest` module directly).
 
-Tasks that need project-specific values call `get_config(c)` at the top of the function body;
+Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
 ### 3. The `ns` Namespace

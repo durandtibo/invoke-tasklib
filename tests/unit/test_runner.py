@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
+import pytest
 from invoke.config import Config
 from invoke.context import MockContext
+from invoke.exceptions import Exit
 
-from invoke_tasklib.runner import python_executable, run
-
-if TYPE_CHECKING:
-    import pytest
+from invoke_tasklib.runner import check_program, python_executable, run
 
 #######################################
 #     Tests for python_executable     #
@@ -96,3 +94,56 @@ def test_run_forwards_extra_arguments() -> None:
 def test_run_returns_the_result_of_the_context() -> None:
     c = _context()
     assert run(c, "ls").command == "ls"
+
+
+###################################
+#     Tests for check_program     #
+###################################
+
+
+def test_check_program_accepts_a_program_on_the_path() -> None:
+    assert check_program("ruff check .") is None
+
+
+def test_check_program_missing_program_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    with pytest.raises(Exit, match=r"'ruff' was not found on the PATH.*invoke env\.install"):
+        check_program("ruff check .")
+
+
+def test_check_program_missing_program_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    with pytest.raises(Exit) as excinfo:
+        check_program("ruff check .")
+    assert excinfo.value.code == 127
+
+
+@pytest.mark.parametrize("command", ["find . -name x", "command -v python"])
+def test_check_program_skips_unchecked_programs(
+    command: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    assert check_program(command) is None
+
+
+def test_check_program_skips_absolute_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    assert check_program("/usr/bin/python -m pytest") is None
+
+
+def test_check_program_skips_empty_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    assert check_program("") is None
+
+
+def test_check_program_quoted_absolute_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    assert check_program("'/path with space/python' -m pytest") is None
+
+
+def test_run_missing_program_does_not_run_the_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    c = _context()
+    with pytest.raises(Exit, match=r"'ruff' was not found"):
+        run(c, "ruff check .")
+    assert not _run_mock(c).called

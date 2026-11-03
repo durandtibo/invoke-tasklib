@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import python_executable, run
 
@@ -29,7 +29,7 @@ def check_cycles(c: Context) -> None:
         UnexpectedExit: If the discovery fails (for example the package
             cannot be found) or a module fails to import.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     name = cfg["package"]["name"]
     python = python_executable()
     say(c, f"🔍 Discovering modules of {name}...")
