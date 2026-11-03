@@ -26,16 +26,21 @@ It:
 
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
   `invoke.yaml`.
-- Merges it on top of `DEFAULT_PACKAGE`/`DEFAULT_PATHS`.
+- Merges it on top of `DEFAULT_PACKAGE`, `DEFAULT_PATHS`, `DEFAULT_GROUPS` and `DEFAULT_TEST`.
+- Rejects unknown keys and validates the values (`package.python_version`, `package.import_name`,
+  `groups.*`, `test.*`).
 - Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
   `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
-- Raises `ValueError` if `package.name` is missing, since nearly every task needs it.
+- Raises `ValueError` if `package.name` is missing, since nearly every task needs it, or if a
+  value is invalid. Tasks call `load_config`, which turns the `ValueError` into an `Exit`.
 
 ```python
 @dataclass(frozen=True)
 class TasklibConfig:
     package: PackageConfig
     paths: PathsConfig
+    groups: GroupsConfig
+    test: TestConfig
 ```
 
 Returning frozen dataclasses rather than a raw dict gives task authors static typing on
@@ -43,8 +48,10 @@ Returning frozen dataclasses rather than a raw dict gives task authors static ty
 
 ### 2. Task Modules
 
-Each task module (`formatting.py`, `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`)
-is a flat collection of `@task`-decorated functions. A module groups tasks that operate on the
+Each task module (`formatting.py`, `lint.py`, `imports.py`, `typecheck.py`, `testing.py`, `env.py`,
+`release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`) is a collection of `@task`-decorated
+functions. `clean.py` and `check.py` also have a default task (`clean.all`, `check.all`) that is
+run by `invoke clean` and `invoke check`. A module groups tasks that operate on the
 same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, except
 `test.doctest-markdown`, which wraps the standard library's `doctest` module directly).
 
@@ -86,7 +93,7 @@ c.run(cmd, pty=True) executes it as a subprocess
 
 ### Why a Shared `get_config` Instead of Per-Task Config?
 
-**Rationale**: A single resolution function keeps defaults and validation in one place, and
+**Rationale**: A single resolution function keeps defaults and the validation of the config in one place, and
 guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.check` agree on
 `package.name`).
 
@@ -108,22 +115,24 @@ time, and attribute access reads better than nested keys, without requiring a ru
 validation dependency.
 
 **Trade-off**: The dataclasses don't validate values on construction; the validation is done by
-`get_config` (e.g. the `package.name` check). It runs when a task starts, not when the collection
+`get_config` (e.g. the `package.name` and `package.python_version` checks). It runs when a task starts, not when the collection
 is loaded, because the `invoke.yaml` values are only known once Invoke has built the context.
 
 ## Testing Strategy
 
 Tests use `invoke.context.MockContext`, which records every `c.run(...)` call without executing
 it. This lets tests assert on the exact shell command a task would run, without depending on
-`ruff`, `pytest`, `uv`, etc. being installed or configured in the test environment.
+`ruff`, `pytest`, `uv`, etc. being installed or configured in the test environment. The unit
+tests also patch `shutil.which` (an autouse fixture in `tests/unit/conftest.py`) so that the check
+of the `PATH` done by `invoke_tasklib.runner.run` passes on any machine.
 
 ## Future Directions
 
 Potential areas for enhancement:
 
 1. Additional task modules for other common project needs (e.g. changelog generation).
-2. A `--config-schema` task to validate a project's `invoke.yaml` against the config schema
-   ahead of time.
+2. A task to validate a project's `invoke.yaml` against the config schema ahead of time (the
+   errors of `get_config` are only raised when a task runs).
 
 ## References
 
