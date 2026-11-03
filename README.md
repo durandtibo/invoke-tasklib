@@ -154,7 +154,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `doc`      | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
 | `doc`      | `doc.build`                   | Build the docs, failing on warnings (`mkdocs build --strict`)                            |    ❌    |
 | `doc`      | `doc.serve`                   | Serve the docs locally                                                                   |    ❌    |
-| `security` | `security.audit`              | Audit installed dependencies for known vulnerabilities with pip-audit                    |    ❌    |
+| `security` | `security.audit`              | Audit the locked dependencies for known vulnerabilities with pip-audit                   |    ❌    |
 | `check`    | `check.all` (or `check`)      | Run the main read-only checks                                                            |    ❌    |
 | `clean`    | `clean.all` (or `clean`)      | Remove build artifacts and caches                                                        |    ✅    |
 | `clean`    | `clean.pycache`               | Remove all `__pycache__` directories                                                     |    ✅    |
