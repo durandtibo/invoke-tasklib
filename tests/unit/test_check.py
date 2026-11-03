@@ -196,6 +196,36 @@ def test_all_keep_going_names_the_failed_step(capsys: pytest.CaptureFixture[str]
     assert "❌ Step failed: lint" in capsys.readouterr().out
 
 
+def test_all_keep_going_prints_the_reason_of_the_failure(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = _context({"tasks": "lint"})
+    c.run = Mock(side_effect=Exit("'ruff' was not found on the PATH."))
+    with pytest.raises(Exit, match=r"failed"):
+        check.all_(c, keep_going=True)
+    assert "   'ruff' was not found on the PATH.\n" in capsys.readouterr().out
+
+
+def test_all_keep_going_prints_the_reason_after_the_step_name(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = _context({"tasks": "lint"})
+    c.run = Mock(side_effect=Exit("boom"))
+    with pytest.raises(Exit, match=r"failed"):
+        check.all_(c, keep_going=True)
+    assert "❌ Step failed: lint\n   boom\n" in capsys.readouterr().out
+
+
+def test_all_keep_going_prints_the_exit_code_of_a_failed_command(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = _context({"tasks": "types"})
+    _failing(c, "ty")
+    with pytest.raises(Exit, match=r"failed"):
+        check.all_(c, keep_going=True)
+    assert "   The command 'ty check' exited with code 1\n" in capsys.readouterr().out
+
+
 ##################################
 #     Tests for _parse_steps     #
 ##################################
@@ -253,10 +283,16 @@ def test_run_step_returns_the_failure_message() -> None:
     assert check._run_step(c, "types") == "boom"
 
 
-def test_run_step_returns_a_message_for_a_failed_command() -> None:
+def test_run_step_returns_the_command_and_code_of_a_failed_command() -> None:
     c = _context()
     _failing(c, "ty")
-    assert check._run_step(c, "types") is not None
+    assert check._run_step(c, "types") == "The command 'ty check' exited with code 1"
+
+
+def test_run_step_names_the_exception_when_the_message_is_empty() -> None:
+    c = _context()
+    c.run = Mock(side_effect=Exit())
+    assert check._run_step(c, "types") == "Exit"
 
 
 def test_run_step_does_not_catch_other_exceptions() -> None:

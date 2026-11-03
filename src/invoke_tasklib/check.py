@@ -2,6 +2,7 @@ r"""Composite task that runs the read-only checks."""
 
 from __future__ import annotations
 
+import textwrap
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit, UnexpectedExit
@@ -99,7 +100,9 @@ def _run_step(c: Context, step: str) -> str | None:
         step: The name of the step.
 
     Returns:
-        ``None`` if the step passed, else the message of the failure.
+        ``None`` if the step passed, else the reason of the failure:
+        the message of an ``Exit``, or the command and the exit code of
+        a command that failed (its output was already shown).
 
     Example usage:
 
@@ -118,7 +121,10 @@ def _run_step(c: Context, step: str) -> str | None:
     """
     try:
         STEPS[step](c)
-    except (UnexpectedExit, Exit) as exc:
+    except UnexpectedExit as exc:
+        result = exc.result
+        return f"The command {result.command!r} exited with code {result.exited}"
+    except Exit as exc:
         return str(exc).strip() or type(exc).__name__
     return None
 
@@ -170,8 +176,9 @@ def all_(
     for step in steps:
         if not keep_going:
             STEPS[step](c)
-        elif _run_step(c, step) is not None:
+        elif (reason := _run_step(c, step)) is not None:
             say(c, f"❌ Step failed: {step}")
+            say(c, textwrap.indent(reason, "   "))
             failed.append(step)
     if failed:
         msg = f"{len(failed)} of {len(steps)} check(s) failed: {', '.join(failed)}"
