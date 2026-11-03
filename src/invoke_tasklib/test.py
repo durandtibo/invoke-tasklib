@@ -83,13 +83,85 @@ def doctest(c: Context) -> None:
     doctest_markdown(c)
 
 
-@task(help={"cov": COV_HELP})
-def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matches `inv test.all`)
+def _run_pytest(
+    c: Context,
+    path: str,
+    *,
+    label: str,
+    timeout: int,
+    cov: bool = False,
+    append: bool = False,
+    skip_missing: bool = False,
+) -> None:
+    r"""Run pytest on a directory of tests.
+
+    The command is ``python -m pytest [--xdoctest] --timeout <timeout>``
+    followed by the coverage options and the path. ``--xdoctest`` is used
+    unless ``tasklib.test.xdoctest`` is false, and
+    ``--cov-fail-under`` is used with ``cov`` if
+    ``tasklib.test.cov_fail_under`` is set.
+
+    Args:
+        c: The invoke context.
+        path: The directory (or file) of tests.
+        label: The name of the scope, used in the messages, e.g.
+            ``"unit tests"``.
+        timeout: The timeout in seconds of each test.
+        cov: If True, generate coverage reports in HTML, XML and terminal
+            formats.
+        append: If True and ``cov`` is True, append to the coverage data
+            of the previous runs instead of replacing it.
+        skip_missing: If True, a message is written and nothing is run
+            when ``path`` is not an existing directory.
+
+    Raises:
+        UnexpectedExit: If pytest fails.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import MockContext
+    >>> from invoke_tasklib.test import _run_pytest
+    >>> cfg = {"tasklib": {"package": {"name": "mypkg"}}}
+    >>> c = MockContext(config=Config(overrides=cfg), run=True)
+    >>> _run_pytest(c, "tests/unit", label="unit tests", timeout=10)  # doctest: +ELLIPSIS
+    🧪 Running unit tests...
+    ...
+    ✅ Unit tests complete
+
+    ```
+    """
+    cfg = load_config(c)
+    if skip_missing and not _directory_exists(c, path, label):
+        return
+    options = cfg["test"]
+    say(c, f"🧪 Running {label}...")
+    cmd = [f"{python_executable()} -m pytest"]
+    if options["xdoctest"]:
+        cmd.append("--xdoctest")
+    cmd.append(f"--timeout {timeout}")
+    if cov:
+        cmd.append("--cov-report html --cov-report xml --cov-report term")
+        if append:
+            cmd.append("--cov-append")
+        cmd.append(f"--cov={cfg['package']['name']}")
+        if options["cov_fail_under"] is not None:
+            cmd.append(f"--cov-fail-under={options['cov_fail_under']}")
+        say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))
+    cmd.append(path)
+    run(c, " ".join(cmd))
+    say(c, f"✅ {label.capitalize()} complete")
+
+
+@task(name="all", help={"cov": COV_HELP})
+def all_(c: Context, cov: bool = False) -> None:
     r"""Run all tests (unit, integration, and functional).
 
-    The timeout of each test is 60 seconds, the one of the slowest scopes
-    (integration and functional), because the whole ``tests`` directory
-    is run in one pytest call.
+    The whole tests directory is run in one pytest call, so the timeout
+    of each test is the largest of the three scopes
+    (``tasklib.test.unit_timeout``, ``integration_timeout`` and
+    ``functional_timeout``).
 
     Args:
         c: The invoke context.
@@ -97,87 +169,80 @@ def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matche
             formats. Default is False.
     """
     cfg = load_config(c)
-    name = cfg["package"]["name"]
-    tests = cfg["paths"]["tests"]
-    say(c, "🧪 Running all tests...")
-    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
-    if cov:
-        cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
-        say(c, "📊 Coverage reports will be generated")
-    cmd.append(tests)
-    run(c, " ".join(cmd))
-    say(c, "✅ All tests complete")
+    options = cfg["test"]
+    timeout = max(
+        options["unit_timeout"], options["integration_timeout"], options["functional_timeout"]
+    )
+    _run_pytest(c, cfg["paths"]["tests"], label="all tests", timeout=timeout, cov=cov)
 
 
 @task(help={"cov": COV_HELP})
 def unit(c: Context, cov: bool = False) -> None:
     r"""Run unit tests.
 
+    The timeout of each test is ``tasklib.test.unit_timeout`` (10
+    seconds by default).
+
     Args:
         c: The invoke context.
         cov: If True, generate coverage reports. Default is False.
     """
     cfg = load_config(c)
-    name = cfg["package"]["name"]
-    unit_tests = cfg["paths"]["unit_tests"]
-    say(c, "🧪 Running unit tests...")
-    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 10"]
-    if cov:
-        cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
-        say(c, "📊 Coverage reports will be generated")
-    cmd.append(unit_tests)
-    run(c, " ".join(cmd))
-    say(c, "✅ Unit tests complete")
+    _run_pytest(
+        c,
+        cfg["paths"]["unit_tests"],
+        label="unit tests",
+        timeout=cfg["test"]["unit_timeout"],
+        cov=cov,
+    )
 
 
 @task(help={"cov": COV_HELP})
 def integration(c: Context, cov: bool = False) -> None:
     r"""Run integration tests.
 
+    The timeout of each test is ``tasklib.test.integration_timeout`` (60
+    seconds by default). Nothing is run if the directory does not exist.
+
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports (appended). Default is False.
+        cov: If True, generate coverage reports, appended to the
+            existing coverage data. Default is False.
     """
     cfg = load_config(c)
-    name = cfg["package"]["name"]
-    integration_tests = cfg["paths"]["integration_tests"]
-    if not _directory_exists(c, integration_tests, "integration tests"):
-        return
-    say(c, "🧪 Running integration tests...")
-    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
-    if cov:
-        cmd.append(
-            f"--cov-report html --cov-report xml --cov-report term --cov-append --cov={name}"
-        )
-        say(c, "📊 Coverage reports will be generated (appending)")
-    cmd.append(integration_tests)
-    run(c, " ".join(cmd))
-    say(c, "✅ Integration tests complete")
+    _run_pytest(
+        c,
+        cfg["paths"]["integration_tests"],
+        label="integration tests",
+        timeout=cfg["test"]["integration_timeout"],
+        cov=cov,
+        append=True,
+        skip_missing=True,
+    )
 
 
 @task(help={"cov": COV_HELP})
 def functional(c: Context, cov: bool = False) -> None:
     r"""Run functional tests.
 
+    The timeout of each test is ``tasklib.test.functional_timeout`` (60
+    seconds by default). Nothing is run if the directory does not exist.
+
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports (appended). Default is False.
+        cov: If True, generate coverage reports, appended to the
+            existing coverage data. Default is False.
     """
     cfg = load_config(c)
-    name = cfg["package"]["name"]
-    functional_tests = cfg["paths"]["functional_tests"]
-    if not _directory_exists(c, functional_tests, "functional tests"):
-        return
-    say(c, "🧪 Running functional tests...")
-    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
-    if cov:
-        cmd.append(
-            f"--cov-report html --cov-report xml --cov-report term --cov-append --cov={name}"
-        )
-        say(c, "📊 Coverage reports will be generated (appending)")
-    cmd.append(functional_tests)
-    run(c, " ".join(cmd))
-    say(c, "✅ Functional tests complete")
+    _run_pytest(
+        c,
+        cfg["paths"]["functional_tests"],
+        label="functional tests",
+        timeout=cfg["test"]["functional_timeout"],
+        cov=cov,
+        append=True,
+        skip_missing=True,
+    )
 
 
 @task(help={"open_browser": "Open the HTML report in the default web browser."})

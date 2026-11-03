@@ -18,7 +18,8 @@ doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 | `test.benchmark`        | Runs performance benchmarks                                   |
 
 All test tasks (except `test.benchmark`, `test.doctest`, and `test.doctest-markdown`) run `pytest`
-with `--xdoctest` enabled, so doctests embedded in the code under test are also collected.
+with `--xdoctest` enabled, so doctests embedded in the code under test are also collected. Set
+`tasklib.test.xdoctest: false` if the project does not have the `xdoctest` package.
 
 ## Running Doctests
 
@@ -60,8 +61,10 @@ invoke test.functional
 ```
 
 Each targets its own path (`paths.unit_tests`, `paths.integration_tests`,
-`paths.functional_tests`), with a longer timeout (60s vs 10s) for integration and functional
-tests, since they typically exercise more of the system. If the directory of `test.integration` or
+`paths.functional_tests`), with a longer default timeout (60s vs 10s) for integration and
+functional tests, since they typically exercise more of the system. The timeouts are the
+`test.unit_timeout`, `test.integration_timeout` and `test.functional_timeout` values of the
+[config](config.md). If the directory of `test.integration` or
 `test.functional` does not exist, the task prints a message and skips it instead of failing with a
 pytest error.
 
@@ -69,8 +72,8 @@ pytest error.
 invoke test.all
 ```
 
-Runs everything in `paths.tests` in a single `pytest` invocation, with a 60s timeout (the one of the
-integration and functional tests, which are part of that directory).
+Runs everything in `paths.tests` in a single `pytest` invocation, with the largest of the three timeouts
+(60s by default, since the integration and functional tests are part of that directory).
 
 ## Coverage
 
@@ -90,6 +93,11 @@ invoke test.unit --cov
 invoke test.integration --cov
 invoke test.functional --cov
 ```
+
+If `tasklib.test.cov_fail_under` is set, it is passed as `--cov-fail-under` and the task fails when
+the coverage is lower. Since the integration and functional tasks append to the existing data, run
+`test.unit --cov` first (it replaces the data) or `coverage erase`, otherwise the result depends on
+what was run before.
 
 ```shell
 invoke test.coverage-report

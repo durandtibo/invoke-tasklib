@@ -34,24 +34,34 @@ defaults are derived from `package.name` or from `paths.tests`.
 
 ## Defaults
 
-| Key                       | Default                     |
-| ------------------------- | --------------------------- |
-| `package.python_version`  | `"3.14"`                    |
-| `paths.src`               | `src/<package.name>`        |
-| `paths.tests`             | `tests`                     |
-| `paths.unit_tests`        | `<paths.tests>/unit`        |
-| `paths.integration_tests` | `<paths.tests>/integration` |
-| `paths.functional_tests`  | `<paths.tests>/functional`  |
-| `paths.benchmarks`        | `<paths.tests>/benchmarks`  |
-| `paths.docs_config`       | `docs/mkdocs.yml`           |
-| `groups.install`          | `dev`                       |
-| `groups.update`           | `dev,docs`                  |
+| Key                        | Default                     |
+| -------------------------- | --------------------------- |
+| `package.python_version`   | `"3.14"`                    |
+| `paths.src`                | `src/<package.name>`        |
+| `paths.tests`              | `tests`                     |
+| `paths.unit_tests`         | `<paths.tests>/unit`        |
+| `paths.integration_tests`  | `<paths.tests>/integration` |
+| `paths.functional_tests`   | `<paths.tests>/functional`  |
+| `paths.benchmarks`         | `<paths.tests>/benchmarks`  |
+| `paths.docs_config`        | `docs/mkdocs.yml`           |
+| `groups.install`           | `dev`                       |
+| `groups.update`            | `dev,docs`                  |
+| `test.unit_timeout`        | `10`                        |
+| `test.integration_timeout` | `60`                        |
+| `test.functional_timeout`  | `60`                        |
+| `test.xdoctest`            | `true`                      |
+| `test.cov_fail_under`      | not set                     |
+
+The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
+with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
+not have it), and a coverage threshold: with `--cov`, `cov_fail_under` is forwarded as
+`--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the tasks use
 `load_config`, which turns it into an `invoke.exceptions.Exit` with the same message and the exit
 code 2 (no traceback).
 
-Unknown keys in the `package`, `paths` or `groups` sections (typically a typo such as
+Unknown keys in the `package`, `paths`, `groups` or `test` sections (typically a typo such as
 `paths.unit_test`) also raise a `ValueError` that lists the valid keys and suggests the closest one,
 instead of being silently ignored.
 

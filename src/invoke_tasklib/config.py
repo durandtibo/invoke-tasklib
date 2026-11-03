@@ -53,12 +53,23 @@ class GroupsConfig(TypedDict):
     update: str
 
 
+class TestConfig(TypedDict):
+    r"""Resolved ``test`` config section."""
+
+    unit_timeout: int
+    integration_timeout: int
+    functional_timeout: int
+    xdoctest: bool
+    cov_fail_under: int | None
+
+
 class TasklibConfig(TypedDict):
     r"""Resolved tasklib config."""
 
     package: PackageConfig
     paths: PathsConfig
     groups: GroupsConfig
+    test: TestConfig
 
 
 EXCLUDED_DIRS: frozenset[str] = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
@@ -87,6 +98,14 @@ DEFAULT_PATHS: dict[str, str | None] = {
 DEFAULT_GROUPS: dict[str, str] = {
     "install": "dev",
     "update": "dev,docs",
+}
+
+DEFAULT_TEST: dict[str, int | bool | None] = {
+    "unit_timeout": 10,
+    "integration_timeout": 60,
+    "functional_timeout": 60,
+    "xdoctest": True,
+    "cov_fail_under": None,
 }
 
 
@@ -206,6 +225,64 @@ def _normalize_groups(key: str, value: object) -> str:
     raise ValueError(msg)
 
 
+def _validate_int(key: str, value: object, *, minimum: int) -> int:
+    r"""Validate an integer value of the ``test`` config section.
+
+    Args:
+        key: The name of the config key, used in the error message.
+        value: The raw config value.
+        minimum: The smallest valid value.
+
+    Returns:
+        The validated integer.
+
+    Raises:
+        ValueError: If the value is not an integer (a boolean is not
+            accepted) or is smaller than ``minimum``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_int
+    >>> _validate_int("unit_timeout", 10, minimum=1)
+    10
+
+    ```
+    """
+    if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+        msg = f"'tasklib.test.{key}' must be an integer >= {minimum}, got {value!r}"
+        raise ValueError(msg)
+    return value
+
+
+def _validate_bool(key: str, value: object) -> bool:
+    r"""Validate a boolean value of the ``test`` config section.
+
+    Args:
+        key: The name of the config key, used in the error message.
+        value: The raw config value.
+
+    Returns:
+        The validated boolean.
+
+    Raises:
+        ValueError: If the value is not a boolean.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_bool
+    >>> _validate_bool("xdoctest", False)
+    False
+
+    ```
+    """
+    if value is not True and value is not False:
+        msg = f"'tasklib.test.{key}' must be a boolean (true or false), got {value!r}"
+        raise ValueError(msg)
+    return value
+
+
 def get_config(c: Context) -> TasklibConfig:
     r"""Return the effective tasklib config, merging user overrides from
     ``invoke.yaml`` (under the ``tasklib`` key) on top of the defaults.
@@ -214,7 +291,8 @@ def get_config(c: Context) -> TasklibConfig:
         c: The invoke context.
 
     Returns:
-        A dict with resolved ``package`` and ``paths`` sections.
+        A dict with the resolved ``package``, ``paths``, ``groups`` and
+        ``test`` sections.
 
     Raises:
         ValueError: If ``tasklib.package.name`` is not set, or if
@@ -222,8 +300,12 @@ def get_config(c: Context) -> TasklibConfig:
             ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
             float ``3.1``), or if a ``tasklib.groups`` value is neither
             a string nor a list of strings, or if the ``package``,
-            ``paths`` or ``groups`` section has an unknown key (for
-            example a typo such as ``unit_test`` for ``unit_tests``).
+            ``paths``, ``groups`` or ``test`` section has an unknown key (for
+            example a typo such as ``unit_test`` for ``unit_tests``), or
+            if a ``tasklib.test`` value is invalid (a timeout and
+            ``cov_fail_under`` must be integers, with a timeout > 0 and
+            ``cov_fail_under`` >= 0, and ``xdoctest`` must be a
+            boolean).
 
     Example usage:
 
@@ -239,6 +321,8 @@ def get_config(c: Context) -> TasklibConfig:
     'src/mypkg'
     >>> cfg["groups"]
     {'install': 'dev', 'update': 'dev,docs'}
+    >>> cfg["test"]["unit_timeout"]
+    10
 
     ```
     """
@@ -246,9 +330,11 @@ def get_config(c: Context) -> TasklibConfig:
     _check_keys("package", user.get("package", {}), DEFAULT_PACKAGE)
     _check_keys("paths", user.get("paths", {}), DEFAULT_PATHS)
     _check_keys("groups", user.get("groups", {}), DEFAULT_GROUPS)
+    _check_keys("test", user.get("test", {}), DEFAULT_TEST)
     package = {**DEFAULT_PACKAGE, **user.get("package", {})}
     paths = {**DEFAULT_PATHS, **user.get("paths", {})}
     groups = {**DEFAULT_GROUPS, **user.get("groups", {})}
+    test = {**DEFAULT_TEST, **user.get("test", {})}
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
@@ -282,6 +368,21 @@ def get_config(c: Context) -> TasklibConfig:
         "groups": GroupsConfig(
             install=_normalize_groups("install", groups["install"]),
             update=_normalize_groups("update", groups["update"]),
+        ),
+        "test": TestConfig(
+            unit_timeout=_validate_int("unit_timeout", test["unit_timeout"], minimum=1),
+            integration_timeout=_validate_int(
+                "integration_timeout", test["integration_timeout"], minimum=1
+            ),
+            functional_timeout=_validate_int(
+                "functional_timeout", test["functional_timeout"], minimum=1
+            ),
+            xdoctest=_validate_bool("xdoctest", test["xdoctest"]),
+            cov_fail_under=(
+                None
+                if test["cov_fail_under"] is None
+                else _validate_int("cov_fail_under", test["cov_fail_under"], minimum=0)
+            ),
         ),
     }
 
