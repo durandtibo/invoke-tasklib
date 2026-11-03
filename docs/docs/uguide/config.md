@@ -42,6 +42,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 
 | Key                        | Default                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------- |
+| `package.name`             | required                                                                              |
 | `package.import_name`      | `<package.name>` with `-` replaced by `_`                                             |
 | `package.python_version`   | `"3.14"`                                                                              |
 | `paths.src`                | `src/<package.import_name>`, or `<package.import_name>` if only that directory exists |
@@ -91,6 +92,20 @@ non-empty string, and `test.cov_fail_under` must be between 0 and 100.
 `package.python_version` must be a quoted string such as `"3.10"` or `"3.10.4"`. YAML reads an
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.
+
+## Editor Completion (JSON Schema)
+
+The keys, the defaults and the descriptions are declared once, in `invoke_tasklib.config.SCHEMA`
+(one `Option` per key: default, validation and JSON schema). The defaults, the key checks, the
+error messages and the JSON schema are all generated from it, so they cannot drift. Print the
+schema of the `tasklib` section of `invoke.yaml` with:
+
+```shell
+python -m invoke_tasklib.config > invoke-tasklib.schema.json
+```
+
+and point your editor to it (for example with a `# yaml-language-server: $schema=...` comment at
+the top of `invoke.yaml`) to get completion and validation of the keys.
 
 ## Environment Variables
 

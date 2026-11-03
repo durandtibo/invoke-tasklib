@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+
+from invoke_tasklib.config import SCHEMA, json_schema
 
 ROOT = Path(__file__).parents[2]
 DOCS = ROOT / "docs" / "docs"
@@ -100,3 +105,39 @@ def test_reference_page_is_in_the_navigation(page: Path) -> None:
 
 def test_reference_directive_is_found_in_a_page() -> None:
     assert REFERENCE_DIRECTIVE.findall("::: invoke_tasklib.runner\n") == ["invoke_tasklib.runner"]
+
+
+#######################################################
+#     Tests for the config page and the JSON schema   #
+#######################################################
+
+CONFIG_KEY = re.compile(r"^\| `((?:package|paths|groups|test|check)\.\w+)`", flags=re.MULTILINE)
+
+
+def test_config_page_documents_every_key_of_the_schema() -> None:
+    documented = set(CONFIG_KEY.findall((DOCS / "uguide" / "config.md").read_text()))
+    assert documented == {f"{s}.{k}" for s, options in SCHEMA.items() for k in options}
+
+
+def test_config_module_prints_the_json_schema() -> None:
+    proc = subprocess.run(
+        [sys.executable, "-m", "invoke_tasklib.config"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert json.loads(proc.stdout) == json_schema()
+
+
+def test_config_module_fails_with_an_argument() -> None:
+    proc = subprocess.run(
+        [sys.executable, "-m", "invoke_tasklib.config", "--bad"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 2
+
+
+def test_config_key_pattern_matches_a_table_row() -> None:
+    assert CONFIG_KEY.findall("| `test.xdoctest`  | `true` |\n") == ["test.xdoctest"]

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict
+import json
+import runpy
+import sys
+from dataclasses import asdict, fields
 from typing import TYPE_CHECKING
 
 import pytest
@@ -8,6 +11,7 @@ from invoke.config import Config
 from invoke.context import Context
 from invoke.exceptions import Exit
 
+from invoke_tasklib import config as config_module
 from invoke_tasklib.config import (
     COV_REPORTS,
     DEFAULT_CHECK,
@@ -15,13 +19,22 @@ from invoke_tasklib.config import (
     DEFAULT_PACKAGE,
     DEFAULT_PATHS,
     DEFAULT_TEST,
+    SCHEMA,
+    CheckConfig,
+    GroupsConfig,
+    PackageConfig,
+    PathsConfig,
     _as_mapping,
     _check_keys,
     _default_src,
+    _defaults,
     _int_from_text,
     _normalize_groups,
+    _path,
+    _timeout,
     _validate_bool,
     _validate_check_tasks,
+    _validate_cov_fail_under,
     _validate_cov_reports,
     _validate_import_name,
     _validate_int,
@@ -29,7 +42,9 @@ from invoke_tasklib.config import (
     _validate_str,
     default_config,
     get_config,
+    json_schema,
     load_config,
+    main,
 )
 
 if TYPE_CHECKING:
@@ -59,7 +74,7 @@ def test_get_config_defaults() -> None:
             "benchmarks": "tests/benchmarks",
             "docs_config": "docs/mkdocs.yml",
         },
-        "groups": {"install": "dev", "update": "dev,docs"},
+        "groups": {"install": ("dev",), "update": ("dev", "docs")},
         "test": {
             "unit_timeout": 10,
             "integration_timeout": 60,
@@ -269,8 +284,8 @@ def test_get_config_groups_overrides() -> None:
             }
         )
     )
-    assert cfg.groups.install == "dev,test"
-    assert cfg.groups.update == "dev,test,docs"
+    assert cfg.groups.install == ("dev", "test")
+    assert cfg.groups.update == ("dev", "test", "docs")
 
 
 ########################################
@@ -385,22 +400,22 @@ def test_validate_python_version_rejects_float() -> None:
 
 def test_get_config_groups_install_as_list() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": ["dev", "docs"]}})
-    assert get_config(c).groups.install == "dev,docs"
+    assert get_config(c).groups.install == ("dev", "docs")
 
 
 def test_get_config_groups_update_as_list() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"update": ["dev", "test"]}})
-    assert get_config(c).groups.update == "dev,test"
+    assert get_config(c).groups.update == ("dev", "test")
 
 
-def test_get_config_groups_as_string_is_unchanged() -> None:
+def test_get_config_groups_as_string_is_split() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": "dev,test"}})
-    assert asdict(get_config(c).groups) == {"install": "dev,test", "update": "dev,docs"}
+    assert asdict(get_config(c).groups) == {"install": ("dev", "test"), "update": ("dev", "docs")}
 
 
 def test_get_config_groups_as_empty_list_installs_no_group() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": []}})
-    assert get_config(c).groups.install == ""
+    assert get_config(c).groups.install == ()
 
 
 @pytest.mark.parametrize("value", [1, None, ["dev", 1], {"dev": True}])
@@ -415,16 +430,38 @@ def test_get_config_rejects_invalid_groups(value: object) -> None:
 #######################################
 
 
-def test_normalize_groups_joins_list() -> None:
-    assert _normalize_groups("install", ["dev", "docs"]) == "dev,docs"
+def test_normalize_groups_converts_a_list() -> None:
+    assert _normalize_groups("install", ["dev", "docs"]) == ("dev", "docs")
 
 
-def test_normalize_groups_keeps_string() -> None:
-    assert _normalize_groups("install", "dev") == "dev"
+def test_normalize_groups_splits_a_string() -> None:
+    assert _normalize_groups("install", "dev") == ("dev",)
 
 
 def test_normalize_groups_accepts_tuple() -> None:
-    assert _normalize_groups("update", ("dev", "docs")) == "dev,docs"
+    assert _normalize_groups("update", ("dev", "docs")) == ("dev", "docs")
+
+
+def test_normalize_groups_splits_a_comma_separated_string() -> None:
+    assert _normalize_groups("install", "dev,docs") == ("dev", "docs")
+
+
+def test_normalize_groups_strips_the_names() -> None:
+    assert _normalize_groups("install", " dev , docs ") == ("dev", "docs")
+
+
+def test_normalize_groups_drops_empty_names() -> None:
+    assert _normalize_groups("install", "dev,,docs,") == ("dev", "docs")
+
+
+def test_normalize_groups_of_an_empty_string_is_empty() -> None:
+    assert _normalize_groups("install", "") == ()
+
+
+def test_normalize_groups_does_not_mutate_a_list() -> None:
+    groups = [" dev "]
+    _normalize_groups("install", groups)
+    assert groups == [" dev "]
 
 
 def test_normalize_groups_error_names_the_key() -> None:
@@ -829,3 +866,216 @@ def test_get_config_check_rejects_an_unknown_key() -> None:
     c = _context({"package": {"name": "mypkg"}, "check": {"task": "lint"}})
     with pytest.raises(ValueError, match=r"Unknown key 'task' \(did you mean 'tasks'\?\)"):
         get_config(c)
+
+
+##########################################
+#     Tests for _validate_cov_fail_under #
+##########################################
+
+
+def test_validate_cov_fail_under_none_is_not_set() -> None:
+    assert _validate_cov_fail_under(None) is None
+
+
+@pytest.mark.parametrize(("value", "expected"), [(0, 0), (90, 90), (100, 100), ("85", 85)])
+def test_validate_cov_fail_under_accepts_a_percentage(value: object, expected: int) -> None:
+    assert _validate_cov_fail_under(value) == expected
+
+
+@pytest.mark.parametrize("value", [-1, 101, 1.5, "ninety", True])
+def test_validate_cov_fail_under_rejects_an_invalid_value(value: object) -> None:
+    with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer"):
+        _validate_cov_fail_under(value)
+
+
+#############################
+#     Tests for SCHEMA      #
+#############################
+
+_SECTION_CLASSES = {
+    "package": PackageConfig,
+    "paths": PathsConfig,
+    "groups": GroupsConfig,
+    "test": config_module.TestConfig,
+    "check": CheckConfig,
+}
+
+
+def test_schema_sections() -> None:
+    assert list(SCHEMA) == ["package", "paths", "groups", "test", "check"]
+
+
+@pytest.mark.parametrize("section", sorted(_SECTION_CLASSES))
+def test_schema_keys_are_the_fields_of_the_section_dataclass(section: str) -> None:
+    assert list(SCHEMA[section]) == [f.name for f in fields(_SECTION_CLASSES[section])]
+
+
+_OPTIONS = [(s, k) for s, options in SCHEMA.items() for k in options]
+
+
+_OPTIONS_WITH_DEFAULT = [(s, k) for s, k in _OPTIONS if SCHEMA[s][k].default is not None]
+
+
+@pytest.mark.parametrize(("section", "key"), _OPTIONS_WITH_DEFAULT)
+def test_schema_default_is_valid(section: str, key: str) -> None:
+    option = SCHEMA[section][key]
+    assert option.validate(option.default) is not None
+
+
+@pytest.mark.parametrize(("section", "key"), _OPTIONS)
+def test_schema_option_has_a_description(section: str, key: str) -> None:
+    assert SCHEMA[section][key].doc.endswith((".", ")"))
+
+
+@pytest.mark.parametrize(("section", "key"), _OPTIONS)
+def test_schema_option_has_a_json_type(section: str, key: str) -> None:
+    schema = SCHEMA[section][key].json_schema
+    assert "type" in schema or "anyOf" in schema
+
+
+@pytest.mark.parametrize(("section", "key"), _OPTIONS)
+def test_schema_option_validation_error_names_the_key(section: str, key: str) -> None:
+    with pytest.raises(ValueError, match=rf"tasklib\.{section}\.{key}"):
+        SCHEMA[section][key].validate(object())
+
+
+def test_schema_default_dicts_are_derived_from_the_schema() -> None:
+    assert {k: o.default for k, o in SCHEMA["test"].items()} == DEFAULT_TEST
+
+
+def test_defaults_of_a_section() -> None:
+    assert _defaults("check") == {
+        "tasks": "format-python,format-docstrings,lint,types,imports,unit"
+    }
+
+
+def test_defaults_returns_a_new_dict() -> None:
+    _defaults("groups")["install"] = "changed"
+    assert _defaults("groups")["install"] == "dev"
+
+
+def test_timeout_option() -> None:
+    option = _timeout("unit_timeout", 10, "Timeout.")
+    assert (option.default, option.json_schema) == (10, {"type": "integer", "minimum": 1})
+
+
+def test_timeout_option_rejects_zero() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer >= 1"):
+        _timeout("unit_timeout", 10, "Timeout.").validate(0)
+
+
+def test_path_option() -> None:
+    option = _path("src", None, "Source.")
+    assert (option.default, option.doc) == (None, "Source.")
+
+
+def test_path_option_rejects_an_empty_string() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib.paths.src' must be a non-empty string"):
+        _path("src", None, "Source.").validate("")
+
+
+def test_get_config_does_not_mutate_the_defaults() -> None:
+    before = {section: _defaults(section) for section in SCHEMA}
+    get_config(_context({"package": {"name": "mypkg"}, "paths": {"src": "lib"}}))
+    assert {section: _defaults(section) for section in SCHEMA} == before
+
+
+def test_get_config_does_not_mutate_the_user_config() -> None:
+    user = {"package": {"name": "my-pkg"}}
+    get_config(_context(user))
+    assert user == {"package": {"name": "my-pkg"}}
+
+
+#################################
+#     Tests for json_schema     #
+#################################
+
+
+def test_json_schema_groups_section() -> None:
+    names = {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]}
+    assert json_schema()["properties"]["tasklib"]["properties"]["groups"] == {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "install": {
+                **names,
+                "description": "Dependency groups of env.install (comma-separated string or list).",
+                "default": "dev",
+            },
+            "update": {
+                **names,
+                "description": "Dependency groups of env.update (comma-separated string or list).",
+                "default": "dev,docs",
+            },
+        },
+    }
+
+
+def test_json_schema_requires_the_package_name() -> None:
+    tasklib = json_schema()["properties"]["tasklib"]
+    assert (tasklib["required"], tasklib["properties"]["package"]["required"]) == (
+        ["package"],
+        ["name"],
+    )
+
+
+def test_json_schema_has_no_default_for_a_derived_key() -> None:
+    package = json_schema()["properties"]["tasklib"]["properties"]["package"]["properties"]
+    assert "default" not in package["import_name"]
+
+
+def test_json_schema_rejects_unknown_keys_of_a_section() -> None:
+    sections = json_schema()["properties"]["tasklib"]["properties"]
+    assert all(section["additionalProperties"] is False for section in sections.values())
+
+
+def test_json_schema_allows_other_top_level_keys() -> None:
+    assert "additionalProperties" not in json_schema()
+
+
+def test_json_schema_lists_every_key_of_the_schema() -> None:
+    sections = json_schema()["properties"]["tasklib"]["properties"]
+    assert {s: list(v["properties"]) for s, v in sections.items()} == {
+        s: list(options) for s, options in SCHEMA.items()
+    }
+
+
+def test_json_schema_check_steps_are_listed() -> None:
+    sections = json_schema()["properties"]["tasklib"]["properties"]
+    assert "docs" in sections["check"]["properties"]["tasks"]["anyOf"][1]["items"]["enum"]
+
+
+def test_json_schema_is_valid_json() -> None:
+    assert json.loads(json.dumps(json_schema())) == json_schema()
+
+
+def test_json_schema_is_deterministic() -> None:
+    assert json_schema() == json_schema()
+
+
+###########################
+#     Tests for main      #
+###########################
+
+
+def test_main_prints_the_schema(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main([]) == 0
+    assert json.loads(capsys.readouterr().out) == json_schema()
+
+
+def test_main_rejects_arguments(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["--bad"]) == 2
+    assert capsys.readouterr().out == "usage: python -m invoke_tasklib.config\n"
+
+
+def test_running_the_module_prints_the_schema(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(sys, "argv", ["config"])
+    monkeypatch.delitem(sys.modules, "invoke_tasklib.config")
+    with pytest.raises(SystemExit) as exc_info:
+        runpy.run_module("invoke_tasklib.config", run_name="__main__")
+    assert (exc_info.value.code, json.loads(capsys.readouterr().out)["title"]) == (
+        0,
+        "invoke.yaml of invoke-tasklib",
+    )

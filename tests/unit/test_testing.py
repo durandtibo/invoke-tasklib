@@ -10,6 +10,7 @@ from invoke.config import Config
 from invoke.context import MockContext
 
 from invoke_tasklib import testing as test_tasks
+from invoke_tasklib.config import get_config
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -650,3 +651,16 @@ def test_run_pytest_without_skip_missing_runs_a_missing_directory() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1)
     assert len(_commands(c)) == 1
+
+
+def test_run_pytest_uses_the_given_config_without_reading_the_context() -> None:
+    c = MockContext(config=Config(), run=True)
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"xdoctest": False}}))
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=5, cfg=cfg)
+    assert _commands(c) == ["/venv/bin/python -m pytest --timeout 5 tests/x"]
+
+
+def test_run_pytest_loads_the_config_without_a_given_one() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"xdoctest": False}})
+    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=5)
+    assert _commands(c) == ["/venv/bin/python -m pytest --timeout 5 tests/x"]
