@@ -46,3 +46,19 @@ def test_all_keep_going_prints_the_hint_of_a_missing_tool(
     with pytest.raises(Exit, match=r"1 of 1 check\(s\) failed: shell"):
         check.all_(_context("badpkg"), only="shell", keep_going=True)
     assert "'shellcheck' was not found on the PATH" in capsys.readouterr().out
+
+
+def test_all_stops_before_running_when_a_tool_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    with pytest.raises(Exit, match=r"tool\(s\) missing for the selected steps") as info:
+        check.all_(_context("badpkg"), only="lint,imports")
+    assert info.value.code == 127
+
+
+def test_all_prints_nothing_when_a_tool_is_missing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    with pytest.raises(Exit, match=r"missing"):
+        check.all_(_context("badpkg"), only="lint,imports")
+    assert capsys.readouterr().out == ""

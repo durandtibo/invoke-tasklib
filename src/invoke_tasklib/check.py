@@ -2,6 +2,7 @@ r"""Composite task that runs the read-only checks."""
 
 from __future__ import annotations
 
+import sys
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -66,8 +67,8 @@ MODULES: dict[str, tuple[str, ...]] = {
     "audit": (),
 }
 r"""The Python modules that each step of ``check.all`` runs, by step
-name. ``xdoctest`` is also needed by ``unit`` if ``tasklib.test.xdoctest``
-is true."""
+name. ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is
+true."""
 
 
 def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
@@ -79,8 +80,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
 
     Returns:
         A ``(tool, reason)`` pair for each program of ``PROGRAMS`` that
-        is not on the ``PATH`` and each module of ``MODULES`` that is not
-        installed, in that order. The reason says how to install it.
+        is not on the ``PATH`` and each module of ``MODULES`` that is
+        not installed, in that order. The reason says how to install it.
 
     Example usage:
 
@@ -89,7 +90,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
     >>> from invoke.context import MockContext
     >>> from invoke_tasklib.check import _missing_tools
     >>> from invoke_tasklib.config import load_config
-    >>> c = MockContext(config=Config(overrides={"tasklib": {"package": {"name": "p"}}}))
+    >>> cfg = {"tasklib": {"package": {"name": "p"}}}
+    >>> c = MockContext(config=Config(overrides=cfg))
     >>> _missing_tools("imports", load_config(c))
     []
 
@@ -123,16 +125,16 @@ def _preflight_message(blocked: dict[str, list[tuple[str, str]]]) -> str:
             that cannot run, by step name.
 
     Returns:
-        A message with one line per missing tool. The steps that need a
-        tool are listed after its name.
+        A message with one line per missing tool: the reason, then the
+        steps that need the tool.
 
     Example usage:
 
     ```pycon
     >>> from invoke_tasklib.check import _preflight_message
-    >>> print(_preflight_message({"lint": [("ruff", "Install it.")]}))
+    >>> print(_preflight_message({"lint": [("ruff", "Install ruff.")]}))
     1 tool(s) missing for the selected steps:
-      ruff (lint): Install it.
+      Install ruff. (needed by: lint)
 
     ```
     """
@@ -143,7 +145,7 @@ def _preflight_message(blocked: dict[str, list[tuple[str, str]]]) -> str:
             steps_of.setdefault(name, []).append(step)
             reasons.setdefault(name, reason)
     lines = [f"{len(steps_of)} tool(s) missing for the selected steps:"]
-    lines.extend(f"  {name} ({', '.join(steps_of[name])}): {reasons[name]}" for name in steps_of)
+    lines.extend(f"  {reasons[name]} (needed by: {', '.join(steps_of[name])})" for name in steps_of)
     return "\n".join(lines)
 
 

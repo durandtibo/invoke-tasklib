@@ -52,6 +52,11 @@ invoke check --only lint,types
 invoke check --skip unit
 ```
 
+Before running anything, the task looks up the tools that the selected steps need and reports all the
+missing ones at once (exit code 127), so a missing `ty` is not discovered after the formatting has
+run. With `--keep-going`, only the steps that miss a tool are not run: they are reported as failed,
+with the missing tool as the reason. Run [`env.check-tools`](env.md) to see every tool of the tasks.
+
 By default the task stops at the first failure, as the CI jobs do; use `--keep-going` locally to
 learn about all the problems in one run. Use the tasks directly (with `--args` and `--paths`) to run only one
 of them, or [`lint.pre-commit`](lint.md) to run the hooks of the project. To leave `check` out of a
