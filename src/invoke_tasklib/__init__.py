@@ -2,7 +2,9 @@ r"""Reusable Invoke tasks shared across Python projects.
 
 Typical usage in a consuming project's ``tasks.py``::
 
-    from invoke_tasklib import ns
+    from invoke_tasklib import make_ns
+
+    ns = make_ns()
 
 and an ``invoke.yaml`` at the project root::
 
@@ -10,10 +12,10 @@ and an ``invoke.yaml`` at the project root::
       package:
         name: my_package
 
-To compose a custom subset of tasks instead of using the default
-``ns``, use ``make_ns``, or import individual task modules (the module
-of the ``test`` tasks is ``testing``, so its collection needs the name
-``test`` to keep the task names):
+To compose a custom subset of tasks, use the ``exclude`` and
+``include`` options of ``make_ns``, or import individual task modules
+(the module of the ``test`` tasks is ``testing``, so its collection
+needs the name ``test`` to keep the task names):
 
 ```pycon
 >>> from invoke.collection import Collection
@@ -30,7 +32,10 @@ of the ``test`` tasks is ``testing``, so its collection needs the name
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import functools
+import importlib.metadata
+import warnings
+from typing import TYPE_CHECKING, Any
 
 from invoke.collection import Collection
 
@@ -53,6 +58,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 __all__ = [
+    "__version__",
     "check",
     "clean",
     "doc",
@@ -61,12 +67,40 @@ __all__ = [
     "imports",
     "lint",
     "make_ns",
-    "ns",
     "release",
     "security",
     "testing",
     "typecheck",
 ]
+
+
+def _installed_version(distribution: str = "invoke-tasklib") -> str:
+    r"""Return the version of an installed distribution.
+
+    Args:
+        distribution: The name of the distribution.
+
+    Returns:
+        The version, or ``"0+unknown"`` if the distribution is not
+        installed (for example when running from a source checkout).
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib import _installed_version
+    >>> _installed_version("no-such-distribution")
+    '0+unknown'
+
+    ```
+    """
+    try:
+        return importlib.metadata.version(distribution)
+    except importlib.metadata.PackageNotFoundError:
+        return "0+unknown"
+
+
+__version__ = _installed_version()
+r"""The version of the installed ``invoke-tasklib`` distribution."""
 
 _MODULES = {
     "format": formatting,
@@ -178,4 +212,44 @@ def make_ns(
     return ns
 
 
-ns: Collection = make_ns()
+@functools.cache
+def _shared_ns() -> Collection:
+    r"""Build the collection that the deprecated ``ns`` returns.
+
+    Returns:
+        The same collection on every call, like the former module
+        level ``ns``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib import _shared_ns
+    >>> _shared_ns() is _shared_ns()
+    True
+
+    ```
+    """
+    return make_ns()
+
+
+def __getattr__(name: str) -> Any:
+    r"""Give the deprecated ``ns`` attribute of the module.
+
+    Args:
+        name: The name of the attribute.
+
+    Returns:
+        The shared collection, for ``ns``.
+
+    Raises:
+        AttributeError: For any other name.
+    """
+    if name == "ns":
+        msg = (
+            "'invoke_tasklib.ns' is deprecated and will be removed: it is one collection shared "
+            "by every importer. Use 'ns = make_ns()' in your tasks.py instead."
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return _shared_ns()
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)

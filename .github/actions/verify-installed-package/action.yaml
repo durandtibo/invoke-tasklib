@@ -17,7 +17,8 @@ runs:
         set -euo pipefail
         python -c "
         import invoke_tasklib
-        from invoke_tasklib import ns
-        print('invoke_tasklib version/module:', invoke_tasklib.__file__)
-        print('namespace tasks:', sorted(t for t in ns.task_names))
+        from invoke_tasklib import make_ns
+        print('invoke_tasklib version:', invoke_tasklib.__version__)
+        print('invoke_tasklib module:', invoke_tasklib.__file__)
+        print('namespace tasks:', sorted(make_ns().task_names))
         "

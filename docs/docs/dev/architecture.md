@@ -12,7 +12,7 @@ core design follows these principles:
    `invoke_tasklib.config.get_config`, never directly from `c.config`.
 2. **Convention over configuration**: sensible defaults derived from `package.name` mean most
    projects only set one value (`tasklib.package.name`).
-3. **Composability**: the pre-built `ns` namespace is a convenience; any subset of task modules
+3. **Composability**: `make_ns()` builds the default namespace; any subset of task modules
    can be imported and combined with project-specific tasks.
 4. **No hidden state**: tasks only run external commands (`ruff`, `pytest`, `uv`, `mike`, ...);
    they don't maintain state between invocations.
@@ -59,18 +59,20 @@ same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, excep
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
-### 3. The `ns` Namespace
+### 3. The Namespace
 
 `invoke_tasklib/__init__.py` has `make_ns(*, exclude=(), include=None)`, which builds a new
 `Collection` by adding each task module (`Collection.from_module(module, name=...)`) as a
 sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the
 tasks of `include` when it is set. The modules whose names would shadow the standard library or a
 builtin (`format`, `types`, `test`) are named `formatting`, `typecheck` and `testing`; the
-namespace names come from `_MODULES`, not from the module names. `ns = make_ns()` is the pre-built collection.
+namespace names come from `_MODULES`, not from the module names.
 
-This is what gives consuming projects `format.check-python`, `test.unit`, etc. via a single
-`from invoke_tasklib import ns` in their `tasks.py`, or a trimmed copy with `make_ns(...)`. A
-project that adds its own tasks should do it on its own `make_ns()` result, not on the shared `ns`.
+This is what gives consuming projects `format.check-python`, `test.unit`, etc. via
+`ns = make_ns()` in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns
+a new collection, so a project can add its own tasks without affecting other importers.
+`invoke_tasklib.ns`, a collection built once and shared by every importer, is deprecated: accessing
+it emits a `DeprecationWarning`.
 
 ## Data Flow
 

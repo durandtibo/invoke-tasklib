@@ -52,7 +52,9 @@ coverage flag) creep in over time.
 `invoke-tasklib` centralizes these tasks in one importable package:
 
 ```python
-from invoke_tasklib import ns
+from invoke_tasklib import make_ns
+
+ns = make_ns()
 ```
 
 ```shell

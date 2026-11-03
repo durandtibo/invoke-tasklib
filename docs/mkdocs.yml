@@ -37,11 +37,13 @@ nav:
       - uguide/clean.md
       - uguide/check.md
       - uguide/config.md
+      - uguide/custom_tasks.md
   - troubleshooting.md
   - Developer Guide:
       - dev/development.md
       - dev/architecture.md
   - Reference:
+      - refs/invoke_tasklib.md
       - refs/format.md
       - refs/lint.md
       - refs/imports.md
@@ -54,6 +56,8 @@ nav:
       - refs/clean.md
       - refs/check.md
       - refs/config.md
+      - refs/runner.md
+      - refs/output.md
   - GitHub: https://github.com/durandtibo/invoke-tasklib
 
 repo_url: https://github.com/durandtibo/invoke-tasklib
