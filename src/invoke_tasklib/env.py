@@ -25,7 +25,7 @@ def create_venv(c: Context) -> None:
     """
     cfg = get_config(c)
     python_version = cfg["package"]["python_version"]
-    logger.info(f"🐍 Creating virtual environment with Python {python_version}...")
+    logger.info("🐍 Creating virtual environment with Python %s...", python_version)
     c.run(f"uv venv --python {python_version} --clear", pty=True)
     logger.info("📦 Installing invoke...")
     c.run("uv tool install invoke", pty=True)
@@ -82,7 +82,7 @@ def update(c: Context, groups: str | None = None) -> None:
     c.run("uv tool upgrade --all", pty=True)
     logger.info("🪝 Updating pre-commit hooks...")
     c.run("pre-commit autoupdate", pty=True)
-    logger.info(f"📦 Reinstalling with dependency groups: {groups}...")
+    logger.info("📦 Reinstalling with dependency groups: %s...", groups)
     install(c, groups=groups)
     logger.info("✅ Update complete")
 

@@ -9,11 +9,20 @@ from invoke.context import MockContext
 from invoke_tasklib import clean
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from _pytest.monkeypatch import MonkeyPatch
 
 
 def _context() -> MockContext:
     return MockContext(config=Config(), run=True)
+
+
+def _record_unlink(removed: list[Path]) -> Callable[[Path], None]:
+    def unlink(path: Path) -> None:
+        removed.append(path)
+
+    return unlink
 
 
 def test_all_removes_existing_dirs_and_files(monkeypatch: MonkeyPatch) -> None:
@@ -23,8 +32,8 @@ def test_all_removes_existing_dirs_and_files(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "is_dir", lambda _self: str(_self) in {"dist", "htmlcov"})
     monkeypatch.setattr(Path, "is_file", lambda _self: str(_self) == ".coverage")
     monkeypatch.setattr(Path, "glob", lambda _self, _pattern: iter([]))
-    monkeypatch.setattr("shutil.rmtree", lambda p: removed_dirs.append(p))
-    monkeypatch.setattr(Path, "unlink", lambda _self: removed_files.append(_self))
+    monkeypatch.setattr("shutil.rmtree", removed_dirs.append)
+    monkeypatch.setattr(Path, "unlink", _record_unlink(removed_files))
 
     c = _context()
     clean.all(c)
@@ -57,7 +66,7 @@ def test_all_removes_glob_matches(monkeypatch: MonkeyPatch) -> None:
         }.get(pattern, [])
 
     monkeypatch.setattr(Path, "glob", fake_glob)
-    monkeypatch.setattr("shutil.rmtree", lambda p: removed_dirs.append(p))
+    monkeypatch.setattr("shutil.rmtree", removed_dirs.append)
 
     c = _context()
     clean.all(c)
@@ -72,7 +81,7 @@ def test_pycache_removes_only_pycache_dirs(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
         Path, "glob", lambda _self, _pattern: iter([Path("a/__pycache__"), Path("__pycache__")])
     )
-    monkeypatch.setattr("shutil.rmtree", lambda p: removed_dirs.append(p))
+    monkeypatch.setattr("shutil.rmtree", removed_dirs.append)
 
     clean.pycache(_context())
 

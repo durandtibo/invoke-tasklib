@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 from invoke.config import Config
 from invoke.context import MockContext
 
@@ -12,7 +14,9 @@ def _context(tasklib_config: dict | None = None) -> MockContext:
 
 
 def _commands(c: MockContext) -> list[str]:
-    return [call.args[0] for call in c.run.call_args_list]
+    run = c.run
+    assert isinstance(run, Mock)
+    return [call.args[0] for call in run.call_args_list]
 
 
 _INSTALL_CHECK_CMD = (

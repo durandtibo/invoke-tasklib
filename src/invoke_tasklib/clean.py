@@ -50,11 +50,11 @@ def pycache(c: Context) -> None:  # noqa: ARG001 (task signature required by inv
 
 def _remove_dir(path: Path) -> None:
     if path.is_dir():
-        logger.info(f"🗑️  Removing {path}")
+        logger.info("🗑️  Removing %s", path)
         shutil.rmtree(path)
 
 
 def _remove_file(path: Path) -> None:
     if path.is_file():
-        logger.info(f"🗑️  Removing {path}")
+        logger.info("🗑️  Removing %s", path)
         path.unlink()

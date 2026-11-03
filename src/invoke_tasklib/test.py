@@ -35,13 +35,13 @@ def doctest_markdown(c: Context) -> None:
     md_files = sorted(
         p for p in Path().rglob("*.md") if not MARKDOWN_DOCTEST_EXCLUDE_DIRS.intersection(p.parts)
     )
-    logger.info(f"📚 Found {len(md_files)} markdown files")
+    logger.info("📚 Found %s markdown files", len(md_files))
     for f in md_files:
-        logger.info(f"🔍 Checking: {f}")
+        logger.info("🔍 Checking: %s", f)
         c.run(
             f"python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF {f}", pty=True
         )
-    logger.info(f"✅ All {len(md_files)} markdown files have been checked")
+    logger.info("✅ All %s markdown files have been checked", len(md_files))
 
 
 @task

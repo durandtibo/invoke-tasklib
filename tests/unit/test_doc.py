@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import types
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 from invoke.config import Config
 from invoke.context import MockContext
@@ -19,7 +20,9 @@ def _context(tasklib_config: dict | None = None) -> MockContext:
 
 
 def _commands(c: MockContext) -> list[str]:
-    return [call.args[0] for call in c.run.call_args_list]
+    run = c.run
+    assert isinstance(run, Mock)
+    return [call.args[0] for call in run.call_args_list]
 
 
 def test_publish_dev() -> None:
@@ -39,9 +42,11 @@ def _install_fake_feu_module(monkeypatch: MonkeyPatch, version: str | None) -> N
         return version
 
     fake_local_git = types.ModuleType("feu.local_git")
-    fake_local_git.get_last_version_tag_name = _get_last_version_tag_name
+    monkeypatch.setattr(
+        fake_local_git, "get_last_version_tag_name", _get_last_version_tag_name, raising=False
+    )
     fake_feu = types.ModuleType("feu")
-    fake_feu.local_git = fake_local_git
+    monkeypatch.setattr(fake_feu, "local_git", fake_local_git, raising=False)
     monkeypatch.setitem(sys.modules, "feu", fake_feu)
     monkeypatch.setitem(sys.modules, "feu.local_git", fake_local_git)
 
