@@ -53,7 +53,8 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
 
 @task
 def build(c: Context, check: bool = False) -> None:
-    r"""Build the package and verify the built artifacts can be installed.
+    r"""Build the package and verify the built artifacts can be
+    installed.
 
     The newest wheel and the newest source distribution in ``dist/`` are
     each installed in an isolated environment and the package is

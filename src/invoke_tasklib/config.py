@@ -60,10 +60,12 @@ class TasklibConfig(TypedDict):
 
 
 EXCLUDED_DIRS: frozenset[str] = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
-r"""Directories that the tasks never walk into (not owned by the project)."""
+r"""Directories that the tasks never walk into (not owned by the
+project)."""
 
 PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
-r"""Pattern of a valid ``package.python_version`` (``3.10`` or ``3.10.4``)."""
+r"""Pattern of a valid ``package.python_version`` (``3.10`` or
+``3.10.4``)."""
 
 DEFAULT_PACKAGE: dict[str, str | None] = {
     "name": None,

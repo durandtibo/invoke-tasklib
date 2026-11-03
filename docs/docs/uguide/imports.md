@@ -4,8 +4,8 @@
 
 ## Overview
 
-| Task                   | Behavior                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------- |
+| Task                   | Behavior                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------- |
 | `imports.check-cycles` | Checks for cyclic import dependencies by importing each module in isolation (read-only) |
 
 ## Usage
