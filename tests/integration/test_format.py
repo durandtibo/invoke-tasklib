@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import subprocess
 from typing import TYPE_CHECKING
 
 import pytest
-from invoke.config import Config
-from invoke.context import Context
 
 from invoke_tasklib import format  # noqa: A004
 
@@ -17,10 +16,10 @@ if TYPE_CHECKING:
 
 
 def _find_scripts(root: Path) -> list[str]:
-    c = Context(config=Config())
-    with c.cd(str(root)):
-        result = c.run(format._FIND_SH, hide=True, in_stream=False)
-    return sorted(result.stdout.split("\0")[:-1])
+    result = subprocess.run(  # noqa: S603 (fixed command built from constants)
+        ["/bin/sh", "-c", format._FIND_SH], cwd=root, capture_output=True, check=True
+    )
+    return sorted(result.stdout.decode().split("\0")[:-1])
 
 
 def test_find_sh_finds_scripts_of_the_project(tmp_path: Path) -> None:
