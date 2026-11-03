@@ -22,6 +22,12 @@ the `PATH` and exit with code 127 if it is not. Install the project tools with
 `invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`)
 or activate the virtual environment that has them.
 
+The hint depends on the program: `uv` points to its installation page (`env.install` itself needs
+it), `shellcheck` and `shfmt` to the system package manager, and `codespell` to the project
+dependencies. Every command of a pipeline is checked, and so is the module of
+`python -m <module>` (for example `pytest`), which is reported as
+`The Python module 'pytest' is not installed for ...` instead of Python's own `No module named`.
+
 ## `invoke: command not found` after installing
 
 `invoke-tasklib` depends on `invoke`, but installing a library into a virtual environment does not

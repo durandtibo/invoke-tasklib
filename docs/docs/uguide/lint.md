@@ -33,8 +33,9 @@ This runs `ruff check --fix .`, which rewrites files in place for every auto-fix
 Not every lint rule is auto-fixable, so `lint.check-python` may still report violations afterwards
 that need a manual fix.
 
+<!-- prettier-ignore -->
 !!! warning
-`lint.fix-python` modifies files in place. Commit your work before running it.
+    `lint.fix-python` modifies files in place. Commit your work before running it.
 
 ## Spelling and Pre-commit Hooks
 
