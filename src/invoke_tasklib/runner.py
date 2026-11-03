@@ -243,8 +243,8 @@ def _program_of(words: Sequence[str]) -> str | None:
 
     ``xargs`` runs the command that follows its options, so that command
     is the one that has to be installed. A command that starts a
-    subshell or a group (``(``, ``{``, ``}``) or a substitution (``$(``) has no
-    program that can be looked up.
+    subshell or a group (``(``, ``{``, ``}``) or a substitution
+    (``$(``) has no program that can be looked up.
 
     Args:
         words: The words of a command, without the assignments of

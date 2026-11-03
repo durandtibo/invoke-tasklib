@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import shlex
+import subprocess
 import sys
 
 import pytest
-from invoke.config import Config
-from invoke.context import Context
 from invoke.exceptions import Exit
 
-from invoke_tasklib.runner import check_program, run
+from invoke_tasklib.runner import check_program
 
 
 def test_check_program_missing_program_of_a_pipeline_exits_with_its_hint(
@@ -38,14 +37,14 @@ def test_check_program_accepts_a_builtin_without_an_executable(
     assert check_program("cd . && export FOO=1") is None
 
 
-def test_run_executes_a_command_with_an_assignment_and_a_builtin(
-    capfd: pytest.CaptureFixture[str],
-) -> None:
-    run(
-        Context(config=Config()),
-        "FOO=hello; cd . && echo $FOO",
-        echo=False,
-        pty=False,
-        in_stream=False,
+def test_run_executes_a_command_with_an_assignment_and_a_builtin() -> None:
+    code = (
+        "from invoke.config import Config\n"
+        "from invoke.context import Context\n"
+        "from invoke_tasklib.runner import run\n"
+        "run(Context(config=Config()), 'FOO=hello; cd . && echo $FOO', echo=False, pty=False)\n"
     )
-    assert capfd.readouterr().out == "hello\n"
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stdout == "hello\n"
