@@ -15,6 +15,48 @@ def test_ns_is_collection() -> None:
     assert isinstance(ns, Collection)
 
 
+def test_ns_contains_the_complete_list_of_tasks() -> None:
+    assert sorted(ns.task_names) == [
+        "check.all",
+        "clean.all",
+        "clean.pycache",
+        "doc.build",
+        "doc.publish-dev",
+        "doc.publish-latest",
+        "doc.serve",
+        "env.create-venv",
+        "env.install",
+        "env.show-installed-packages",
+        "env.show-python-config",
+        "env.update",
+        "format.check-docstrings",
+        "format.check-python",
+        "format.check-shell",
+        "format.fix-docstrings",
+        "format.fix-python",
+        "format.fix-shell",
+        "imports.check-cycles",
+        "imports.check-isolated",
+        "lint.check-python",
+        "lint.check-spelling",
+        "lint.fix-python",
+        "lint.pre-commit",
+        "release.build",
+        "release.publish",
+        "security.audit",
+        "test.all",
+        "test.benchmark",
+        "test.coverage-report",
+        "test.doctest",
+        "test.doctest-markdown",
+        "test.doctest-src",
+        "test.functional",
+        "test.integration",
+        "test.unit",
+        "types.check",
+    ]
+
+
 def test_ns_contains_expected_subcollections() -> None:
     assert set(ns.collections.keys()) == {
         "format",

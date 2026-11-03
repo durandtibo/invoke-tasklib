@@ -3,7 +3,6 @@ from __future__ import annotations
 import io
 import os
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
@@ -12,7 +11,7 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import release
-from tests.helpers import commands, make_context
+from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -171,9 +170,7 @@ def test_publish_dry_run_needs_no_credentials() -> None:
 def test_publish_passes_token_through_environment() -> None:
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    run = c.run
-    assert isinstance(run, Mock)
-    assert run.call_args.kwargs["env"] == {"UV_PUBLISH_TOKEN": "pypi-secret"}
+    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "pypi-secret"}
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -188,9 +185,7 @@ def test_publish_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    run = c.run
-    assert isinstance(run, Mock)
-    assert run.call_args.kwargs["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
 
 
 @pytest.mark.usefixtures("dist", "oidc")
@@ -204,9 +199,7 @@ def test_publish_uses_trusted_publishing_without_token() -> None:
 def test_publish_sends_no_token_with_trusted_publishing() -> None:
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    run = c.run
-    assert isinstance(run, Mock)
-    assert run.call_args.kwargs["env"] == {}
+    assert run_kwargs(c)[-1]["env"] == {}
 
 
 @pytest.mark.usefixtures("dist", "oidc", "token")

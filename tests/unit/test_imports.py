@@ -160,7 +160,9 @@ def test_check_cycles_detects_a_cycle_through_the_package(make_package: _Maker) 
         imports.check_cycles(make_context({"package": {"name": "cyc_init"}}))
 
 
-def test_check_cycles_ignores_type_checking_imports(make_package: _Maker) -> None:
+def test_check_cycles_ignores_type_checking_imports(
+    make_package: _Maker, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_package(
         "cyc_tc",
         {
@@ -170,6 +172,7 @@ def test_check_cycles_ignores_type_checking_imports(make_package: _Maker) -> Non
         },
     )
     imports.check_cycles(make_context({"package": {"name": "cyc_tc"}}))
+    assert "✅ No import cycle in 3 module(s)" in capsys.readouterr().out
 
 
 def test_check_cycles_can_follow_type_checking_imports(make_package: _Maker) -> None:
@@ -185,7 +188,9 @@ def test_check_cycles_can_follow_type_checking_imports(make_package: _Maker) -> 
         imports.check_cycles(make_context({"package": {"name": "cyc_tc2"}}), type_checking=True)
 
 
-def test_check_cycles_ignores_lazy_imports(make_package: _Maker) -> None:
+def test_check_cycles_ignores_lazy_imports(
+    make_package: _Maker, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_package(
         "cyc_lazy",
         {
@@ -195,6 +200,7 @@ def test_check_cycles_ignores_lazy_imports(make_package: _Maker) -> None:
         },
     )
     imports.check_cycles(make_context({"package": {"name": "cyc_lazy"}}))
+    assert "✅ No import cycle in 3 module(s)" in capsys.readouterr().out
 
 
 def test_check_cycles_can_follow_lazy_imports(make_package: _Maker) -> None:
@@ -216,9 +222,12 @@ def test_check_cycles_does_not_report_a_syntax_error_as_a_cycle(make_package: _M
         imports.check_cycles(make_context({"package": {"name": "cyc_syntax"}}))
 
 
-def test_check_cycles_does_not_report_a_missing_dependency_as_a_cycle(make_package: _Maker) -> None:
+def test_check_cycles_does_not_report_a_missing_dependency_as_a_cycle(
+    make_package: _Maker, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_package("cyc_dep", {"__init__.py": "", "a.py": "import not_installed_anywhere\n"})
     imports.check_cycles(make_context({"package": {"name": "cyc_dep"}}))
+    assert "✅ No import cycle in 2 module(s)" in capsys.readouterr().out
 
 
 def test_check_cycles_reports_a_missing_package() -> None:
@@ -226,6 +235,9 @@ def test_check_cycles_reports_a_missing_package() -> None:
         imports.check_cycles(make_context({"package": {"name": "cyc_missing"}}))
 
 
-def test_check_cycles_uses_the_configured_import_name(make_package: _Maker) -> None:
+def test_check_cycles_uses_the_configured_import_name(
+    make_package: _Maker, capsys: pytest.CaptureFixture[str]
+) -> None:
     make_package("cyc_named", {"__init__.py": ""})
     imports.check_cycles(make_context({"package": {"name": "my-dist", "import_name": "cyc_named"}}))
+    assert "✅ No import cycle in 1 module(s)" in capsys.readouterr().out

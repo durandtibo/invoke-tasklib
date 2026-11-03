@@ -37,11 +37,15 @@ def _mkdir(*parts: str) -> Callable[[Path], Path]:
 #########################
 
 
-def test_all_removes_artifact_dirs(project: Path) -> None:
+def test_all_removes_the_dist_dir(project: Path) -> None:
     _mkdir("dist")(project)
-    _mkdir("htmlcov")(project)
     clean.all_(_context())
     assert not (project / "dist").exists()
+
+
+def test_all_removes_the_htmlcov_dir(project: Path) -> None:
+    _mkdir("htmlcov")(project)
+    clean.all_(_context())
     assert not (project / "htmlcov").exists()
 
 

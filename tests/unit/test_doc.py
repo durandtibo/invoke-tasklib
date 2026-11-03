@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
@@ -9,15 +10,15 @@ from invoke.context import MockContext
 from invoke.exceptions import Exit
 from invoke.runners import Result
 
+from invoke_tasklib import doc
+from invoke_tasklib.doc import _docs_config, _parse_release, _parse_releases, _published_releases
+from tests.helpers import commands, make_context
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
     from _pytest.monkeypatch import MonkeyPatch
-
-from invoke_tasklib import doc
-from invoke_tasklib.doc import _docs_config, _parse_release, _parse_releases, _published_releases
-from tests.helpers import commands, make_context
 
 
 @pytest.fixture(autouse=True)
@@ -248,8 +249,10 @@ def test_publish_latest_compares_minor_versions_as_numbers(monkeypatch: MonkeyPa
 def test_publish_latest_does_not_check_the_published_versions_of_a_pre_release(
     monkeypatch: MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(doc, "_published_releases", lambda _c, _config: pytest.fail("listed"))
+    listed = Mock()
+    monkeypatch.setattr(doc, "_published_releases", listed)
     doc.publish_latest(make_context(_DOCS), version="1.0.0rc1")
+    assert listed.call_count == 0
 
 
 #######################################

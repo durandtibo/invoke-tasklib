@@ -24,7 +24,7 @@ def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def test_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def _project_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for name in ("integration", "functional", "benchmarks"):
         (tmp_path / "tests" / name).mkdir(parents=True)
     monkeypatch.chdir(tmp_path)
@@ -216,14 +216,14 @@ def test_unit_with_coverage() -> None:
     ]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_integration_without_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.integration(c)
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_integration_with_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.integration(c, cov=True)
@@ -235,14 +235,14 @@ def test_integration_with_coverage() -> None:
     ]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_functional_without_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.functional(c)
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_functional_with_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.functional(c, cov=True)
@@ -266,14 +266,14 @@ def test_unit_uses_configured_timeout() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 3 tests/unit"]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_integration_uses_configured_timeout() -> None:
     c = make_context({"package": {"name": "mypkg"}, "test": {"integration_timeout": 7}})
     test_tasks.integration(c)
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 7 tests/integration"]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_functional_uses_configured_timeout() -> None:
     c = make_context({"package": {"name": "mypkg"}, "test": {"functional_timeout": 9}})
     test_tasks.functional(c)
@@ -368,7 +368,7 @@ def test_integration_paths_run_even_if_the_directory_is_missing() -> None:
     ]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_functional_args() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.functional(c, args="-x")
@@ -411,7 +411,7 @@ def test_benchmark_quotes_the_benchmarks_path(tmp_path: Path) -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only 'my bench/'"]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_benchmark_with_args() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c, args="--benchmark-save=x")
@@ -427,7 +427,7 @@ def test_benchmark_with_paths_runs_without_the_default_directory() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only bench/test_a.py"]
 
 
-@pytest.mark.usefixtures("test_dirs")
+@pytest.mark.usefixtures("_project_dirs")
 def test_benchmark() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
