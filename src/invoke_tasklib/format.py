@@ -37,8 +37,10 @@ def check_python(c: Context) -> None:
 
 @task
 def check_docstrings(c: Context) -> None:
-    r"""Check docstring formatting with docformatter without modifying
-    files."""
+    r"""Check docstring format with docformatter.
+
+    The files are not modified.
+    """
     cfg = get_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Checking docstring formatting...")

@@ -14,6 +14,8 @@ from invoke_tasklib.runner import python_executable
 if TYPE_CHECKING:
     from invoke.context import Context
 
+COV_HELP = "Generate coverage reports (html, xml and terminal)."
+
 
 def _directory_exists(c: Context, path: str, what: str) -> bool:
     r"""Check that the directory of a test scope exists.
@@ -62,8 +64,7 @@ def doctest_src(c: Context) -> None:
 
 @task
 def doctest_markdown(c: Context) -> None:
-    r"""Run doctests on Python code examples embedded in markdown
-    files."""
+    r"""Run doctests on the Python examples of the markdown files."""
     md_files = sorted(p for p in Path().rglob("*.md") if not EXCLUDED_DIRS.intersection(p.parts))
     say(c, f"📚 Found {len(md_files)} markdown files")
     for f in md_files:
@@ -82,7 +83,7 @@ def doctest(c: Context) -> None:
     doctest_markdown(c)
 
 
-@task
+@task(help={"cov": COV_HELP})
 def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matches `inv test.all`)
     r"""Run all tests (unit, integration, and functional).
 
@@ -108,7 +109,7 @@ def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matche
     say(c, "✅ All tests complete")
 
 
-@task
+@task(help={"cov": COV_HELP})
 def unit(c: Context, cov: bool = False) -> None:
     r"""Run unit tests.
 
@@ -129,7 +130,7 @@ def unit(c: Context, cov: bool = False) -> None:
     say(c, "✅ Unit tests complete")
 
 
-@task
+@task(help={"cov": COV_HELP})
 def integration(c: Context, cov: bool = False) -> None:
     r"""Run integration tests.
 
@@ -154,7 +155,7 @@ def integration(c: Context, cov: bool = False) -> None:
     say(c, "✅ Integration tests complete")
 
 
-@task
+@task(help={"cov": COV_HELP})
 def functional(c: Context, cov: bool = False) -> None:
     r"""Run functional tests.
 
@@ -179,10 +180,12 @@ def functional(c: Context, cov: bool = False) -> None:
     say(c, "✅ Functional tests complete")
 
 
-@task
+@task(help={"open_browser": "Open the HTML report in the default web browser."})
 def coverage_report(c: Context, open_browser: bool = False) -> None:
-    r"""Generate an HTML coverage report from the last recorded coverage
-    data and print the terminal summary.
+    r"""Generate an HTML coverage report.
+
+    The report is built from the last recorded coverage data, and the
+    terminal summary is printed.
 
     Args:
         c: The invoke context.

@@ -14,8 +14,10 @@ if TYPE_CHECKING:
 
 @task
 def audit(c: Context) -> None:
-    r"""Audit installed dependencies for known vulnerabilities with pip-
-    audit."""
+    r"""Audit the dependencies for known vulnerabilities.
+
+    The audit is done with ``pip-audit``.
+    """
     say(c, "🔒 Auditing dependencies for known vulnerabilities...")
     c.run("uv run pip-audit", pty=True)
     say(c, "✅ Dependency audit passed")
