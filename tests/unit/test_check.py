@@ -12,6 +12,7 @@ from invoke.runners import Result
 
 from invoke_tasklib import check
 from invoke_tasklib.config import CHECK_STEPS
+from tests.helpers import commands
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -37,12 +38,6 @@ def _context(check_config: dict | None = None) -> MockContext:
     return MockContext(config=Config(overrides={"tasklib": tasklib}), run=True)
 
 
-def _commands(c: MockContext) -> list[str]:
-    run = c.run
-    assert isinstance(run, Mock)
-    return [call.args[0] for call in run.call_args_list]
-
-
 def _failing(c: MockContext, *failing: str) -> None:
     r"""Make the commands starting with a prefix of ``failing`` fail."""
 
@@ -63,7 +58,7 @@ def _failing(c: MockContext, *failing: str) -> None:
 def test_all_runs_the_checks_in_order() -> None:
     c = _context()
     check.all_(c)
-    assert _commands(c)[:4] == [
+    assert commands(c)[:4] == [
         "ruff format --check .",
         "docformatter --config ./pyproject.toml --check src/mypkg",
         "ruff check .",
@@ -74,13 +69,13 @@ def test_all_runs_the_checks_in_order() -> None:
 def test_all_ends_with_the_unit_tests() -> None:
     c = _context()
     check.all_(c)
-    assert _commands(c)[-1] == "/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"
+    assert commands(c)[-1] == "/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"
 
 
 def test_all_does_not_modify_files() -> None:
     c = _context()
     check.all_(c)
-    assert not [cmd for cmd in _commands(c) if "--fix" in cmd or "--in-place" in cmd]
+    assert not [cmd for cmd in commands(c) if "--fix" in cmd or "--in-place" in cmd]
 
 
 def test_all_stops_at_the_first_failure() -> None:
@@ -102,37 +97,37 @@ def test_all_runs_nothing_after_the_first_failure() -> None:
 def test_all_runs_the_configured_steps() -> None:
     c = _context({"tasks": ["lint", "format-python"]})
     check.all_(c)
-    assert _commands(c) == ["ruff check .", "ruff format --check ."]
+    assert commands(c) == ["ruff check .", "ruff format --check ."]
 
 
 def test_all_runs_the_optional_steps_when_configured() -> None:
     c = _context({"tasks": "docs,audit"})
     check.all_(c)
-    assert _commands(c)[0] == "mkdocs build --strict --config-file docs/mkdocs.yml"
+    assert commands(c)[0] == "mkdocs build --strict --config-file docs/mkdocs.yml"
 
 
 def test_all_only_replaces_the_configured_steps() -> None:
     c = _context()
     check.all_(c, only="types")
-    assert _commands(c) == ["ty check"]
+    assert commands(c) == ["ty check"]
 
 
 def test_all_only_keeps_the_order_given() -> None:
     c = _context()
     check.all_(c, only="types,lint")
-    assert _commands(c) == ["ty check", "ruff check ."]
+    assert commands(c) == ["ty check", "ruff check ."]
 
 
 def test_all_skip_removes_steps() -> None:
     c = _context({"tasks": "lint,types,format-python"})
     check.all_(c, skip="types")
-    assert _commands(c) == ["ruff check .", "ruff format --check ."]
+    assert commands(c) == ["ruff check .", "ruff format --check ."]
 
 
 def test_all_skip_is_applied_to_only() -> None:
     c = _context()
     check.all_(c, only="lint,types", skip="lint")
-    assert _commands(c) == ["ty check"]
+    assert commands(c) == ["ty check"]
 
 
 def test_all_rejects_an_unknown_only_step() -> None:
@@ -149,7 +144,7 @@ def test_all_with_unknown_step_runs_nothing() -> None:
     c = _context()
     with pytest.raises(Exit, match=r"Unknown step"):
         check.all_(c, skip="nope")
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 def test_all_reports_an_invalid_config() -> None:
@@ -162,7 +157,7 @@ def test_all_keep_going_runs_every_step_after_a_failure() -> None:
     _failing(c, "ruff format")
     with pytest.raises(Exit, match=r"1 of 3 check\(s\) failed: format-python"):
         check.all_(c, keep_going=True)
-    assert _commands(c) == ["ruff format --check .", "ruff check .", "ty check"]
+    assert commands(c) == ["ruff format --check .", "ruff check .", "ty check"]
 
 
 def test_all_keep_going_lists_all_the_failed_steps() -> None:
@@ -183,7 +178,7 @@ def test_all_keep_going_exits_with_code_1() -> None:
 def test_all_keep_going_passes_when_no_step_fails() -> None:
     c = _context({"tasks": "lint,types"})
     check.all_(c, keep_going=True)
-    assert _commands(c) == ["ruff check .", "ty check"]
+    assert commands(c) == ["ruff check .", "ty check"]
 
 
 def test_all_keep_going_catches_a_missing_program() -> None:
