@@ -212,6 +212,12 @@ def test_task_summary_fits_in_the_task_list(name: str) -> None:
 
 
 @pytest.mark.parametrize("name", sorted(ns.task_names))
+def test_task_summary_has_no_backticks(name: str) -> None:
+    summary = (ns[name].__doc__ or "").strip().splitlines()[0]
+    assert "`" not in summary
+
+
+@pytest.mark.parametrize("name", sorted(ns.task_names))
 def test_task_summary_is_a_sentence(name: str) -> None:
     summary = (ns[name].__doc__ or "").strip().splitlines()[0]
     assert summary.endswith(".")

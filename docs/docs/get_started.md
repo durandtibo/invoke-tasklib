@@ -74,7 +74,7 @@ Available tasks:
 
   check.all (check)             Run the main checks of the project.
   clean.all (clean)             Remove build artifacts and caches.
-  clean.pycache                 Remove all ``__pycache__`` directories.
+  clean.pycache                 Remove all __pycache__ directories.
   doc.build                     Build the documentation and fail on any
                                 warning.
   doc.publish-dev               Publish development (e.g. unstable) docs.
