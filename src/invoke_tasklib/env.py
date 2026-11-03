@@ -15,18 +15,19 @@ if TYPE_CHECKING:
 
 @task
 def create_venv(c: Context) -> None:
-    r"""Create a virtual environment and install invoke.
+    r"""Create a virtual environment and install invoke in it.
 
     Note:
         The virtual environment will be created in the .venv directory and any
-        existing environment will be cleared.
+        existing environment will be cleared. The task itself runs with
+        ``invoke``, so ``invoke`` must already be available to run it.
     """
     cfg = get_config(c)
     python_version = cfg["package"]["python_version"]
     say(c, f"🐍 Creating virtual environment with Python {python_version}...")
     c.run(f"uv venv --python {python_version} --clear", pty=True)
     say(c, "📦 Installing invoke...")
-    c.run("uv tool install invoke", pty=True)
+    c.run("uv pip install invoke", pty=True)
     say(c, "✅ Virtual environment created successfully")
 
 
@@ -46,7 +47,7 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     if groups is None:
         groups = get_config(c)["groups"]["install"]
     say(c, "📦 Installing project dependencies...")
-    cmd = ["uv sync --frozen"]
+    cmd = ["uv sync --locked"]
     if optional_deps:
         cmd.append("--all-extras")
     cmd.extend(f"--group {group}" for group in filter(None, (g.strip() for g in groups.split(","))))
@@ -68,6 +69,10 @@ def update(c: Context, groups: str | None = None) -> None:
             ``tasklib.groups.update`` config value (``"dev,docs"`` unless
             overridden in ``invoke.yaml``).
 
+    Note:
+        The lock file is upgraded first, then the environment is synced once
+        with the dependency groups.
+
     Warning:
         This may introduce breaking changes. Review the changes and run tests
         after updating.
@@ -75,7 +80,7 @@ def update(c: Context, groups: str | None = None) -> None:
     if groups is None:
         groups = get_config(c)["groups"]["update"]
     say(c, "🔄 Updating dependencies...")
-    c.run("uv sync --upgrade", pty=True)
+    c.run("uv lock --upgrade", pty=True)
     say(c, "🛠️  Upgrading uv tools...")
     c.run("uv tool upgrade --all", pty=True)
     say(c, "🪝 Updating pre-commit hooks...")
@@ -98,4 +103,4 @@ def show_python_config(c: Context) -> None:
     say(c, "🐍 Python configuration:")
     c.run("uv python list --only-installed", pty=True)
     c.run("uv python find", pty=True)
-    c.run("which python", pty=True)
+    c.run("command -v python", pty=True)

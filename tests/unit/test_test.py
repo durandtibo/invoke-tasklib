@@ -12,6 +12,8 @@ from invoke.context import MockContext
 from invoke_tasklib import test as test_tasks
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from _pytest.monkeypatch import MonkeyPatch
 
 
@@ -23,6 +25,13 @@ def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
 def _context(tasklib_config: dict | None = None) -> MockContext:
     overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
     return MockContext(config=Config(overrides=overrides), run=True)
+
+
+@pytest.fixture
+def test_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("integration", "functional", "benchmarks"):
+        (tmp_path / "tests" / name).mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
 
 
 def _commands(c: MockContext) -> list[str]:
@@ -105,7 +114,7 @@ def test_doctest(monkeypatch: MonkeyPatch) -> None:
 def test_all_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.all(c)
-    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 tests"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests"]
 
 
 def test_all_with_coverage() -> None:
@@ -113,7 +122,7 @@ def test_all_with_coverage() -> None:
     test_tasks.all(c, cov=True)
     assert _commands(c) == [
         (
-            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 "
             "--cov-report html --cov-report xml --cov-report term --cov=mypkg tests"
         )
     ]
@@ -136,12 +145,14 @@ def test_unit_with_coverage() -> None:
     ]
 
 
+@pytest.mark.usefixtures("test_dirs")
 def test_integration_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.integration(c)
     assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
+@pytest.mark.usefixtures("test_dirs")
 def test_integration_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.integration(c, cov=True)
@@ -153,12 +164,14 @@ def test_integration_with_coverage() -> None:
     ]
 
 
+@pytest.mark.usefixtures("test_dirs")
 def test_functional_without_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.functional(c)
     assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
+@pytest.mark.usefixtures("test_dirs")
 def test_functional_with_coverage() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.functional(c, cov=True)
@@ -186,7 +199,73 @@ def test_coverage_report_open_browser() -> None:
     ]
 
 
+@pytest.mark.usefixtures("test_dirs")
 def test_benchmark() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
     assert _commands(c) == ["/venv/bin/python -m pytest tests/benchmarks/ --benchmark-only"]
+
+
+##############################################
+#     Tests for missing test directories     #
+##############################################
+
+
+@pytest.fixture
+def empty_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.mark.usefixtures("empty_project")
+@pytest.mark.parametrize("task", [test_tasks.integration, test_tasks.functional])
+def test_scope_without_directory_runs_nothing(task: Callable[..., None]) -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    task(c)
+    assert _commands(c) == []
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_without_directory_runs_nothing() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.benchmark(c)
+    assert _commands(c) == []
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_integration_without_directory_says_it_skips(capsys: pytest.CaptureFixture[str]) -> None:
+    test_tasks.integration(_context({"package": {"name": "mypkg"}}))
+    assert capsys.readouterr().out == (
+        "⏭️  No 'tests/integration' directory: skipping integration tests\n"
+    )
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_unit_runs_even_if_directory_is_missing() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit(c)
+    assert len(_commands(c)) == 1
+
+
+#######################################
+#     Tests for _directory_exists     #
+#######################################
+
+
+def test_directory_exists_true_for_existing_directory(tmp_path: Path) -> None:
+    assert test_tasks._directory_exists(_context(), str(tmp_path), "x") is True
+
+
+def test_directory_exists_false_for_missing_directory(tmp_path: Path) -> None:
+    assert test_tasks._directory_exists(_context(), str(tmp_path / "missing"), "x") is False
+
+
+def test_directory_exists_false_for_file(tmp_path: Path) -> None:
+    (tmp_path / "f").write_text("")
+    assert test_tasks._directory_exists(_context(), str(tmp_path / "f"), "x") is False
+
+
+def test_directory_exists_is_silent_when_present(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    test_tasks._directory_exists(_context(), str(tmp_path), "x")
+    assert capsys.readouterr().out == ""

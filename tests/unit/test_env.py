@@ -22,20 +22,20 @@ def _commands(c: MockContext) -> list[str]:
 def test_create_venv_uses_configured_python_version() -> None:
     c = _context({"package": {"name": "mypkg", "python_version": "3.11"}})
     env.create_venv(c)
-    assert _commands(c) == ["uv venv --python 3.11 --clear", "uv tool install invoke"]
+    assert _commands(c) == ["uv venv --python 3.11 --clear", "uv pip install invoke"]
 
 
 def test_install_default_options() -> None:
     c = _context({"package": {"name": "mypkg"}})
     env.install(c)
-    assert _commands(c) == ["uv sync --frozen --all-extras --group dev", "uv pip install -e ."]
+    assert _commands(c) == ["uv sync --locked --all-extras --group dev", "uv pip install -e ."]
 
 
 def test_install_groups_from_config_list() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": ["dev", "test"]}})
     env.install(c)
     assert _commands(c) == [
-        "uv sync --frozen --all-extras --group dev --group test",
+        "uv sync --locked --all-extras --group dev --group test",
         "uv pip install -e .",
     ]
 
@@ -44,7 +44,7 @@ def test_install_default_groups_from_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"install": "dev,test"}})
     env.install(c)
     assert _commands(c) == [
-        "uv sync --frozen --all-extras --group dev --group test",
+        "uv sync --locked --all-extras --group dev --group test",
         "uv pip install -e .",
     ]
 
@@ -52,14 +52,14 @@ def test_install_default_groups_from_config() -> None:
 def test_install_no_optional_no_groups() -> None:
     c = _context()
     env.install(c, optional_deps=False, groups="")
-    assert _commands(c) == ["uv sync --frozen", "uv pip install -e ."]
+    assert _commands(c) == ["uv sync --locked", "uv pip install -e ."]
 
 
 def test_install_with_explicit_groups() -> None:
     c = _context()
     env.install(c, groups="dev,docs")
     assert _commands(c) == [
-        "uv sync --frozen --all-extras --group dev --group docs",
+        "uv sync --locked --all-extras --group dev --group docs",
         "uv pip install -e .",
     ]
 
@@ -68,7 +68,7 @@ def test_install_with_custom_groups() -> None:
     c = _context()
     env.install(c, groups="dev, test, lint")
     assert _commands(c) == [
-        "uv sync --frozen --all-extras --group dev --group test --group lint",
+        "uv sync --locked --all-extras --group dev --group test --group lint",
         "uv pip install -e .",
     ]
 
@@ -77,10 +77,10 @@ def test_update_runs_expected_commands() -> None:
     c = _context({"package": {"name": "mypkg"}})
     env.update(c)
     assert _commands(c) == [
-        "uv sync --upgrade",
+        "uv lock --upgrade",
         "uv tool upgrade --all",
         "pre-commit autoupdate",
-        "uv sync --frozen --all-extras --group dev --group docs",
+        "uv sync --locked --all-extras --group dev --group docs",
         "uv pip install -e .",
     ]
 
@@ -89,10 +89,10 @@ def test_update_default_groups_from_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "groups": {"update": "dev,test"}})
     env.update(c)
     assert _commands(c) == [
-        "uv sync --upgrade",
+        "uv lock --upgrade",
         "uv tool upgrade --all",
         "pre-commit autoupdate",
-        "uv sync --frozen --all-extras --group dev --group test",
+        "uv sync --locked --all-extras --group dev --group test",
         "uv pip install -e .",
     ]
 
@@ -101,10 +101,10 @@ def test_update_with_explicit_groups() -> None:
     c = _context()
     env.update(c, groups="dev,test")
     assert _commands(c) == [
-        "uv sync --upgrade",
+        "uv lock --upgrade",
         "uv tool upgrade --all",
         "pre-commit autoupdate",
-        "uv sync --frozen --all-extras --group dev --group test",
+        "uv sync --locked --all-extras --group dev --group test",
         "uv pip install -e .",
     ]
 
@@ -121,5 +121,28 @@ def test_show_python_config() -> None:
     assert _commands(c) == [
         "uv python list --only-installed",
         "uv python find",
-        "which python",
+        "command -v python",
     ]
+
+
+############################################
+#     Tests for the lock file handling     #
+############################################
+
+
+def test_install_requires_an_up_to_date_lock_file() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    env.install(c)
+    assert _commands(c)[0].startswith("uv sync --locked")
+
+
+def test_update_locks_before_syncing() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    env.update(c)
+    assert _commands(c)[0] == "uv lock --upgrade"
+
+
+def test_update_does_not_sync_twice() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    env.update(c)
+    assert len([cmd for cmd in _commands(c) if cmd.startswith("uv sync")]) == 1

@@ -15,6 +15,41 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+def _directory_exists(c: Context, path: str, what: str) -> bool:
+    r"""Check that the directory of a test scope exists.
+
+    Pytest exits with an error when it is given a path that does not
+    exist, so a project without, for example, integration tests would
+    fail the task. A message is written when the directory is missing so
+    that the skip is visible.
+
+    Args:
+        c: The invoke context.
+        path: The directory to check.
+        what: The name of the scope, used in the message, e.g.
+            ``"integration tests"``.
+
+    Returns:
+        ``True`` if the directory exists, ``False`` otherwise.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.test import _directory_exists
+    >>> _directory_exists(Context(config=Config()), "no/such/dir", "benchmarks")
+    ⏭️  No 'no/such/dir' directory: skipping benchmarks
+    False
+
+    ```
+    """
+    if Path(path).is_dir():
+        return True
+    say(c, f"⏭️  No '{path}' directory: skipping {what}")
+    return False
+
+
 @task
 def doctest_src(c: Context) -> None:
     r"""Run doctests on source code."""
@@ -51,6 +86,10 @@ def doctest(c: Context) -> None:
 def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matches `inv test.all`)
     r"""Run all tests (unit, integration, and functional).
 
+    The timeout of each test is 60 seconds, the one of the slowest scopes
+    (integration and functional), because the whole ``tests`` directory
+    is run in one pytest call.
+
     Args:
         c: The invoke context.
         cov: If True, generate coverage reports in HTML, XML, and terminal
@@ -60,7 +99,7 @@ def all(c: Context, cov: bool = False) -> None:  # noqa: A001 (task name, matche
     name = cfg["package"]["name"]
     tests = cfg["paths"]["tests"]
     say(c, "🧪 Running all tests...")
-    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 10"]
+    cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
     if cov:
         cmd.append(f"--cov-report html --cov-report xml --cov-report term --cov={name}")
         say(c, "📊 Coverage reports will be generated")
@@ -101,6 +140,8 @@ def integration(c: Context, cov: bool = False) -> None:
     cfg = get_config(c)
     name = cfg["package"]["name"]
     integration_tests = cfg["paths"]["integration_tests"]
+    if not _directory_exists(c, integration_tests, "integration tests"):
+        return
     say(c, "🧪 Running integration tests...")
     cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
     if cov:
@@ -124,6 +165,8 @@ def functional(c: Context, cov: bool = False) -> None:
     cfg = get_config(c)
     name = cfg["package"]["name"]
     functional_tests = cfg["paths"]["functional_tests"]
+    if not _directory_exists(c, functional_tests, "functional tests"):
+        return
     say(c, "🧪 Running functional tests...")
     cmd = [f"{python_executable()} -m pytest --xdoctest --timeout 60"]
     if cov:
@@ -160,6 +203,8 @@ def benchmark(c: Context) -> None:
     r"""Run performance benchmarks."""
     cfg = get_config(c)
     benchmarks = cfg["paths"]["benchmarks"]
+    if not _directory_exists(c, benchmarks, "benchmarks"):
+        return
     say(c, "⏱️  Running benchmarks...")
     c.run(f"{python_executable()} -m pytest {benchmarks}/ --benchmark-only", pty=True)
     say(c, "✅ Benchmarks complete")

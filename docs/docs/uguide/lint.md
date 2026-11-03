@@ -15,8 +15,13 @@
 invoke lint.check-python
 ```
 
-This runs `ruff check --output-format=github .`, which is well-suited for use in a GitHub Actions
-workflow since ruff annotates violations directly on the diff.
+This runs `ruff check .`. In GitHub Actions (`GITHUB_ACTIONS=true`) it adds
+`--output-format=github`, so ruff annotates violations directly on the diff; locally the readable
+default output is used. Pass `--output-format` to choose the format explicitly:
+
+```shell
+invoke lint.check-python --output-format=concise
+```
 
 ```shell
 invoke lint.fix-python
