@@ -12,20 +12,10 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import release
+from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-
-def _context(tasklib_config: dict | None = None) -> MockContext:
-    overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
-    return MockContext(config=Config(overrides=overrides), run=True)
-
-
-def _commands(c: MockContext) -> list[str]:
-    run = c.run
-    assert isinstance(run, Mock)
-    return [call.args[0] for call in run.call_args_list]
 
 
 @pytest.fixture
@@ -53,37 +43,37 @@ _SDIST_CHECK_CMD = (
 
 @pytest.mark.usefixtures("dist")
 def test_build_without_check() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     release.build(c)
-    assert _commands(c) == ["uv build --clear", _WHEEL_CHECK_CMD, _SDIST_CHECK_CMD]
+    assert commands(c) == ["uv build --clear", _WHEEL_CHECK_CMD, _SDIST_CHECK_CMD]
 
 
 @pytest.mark.usefixtures("dist")
 def test_build_with_args() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     release.build(c, args="--no-sources")
-    assert _commands(c)[0] == "uv build --clear --no-sources"
+    assert commands(c)[0] == "uv build --clear --no-sources"
 
 
 @pytest.mark.usefixtures("dist")
 def test_build_imports_the_import_name() -> None:
-    c = _context({"package": {"name": "my-pkg"}})
+    c = make_context({"package": {"name": "my-pkg"}})
     release.build(c)
-    assert _commands(c)[1].endswith("-- python -c 'import my_pkg'")
+    assert commands(c)[1].endswith("-- python -c 'import my_pkg'")
 
 
 @pytest.mark.usefixtures("dist")
 def test_build_imports_the_configured_import_name() -> None:
-    c = _context({"package": {"name": "my-pkg", "import_name": "other"}})
+    c = make_context({"package": {"name": "my-pkg", "import_name": "other"}})
     release.build(c)
-    assert _commands(c)[2].endswith("-- python -c 'import other'")
+    assert commands(c)[2].endswith("-- python -c 'import other'")
 
 
 @pytest.mark.usefixtures("dist")
 def test_build_with_check() -> None:
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     release.build(c, check=True)
-    assert _commands(c) == [
+    assert commands(c) == [
         "uv build --clear",
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
@@ -94,16 +84,16 @@ def test_build_with_check() -> None:
 def test_build_installs_the_built_wheel_not_the_package_name(dist: Path) -> None:
     (dist / "mypkg-0.0.2-py3-none-any.whl").write_text("")
     os.utime(dist / "mypkg-0.0.2-py3-none-any.whl", (1, 1))
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     release.build(c)
-    assert _commands(c)[1] == _WHEEL_CHECK_CMD
+    assert commands(c)[1] == _WHEEL_CHECK_CMD
 
 
 def test_build_fails_when_no_wheel_is_built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    c = _context({"package": {"name": "mypkg"}})
+    c = make_context({"package": {"name": "mypkg"}})
     with pytest.raises(Exit, match=r"No file matching '\*\.whl'"):
         release.build(c)
 
@@ -141,23 +131,23 @@ def oidc(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert _commands(c) == [*_BUILD, "uv publish"]
+    assert commands(c) == [*_BUILD, "uv publish"]
 
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_args_go_to_publish_not_to_build() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True, args="--index testpypi")
-    assert _commands(c) == [*_BUILD, "uv publish --index testpypi"]
+    assert commands(c) == [*_BUILD, "uv publish --index testpypi"]
 
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_to_test_pypi() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert _commands(c)[-1] == (
+    assert commands(c)[-1] == (
         "uv publish --publish-url https://test.pypi.org/legacy/ "
         "--check-url https://test.pypi.org/simple/"
     )
@@ -165,21 +155,21 @@ def test_publish_to_test_pypi() -> None:
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_dry_run() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, dry_run=True, skip_checks=True)
-    assert _commands(c) == [*_BUILD, "uv publish --dry-run"]
+    assert commands(c) == [*_BUILD, "uv publish --dry-run"]
 
 
 @pytest.mark.usefixtures("dist")
 def test_publish_dry_run_needs_no_credentials() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, dry_run=True, skip_checks=True)
-    assert _commands(c)[-1] == "uv publish --dry-run"
+    assert commands(c)[-1] == "uv publish --dry-run"
 
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_passes_token_through_environment() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
     run = c.run
     assert isinstance(run, Mock)
@@ -188,15 +178,15 @@ def test_publish_passes_token_through_environment() -> None:
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_does_not_put_token_on_command_line() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert "pypi-secret" not in " ".join(_commands(c))
+    assert "pypi-secret" not in " ".join(commands(c))
 
 
 @pytest.mark.usefixtures("dist")
 def test_publish_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
     run = c.run
     assert isinstance(run, Mock)
@@ -205,14 +195,14 @@ def test_publish_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> No
 
 @pytest.mark.usefixtures("dist", "oidc")
 def test_publish_uses_trusted_publishing_without_token() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert _commands(c)[-1] == "uv publish --trusted-publishing always"
+    assert commands(c)[-1] == "uv publish --trusted-publishing always"
 
 
 @pytest.mark.usefixtures("dist", "oidc")
 def test_publish_sends_no_token_with_trusted_publishing() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
     run = c.run
     assert isinstance(run, Mock)
@@ -221,9 +211,9 @@ def test_publish_sends_no_token_with_trusted_publishing() -> None:
 
 @pytest.mark.usefixtures("dist", "oidc", "token")
 def test_publish_prefers_the_token_to_trusted_publishing() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert _commands(c)[-1] == "uv publish"
+    assert commands(c)[-1] == "uv publish"
 
 
 @pytest.mark.usefixtures("dist")
@@ -232,44 +222,44 @@ def test_publish_requires_the_id_token_url_for_trusted_publishing(
 ) -> None:
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
     with pytest.raises(Exit, match=r"PYPI_TOKEN"):
-        release.publish(_context(_CFG), yes=True, skip_checks=True)
+        release.publish(make_context(_CFG), yes=True, skip_checks=True)
 
 
 def test_publish_fails_without_credentials() -> None:
     with pytest.raises(Exit, match=r"PYPI_TOKEN"):
-        release.publish(_context(_CFG))
+        release.publish(make_context(_CFG))
 
 
 def test_publish_does_not_build_without_credentials() -> None:
-    c = _context(_CFG)
+    c = make_context(_CFG)
     with pytest.raises(Exit, match=r"PYPI_TOKEN"):
         release.publish(c)
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_asks_for_a_confirmation(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO("n\n"))
-    c = _context(_CFG)
+    c = make_context(_CFG)
     with pytest.raises(Exit, match=r"Publication cancelled"):
         release.publish(c, skip_checks=True)
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_goes_on_after_a_confirmation(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, skip_checks=True)
-    assert _commands(c)[-1] == "uv publish"
+    assert commands(c)[-1] == "uv publish"
 
 
 @pytest.mark.usefixtures("dist", "token")
 def test_publish_does_not_ask_in_ci(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CI", "true")
-    c = _context(_CFG)
+    c = make_context(_CFG)
     release.publish(c, skip_checks=True)
-    assert _commands(c)[-1] == "uv publish"
+    assert commands(c)[-1] == "uv publish"
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -277,7 +267,7 @@ def test_publish_checks_the_git_state_first() -> None:
     c = _git_context(status=" M a.py\n")
     with pytest.raises(Exit, match=r"working tree is not clean"):
         release.publish(c, yes=True)
-    assert _commands(c) == ["git status --porcelain"]
+    assert commands(c) == ["git status --porcelain"]
 
 
 ##########################################

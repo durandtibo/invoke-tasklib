@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
 
 import pytest
-from invoke.config import Config
-from invoke.context import MockContext
 from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import imports
+from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,17 +22,6 @@ def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
 
 
-def _context(tasklib_config: dict | None = None, run: object = True) -> MockContext:
-    overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
-    return MockContext(config=Config(overrides=overrides), run=run)
-
-
-def _commands(c: MockContext) -> list[str]:
-    run = c.run
-    assert isinstance(run, Mock)
-    return [call.args[0] for call in run.call_args_list]
-
-
 _DISCOVER_CMD = "/venv/bin/python -m invoke_tasklib._discover mypkg"
 
 
@@ -44,7 +31,7 @@ _DISCOVER_CMD = "/venv/bin/python -m invoke_tasklib._discover mypkg"
 
 
 def test_check_isolated_discovers_then_imports_each_module() -> None:
-    c = _context(
+    c = make_context(
         tasklib_config={"package": {"name": "mypkg"}},
         run={
             _DISCOVER_CMD: Result(stdout="mypkg\nmypkg.a\nmypkg.sub\nmypkg.sub.b\n"),
@@ -55,7 +42,7 @@ def test_check_isolated_discovers_then_imports_each_module() -> None:
         },
     )
     imports.check_isolated(c)
-    assert _commands(c) == [
+    assert commands(c) == [
         _DISCOVER_CMD,
         "/venv/bin/python -c 'import mypkg'",
         "/venv/bin/python -c 'import mypkg.a'",
@@ -65,36 +52,36 @@ def test_check_isolated_discovers_then_imports_each_module() -> None:
 
 
 def test_check_isolated_does_not_embed_a_script() -> None:
-    c = _context(
+    c = make_context(
         tasklib_config={"package": {"name": "mypkg"}},
         run={_DISCOVER_CMD: Result(stdout="")},
     )
     imports.check_isolated(c)
-    assert _commands(c) == [_DISCOVER_CMD]
+    assert commands(c) == [_DISCOVER_CMD]
 
 
 def test_check_isolated_uses_the_import_name() -> None:
     cmd = "/venv/bin/python -m invoke_tasklib._discover my_pkg"
-    c = _context(
+    c = make_context(
         tasklib_config={"package": {"name": "my-pkg"}},
         run={cmd: Result(stdout="")},
     )
     imports.check_isolated(c)
-    assert _commands(c) == [cmd]
+    assert commands(c) == [cmd]
 
 
 def test_check_isolated_uses_the_configured_import_name() -> None:
     cmd = "/venv/bin/python -m invoke_tasklib._discover other"
-    c = _context(
+    c = make_context(
         tasklib_config={"package": {"name": "my-pkg", "import_name": "other"}},
         run={cmd: Result(stdout="")},
     )
     imports.check_isolated(c)
-    assert _commands(c) == [cmd]
+    assert commands(c) == [cmd]
 
 
 def test_check_isolated_reports_progress(capsys: pytest.CaptureFixture[str]) -> None:
-    c = _context(
+    c = make_context(
         tasklib_config={"package": {"name": "mypkg"}},
         run={
             _DISCOVER_CMD: Result(stdout="mypkg\n"),
@@ -131,7 +118,7 @@ def test_check_cycles_passes_without_cycle(
     make_package: _Maker, capsys: pytest.CaptureFixture[str]
 ) -> None:
     make_package("cyc_ok", {"__init__.py": "", "a.py": "from cyc_ok import b\n", "b.py": ""})
-    imports.check_cycles(_context({"package": {"name": "cyc_ok"}}))
+    imports.check_cycles(make_context({"package": {"name": "cyc_ok"}}))
     assert capsys.readouterr().out == (
         "🔍 Building the import graph of cyc_ok...\n✅ No import cycle in 3 module(s)\n"
     )
@@ -139,9 +126,9 @@ def test_check_cycles_passes_without_cycle(
 
 def test_check_cycles_runs_no_command(make_package: _Maker) -> None:
     make_package("cyc_cmd", {"__init__.py": ""})
-    c = _context({"package": {"name": "cyc_cmd"}})
+    c = make_context({"package": {"name": "cyc_cmd"}})
     imports.check_cycles(c)
-    assert _commands(c) == []
+    assert commands(c) == []
 
 
 def test_check_cycles_reports_the_cycle_path(make_package: _Maker) -> None:
@@ -152,7 +139,7 @@ def test_check_cycles_reports_the_cycle_path(make_package: _Maker) -> None:
     with pytest.raises(
         Exit, match=r"Found 1 import cycle\(s\) in cyc_bad:\n  cyc_bad.a -> cyc_bad.b -> cyc_bad.a"
     ):
-        imports.check_cycles(_context({"package": {"name": "cyc_bad"}}))
+        imports.check_cycles(make_context({"package": {"name": "cyc_bad"}}))
 
 
 def test_check_cycles_exits_with_code_1(make_package: _Maker) -> None:
@@ -161,7 +148,7 @@ def test_check_cycles_exits_with_code_1(make_package: _Maker) -> None:
         {"a.py": "import cyc_code.b\n", "b.py": "import cyc_code.a\n", "__init__.py": ""},
     )
     with pytest.raises(Exit) as info:
-        imports.check_cycles(_context({"package": {"name": "cyc_code"}}))
+        imports.check_cycles(make_context({"package": {"name": "cyc_code"}}))
     assert info.value.code == 1
 
 
@@ -170,7 +157,7 @@ def test_check_cycles_detects_a_cycle_through_the_package(make_package: _Maker) 
         "cyc_init", {"__init__.py": "from cyc_init import a\n", "a.py": "from cyc_init import X\n"}
     )
     with pytest.raises(Exit, match=r"cyc_init -> cyc_init.a -> cyc_init"):
-        imports.check_cycles(_context({"package": {"name": "cyc_init"}}))
+        imports.check_cycles(make_context({"package": {"name": "cyc_init"}}))
 
 
 def test_check_cycles_ignores_type_checking_imports(make_package: _Maker) -> None:
@@ -182,7 +169,7 @@ def test_check_cycles_ignores_type_checking_imports(make_package: _Maker) -> Non
             "b.py": "from cyc_tc import a\n",
         },
     )
-    imports.check_cycles(_context({"package": {"name": "cyc_tc"}}))
+    imports.check_cycles(make_context({"package": {"name": "cyc_tc"}}))
 
 
 def test_check_cycles_can_follow_type_checking_imports(make_package: _Maker) -> None:
@@ -195,7 +182,7 @@ def test_check_cycles_can_follow_type_checking_imports(make_package: _Maker) -> 
         },
     )
     with pytest.raises(Exit, match=r"cyc_tc2.a -> cyc_tc2.b -> cyc_tc2.a"):
-        imports.check_cycles(_context({"package": {"name": "cyc_tc2"}}), type_checking=True)
+        imports.check_cycles(make_context({"package": {"name": "cyc_tc2"}}), type_checking=True)
 
 
 def test_check_cycles_ignores_lazy_imports(make_package: _Maker) -> None:
@@ -207,7 +194,7 @@ def test_check_cycles_ignores_lazy_imports(make_package: _Maker) -> None:
             "b.py": "from cyc_lazy import a\n",
         },
     )
-    imports.check_cycles(_context({"package": {"name": "cyc_lazy"}}))
+    imports.check_cycles(make_context({"package": {"name": "cyc_lazy"}}))
 
 
 def test_check_cycles_can_follow_lazy_imports(make_package: _Maker) -> None:
@@ -220,25 +207,25 @@ def test_check_cycles_can_follow_lazy_imports(make_package: _Maker) -> None:
         },
     )
     with pytest.raises(Exit, match=r"Found 1 import cycle"):
-        imports.check_cycles(_context({"package": {"name": "cyc_lazy2"}}), lazy=True)
+        imports.check_cycles(make_context({"package": {"name": "cyc_lazy2"}}), lazy=True)
 
 
 def test_check_cycles_does_not_report_a_syntax_error_as_a_cycle(make_package: _Maker) -> None:
     make_package("cyc_syntax", {"__init__.py": "", "a.py": "def (:\n"})
     with pytest.raises(Exit, match=r"Cannot parse module cyc_syntax\.a: invalid syntax \(line 1\)"):
-        imports.check_cycles(_context({"package": {"name": "cyc_syntax"}}))
+        imports.check_cycles(make_context({"package": {"name": "cyc_syntax"}}))
 
 
 def test_check_cycles_does_not_report_a_missing_dependency_as_a_cycle(make_package: _Maker) -> None:
     make_package("cyc_dep", {"__init__.py": "", "a.py": "import not_installed_anywhere\n"})
-    imports.check_cycles(_context({"package": {"name": "cyc_dep"}}))
+    imports.check_cycles(make_context({"package": {"name": "cyc_dep"}}))
 
 
 def test_check_cycles_reports_a_missing_package() -> None:
     with pytest.raises(Exit, match=r"No module named 'cyc_missing'"):
-        imports.check_cycles(_context({"package": {"name": "cyc_missing"}}))
+        imports.check_cycles(make_context({"package": {"name": "cyc_missing"}}))
 
 
 def test_check_cycles_uses_the_configured_import_name(make_package: _Maker) -> None:
     make_package("cyc_named", {"__init__.py": ""})
-    imports.check_cycles(_context({"package": {"name": "my-dist", "import_name": "cyc_named"}}))
+    imports.check_cycles(make_context({"package": {"name": "my-dist", "import_name": "cyc_named"}}))
