@@ -81,7 +81,7 @@ pip install invoke-tasklib
 it even if you install `invoke-tasklib` with `pip`.
 
 **Platforms:** Linux and macOS. Windows is not supported: the tasks rely on
-POSIX tools (`which`, `find`, ...) and a POSIX shell.
+POSIX tools (`find`, `xargs`, ...) and a POSIX shell.
 
 ## Quickstart
 
@@ -181,9 +181,10 @@ default derived from it:
 tasklib:
   package:
     name: my_package # required
+    import_name: my_package # default: <package.name> with - replaced by _
     python_version: "3.14" # used by env.create-venv
   paths:
-    src: src/my_package # default: src/<package.name>
+    src: src/my_package # default: src/<package.import_name>
     tests: tests
     unit_tests: tests/unit # default: <tests>/unit
     integration_tests: tests/integration # default: <tests>/integration
