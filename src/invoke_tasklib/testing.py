@@ -2,6 +2,7 @@ r"""Test and benchmark tasks."""
 
 from __future__ import annotations
 
+import os
 import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,8 +16,19 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, python_e
 if TYPE_CHECKING:
     from invoke.context import Context
 
-COV_HELP = "Generate coverage reports (html, xml and terminal)."
+COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
+MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
+    "build",
+    "dist",
+    "site",
+    "htmlcov",
+    ".tox",
+    ".nox",
+    ".mypy_cache",
+    ".ruff_cache",
+}
+r"""Directories whose markdown files are never checked."""
 PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
 
 
@@ -64,10 +76,48 @@ def doctest_src(c: Context) -> None:
     say(c, "✅ Doctest validation complete")
 
 
+def _find_markdown_files(root: Path) -> list[Path]:
+    r"""Find the markdown files under a root directory.
+
+    The directories in ``MARKDOWN_EXCLUDED_DIRS`` (``.venv``, ``.git``,
+    ``site``, ...) are not walked into, so a virtual environment or a
+    build directory is never traversed.
+
+    Args:
+        root: The directory to search.
+
+    Returns:
+        The sorted paths of the ``.md`` files found.
+
+    Example usage:
+
+    ```pycon
+    >>> import tempfile
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.testing import _find_markdown_files
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     (Path(tmp) / "docs").mkdir()
+    ...     (Path(tmp) / ".venv").mkdir()
+    ...     _ = (Path(tmp) / "docs" / "a.md").write_text("")
+    ...     _ = (Path(tmp) / ".venv" / "b.md").write_text("")
+    ...     found = _find_markdown_files(Path(tmp))
+    ...     [p.relative_to(tmp).as_posix() for p in found]
+    ...
+    ['docs/a.md']
+
+    ```
+    """
+    found: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in MARKDOWN_EXCLUDED_DIRS]
+        found.extend(Path(dirpath) / name for name in filenames if name.endswith(".md"))
+    return sorted(found)
+
+
 @task
 def doctest_markdown(c: Context) -> None:
     r"""Run doctests on the Python examples of the markdown files."""
-    md_files = sorted(p for p in Path().rglob("*.md") if not EXCLUDED_DIRS.intersection(p.parts))
+    md_files = _find_markdown_files(Path())
     say(c, f"📚 Found {len(md_files)} markdown files")
     if md_files:
         files = " ".join(shlex.quote(str(f)) for f in md_files)
@@ -146,7 +196,7 @@ def _run_pytest(
         cmd.append("--xdoctest")
     cmd.append(f"--timeout {timeout}")
     if cov:
-        cmd.append("--cov-report html --cov-report xml --cov-report term")
+        cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
         if append:
             cmd.append("--cov-append")
         cmd.append(f"--cov={cfg.package.import_name}")
@@ -193,7 +243,9 @@ def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | No
     r"""Run unit tests.
 
     The timeout of each test is ``tasklib.test.unit_timeout`` (10
-    seconds by default).
+    seconds by default). If the unit tests directory does not exist
+    (a flat ``tests`` layout), the whole tests directory is run
+    instead; if neither exists, nothing is run.
 
     Args:
         c: The invoke context.
@@ -203,14 +255,19 @@ def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | No
             this scope.
     """
     cfg = load_config(c)
+    path = cfg.paths.unit_tests
+    if not paths and not Path(path).is_dir() and Path(cfg.paths.tests).is_dir():
+        say(c, f"⏭️  No '{path}' directory: running '{cfg.paths.tests}' instead")
+        path = cfg.paths.tests
     _run_pytest(
         c,
-        cfg.paths.unit_tests,
+        path,
         label="unit tests",
         timeout=cfg.test.unit_timeout,
         cov=cov,
         args=args,
         paths=paths,
+        skip_missing=True,
     )
 
 
@@ -289,8 +346,8 @@ def coverage_report(c: Context, open_browser: bool = False) -> None:
             default web browser. Default is False.
     """
     say(c, "📊 Generating coverage report...")
-    run(c, "coverage html")
-    run(c, "coverage report")
+    run(c, f"{python_executable()} -m coverage html")
+    run(c, f"{python_executable()} -m coverage report")
     if open_browser:
         say(c, "🌐 Opening coverage report in the browser...")
         run(c, f"{python_executable()} -m webbrowser -t htmlcov/index.html")
