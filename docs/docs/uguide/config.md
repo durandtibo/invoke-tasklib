@@ -27,6 +27,12 @@ tasklib:
   groups:
     install: dev
     update: dev,docs
+  test:
+    unit_timeout: 10
+    xdoctest: true
+    cov_reports: html,xml,term
+  check:
+    tasks: format-python,format-docstrings,lint,types,imports,unit
 ```
 
 Only `tasklib.package.name` (the distribution name, as on PyPI) is required. Everything else has a default, and most of the `paths`
@@ -53,6 +59,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `test.xdoctest`            | `true`                                                                                |
 | `test.cov_fail_under`      | not set                                                                               |
 | `test.cov_reports`         | `html,xml,term`                                                                       |
+| `check.tasks`              | `format-python,format-docstrings,lint,types,imports,unit`                             |
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
 with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
@@ -61,6 +68,10 @@ not have it), and a coverage threshold: with `--cov`, `cov_fail_under` is forwar
 `cov_reports` is a comma-separated string or a list of the `--cov-report` formats of pytest-cov
 (`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
+
+`check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order:
+`format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,
+`spelling`, `docs` and `audit`. It must have at least one step and no unknown step.
 
 `package.import_name` is the name used to import the package. It is used by `imports.check-cycles`,
 `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.

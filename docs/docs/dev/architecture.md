@@ -26,9 +26,9 @@ It:
 
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
   `invoke.yaml`.
-- Merges it on top of `DEFAULT_PACKAGE`, `DEFAULT_PATHS`, `DEFAULT_GROUPS` and `DEFAULT_TEST`.
+- Merges it on top of `DEFAULT_PACKAGE`, `DEFAULT_PATHS`, `DEFAULT_GROUPS`, `DEFAULT_TEST` and `DEFAULT_CHECK`.
 - Rejects unknown keys and validates the values (`package.python_version`, `package.import_name`,
-  `groups.*`, `test.*`).
+  `groups.*`, `test.*`, `check.tasks`).
 - Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
   `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
 - Raises `ValueError` if `package.name` is missing, since nearly every task needs it, or if a
@@ -41,6 +41,7 @@ class TasklibConfig:
     paths: PathsConfig
     groups: GroupsConfig
     test: TestConfig
+    check: CheckConfig
 ```
 
 Returning frozen dataclasses rather than a raw dict gives task authors static typing on

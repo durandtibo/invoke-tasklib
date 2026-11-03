@@ -10,6 +10,7 @@ from invoke.exceptions import Exit
 
 from invoke_tasklib.config import (
     COV_REPORTS,
+    DEFAULT_CHECK,
     DEFAULT_GROUPS,
     DEFAULT_PACKAGE,
     DEFAULT_PATHS,
@@ -20,6 +21,7 @@ from invoke_tasklib.config import (
     _int_from_text,
     _normalize_groups,
     _validate_bool,
+    _validate_check_tasks,
     _validate_cov_reports,
     _validate_import_name,
     _validate_int,
@@ -65,6 +67,9 @@ def test_get_config_defaults() -> None:
             "xdoctest": True,
             "cov_fail_under": None,
             "cov_reports": ("html", "xml", "term"),
+        },
+        "check": {
+            "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit")
         },
     }
 
@@ -205,7 +210,7 @@ def test_get_config_rejects_an_unknown_top_level_key() -> None:
 
 def test_get_config_top_level_error_lists_the_valid_sections() -> None:
     c = _context({"package": {"name": "mypkg"}, "zzz": {}})
-    with pytest.raises(ValueError, match=r"Valid keys: groups, package, paths, test"):
+    with pytest.raises(ValueError, match=r"Valid keys: check, groups, package, paths, test"):
         get_config(c)
 
 
@@ -628,8 +633,8 @@ def test_default_src_falls_back_to_the_src_layout(
 ####################################
 
 
-def test_default_config_has_the_four_sections() -> None:
-    assert sorted(default_config()) == ["groups", "package", "paths", "test"]
+def test_default_config_has_the_five_sections() -> None:
+    assert sorted(default_config()) == ["check", "groups", "package", "paths", "test"]
 
 
 def test_default_config_is_the_defaults() -> None:
@@ -638,6 +643,7 @@ def test_default_config_is_the_defaults() -> None:
         "paths": DEFAULT_PATHS,
         "groups": DEFAULT_GROUPS,
         "test": DEFAULT_TEST,
+        "check": DEFAULT_CHECK,
     }
 
 
@@ -769,4 +775,57 @@ def test_validate_cov_reports_rejects_other_types(value: object) -> None:
 def test_get_config_cov_reports_error_is_reported() -> None:
     c = _context({"package": {"name": "mypkg"}, "test": {"cov_reports": "nope"}})
     with pytest.raises(ValueError, match=r"Unknown coverage report \['nope'\]"):
+        get_config(c)
+
+
+###########################################
+#     Tests for _validate_check_tasks     #
+###########################################
+
+
+def test_validate_check_tasks_comma_separated_string() -> None:
+    assert _validate_check_tasks("lint, unit") == ("lint", "unit")
+
+
+def test_validate_check_tasks_list() -> None:
+    assert _validate_check_tasks(["types", "docs"]) == ("types", "docs")
+
+
+def test_validate_check_tasks_removes_duplicates_keeping_the_order() -> None:
+    assert _validate_check_tasks("unit,lint,unit") == ("unit", "lint")
+
+
+def test_validate_check_tasks_ignores_empty_names() -> None:
+    assert _validate_check_tasks("lint,,") == ("lint",)
+
+
+def test_validate_check_tasks_rejects_an_empty_value() -> None:
+    with pytest.raises(ValueError, match=r"must contain at least one step"):
+        _validate_check_tasks("")
+
+
+def test_validate_check_tasks_rejects_an_unknown_step() -> None:
+    with pytest.raises(ValueError, match=r"Unknown check step \['lnt'\] in 'tasklib.check.tasks'"):
+        _validate_check_tasks("lnt")
+
+
+def test_validate_check_tasks_lists_the_valid_steps() -> None:
+    with pytest.raises(ValueError, match=r"Valid steps: format-python, format-docstrings, lint"):
+        _validate_check_tasks("lnt")
+
+
+@pytest.mark.parametrize("value", [3, None, ["lint", 3]])
+def test_validate_check_tasks_rejects_a_wrong_type(value: object) -> None:
+    with pytest.raises(ValueError, match=r"must be a comma-separated string or a list"):
+        _validate_check_tasks(value)
+
+
+def test_get_config_check_tasks_override() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "check": {"tasks": ["lint", "docs"]}}))
+    assert cfg.check.tasks == ("lint", "docs")
+
+
+def test_get_config_check_rejects_an_unknown_key() -> None:
+    c = _context({"package": {"name": "mypkg"}, "check": {"task": "lint"}})
+    with pytest.raises(ValueError, match=r"Unknown key 'task' \(did you mean 'tasks'\?\)"):
         get_config(c)
