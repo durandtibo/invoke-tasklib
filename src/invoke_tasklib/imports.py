@@ -2,18 +2,16 @@ r"""Import-graph tasks."""
 
 from __future__ import annotations
 
-import logging
 import shlex
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
+from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
     from invoke.context import Context
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 
 @task
@@ -27,7 +25,7 @@ def check_cycles(c: Context) -> None:
     """
     cfg = get_config(c)
     name = cfg["package"]["name"]
-    logger.info("🔍 Discovering subpackages of %s...", name)
+    say(c, f"🔍 Discovering subpackages of {name}...")
     discover_script = (
         "import importlib, pkgutil, sys\n"
         "name = sys.argv[1]\n"
@@ -40,8 +38,8 @@ def check_cycles(c: Context) -> None:
     )
     discover = c.run(f"python -c {shlex.quote(discover_script)} {name}", hide=True)
     modules = [line for line in discover.stdout.splitlines() if line]
-    logger.info("🔍 Checking %s module(s) for cyclic imports...", len(modules))
+    say(c, f"🔍 Checking {len(modules)} module(s) for cyclic imports...")
     for module in modules:
-        logger.info("🔍 Checking: %s", module)
+        say(c, f"🔍 Checking: {module}")
         c.run(f"python -c {shlex.quote(f'import {module}')}", pty=True)
-    logger.info("✅ All %s module(s) imported without cyclic dependency errors", len(modules))
+    say(c, f"✅ All {len(modules)} module(s) imported without cyclic dependency errors")

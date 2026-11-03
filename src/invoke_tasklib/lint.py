@@ -2,23 +2,22 @@ r"""Lint tasks."""
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
+from invoke_tasklib.output import say
+
 if TYPE_CHECKING:
     from invoke.context import Context
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 
 @task
 def check_python(c: Context) -> None:
     r"""Check code linting with ruff."""
-    logger.info("🔍 Checking code linting with ruff...")
+    say(c, "🔍 Checking code linting with ruff...")
     c.run("ruff check --output-format=github .", pty=True)
-    logger.info("✅ Linting check passed")
+    say(c, "✅ Linting check passed")
 
 
 @task
@@ -29,6 +28,6 @@ def fix_python(c: Context) -> None:
         This modifies files in place. Ensure your work is committed before
         running this task.
     """
-    logger.info("🔧 Fixing linting issues with ruff...")
+    say(c, "🔧 Fixing linting issues with ruff...")
     c.run("ruff check --fix .", pty=True)
-    logger.info("✅ Linting fix complete")
+    say(c, "✅ Linting fix complete")

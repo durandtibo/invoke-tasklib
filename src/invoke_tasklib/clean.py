@@ -2,15 +2,14 @@ r"""Cleanup tasks."""
 
 from __future__ import annotations
 
-import logging
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from invoke_tasklib.output import say
+
 if TYPE_CHECKING:
     from invoke.context import Context
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 DIRS = (
     "build",
@@ -26,35 +25,35 @@ DIR_GLOBS = ("*.egg-info", "**/__pycache__")
 FILES = (".coverage", "coverage.xml")
 
 
-def all(c: Context) -> None:  # noqa: A001, ARG001 (task name/signature required by invoke)
+def all(c: Context) -> None:  # noqa: A001 (task name required by invoke)
     r"""Remove build artifacts and caches (dist, __pycache__,
     .pytest_cache, .coverage, etc.)."""
-    logger.info("🧹 Cleaning build artifacts and caches...")
+    say(c, "🧹 Cleaning build artifacts and caches...")
     for d in DIRS:
-        _remove_dir(Path(d))
+        _remove_dir(c, Path(d))
     for pattern in DIR_GLOBS:
         for p in Path().glob(pattern):
-            _remove_dir(p)
+            _remove_dir(c, p)
     for f in FILES:
-        _remove_file(Path(f))
-    logger.info("✅ Cleanup complete")
+        _remove_file(c, Path(f))
+    say(c, "✅ Cleanup complete")
 
 
-def pycache(c: Context) -> None:  # noqa: ARG001 (task signature required by invoke)
+def pycache(c: Context) -> None:
     r"""Remove all ``__pycache__`` directories."""
-    logger.info("🧹 Cleaning __pycache__ directories...")
+    say(c, "🧹 Cleaning __pycache__ directories...")
     for p in Path().glob("**/__pycache__"):
-        _remove_dir(p)
-    logger.info("✅ Cleanup complete")
+        _remove_dir(c, p)
+    say(c, "✅ Cleanup complete")
 
 
-def _remove_dir(path: Path) -> None:
+def _remove_dir(c: Context, path: Path) -> None:
     if path.is_dir():
-        logger.info("🗑️  Removing %s", path)
+        say(c, f"🗑️  Removing {path}")
         shutil.rmtree(path)
 
 
-def _remove_file(path: Path) -> None:
+def _remove_file(c: Context, path: Path) -> None:
     if path.is_file():
-        logger.info("🗑️  Removing %s", path)
+        say(c, f"🗑️  Removing {path}")
         path.unlink()

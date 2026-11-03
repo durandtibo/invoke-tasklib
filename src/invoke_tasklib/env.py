@@ -2,17 +2,15 @@ r"""Environment and dependency management tasks."""
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
+from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
     from invoke.context import Context
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 
 @task
@@ -25,11 +23,11 @@ def create_venv(c: Context) -> None:
     """
     cfg = get_config(c)
     python_version = cfg["package"]["python_version"]
-    logger.info("🐍 Creating virtual environment with Python %s...", python_version)
+    say(c, f"🐍 Creating virtual environment with Python {python_version}...")
     c.run(f"uv venv --python {python_version} --clear", pty=True)
-    logger.info("📦 Installing invoke...")
+    say(c, "📦 Installing invoke...")
     c.run("uv tool install invoke", pty=True)
-    logger.info("✅ Virtual environment created successfully")
+    say(c, "✅ Virtual environment created successfully")
 
 
 @task
@@ -47,15 +45,15 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     """
     if groups is None:
         groups = get_config(c)["groups"]["install"]
-    logger.info("📦 Installing project dependencies...")
+    say(c, "📦 Installing project dependencies...")
     cmd = ["uv sync --frozen"]
     if optional_deps:
         cmd.append("--all-extras")
     cmd.extend(f"--group {group}" for group in filter(None, (g.strip() for g in groups.split(","))))
     c.run(" ".join(cmd), pty=True)
-    logger.info("🔧 Installing package in editable mode...")
+    say(c, "🔧 Installing package in editable mode...")
     c.run("uv pip install -e .", pty=True)
-    logger.info("✅ Installation complete")
+    say(c, "✅ Installation complete")
 
 
 @task
@@ -76,28 +74,28 @@ def update(c: Context, groups: str | None = None) -> None:
     """
     if groups is None:
         groups = get_config(c)["groups"]["update"]
-    logger.info("🔄 Updating dependencies...")
+    say(c, "🔄 Updating dependencies...")
     c.run("uv sync --upgrade", pty=True)
-    logger.info("🛠️  Upgrading uv tools...")
+    say(c, "🛠️  Upgrading uv tools...")
     c.run("uv tool upgrade --all", pty=True)
-    logger.info("🪝 Updating pre-commit hooks...")
+    say(c, "🪝 Updating pre-commit hooks...")
     c.run("pre-commit autoupdate", pty=True)
-    logger.info("📦 Reinstalling with dependency groups: %s...", groups)
+    say(c, f"📦 Reinstalling with dependency groups: {groups}...")
     install(c, groups=groups)
-    logger.info("✅ Update complete")
+    say(c, "✅ Update complete")
 
 
 @task
 def show_installed_packages(c: Context) -> None:
     r"""Show the installed packages."""
-    logger.info("📦 Listing installed packages...")
+    say(c, "📦 Listing installed packages...")
     c.run("uv pip list", pty=True)
 
 
 @task
 def show_python_config(c: Context) -> None:
     r"""Show the python configuration."""
-    logger.info("🐍 Python configuration:")
+    say(c, "🐍 Python configuration:")
     c.run("uv python list --only-installed", pty=True)
     c.run("uv python find", pty=True)
     c.run("which python", pty=True)

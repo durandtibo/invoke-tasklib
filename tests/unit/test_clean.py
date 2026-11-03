@@ -11,6 +11,7 @@ from invoke_tasklib import clean
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    import pytest
     from _pytest.monkeypatch import MonkeyPatch
 
 
@@ -86,3 +87,44 @@ def test_pycache_removes_only_pycache_dirs(monkeypatch: MonkeyPatch) -> None:
     clean.pycache(_context())
 
     assert {str(p) for p in removed_dirs} == {"a/__pycache__", "__pycache__"}
+
+
+##################################
+#     Tests for _remove_dir      #
+##################################
+
+
+def test_remove_dir_removes_existing_dir(tmp_path: Path) -> None:
+    target = tmp_path / "cache"
+    target.mkdir()
+    clean._remove_dir(_context(), target)
+    assert not target.exists()
+
+
+def test_remove_dir_ignores_missing_dir(tmp_path: Path) -> None:
+    clean._remove_dir(_context(), tmp_path / "missing")
+    assert tmp_path.exists()
+
+
+def test_remove_dir_reports_removal(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    target = tmp_path / "cache"
+    target.mkdir()
+    clean._remove_dir(_context(), target)
+    assert capsys.readouterr().out == f"🗑️  Removing {target}\n"
+
+
+###################################
+#     Tests for _remove_file      #
+###################################
+
+
+def test_remove_file_removes_existing_file(tmp_path: Path) -> None:
+    target = tmp_path / ".coverage"
+    target.write_text("data")
+    clean._remove_file(_context(), target)
+    assert not target.exists()
+
+
+def test_remove_file_ignores_missing_file(tmp_path: Path) -> None:
+    clean._remove_file(_context(), tmp_path / "missing")
+    assert tmp_path.exists()
