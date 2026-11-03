@@ -18,9 +18,10 @@ To compose a custom subset of tasks instead of using the default
 >>> from invoke_tasklib import lint, test
 >>> ns = Collection(lint, test)
 >>> sorted(ns.task_names)
-['lint.check-python', 'lint.fix-python', 'test.all', 'test.benchmark',
- 'test.coverage-report', 'test.doctest', 'test.doctest-markdown',
- 'test.doctest-src', 'test.functional', 'test.integration', 'test.unit']
+['lint.check-python', 'lint.check-spelling', 'lint.fix-python', 'lint.pre-commit',
+ 'test.all', 'test.benchmark', 'test.coverage-report', 'test.doctest',
+ 'test.doctest-markdown', 'test.doctest-src', 'test.functional',
+ 'test.integration', 'test.unit']
 
 ```
 """
