@@ -9,6 +9,7 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib.config import (
+    _as_mapping,
     _check_keys,
     _default_src,
     _normalize_groups,
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def _context(tasklib_config: dict | None = None) -> Context:
+def _context(tasklib_config: object = None) -> Context:
     overrides = {"tasklib": tasklib_config} if tasklib_config is not None else {}
     return Context(config=Config(overrides=overrides))
 
@@ -202,6 +203,66 @@ def test_get_config_groups_overrides() -> None:
     )
     assert cfg.groups.install == "dev,test"
     assert cfg.groups.update == "dev,test,docs"
+
+
+########################################
+#     Tests for mapping validation     #
+########################################
+
+
+@pytest.mark.parametrize("section", ["package", "paths", "groups", "test"])
+def test_get_config_rejects_a_section_that_is_a_string(section: str) -> None:
+    c = _context({"package": {"name": "mypkg"}, section: "foo"})
+    with pytest.raises(ValueError, match=rf"'tasklib\.{section}' must be a mapping, got 'foo'"):
+        get_config(c)
+
+
+def test_get_config_rejects_a_section_that_is_a_list() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": ["src"]})
+    with pytest.raises(ValueError, match=r"'tasklib\.paths' must be a mapping, got \['src'\]"):
+        get_config(c)
+
+
+def test_get_config_rejects_an_empty_section() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": None})
+    with pytest.raises(ValueError, match=r"'tasklib\.paths' must be a mapping, got None"):
+        get_config(c)
+
+
+def test_get_config_rejects_a_tasklib_section_that_is_a_string() -> None:
+    c = _context("foo")
+    with pytest.raises(ValueError, match=r"'tasklib' must be a mapping, got 'foo'"):
+        get_config(c)
+
+
+def test_load_config_exits_on_a_section_that_is_a_string() -> None:
+    c = _context({"package": {"name": "mypkg"}, "paths": "foo"})
+    with pytest.raises(Exit, match=r"'tasklib\.paths' must be a mapping"):
+        load_config(c)
+
+
+#################################
+#     Tests for _as_mapping     #
+#################################
+
+
+def test_as_mapping_returns_the_mapping() -> None:
+    assert _as_mapping("tasklib.paths", {"src": "x"}) == {"src": "x"}
+
+
+def test_as_mapping_returns_the_same_object() -> None:
+    value = {"src": "x"}
+    assert _as_mapping("tasklib.paths", value) is value
+
+
+def test_as_mapping_accepts_an_empty_mapping() -> None:
+    assert _as_mapping("tasklib.paths", {}) == {}
+
+
+@pytest.mark.parametrize("value", ["foo", "", ["a"], 5, None, True])
+def test_as_mapping_rejects_other_types(value: object) -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.paths' must be a mapping, got "):
+        _as_mapping("tasklib.paths", value)
 
 
 ###############################################

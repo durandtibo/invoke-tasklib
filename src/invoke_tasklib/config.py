@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import difflib
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,7 +26,7 @@ from typing import TYPE_CHECKING
 from invoke.exceptions import Exit
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Iterable
 
     from invoke.context import Context
 
@@ -162,6 +163,42 @@ def _validate_python_version(value: object) -> str:
         )
         raise ValueError(msg)
     return value
+
+
+def _as_mapping(name: str, value: object) -> Mapping[str, object]:
+    r"""Check that a config section is a mapping.
+
+    Without this check, a string given instead of a section would be
+    read character by character by the key validation.
+
+    Args:
+        name: The dotted name of the section (``tasklib`` or
+            ``tasklib.paths``), used in the error message.
+        value: The raw value of the section.
+
+    Returns:
+        The section, unchanged.
+
+    Raises:
+        ValueError: If ``value`` is not a mapping.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _as_mapping
+    >>> _as_mapping("tasklib.paths", {"src": "x"})
+    {'src': 'x'}
+    >>> _as_mapping("tasklib.paths", "foo")
+    Traceback (most recent call last):
+        ...
+    ValueError: 'tasklib.paths' must be a mapping, got 'foo'
+
+    ```
+    """
+    if isinstance(value, Mapping):
+        return value
+    msg = f"'{name}' must be a mapping, got {value!r}"
+    raise ValueError(msg)
 
 
 def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) -> None:
@@ -375,7 +412,9 @@ def get_config(c: Context) -> TasklibConfig:
         e.g. ``cfg.paths.src``.
 
     Raises:
-        ValueError: If ``tasklib.package.name`` is not set, or if
+        ValueError: If ``tasklib`` or one of its ``package``, ``paths``,
+            ``groups`` and ``test`` sections is not a mapping, or if
+            ``tasklib.package.name`` is not set, or if
             ``tasklib.package.python_version`` is not a string such as
             ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
             float ``3.1``), or if ``tasklib.package.import_name`` is not
@@ -407,15 +446,19 @@ def get_config(c: Context) -> TasklibConfig:
 
     ```
     """
-    user = dict(c.config.get("tasklib", {}))
-    _check_keys("package", user.get("package", {}), DEFAULT_PACKAGE)
-    _check_keys("paths", user.get("paths", {}), DEFAULT_PATHS)
-    _check_keys("groups", user.get("groups", {}), DEFAULT_GROUPS)
-    _check_keys("test", user.get("test", {}), DEFAULT_TEST)
-    package = {**DEFAULT_PACKAGE, **user.get("package", {})}
-    paths = {**DEFAULT_PATHS, **user.get("paths", {})}
-    groups = {**DEFAULT_GROUPS, **user.get("groups", {})}
-    test = {**DEFAULT_TEST, **user.get("test", {})}
+    user = _as_mapping("tasklib", c.config.get("tasklib", {}))
+    sections = {
+        name: _as_mapping(f"tasklib.{name}", user.get(name, {}))
+        for name in ("package", "paths", "groups", "test")
+    }
+    _check_keys("package", sections["package"], DEFAULT_PACKAGE)
+    _check_keys("paths", sections["paths"], DEFAULT_PATHS)
+    _check_keys("groups", sections["groups"], DEFAULT_GROUPS)
+    _check_keys("test", sections["test"], DEFAULT_TEST)
+    package = {**DEFAULT_PACKAGE, **sections["package"]}
+    paths = {**DEFAULT_PATHS, **sections["paths"]}
+    groups = {**DEFAULT_GROUPS, **sections["groups"]}
+    test = {**DEFAULT_TEST, **sections["test"]}
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
