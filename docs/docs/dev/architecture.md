@@ -27,12 +27,13 @@ It:
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
   `invoke.yaml`.
 - Merges it on top of `DEFAULT_PACKAGE`/`DEFAULT_PATHS`.
-- Derives unset `paths.*` entries from `package.name` (for `paths.src`) or `paths.tests` (for the
+- Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
   `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
 - Raises `ValueError` if `package.name` is missing, since nearly every task needs it.
 
 ```python
-class TasklibConfig(TypedDict):
+@dataclass(frozen=True)
+class TasklibConfig:
     package: PackageConfig
     paths: PathsConfig
 ```
