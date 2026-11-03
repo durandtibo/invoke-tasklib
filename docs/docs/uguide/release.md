@@ -5,10 +5,12 @@ publish the package to PyPI using [`uv`](https://docs.astral.sh/uv/).
 
 ## Overview
 
+`release.pypi` was renamed to `release.publish`; the old name is no longer available.
+
 | Task            | Behavior                                                                                    |
 | --------------- | ------------------------------------------------------------------------------------------- |
 | `release.build` | Builds the package and verifies installation (`--check` also validates metadata with twine) |
-| `release.pypi`  | Builds and publishes the package to PyPI                                                    |
+| `release.publish` | Checks the git state, then builds and publishes the package to PyPI or TestPyPI           |
 
 ## Building
 
@@ -31,26 +33,45 @@ invoke release.build --check
 ## Publishing to PyPI
 
 ```shell
-invoke release.pypi
+invoke release.publish
 ```
 
-Builds the package (via `release.build`, which clears `dist/` first so stale artifacts are never
-uploaded) and then runs `uv publish`. The token is read from the `PYPI_TOKEN` environment variable
-(or `UV_PUBLISH_TOKEN`) and handed to `uv publish` through its environment, so it never appears on
-the command line. The task fails before building if no token is set.
+Before anything is built, the task checks the git state: the working tree must be clean, `HEAD`
+must be tagged and the tag (without a leading `v`) must be the static `project.version` of
+`pyproject.toml` (a dynamic version is not compared). It then asks for a confirmation, unless
+`--yes` is given or the `CI` environment variable is set. Finally it builds the package (via
+`release.build`, which clears `dist/` first so stale artifacts are never uploaded) and runs
+`uv publish`.
 
-`release.pypi` is the token-based way to publish, for example from a local machine. It is not the
-only one: a CI workflow can build the package with `release.build` and publish it with
-[PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), which needs
-no token at all. This repository releases that way (see `.github/workflows/release-pypi.yaml`),
-and does not use `release.pypi`.
+Credentials, in this order:
+
+- a token in `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`), handed to `uv publish` through its environment
+  so it never appears on the command line;
+- [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), used
+  automatically in GitHub Actions with the `id-token: write` permission (`--trusted-publishing
+  always`); no token is needed.
+
+Without either, the task fails before building.
+
+| Option          | Effect                                                                           |
+| --------------- | -------------------------------------------------------------------------------- |
+| `--test-pypi`   | Publishes to [TestPyPI](https://test.pypi.org/) instead of PyPI                  |
+| `--dry-run`     | Runs the checks and the build, and gives `--dry-run` to `uv publish`; no token   |
+| `--yes`         | Does not ask for a confirmation                                                  |
+| `--skip-checks` | Does not check the git state                                                     |
+| `--args`        | Extra arguments for `uv publish`                                                 |
+
+```shell
+invoke release.publish --dry-run
+invoke release.publish --test-pypi --yes
+```
 
 <!-- prettier-ignore -->
 !!! warning
-    This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
-    and that you are releasing the intended version before running this task.
+    This publishes a new version to PyPI, which cannot be undone. Try `--dry-run` or `--test-pypi`
+    first, and make sure you are releasing the intended version.
 
-`release.build` and `release.pypi` take `--args` for `uv build` and `uv publish`.
+`release.build` takes `--args` for `uv build`.
 
 ## See Also
 

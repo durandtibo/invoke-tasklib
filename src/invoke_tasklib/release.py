@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shlex
+import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -85,30 +86,196 @@ def build(c: Context, check: bool = False, args: str | None = None) -> None:
         run(c, "uvx twine check dist/*")
 
 
-@task(help={"args": ARGS_HELP})
-def pypi(c: Context, args: str | None = None) -> None:
-    r"""Build and publish the package to PyPI.
+TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
+r"""The upload endpoint of TestPyPI."""
 
-    The token is read from the ``PYPI_TOKEN`` environment variable (or
-    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively) and is
-    passed to ``uv publish`` through its environment, so it does not
-    appear on the command line. The task fails before building if no
-    token is set. ``dist/`` is cleared by the build, so only the freshly
-    built artifacts are uploaded.
+TEST_PYPI_CHECK_URL = "https://test.pypi.org/simple/"
+r"""The index of TestPyPI, to skip the files already uploaded."""
+
+
+def _project_version(pyproject: Path) -> str | None:
+    r"""Read the version of a ``pyproject.toml``.
+
+    Args:
+        pyproject: The path of the file.
+
+    Returns:
+        The ``project.version``, or ``None`` if the file does not
+        exist or the version is dynamic (not written in the file).
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.release import _project_version
+    >>> _project_version(Path("no/such/pyproject.toml")) is None
+    True
+
+    ```
+    """
+    if not pyproject.is_file():
+        return None
+    version = tomllib.loads(pyproject.read_text()).get("project", {}).get("version")
+    return version if isinstance(version, str) else None
+
+
+def _head_tag(c: Context) -> str | None:
+    r"""Return the tag that points at ``HEAD``.
 
     Args:
         c: The invoke context.
-        args: Extra arguments passed to ``uv publish``, e.g.
-            ``"--index testpypi"``.
+
+    Returns:
+        The name of the tag, or ``None`` if ``HEAD`` is not tagged.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.context import MockContext
+    >>> from invoke.runners import Result
+    >>> from invoke_tasklib.release import _head_tag
+    >>> cmd = "git describe --exact-match --tags HEAD"
+    >>> _head_tag(MockContext(run={cmd: Result(stdout="v1.2.0\n")}))
+    'v1.2.0'
+
+    ```
+    """
+    result = run(c, "git describe --exact-match --tags HEAD", hide=True, warn=True, echo=False)
+    return result.stdout.strip() if result.ok and result.stdout.strip() else None
+
+
+def _check_release_state(c: Context) -> None:
+    r"""Check that the repository is in a state that can be released.
+
+    The working tree must be clean, ``HEAD`` must be tagged and, if the
+    ``pyproject.toml`` has a static version, the tag (without a leading
+    ``v``) must be equal to it.
+
+    Args:
+        c: The invoke context.
 
     Raises:
-        Exit: If neither ``PYPI_TOKEN`` nor ``UV_PUBLISH_TOKEN`` is set.
+        Exit: If one of the conditions is not met.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.context import MockContext
+    >>> from invoke.runners import Result
+    >>> from invoke_tasklib.release import _check_release_state
+    >>> dirty = Result(stdout=" M a.py\n")
+    >>> c = MockContext(run={"git status --porcelain": dirty})
+    >>> _check_release_state(c)
+    Traceback (most recent call last):
+        ...
+    invoke.exceptions.Exit: The working tree is not clean: ...
+
+    ```
+    """
+    status = run(c, "git status --porcelain", hide=True, echo=False)
+    if status.stdout.strip():
+        msg = "The working tree is not clean: commit or stash the changes before publishing"
+        raise Exit(msg, code=1)
+    tag = _head_tag(c)
+    if tag is None:
+        msg = "HEAD is not tagged: check out the release tag before publishing"
+        raise Exit(msg, code=1)
+    version = _project_version(Path("pyproject.toml"))
+    if version is not None and tag.removeprefix("v") != version:
+        msg = f"The tag {tag} does not match the version {version} of pyproject.toml"
+        raise Exit(msg, code=1)
+
+
+def _confirm(target: str) -> None:
+    r"""Ask the user to confirm a publication.
+
+    Args:
+        target: What is published to, e.g. ``"PyPI"``.
+
+    Raises:
+        Exit: If the answer is not ``y`` or ``yes``.
+    """
+    answer = input(f"Publish the package to {target}? This cannot be undone. [y/N] ")
+    if answer.strip().lower() not in {"y", "yes"}:
+        msg = "Publication cancelled"
+        raise Exit(msg, code=1)
+
+
+@task(
+    help={
+        "test_pypi": "Publish to TestPyPI instead of PyPI.",
+        "dry_run": "Build and check, but do not upload anything.",
+        "yes": "Do not ask for a confirmation (never asked when the CI variable is set).",
+        "skip_checks": "Do not check the git state (clean tree, tagged HEAD, matching version).",
+        "args": ARGS_HELP,
+    }
+)
+def publish(
+    c: Context,
+    *,
+    test_pypi: bool = False,
+    dry_run: bool = False,
+    yes: bool = False,
+    skip_checks: bool = False,
+    args: str | None = None,
+) -> None:
+    r"""Build and publish the package to PyPI.
+
+    Before anything is built, the task checks that the working tree is
+    clean, that ``HEAD`` is tagged and that the tag matches the
+    ``pyproject.toml`` version (``--skip-checks`` turns it off). Outside
+    of CI it then asks for a confirmation (``--yes`` turns it off).
+
+    The credentials are either a token, read from ``PYPI_TOKEN`` (or
+    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively) and
+    passed to ``uv publish`` through its environment, so it does not
+    appear on the command line; or, in GitHub Actions with the
+    ``id-token: write`` permission, PyPI Trusted Publishing. ``dist/``
+    is cleared by the build, so only the freshly built artifacts are
+    uploaded.
+
+    Args:
+        c: The invoke context.
+        test_pypi: If True, publish to TestPyPI.
+        dry_run: If True, run the checks and the build, and give
+            ``--dry-run`` to ``uv publish``. No credentials are needed.
+        yes: If True, do not ask for a confirmation.
+        skip_checks: If True, do not check the git state.
+        args: Extra arguments passed to ``uv publish``.
+
+    Raises:
+        Exit: If the git state is not releasable, if there are no
+            credentials, or if the confirmation is refused.
     """
     token = os.environ.get("PYPI_TOKEN") or os.environ.get("UV_PUBLISH_TOKEN")
-    if not token:
-        msg = "Set the PYPI_TOKEN (or UV_PUBLISH_TOKEN) environment variable to publish to PyPI"
+    trusted = os.environ.get("GITHUB_ACTIONS") == "true" and bool(
+        os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
+    )
+    if not (token or trusted or dry_run):
+        msg = (
+            "Set the PYPI_TOKEN (or UV_PUBLISH_TOKEN) environment variable, or run in GitHub "
+            "Actions with the id-token permission, to publish to PyPI"
+        )
         raise Exit(msg, code=1)
+    if not skip_checks:
+        _check_release_state(c)
+    if not (yes or dry_run or os.environ.get("CI")):
+        _confirm("TestPyPI" if test_pypi else "PyPI")
     build(c)
-    say(c, "🚀 Publishing to PyPI...")
-    run(c, build_command("uv publish", args=args), env={"UV_PUBLISH_TOKEN": token})
-    say(c, "✅ Package published successfully")
+    cmd = ["uv publish"]
+    if test_pypi:
+        cmd.append(
+            f"--publish-url {shlex.quote(TEST_PYPI_PUBLISH_URL)} "
+            f"--check-url {shlex.quote(TEST_PYPI_CHECK_URL)}"
+        )
+    if dry_run:
+        cmd.append("--dry-run")
+    if not token and trusted:
+        cmd.append("--trusted-publishing always")
+    say(c, "🚀 Publishing" + (" (dry run)" if dry_run else "") + "...")
+    run(
+        c,
+        build_command(" ".join(cmd), args=args),
+        env={"UV_PUBLISH_TOKEN": token} if token else {},
+    )
+    say(c, "✅ Package published successfully" if not dry_run else "✅ Dry run complete")

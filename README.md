@@ -149,7 +149,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `env`      | `env.show-installed-packages` | Show the installed packages                                                              |    ❌    |
 | `env`      | `env.show-python-config`      | Show the Python configuration                                                            |    ❌    |
 | `release`  | `release.build`               | Build the package and verify installation (`--check` also validates metadata with twine) |    ✅    |
-| `release`  | `release.pypi`                | Build and publish the package to PyPI                                                    |    ✅    |
+| `release`  | `release.publish`                | Build and publish the package to PyPI                                                    |    ✅    |
 | `doc`      | `doc.publish-dev`             | Publish development (unstable) docs                                                      |    ✅    |
 | `doc`      | `doc.publish-latest`          | Publish latest (stable) docs                                                             |    ✅    |
 | `doc`      | `doc.build`                   | Build the docs, failing on warnings (`mkdocs build --strict`)                            |    ❌    |
@@ -213,7 +213,7 @@ def my_custom_task(c):
     c.run("echo hello")
 
 
-ns = make_ns(exclude=["release.pypi", "doc"])
+ns = make_ns(exclude=["release.publish", "doc"])
 ns.add_task(my_custom_task)
 ```
 
@@ -222,7 +222,7 @@ project is imported with an absolute import (`from my_tasks import my_custom_tas
 relative one (`from . import my_custom_task`), which fails with an `ImportError`.
 
 or keep only some of them with `include`, e.g. `make_ns(include=["lint", "test.unit"])`. The names
-are namespaces (`"doc"`) or tasks (`"release.pypi"`); an unknown name raises a `ValueError`. The
+are namespaces (`"doc"`) or tasks (`"release.publish"`); an unknown name raises a `ValueError`. The
 pre-built `ns` is `make_ns()`. Individual task modules can also be composed by hand:
 
 ```python

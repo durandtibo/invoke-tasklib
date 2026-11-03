@@ -81,15 +81,16 @@ backwards. Pass `--force` if that is what you want.
 
 See [Doc](uguide/doc.md).
 
-## `release.pypi` fails to authenticate
+## `release.publish` fails to authenticate
 
-`release.pypi` passes the `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`) environment variable to
-`uv publish` and stops with a clear message if neither is set. Make sure the variable is set (e.g.
-as a CI secret) before running it:
+`release.publish` passes the `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`) environment variable to
+`uv publish`. Without a token it only works in GitHub Actions with the `id-token: write`
+permission (Trusted Publishing); anywhere else it stops with a clear message. Make sure the
+variable is set (e.g. as a CI secret) before running it:
 
 ```shell
 export PYPI_TOKEN=pypi-...
-invoke release.pypi
+invoke release.publish
 ```
 
 See [Release](uguide/release.md).

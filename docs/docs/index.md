@@ -115,7 +115,7 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 📦 **Release**
 
-- `release.build`, `release.pypi`
+- `release.build`, `release.publish`
 
 [Learn more →](uguide/release.md)
 

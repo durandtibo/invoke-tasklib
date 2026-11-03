@@ -83,11 +83,11 @@ def test_make_ns_unknown_bare_string_names_the_whole_string() -> None:
 
 
 def test_make_ns_exclude_a_task() -> None:
-    assert "release.pypi" not in make_ns(exclude=["release.pypi"]).task_names
+    assert "release.publish" not in make_ns(exclude=["release.publish"]).task_names
 
 
 def test_make_ns_exclude_a_task_keeps_its_siblings() -> None:
-    assert "release.build" in make_ns(exclude=["release.pypi"]).task_names
+    assert "release.build" in make_ns(exclude=["release.publish"]).task_names
 
 
 def test_make_ns_exclude_all_tasks_of_a_namespace_removes_it() -> None:
@@ -138,11 +138,11 @@ def test_make_ns_unknown_name_in_include() -> None:
 @pytest.mark.parametrize(
     ("name", "patterns", "expected"),
     [
-        ("release.pypi", ["release"], True),
-        ("release.pypi", ["release.pypi"], True),
-        ("release.pypi", ["release.build"], False),
-        ("release.pypi", ["rel"], False),
-        ("release.pypi", [], False),
+        ("release.publish", ["release"], True),
+        ("release.publish", ["release.publish"], True),
+        ("release.publish", ["release.build"], False),
+        ("release.publish", ["rel"], False),
+        ("release.publish", [], False),
     ],
 )
 def test_matches(name: str, patterns: list[str], expected: bool) -> None:
