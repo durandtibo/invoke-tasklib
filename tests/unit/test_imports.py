@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import sys
 from unittest.mock import Mock
 
+import pytest
 from invoke.config import Config
 from invoke.context import MockContext
 from invoke.runners import Result
 
 from invoke_tasklib import imports
+
+
+@pytest.fixture(autouse=True)
+def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "executable", "/venv/bin/python")
 
 
 def _context(tasklib_config: dict | None = None, run: object = True) -> MockContext:
@@ -22,7 +29,7 @@ def _commands(c: MockContext) -> list[str]:
 
 def test_check_cycles() -> None:
     discover_cmd = (
-        "python -c 'import importlib, pkgutil, sys\n"
+        "/venv/bin/python -c 'import importlib, pkgutil, sys\n"
         "name = sys.argv[1]\n"
         "package = importlib.import_module(name)\n"
         "names = [name] + sorted(\n"
@@ -36,11 +43,14 @@ def test_check_cycles() -> None:
         tasklib_config={"package": {"name": "mypkg"}},
         run={
             discover_cmd: Result(stdout="mypkg\nmypkg.sub\n"),
-            "python -c 'import mypkg'": Result(),
-            "python -c 'import mypkg.sub'": Result(),
+            "/venv/bin/python -c 'import mypkg'": Result(),
+            "/venv/bin/python -c 'import mypkg.sub'": Result(),
         },
     )
     imports.check_cycles(c)
     commands = _commands(c)
     assert commands[0] == discover_cmd
-    assert commands[1:] == ["python -c 'import mypkg'", "python -c 'import mypkg.sub'"]
+    assert commands[1:] == [
+        "/venv/bin/python -c 'import mypkg'",
+        "/venv/bin/python -c 'import mypkg.sub'",
+    ]
