@@ -477,7 +477,7 @@ def get_config(c: Context) -> TasklibConfig:
 
     return TasklibConfig(
         package=PackageConfig(
-            name=package["name"],
+            name=str(package["name"]),
             import_name=import_name,
             python_version=_validate_python_version(package["python_version"]),
         ),
