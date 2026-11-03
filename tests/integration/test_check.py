@@ -37,3 +37,12 @@ def test_all_stops_with_the_error_of_the_step() -> None:
 def test_all_keep_going_reports_the_failed_step() -> None:
     with pytest.raises(Exit, match=r"1 of 1 check\(s\) failed: imports"):
         check.all_(_context("badpkg"), only="imports", keep_going=True)
+
+
+def test_all_keep_going_prints_the_hint_of_a_missing_tool(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    with pytest.raises(Exit, match=r"1 of 1 check\(s\) failed: shell"):
+        check.all_(_context("badpkg"), only="shell", keep_going=True)
+    assert "'shellcheck' was not found on the PATH" in capsys.readouterr().out
