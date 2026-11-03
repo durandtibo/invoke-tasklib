@@ -43,7 +43,7 @@ the missing tool, either directly or via your project's dependency groups:
 
 ```shell
 invoke env.install                  # installs dev deps: ruff, ty, pytest, ...
-invoke env.install --groups dev,docs  # additionally installs mike, feu, packaging
+invoke env.install --groups dev,docs  # additionally installs mike, feu
 ```
 
 `shellcheck` and `shfmt` are not Python packages; install them with your system package manager
@@ -51,13 +51,14 @@ invoke env.install --groups dev,docs  # additionally installs mike, feu, packagi
 [Format](uguide/format.md) page. The full external-tool matrix is in the
 [User Guide overview](uguide/index.md#external-tools).
 
-## `doc.publish-latest` fails with `ModuleNotFoundError: feu` / `packaging`
+## `doc.publish-latest` fails with `ModuleNotFoundError: feu`
 
-`doc.publish-latest` needs the `feu` and `packaging` packages to compute the version tag. Install
-documentation dependencies first:
+`doc.publish-latest` needs the `feu` package to read the last version tag. Install documentation
+dependencies first, or skip the tag lookup by passing the version:
 
 ```shell
 invoke env.install --groups dev,docs
+invoke doc.publish-latest --version 1.2
 ```
 
 See [Doc](uguide/doc.md).
