@@ -301,14 +301,18 @@ def all_(
     failed: list[str] = []
     for step in steps:
         if step in blocked:
-            say(c, f"❌ Step failed: {step}")
-            say(c, textwrap.indent("\n".join(reason for _, reason in blocked[step]), "   "))
+            say(c, f"❌ Step failed: {step}", err=True)
+            say(
+                c,
+                textwrap.indent("\n".join(reason for _, reason in blocked[step]), "   "),
+                err=True,
+            )
             failed.append(step)
         elif not keep_going:
             STEPS[step](c)
         elif (reason := _run_step(c, step)) is not None:
-            say(c, f"❌ Step failed: {step}")
-            say(c, textwrap.indent(reason, "   "))
+            say(c, f"❌ Step failed: {step}", err=True)
+            say(c, textwrap.indent(reason, "   "), err=True)
             failed.append(step)
     if failed:
         msg = f"{len(failed)} of {len(steps)} check(s) failed: {', '.join(failed)}"

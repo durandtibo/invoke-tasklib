@@ -41,6 +41,40 @@ def _ascii_stream() -> tuple[BytesIO, TextIOWrapper]:
     return raw, TextIOWrapper(raw, encoding="ascii", write_through=True)
 
 
+def test_say_err_writes_to_stderr_by_default(capsys: pytest.CaptureFixture[str]) -> None:
+    say(Context(config=Config()), "oops", err=True)
+    assert capsys.readouterr().err == "oops\n"
+
+
+def test_say_err_does_not_write_to_stdout(capsys: pytest.CaptureFixture[str]) -> None:
+    say(Context(config=Config()), "oops", err=True)
+    assert capsys.readouterr().out == ""
+
+
+def test_say_err_writes_to_the_configured_err_stream() -> None:
+    _, err, c = _context_with_err()
+    say(c, "oops", err=True)
+    assert err.getvalue() == "oops\n"
+
+
+def test_say_err_does_not_write_to_the_out_stream() -> None:
+    out, _, c = _context_with_err()
+    say(c, "oops", err=True)
+    assert out.getvalue() == ""
+
+
+def test_say_does_not_write_to_the_err_stream() -> None:
+    _, err, c = _context_with_err()
+    say(c, "hello")
+    assert err.getvalue() == ""
+
+
+def test_say_err_replaces_characters_the_stream_cannot_encode() -> None:
+    raw, stream = _ascii_stream()
+    say(Context(config=Config(overrides={"run": {"err_stream": stream}})), "❌ bad", err=True)
+    assert raw.getvalue() == b"? bad\n"
+
+
 def test_say_replaces_characters_the_stream_cannot_encode() -> None:
     raw, stream = _ascii_stream()
     say(Context(config=Config(overrides={"run": {"out_stream": stream}})), "🧹 clean")
@@ -93,6 +127,12 @@ def _context() -> tuple[StringIO, Context]:
     return stream, Context(config=Config(overrides={"run": {"out_stream": stream}}))
 
 
+def _context_with_err() -> tuple[StringIO, StringIO, Context]:
+    out, err = StringIO(), StringIO()
+    config = Config(overrides={"run": {"out_stream": out, "err_stream": err}})
+    return out, err, Context(config=config)
+
+
 def test_step_writes_the_start_then_the_done_message() -> None:
     stream, c = _context()
     with step(c, "🎨 Checking...", "✅ Done"):
@@ -112,11 +152,18 @@ def _fail_in_step(c: Context, start: str, error: BaseException) -> None:
         raise error
 
 
-def test_step_writes_a_failure_message_instead_of_the_done_message() -> None:
-    stream, c = _context()
+def test_step_writes_the_failure_message_to_the_error_stream() -> None:
+    _, err, c = _context_with_err()
     with pytest.raises(Exit, match=r"boom"):
         _fail_in_step(c, "🎨 Checking code...", Exit("boom"))
-    assert stream.getvalue() == "🎨 Checking code...\n❌ Failed: Checking code\n"
+    assert err.getvalue() == "❌ Failed: Checking code\n"
+
+
+def test_step_writes_no_done_message_when_the_block_fails() -> None:
+    out, _, c = _context_with_err()
+    with pytest.raises(Exit, match=r"boom"):
+        _fail_in_step(c, "🎨 Checking code...", Exit("boom"))
+    assert out.getvalue() == "🎨 Checking code...\n"
 
 
 def test_step_raises_the_same_exception() -> None:
@@ -148,8 +195,10 @@ def test_task_failure_is_visible_after_the_start_message(
     c.run = Mock(side_effect=UnexpectedExit(Result(exited=1)))
     with pytest.raises(UnexpectedExit):
         lint.check_python(c)
-    assert capsys.readouterr().out == (
-        "🔍 Checking code linting with ruff...\n❌ Failed: Checking code linting with ruff\n"
+    captured = capsys.readouterr()
+    assert (captured.out, captured.err) == (
+        "🔍 Checking code linting with ruff...\n",
+        "❌ Failed: Checking code linting with ruff\n",
     )
 
 

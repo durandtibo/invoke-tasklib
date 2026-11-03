@@ -13,12 +13,15 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
-def say(c: Context, message: str) -> None:
+def say(c: Context, message: str, *, err: bool = False) -> None:
     r"""Write a progress message followed by a newline.
 
     The message goes to the output stream configured in the invoke
     context (``run.out_stream``), or to ``sys.stdout`` if none is
-    configured. Unlike ``logging``, it needs no logging setup to be
+    configured. With ``err``, it goes to ``run.err_stream`` or to
+    ``sys.stderr`` instead, like the message of an ``Exit`` that invoke
+    prints, so that a failure and its reason are on the same stream.
+    Unlike ``logging``, it needs no logging setup to be
     visible.
 
     A message never fails a task: if the stream cannot encode a
@@ -28,6 +31,8 @@ def say(c: Context, message: str) -> None:
     Args:
         c: The invoke context.
         message: The message to write.
+        err: If True, write to the error stream instead of the output
+            stream.
 
     Example usage:
 
@@ -40,7 +45,8 @@ def say(c: Context, message: str) -> None:
 
     ```
     """
-    stream = c.config.run.out_stream or sys.stdout
+    configured = c.config.run.err_stream if err else c.config.run.out_stream
+    stream = configured or (sys.stderr if err else sys.stdout)
     text = f"{message}\n"
     try:
         stream.write(text)
@@ -79,8 +85,9 @@ def step(c: Context, start: str, done: str) -> Generator[None]:
     The start message is written when the block is entered and the done
     message when it exits normally. If the block raises, a failure
     message (``❌ Failed: <start message without symbol and dots>``) is
-    written instead and the exception is raised again, so that a failed
-    step is visible and not only the output of the tool.
+    written to the error stream instead and the exception is raised
+    again, so that a failed step is visible and not only the output of
+    the tool.
 
     Args:
         c: The invoke context.
@@ -109,6 +116,6 @@ def step(c: Context, start: str, done: str) -> Generator[None]:
     try:
         yield
     except Exception:
-        say(c, f"❌ Failed: {_failure_title(start)}")
+        say(c, f"❌ Failed: {_failure_title(start)}", err=True)
         raise
     say(c, done)
