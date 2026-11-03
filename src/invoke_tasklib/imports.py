@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 @task
 def check_cycles(c: Context) -> None:
-    r"""Check for cyclic imports by importing each module in isolation.
+    r"""Check for cyclic imports, one module at a time.
 
     Every module of the package (not only the subpackages) is discovered
     without being imported, then imported in its own interpreter. A

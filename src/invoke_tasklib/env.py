@@ -31,9 +31,14 @@ def create_venv(c: Context) -> None:
     say(c, "✅ Virtual environment created successfully")
 
 
-@task
+@task(
+    help={
+        "optional_deps": "Install all the optional dependencies (extras) of the project.",
+        "groups": "Comma-separated dependency groups to install (default: tasklib.groups.install).",
+    }
+)
 def install(c: Context, optional_deps: bool = True, groups: str | None = None) -> None:
-    r"""Install project dependencies and the package in editable mode.
+    r"""Install the dependencies and the package (editable).
 
     Args:
         c: The invoke context.
@@ -57,10 +62,15 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     say(c, "✅ Installation complete")
 
 
-@task
+@task(
+    help={
+        "groups": "Comma-separated dependency groups to reinstall (default: tasklib.groups.update)."
+    }
+)
 def update(c: Context, groups: str | None = None) -> None:
-    r"""Update dependencies and pre-commit hooks to their latest
-    versions.
+    r"""Update dependencies and pre-commit hooks.
+
+    The dependencies and the hooks are updated to their latest versions.
 
     Args:
         c: The invoke context.

@@ -51,12 +51,11 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
     return candidates[-1]
 
 
-@task
+@task(help={"check": "Also check the package metadata with twine."})
 def build(c: Context, check: bool = False) -> None:
-    r"""Build the package and verify the built artifacts can be
-    installed.
+    r"""Build the package and verify the built artifacts.
 
-    The newest wheel and the newest source distribution in ``dist/`` are
+    The artifacts are checked to be installable. The newest wheel and the newest source distribution in ``dist/`` are
     each installed in an isolated environment and the package is
     imported from it.
 

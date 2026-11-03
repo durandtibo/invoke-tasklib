@@ -29,8 +29,11 @@ FILES = (".coverage", "coverage.xml")
 
 
 def all(c: Context) -> None:  # noqa: A001 (task name required by invoke)
-    r"""Remove build artifacts and caches (dist, __pycache__,
-    .pytest_cache, .coverage, etc.)."""
+    r"""Remove build artifacts and caches.
+
+    The removed paths are ``dist``, ``build``, ``__pycache__``,
+    ``.pytest_cache``, ``.coverage``, etc.
+    """
     say(c, "🧹 Cleaning build artifacts and caches...")
     for d in DIRS:
         _remove_dir(c, Path(d))
