@@ -65,7 +65,7 @@ def all_(c: Context) -> None:
 
 @task
 def pycache(c: Context) -> None:
-    r"""Remove all ``__pycache__`` directories."""
+    r"""Remove all __pycache__ directories."""
     say(c, "🧹 Cleaning __pycache__ directories...")
     for p in _find_pycache_dirs(Path()):
         _remove_dir(c, p)
