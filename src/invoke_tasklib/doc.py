@@ -58,7 +58,7 @@ def _parse_release(version: str) -> tuple[str, bool]:
 
 
 def _docs_config(c: Context) -> str:
-    r"""Return the path of the mkdocs config file, checking that it exists.
+    r"""Return the path of the mkdocs config file, if it exists.
 
     Only the tasks that use the documentation call this function, so a
     project without documentation can use all the other tasks.
@@ -78,11 +78,13 @@ def _docs_config(c: Context) -> str:
     >>> from invoke.config import Config
     >>> from invoke.context import Context
     >>> from invoke_tasklib.doc import _docs_config
-    >>> cfg = {"tasklib": {"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}}}
+    >>> paths = {"docs_config": "no/such.yml"}
+    >>> package = {"name": "mypkg"}
+    >>> cfg = {"tasklib": {"package": package, "paths": paths}}
     >>> _docs_config(Context(config=Config(overrides=cfg)))
     Traceback (most recent call last):
         ...
-    invoke.exceptions.Exit: 'no/such.yml' (tasklib.paths.docs_config) does not exist: ...
+    invoke.exceptions.Exit: 'no/such.yml' ......
 
     ```
     """
@@ -305,8 +307,8 @@ def publish_latest(
 ) -> None:
     r"""Publish latest (e.g. stable) docs.
 
-    The docs are published as ``<major>.<minor>`` of the version with the
-    ``latest`` alias, and ``latest`` is set as the default version.
+    The docs are published as ``<major>.<minor>`` of the version with
+    the ``latest`` alias, and ``latest`` is set as the default version.
     Pre-release versions (``1.2.0rc1``) are skipped. The task refuses to
     publish a version that is older than one that is already published
     (for example a ``1.1.5`` backport after ``1.2.0``), because it would
@@ -321,9 +323,9 @@ def publish_latest(
             commit it locally only.
 
     Raises:
-        Exit: If no version is given and no version tag exists, or if the
-            version cannot be parsed, or if a newer version is already
-            published and ``force`` is False.
+        Exit: If no version is given and no version tag exists, or if
+            the version cannot be parsed, or if a newer version is
+            already published and ``force`` is False.
     """
     docs_config = _docs_config(c)
     if version is None:

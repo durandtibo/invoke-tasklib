@@ -56,8 +56,8 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
 def build(c: Context, check: bool = False) -> None:
     r"""Build the package and verify the built artifacts.
 
-    The artifacts are checked to be installable. The newest wheel and the
-    newest source distribution in ``dist/`` are each installed in an
+    The artifacts are checked to be installable. The newest wheel and
+    the newest source distribution in ``dist/`` are each installed in an
     isolated environment and the package is imported from it, using
     ``package.import_name``.
 

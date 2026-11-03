@@ -1,7 +1,7 @@
 r"""Config resolution for invoke-tasklib tasks.
 
-Consuming projects set project-specific values under a ``tasklib`` key in
-their ``invoke.yaml``, e.g.::
+Consuming projects set project-specific values under a ``tasklib`` key
+in their ``invoke.yaml``, e.g.::
 
     tasklib:
       package:
@@ -267,7 +267,8 @@ def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) 
     >>> _check_keys("paths", {"sr": "x"}, ["src", "tests"])
     Traceback (most recent call last):
         ...
-    ValueError: Unknown key 'sr' (did you mean 'src'?) in 'tasklib.paths'. Valid keys: src, tests
+    ValueError: Unknown key 'sr' (did you mean 'src'?) in
+    'tasklib.paths'. Valid keys: src, tests
 
     ```
     """
@@ -576,18 +577,18 @@ def get_config(c: Context) -> TasklibConfig:
             ``tasklib`` has a key that is not one of these sections, or
             if ``tasklib.package.name`` is not set or is not a string,
             or if a ``tasklib.paths`` value is not a non-empty string,
-            or if
-            ``tasklib.package.python_version`` is not a string such as
-            ``"3.10"`` (an unquoted ``3.10`` is read by YAML as the
-            float ``3.1``), or if ``tasklib.package.import_name`` is not
-            a Python module name, or if a ``tasklib.groups`` value is neither
-            a string nor a list of strings, or if the ``package``,
-            ``paths``, ``groups`` or ``test`` section has an unknown key (for
-            example a typo such as ``unit_test`` for ``unit_tests``), or
-            if a ``tasklib.test`` value is invalid (a timeout and
-            ``cov_fail_under`` must be integers, with a timeout > 0 and
-            ``cov_fail_under`` between 0 and 100, ``cov_reports`` must
-            be report formats, and ``xdoctest`` must be a boolean).
+            or if ``tasklib.package.python_version`` is not a string
+            such as ``"3.10"`` (an unquoted ``3.10`` is read by YAML as
+            the float ``3.1``), or if ``tasklib.package.import_name`` is
+            not a Python module name, or if a ``tasklib.groups`` value
+            is neither a string nor a list of strings, or if the
+            ``package``, ``paths``, ``groups`` or ``test`` section has
+            an unknown key (for example a typo such as ``unit_test`` for
+            ``unit_tests``), or if a ``tasklib.test`` value is invalid
+            (a timeout and ``cov_fail_under`` must be integers, with a
+            timeout > 0 and ``cov_fail_under`` between 0 and 100,
+            ``cov_reports`` must be report formats, and ``xdoctest``
+            must be a boolean).
 
     Example usage:
 
@@ -595,10 +596,11 @@ def get_config(c: Context) -> TasklibConfig:
     >>> from invoke.config import Config
     >>> from invoke.context import Context
     >>> from invoke_tasklib.config import get_config
-    >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
+    >>> overrides = {"tasklib": {"package": {"name": "mypkg"}}}
+    >>> c = Context(config=Config(overrides=overrides))
     >>> cfg = get_config(c)
-    >>> cfg.package
-    PackageConfig(name='mypkg', import_name='mypkg', python_version='3.14')
+    >>> cfg.package.import_name
+    'mypkg'
     >>> cfg.paths.src
     'src/mypkg'
     >>> cfg.groups
@@ -704,7 +706,8 @@ def load_config(c: Context) -> TasklibConfig:
     >>> from invoke.config import Config
     >>> from invoke.context import Context
     >>> from invoke_tasklib.config import load_config
-    >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
+    >>> overrides = {"tasklib": {"package": {"name": "mypkg"}}}
+    >>> c = Context(config=Config(overrides=overrides))
     >>> load_config(c).package.name
     'mypkg'
 

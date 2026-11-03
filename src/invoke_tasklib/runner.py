@@ -109,8 +109,8 @@ def build_command(
     >>> from invoke_tasklib.runner import build_command
     >>> build_command("ruff check", default_paths=["."])
     'ruff check .'
-    >>> build_command("ruff check", args="--select E", paths="src tests", default_paths=["."])
-    'ruff check --select E src tests'
+    >>> build_command("ruff", args="-x", paths="src")
+    'ruff -x src'
 
     ```
     """

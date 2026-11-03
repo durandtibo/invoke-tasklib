@@ -23,9 +23,10 @@ def create_venv(c: Context) -> None:
     r"""Create a virtual environment and install invoke in it.
 
     Note:
-        The virtual environment will be created in the .venv directory and any
-        existing environment will be cleared. The task itself runs with
-        ``invoke``, so ``invoke`` must already be available to run it.
+        The virtual environment will be created in the .venv directory
+        and any existing environment will be cleared. The task itself
+        runs with ``invoke``, so ``invoke`` must already be available to
+        run it.
     """
     cfg = load_config(c)
     python_version = cfg.package.python_version
@@ -50,12 +51,12 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
 
     Args:
         c: The invoke context.
-        optional_deps: If True, install all optional dependencies defined in
-            the project extras. Default is True.
-        groups: Comma-separated list of dependency groups to install, e.g.
-            ``"dev,docs"``. Use an empty string to install no group. Defaults
-            to the ``tasklib.groups.install`` config value (``"dev"`` unless
-            overridden in ``invoke.yaml``).
+        optional_deps: If True, install all optional dependencies
+            defined in the project extras. Default is True.
+        groups: Comma-separated list of dependency groups to install,
+            e.g. ``"dev,docs"``. Use an empty string to install no
+            group. Defaults to the ``tasklib.groups.install`` config
+            value (``"dev"`` unless overridden in ``invoke.yaml``).
     """
     if groups is None:
         groups = load_config(c).groups.install
@@ -86,18 +87,18 @@ def update(c: Context, groups: str | None = None) -> None:
 
     Args:
         c: The invoke context.
-        groups: Comma-separated list of dependency groups to reinstall after
-            updating, e.g. ``"dev,docs"``. Defaults to the
-            ``tasklib.groups.update`` config value (``"dev,docs"`` unless
-            overridden in ``invoke.yaml``).
+        groups: Comma-separated list of dependency groups to reinstall
+            after updating, e.g. ``"dev,docs"``. Defaults to the
+            ``tasklib.groups.update`` config value (``"dev,docs"``
+            unless overridden in ``invoke.yaml``).
 
     Note:
-        The lock file is upgraded first, then the environment is synced once
-        with the dependency groups.
+        The lock file is upgraded first, then the environment is synced
+        once with the dependency groups.
 
     Warning:
-        This may introduce breaking changes. Review the changes and run tests
-        after updating.
+        This may introduce breaking changes. Review the changes and run
+        tests after updating.
     """
     if groups is None:
         groups = load_config(c).groups.update

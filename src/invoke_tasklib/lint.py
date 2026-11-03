@@ -35,8 +35,8 @@ def check_python(
 
     Args:
         c: The invoke context.
-        output_format: The ``--output-format`` passed to ruff. If not set,
-            ``github`` is used when running in GitHub Actions
+        output_format: The ``--output-format`` passed to ruff. If not
+            set, ``github`` is used when running in GitHub Actions
             (``GITHUB_ACTIONS=true``), where it creates annotations, and
             ruff's default format is used otherwise.
         args: Extra arguments passed to ruff, e.g. ``"--select E"``.
@@ -62,8 +62,8 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
             project (``.``).
 
     Note:
-        This modifies files in place. Ensure your work is committed before
-        running this task.
+        This modifies files in place. Ensure your work is committed
+        before running this task.
     """
     say(c, "🔧 Fixing linting issues with ruff...")
     run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))

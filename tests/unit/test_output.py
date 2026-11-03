@@ -53,7 +53,7 @@ def test_say_keeps_encodable_characters_on_ascii_stream() -> None:
 
 
 class _AsciiOnlyStream:
-    r"""A stream with no ``encoding`` attribute that only accepts ASCII."""
+    r"""A stream without ``encoding`` that only accepts ASCII."""
 
     written: ClassVar[list[str]] = []
 
