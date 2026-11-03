@@ -65,9 +65,6 @@ Documentation = "https://durandtibo.github.io/invoke-tasklib/"
 Changelog = "https://github.com/durandtibo/invoke-tasklib/releases"
 Issues = "https://github.com/durandtibo/invoke-tasklib/issues"
 
-[tool.uv.pip]
-torch-backend = "auto"
-
 [tool.codespell]
 skip = "*.lock,./.git,./htmlcov,./docs/site,coverage.xml"
 ignore-regex = "re-declared|\\btha\\.\\.\\."
@@ -140,8 +137,6 @@ lint.select = [
   "ISC",  # flake8-implicit-str-concat
   "LOG",  # logging
   "N",    # naming
-  "NPY",  # NumPy-specific rules
-  "PD",   # pandas-vet
   "PERF", # Perflint
   "PGH",  # pygrep-hooks
   "PIE",  # flake8-pie
@@ -203,8 +198,6 @@ lint.fixable = [
   "ISC",  # flake8-implicit-str-concat
   "LOG",  # logging
   "N",    # naming
-  "NPY",  # NumPy-specific rules
-  "PD",   # pandas-vet
   "PERF", # Perflint
   "PGH",  # pygrep-hooks
   "PIE",  # flake8-pie
@@ -277,14 +270,6 @@ max-doc-length = 72
 force-sort-within-sections = false
 combine-as-imports = true
 known-first-party = ["invoke_tasklib"]
-
-[tool.ruff.lint.flake8-import-conventions]
-[tool.ruff.lint.flake8-import-conventions.aliases]
-numpy = "np"
-pandas = "pd"
-polars = "pl"
-pyarrow = "pa"
-xarray = "xr"
 
 [tool.pyright]
 include = ["src"]
