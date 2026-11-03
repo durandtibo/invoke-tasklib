@@ -21,7 +21,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Lint](lint.md)         | `lint.check-spelling`         | Check the spelling with codespell                   |    ❌    |
 | [Lint](lint.md)         | `lint.pre-commit`             | Run all the pre-commit hooks                        |    ✅    |
 | [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
-| [Types](types.md)       | `types.check`                 | Check type hints with ty                            |    ❌    |
+| [Types](types.md)       | `types.check`                 | Check type hints with ty (`--complete`: + pyright)  |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
 | [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                         |    ❌    |
 | [Test](test.md)         | `test.doctest-markdown`       | Run doctests on Python examples in markdown         |    ❌    |

@@ -126,7 +126,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `lint`     | `lint.check-spelling`         | Check the spelling with codespell                                                        |    ❌    |
 | `lint`     | `lint.pre-commit`             | Run all the pre-commit hooks                                                             |    ✅    |
 | `imports`  | `imports.check-cycles`        | Check for cyclic import dependencies                                                     |    ❌    |
-| `types`    | `types.check`                 | Check type hints with ty                                                                 |    ❌    |
+| `types`    | `types.check`                 | Check type hints with ty (`--complete` also runs pyright)                                |    ❌    |
 | `test`     | `test.doctest`                | Run doctests on source code and markdown files                                           |    ❌    |
 | `test`     | `test.doctest-src`            | Run doctests on source code                                                              |    ❌    |
 | `test`     | `test.doctest-markdown`       | Run doctests on Python examples in markdown files                                        |    ❌    |
@@ -180,6 +180,9 @@ tasklib:
     functional_tests: tests/functional # default: <tests>/functional
     benchmarks: tests/benchmarks # default: <tests>/benchmarks
     docs_config: docs/mkdocs.yml
+  groups:
+    install: dev # dependency groups of env.install
+    update: dev,docs # dependency groups of env.update
 ```
 
 See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)
