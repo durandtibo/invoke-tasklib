@@ -12,7 +12,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import run
+from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -52,8 +52,8 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
     return candidates[-1]
 
 
-@task(help={"check": "Also check the package metadata with twine."})
-def build(c: Context, check: bool = False) -> None:
+@task(help={"check": "Also check the package metadata with twine.", "args": ARGS_HELP})
+def build(c: Context, check: bool = False, args: str | None = None) -> None:
     r"""Build the package and verify the built artifacts.
 
     The artifacts are checked to be installable. The newest wheel and
@@ -65,11 +65,12 @@ def build(c: Context, check: bool = False) -> None:
         c: The invoke context.
         check: If True, also check the package's PyPI metadata with
             twine. Default is False.
+        args: Extra arguments passed to ``uv build``.
     """
     cfg = load_config(c)
     import_name = cfg.package.import_name
     say(c, "📦 Building package...")
-    run(c, "uv build --clear")
+    run(c, build_command("uv build --clear", args=args))
     say(c, "🔍 Verifying package installation...")
     for pattern in ("*.whl", "*.tar.gz"):
         artifact = _latest_artifact(Path("dist"), pattern)
@@ -84,8 +85,8 @@ def build(c: Context, check: bool = False) -> None:
         run(c, "uvx twine check dist/*")
 
 
-@task
-def pypi(c: Context) -> None:
+@task(help={"args": ARGS_HELP})
+def pypi(c: Context, args: str | None = None) -> None:
     r"""Build and publish the package to PyPI.
 
     The token is read from the ``PYPI_TOKEN`` environment variable (or
@@ -94,6 +95,11 @@ def pypi(c: Context) -> None:
     appear on the command line. The task fails before building if no
     token is set. ``dist/`` is cleared by the build, so only the freshly
     built artifacts are uploaded.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to ``uv publish``, e.g.
+            ``"--index testpypi"``.
 
     Raises:
         Exit: If neither ``PYPI_TOKEN`` nor ``UV_PUBLISH_TOKEN`` is set.
@@ -104,5 +110,5 @@ def pypi(c: Context) -> None:
         raise Exit(msg, code=1)
     build(c)
     say(c, "🚀 Publishing to PyPI...")
-    run(c, "uv publish", env={"UV_PUBLISH_TOKEN": token})
+    run(c, build_command("uv publish", args=args), env={"UV_PUBLISH_TOKEN": token})
     say(c, "✅ Package published successfully")

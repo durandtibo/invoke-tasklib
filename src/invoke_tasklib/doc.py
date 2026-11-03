@@ -13,7 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import run
+from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -98,32 +98,43 @@ def _docs_config(c: Context) -> str:
     return docs_config
 
 
-@task
-def build(c: Context) -> None:
+@task(help={"args": ARGS_HELP})
+def build(c: Context, args: str | None = None) -> None:
     r"""Build the documentation and fail on any warning.
 
     The documentation is built with ``mkdocs build --strict`` from
     ``paths.docs_config``, so a broken link or a missing reference fails
     the task. It does not publish anything.
 
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to mkdocs.
+
     Raises:
         UnexpectedExit: If mkdocs reports a warning or an error.
     """
     docs_config = _docs_config(c)
     say(c, "📚 Building the documentation...")
-    run(c, f"mkdocs build --strict --config-file {shlex.quote(docs_config)}")
+    cmd = f"mkdocs build --strict --config-file {shlex.quote(docs_config)}"
+    run(c, build_command(cmd, args=args))
     say(c, "✅ Documentation built")
 
 
-@task
-def serve(c: Context) -> None:
+@task(help={"args": ARGS_HELP})
+def serve(c: Context, args: str | None = None) -> None:
     r"""Serve the documentation locally with live reload.
 
     The server runs until it is interrupted (``Ctrl+C``).
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to mkdocs, e.g.
+            ``"--dev-addr 127.0.0.1:8001"``.
     """
     docs_config = _docs_config(c)
     say(c, "📚 Serving the documentation...")
-    run(c, f"mkdocs serve --config-file {shlex.quote(docs_config)}")
+    cmd = f"mkdocs serve --config-file {shlex.quote(docs_config)}"
+    run(c, build_command(cmd, args=args))
 
 
 def _release_key(tag: str) -> tuple[int, int] | None:

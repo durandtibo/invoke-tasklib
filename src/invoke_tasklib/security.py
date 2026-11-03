@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import run
+from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
 
 
-@task
-def audit(c: Context) -> None:
+@task(help={"args": ARGS_HELP})
+def audit(c: Context, args: str | None = None) -> None:
     r"""Audit the locked dependencies for known vulnerabilities.
 
     The dependencies of ``uv.lock`` are exported to a temporary
@@ -26,6 +26,11 @@ def audit(c: Context) -> None:
     Unlike ``uv run pip-audit``, this does not sync or modify the
     environment, and the result does not depend on what was installed
     last.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to pip-audit, e.g.
+            ``"--ignore-vuln PYSEC-2024-1"``.
 
     Raises:
         UnexpectedExit: If the lock file is out of date, or if a
@@ -39,5 +44,6 @@ def audit(c: Context) -> None:
             "uv export --locked --no-emit-project --no-hashes --all-groups "
             f"--quiet -o {requirements}",
         )
-        run(c, f"uvx pip-audit -r {requirements} --no-deps --disable-pip")
+        cmd = f"uvx pip-audit -r {requirements} --no-deps --disable-pip"
+        run(c, build_command(cmd, args=args))
     say(c, "✅ Dependency audit passed")

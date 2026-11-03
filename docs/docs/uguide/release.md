@@ -50,6 +50,8 @@ and does not use `release.pypi`.
     This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
     and that you are releasing the intended version before running this task.
 
+`release.build` and `release.pypi` take `--args` for `uv build` and `uv publish`.
+
 ## See Also
 
 - [`invoke_tasklib.release` reference](../refs/release.md)

@@ -22,6 +22,12 @@ file is out of date or if a vulnerability is found.
 The task does not sync or modify the environment, and the result depends on the lock file, not on
 what was installed last. `pip-audit` does not have to be a dependency of the project.
 
+Use `--args` to pass options to `pip-audit`, for example to accept an advisory:
+
+```shell
+invoke security.audit --args "--ignore-vuln PYSEC-2024-1"
+```
+
 ## See Also
 
 - [Env](env.md): `env.update` to update the lock file this task audits.

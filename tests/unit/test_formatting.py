@@ -56,6 +56,36 @@ def test_check_shell() -> None:
     assert _commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shellcheck --"]
 
 
+def test_check_shell_with_args() -> None:
+    c = _context()
+    formatting.check_shell(c, args="-x")
+    assert _commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shellcheck -x --"]
+
+
+def test_check_shell_with_paths_does_not_search_the_project() -> None:
+    c = _context()
+    formatting.check_shell(c, paths="a.sh 'b c.sh'")
+    assert _commands(c) == ["shellcheck -- a.sh 'b c.sh'"]
+
+
+def test_check_shell_with_args_and_paths() -> None:
+    c = _context()
+    formatting.check_shell(c, args="-x", paths="a.sh")
+    assert _commands(c) == ["shellcheck -x -- a.sh"]
+
+
+def test_fix_shell_with_args_and_paths() -> None:
+    c = _context()
+    formatting.fix_shell(c, args="-i 2", paths="a.sh")
+    assert _commands(c) == ["shfmt -l -w -i 2 -- a.sh"]
+
+
+def test_fix_shell_with_args() -> None:
+    c = _context()
+    formatting.fix_shell(c, args="-i 2")
+    assert _commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shfmt -l -w -i 2 --"]
+
+
 def test_fix_shell() -> None:
     c = _context()
     formatting.fix_shell(c)
@@ -125,3 +155,31 @@ def test_fix_docstrings_args() -> None:
     assert _commands(c) == [
         "docformatter --config ./pyproject.toml --in-place --wrap-summaries 80 src/mypkg"
     ]
+
+
+#####################################
+#     Tests for _shell_command      #
+#####################################
+
+
+def test_shell_command_searches_the_project_by_default() -> None:
+    assert formatting._shell_command("shfmt -l", None, None) == (
+        f"{formatting._FIND_SH} | xargs -0 -r shfmt -l --"
+    )
+
+
+def test_shell_command_puts_args_before_the_separator() -> None:
+    assert formatting._shell_command("shellcheck", "-x -e SC1091", "a.sh") == (
+        "shellcheck -x -e SC1091 -- a.sh"
+    )
+
+
+def test_shell_command_quotes_the_paths() -> None:
+    assert formatting._shell_command("shellcheck", None, "'a b.sh' ';rm'") == (
+        "shellcheck -- 'a b.sh' ';rm'"
+    )
+
+
+def test_shell_command_rejects_an_unclosed_quote() -> None:
+    with pytest.raises(Exit, match="--paths"):
+        formatting._shell_command("shellcheck", None, "'a.sh")

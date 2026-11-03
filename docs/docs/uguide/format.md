@@ -63,6 +63,9 @@ never checked or rewritten.
     (`shfmt` there comes from the `golang-go` toolchain or a
     [release binary](https://github.com/mvdan/sh/releases)).
 
+`format.check-shell` and `format.fix-shell` take `--args` for the tool and `--paths` to run on
+given scripts instead of every `*.sh` file of the project.
+
 ## See Also
 
 - [Config](config.md): where `paths.src` (used by the docstring tasks) comes from.

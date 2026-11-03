@@ -42,6 +42,16 @@ def test_audit_commands() -> None:
     ]
 
 
+def test_audit_with_args() -> None:
+    c = _context()
+    with patch("tempfile.TemporaryDirectory") as tmp:
+        tmp.return_value.__enter__.return_value = "/work/x"
+        security.audit(c, args="--ignore-vuln PYSEC-1")
+    assert _commands(c)[1] == (
+        "uvx pip-audit -r /work/x/requirements.txt --no-deps --disable-pip --ignore-vuln PYSEC-1"
+    )
+
+
 def test_audit_does_not_sync_the_environment() -> None:
     assert not any(cmd.startswith("uv run") for cmd in _audit_commands())
 

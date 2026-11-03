@@ -124,6 +124,9 @@ Runs `pytest --benchmark-only` against `paths.benchmarks`. This requires
 [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task is skipped
 with a message if `paths.benchmarks` does not exist.
 
+`test.benchmark`, `test.doctest-src` and `test.doctest-markdown` take `--args` and `--paths`, and
+`test.coverage-report` takes `--args` (for example `--fail-under=90`).
+
 ## See Also
 
 - [Config](config.md): the `paths.*_tests` and `paths.benchmarks` config used by these tasks.

@@ -57,6 +57,13 @@ def test_build_without_check() -> None:
 
 
 @pytest.mark.usefixtures("dist")
+def test_build_with_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    release.build(c, args="--no-sources")
+    assert _commands(c)[0] == "uv build --clear --no-sources"
+
+
+@pytest.mark.usefixtures("dist")
 def test_build_imports_the_import_name() -> None:
     c = _context({"package": {"name": "my-pkg"}})
     release.build(c)
@@ -119,6 +126,18 @@ def test_pypi() -> None:
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
         "uv publish",
+    ]
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_pypi_args_go_to_publish_not_to_build() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    release.pypi(c, args="--index testpypi")
+    assert _commands(c) == [
+        "uv build --clear",
+        _WHEEL_CHECK_CMD,
+        _SDIST_CHECK_CMD,
+        "uv publish --index testpypi",
     ]
 
 

@@ -123,6 +123,32 @@ def test_doctest_src_quotes_the_source_path() -> None:
     assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest 'my src'"]
 
 
+def test_doctest_src_with_args_and_paths() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.doctest_src(c, args="-x", paths="src/a.py")
+    assert _commands(c) == ["/venv/bin/python -m pytest --xdoctest -x src/a.py"]
+
+
+def test_doctest_markdown_with_paths(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    _touch(tmp_path, "README.md")
+    monkeypatch.chdir(tmp_path)
+    c = _context()
+    test_tasks.doctest_markdown(c, paths="docs/a.md")
+    assert _commands(c) == [
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF docs/a.md"
+    ]
+
+
+def test_doctest_markdown_with_args(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    _touch(tmp_path, "README.md")
+    monkeypatch.chdir(tmp_path)
+    c = _context()
+    test_tasks.doctest_markdown(c, args="-v")
+    assert _commands(c) == [
+        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF -v README.md"
+    ]
+
+
 def test_doctest_src() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest_src(c)
@@ -370,6 +396,15 @@ def test_coverage_report() -> None:
     ]
 
 
+def test_coverage_report_with_args() -> None:
+    c = _context()
+    test_tasks.coverage_report(c, args="--fail-under=90")
+    assert _commands(c) == [
+        "/venv/bin/python -m coverage html",
+        "/venv/bin/python -m coverage report --fail-under=90",
+    ]
+
+
 def test_coverage_report_open_browser() -> None:
     c = _context()
     test_tasks.coverage_report(c, open_browser=True)
@@ -385,14 +420,30 @@ def test_benchmark_quotes_the_benchmarks_path(tmp_path: Path) -> None:
     (tmp_path / "my bench").mkdir()
     c = _context({"package": {"name": "mypkg"}, "paths": {"benchmarks": "my bench"}})
     test_tasks.benchmark(c)
-    assert _commands(c) == ["/venv/bin/python -m pytest 'my bench/' --benchmark-only"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --benchmark-only 'my bench/'"]
+
+
+@pytest.mark.usefixtures("test_dirs")
+def test_benchmark_with_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.benchmark(c, args="--benchmark-save=x")
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-save=x tests/benchmarks/"
+    ]
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_with_paths_runs_without_the_default_directory() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.benchmark(c, paths="bench/test_a.py")
+    assert _commands(c) == ["/venv/bin/python -m pytest --benchmark-only bench/test_a.py"]
 
 
 @pytest.mark.usefixtures("test_dirs")
 def test_benchmark() -> None:
     c = _context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
-    assert _commands(c) == ["/venv/bin/python -m pytest tests/benchmarks/ --benchmark-only"]
+    assert _commands(c) == ["/venv/bin/python -m pytest --benchmark-only tests/benchmarks/"]
 
 
 ##############################################

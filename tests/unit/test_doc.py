@@ -416,6 +416,12 @@ def test_build_uses_configured_docs_config() -> None:
     assert _commands(c) == ["mkdocs build --strict --config-file mkdocs.yml"]
 
 
+def test_build_with_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    doc.build(c, args="--site-dir out")
+    assert _commands(c) == ["mkdocs build --strict --config-file docs/mkdocs.yml --site-dir out"]
+
+
 def test_build_quotes_the_docs_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "d d/mkdocs.yml"}})
     doc.build(c)
@@ -437,6 +443,12 @@ def test_serve_uses_configured_docs_config() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"docs_config": "mkdocs.yml"}})
     doc.serve(c)
     assert _commands(c) == ["mkdocs serve --config-file mkdocs.yml"]
+
+
+def test_serve_with_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    doc.serve(c, args="--dev-addr 127.0.0.1:8001")
+    assert _commands(c) == ["mkdocs serve --config-file docs/mkdocs.yml --dev-addr 127.0.0.1:8001"]
 
 
 def test_serve_quotes_the_docs_config() -> None:

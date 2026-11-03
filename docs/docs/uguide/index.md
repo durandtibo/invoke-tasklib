@@ -70,19 +70,43 @@ Since Invoke lets you chain multiple task names in one command, all of the above
 
 ## Passing Arguments to the Tools
 
-The tasks that run `pytest` (`test.all`, `test.unit`, `test.integration`, `test.functional`),
-`ruff` (`format.check-python`, `format.fix-python`, `lint.check-python`, `lint.fix-python`),
-`docformatter` (`format.check-docstrings`, `format.fix-docstrings`) and `ty` (`types.check`) have
-two options:
+Every task that runs an external tool takes `--args`, and the tasks that run on files also take
+`--paths`:
 
 - `--args` adds arguments to the command. The value is one string, split like a shell does.
 - `--paths` runs the tool on these files or directories instead of the default ones (the
-  project for `ruff`, `paths.src` for `docformatter`, the scope directory for `pytest`).
+  project for `ruff`, `paths.src` for `docformatter` and the source doctests, the scope directory
+  for `pytest`, every `*.sh` file for `shellcheck` and `shfmt`, every markdown file for the
+  markdown doctests).
+
+| Tasks                                                                                | `--args` goes to       | `--paths` |
+| ------------------------------------------------------------------------------------ | ---------------------- | :-------: |
+| `test.all`, `test.unit`, `test.integration`, `test.functional`, `test.benchmark`     | `pytest`               |    ✅     |
+| `test.doctest-src`                                                                   | `pytest`               |    ✅     |
+| `test.doctest-markdown`                                                              | `python -m doctest`    |    ✅     |
+| `test.coverage-report`                                                               | `coverage report`      |    ❌     |
+| `format.*-python`, `lint.check-python`, `lint.fix-python`                            | `ruff`                 |    ✅     |
+| `format.*-docstrings`                                                                | `docformatter`         |    ✅     |
+| `format.check-shell`, `format.fix-shell`                                             | `shellcheck`, `shfmt`  |    ✅     |
+| `lint.check-spelling`                                                                | `codespell`            |    ✅     |
+| `lint.pre-commit`                                                                    | `pre-commit`           |    ❌     |
+| `types.check`                                                                        | `ty` (only)            |    ✅     |
+| `security.audit`                                                                     | `pip-audit`            |    ❌     |
+| `doc.build`, `doc.serve`                                                             | `mkdocs`               |    ❌     |
+| `release.build`                                                                      | `uv build`             |    ❌     |
+| `release.pypi`                                                                       | `uv publish`           |    ❌     |
+
+The tasks that have no option are the composite tasks (`check.all`, `test.doctest`), the tasks
+that run no external tool (`clean.*`, `imports.check-cycles`) and the tasks with their own options
+(`env.*`, `doc.publish-*`).
 
 ```shell
 invoke test.unit --args "-k foo -x" --paths tests/unit/test_foo.py
 invoke lint.check-python --args "--select E" --paths "src/a.py src/b.py"
 invoke format.check-python --paths src/a.py
+invoke security.audit --args "--ignore-vuln PYSEC-2024-1"
+invoke doc.serve --args "--dev-addr 127.0.0.1:8001"
+invoke test.coverage-report --args "--fail-under=90"
 ```
 
 For `types.check`, `--args` goes to `ty` only and `--paths` goes to `ty` and `pyright`. The
