@@ -9,7 +9,8 @@ This document describes the internal architecture and design principles of `invo
 core design follows these principles:
 
 1. **One config entry point**: every task reads project-specific values through
-   `invoke_tasklib.config.get_config`, never directly from `c.config`.
+   `invoke_tasklib.config.load_config` (which wraps `get_config` and exits with a message on an
+   invalid config), never directly from `c.config`.
 2. **Convention over configuration**: sensible defaults derived from `package.name` mean most
    projects only set one value (`tasklib.package.name`).
 3. **Composability**: `make_ns()` builds the default namespace; any subset of task modules
@@ -65,6 +66,21 @@ same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, excep
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
+Three small modules support the task modules:
+
+- `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
+  the program is on the `PATH` (with a hint per program when it is not), echoes the command, and
+  uses a pty only on a terminal. `build_command` builds a command line and quotes the arguments, and
+  `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options.
+- `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
+  cannot encode the emojis) and the `step` context manager prints the start and done messages of a
+  step, or a failure message.
+- `_discover.py`: lists the modules of a package without importing them. It is run in a
+  subprocess by `imports.check-isolated`.
+
+`config.EXCLUDED_DIRS` lists the directories that the tasks that walk the file tree (`clean`,
+`format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...).
+
 ### 3. The Namespace
 
 `invoke_tasklib/__init__.py` has `make_ns(*, exclude=(), include=None)`, which builds a new
@@ -91,23 +107,24 @@ Invoke loads invoke.yaml into c.config
     ↓
 test.unit(c, cov=True) is called
     ↓
-get_config(c) resolves package.name and paths.unit_tests
+load_config(c) resolves package.name and paths.unit_tests
     ↓
-Task builds the pytest command line
+Task builds the pytest command line with build_command (quoted)
     ↓
-c.run(cmd, pty=True) executes it as a subprocess
+runner.run(c, cmd) checks the program, echoes the command and
+executes it with c.run (pty only on a terminal)
 ```
 
 ## Design Decisions
 
-### Why a Shared `get_config` Instead of Per-Task Config?
+### Why a Shared `load_config` Instead of Per-Task Config?
 
 **Rationale**: A single resolution function keeps defaults and the validation of the config in one place, and
 guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.check` agree on
 `package.name`).
 
 **Trade-off**: Every task pays the (cheap) cost of re-resolving config on each call, rather than
-resolving it once. This is negligible since `get_config` does no I/O beyond reading `c.config`.
+resolving it once. This is negligible since `load_config` does no I/O beyond reading `c.config`.
 
 ### Why `check_<target>`/`fix_<target>` Naming?
 
@@ -129,8 +146,8 @@ is loaded, because the `invoke.yaml` values are only known once Invoke has built
 
 ## Testing Strategy
 
-Tests use `invoke.context.MockContext`, which records every `c.run(...)` call without executing
-it. This lets tests assert on the exact shell command a task would run, without depending on
+Tests use `invoke.context.MockContext`, which records every `c.run(...)` call (made by
+`runner.run`) without executing it. This lets tests assert on the exact shell command a task would run, without depending on
 `ruff`, `pytest`, `uv`, etc. being installed or configured in the test environment. The unit
 tests also patch `shutil.which` (an autouse fixture in `tests/unit/conftest.py`) so that the check
 of the `PATH` done by `invoke_tasklib.runner.run` passes on any machine.
