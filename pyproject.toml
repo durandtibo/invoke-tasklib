@@ -33,7 +33,7 @@ classifiers = [
 ]
 
 requires-python = ">=3.11"
-dependencies = ["invoke>=3.0"]
+dependencies = ["invoke>=3.0,<4.0"]
 
 [dependency-groups]
 dev = [
