@@ -211,45 +211,45 @@ def test_update_does_not_sync_twice() -> None:
 
 
 ###############################
-#     Tests for _find_tool    #
+#     Tests for find_tool    #
 ###############################
 
 
-def test_find_tool_program_found_returns_its_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_program_found_returns_its_path(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
-    assert env._find_tool("ruff") == "/bin/ruff"
+    assert env.find_tool("ruff") == "/bin/ruff"
 
 
-def test_find_tool_program_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_program_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda _: None)
-    assert env._find_tool("ruff") is None
+    assert env.find_tool("ruff") is None
 
 
-def test_find_tool_program_is_not_looked_up_as_a_module(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_program_is_not_looked_up_as_a_module(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda _: None)
-    assert env._find_tool("json") is None
+    assert env.find_tool("json") is None
 
 
-def test_find_tool_module_found_returns_its_origin(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_module_found_returns_its_origin(monkeypatch: pytest.MonkeyPatch) -> None:
     spec = ModuleSpec("pytest", None, origin="/site/pytest/__init__.py")
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: spec)
-    assert env._find_tool("pytest", module=True) == "/site/pytest/__init__.py"
+    assert env.find_tool("pytest", module=True) == "/site/pytest/__init__.py"
 
 
-def test_find_tool_module_without_origin_returns_its_name(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_module_without_origin_returns_its_name(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: ModuleSpec("pytest", None))
-    assert env._find_tool("pytest", module=True) == "pytest"
+    assert env.find_tool("pytest", module=True) == "pytest"
 
 
-def test_find_tool_module_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_module_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
-    assert env._find_tool("pytest", module=True) is None
+    assert env.find_tool("pytest", module=True) is None
 
 
-def test_find_tool_module_is_not_looked_up_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
+def testfind_tool_module_is_not_looked_up_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
-    assert env._find_tool("ruff", module=True) is None
+    assert env.find_tool("ruff", module=True) is None
 
 
 #################################
@@ -265,7 +265,7 @@ def _two_tools(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _available(*names: str) -> object:
-    r"""Return a stand-in of ``_find_tool`` for the given names."""
+    r"""Return a stand-in of ``find_tool`` for the given names."""
 
     def find(name: str, **_: bool) -> str | None:
         return f"/found/{name}" if name in names else None
@@ -277,7 +277,7 @@ def _available(*names: str) -> object:
 def test_check_tools_all_available_lists_every_tool(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available("ruff", "pytest"))
+    monkeypatch.setattr(env, "find_tool", _available("ruff", "pytest"))
     env.check_tools(make_context())
     assert capsys.readouterr().out == (
         "🧰 Checking the tools of the tasks...\n"
@@ -291,7 +291,7 @@ def test_check_tools_all_available_lists_every_tool(
 def test_check_tools_missing_program_says_how_to_install_it(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available("pytest"))
+    monkeypatch.setattr(env, "find_tool", _available("pytest"))
     with pytest.raises(Exit, match=r"1 of 2 tool\(s\) missing: ruff"):
         env.check_tools(make_context())
     assert capsys.readouterr().out == (
@@ -306,7 +306,7 @@ def test_check_tools_missing_program_says_how_to_install_it(
 def test_check_tools_missing_module_says_it_is_a_python_module(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available("ruff"))
+    monkeypatch.setattr(env, "find_tool", _available("ruff"))
     with pytest.raises(Exit, match=r"1 of 2 tool\(s\) missing: pytest"):
         env.check_tools(make_context())
     assert "❌ pytest: Python module not found." in capsys.readouterr().out
@@ -316,14 +316,14 @@ def test_check_tools_missing_module_says_it_is_a_python_module(
 def test_check_tools_lists_all_the_missing_tools_not_only_the_first(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available())
+    monkeypatch.setattr(env, "find_tool", _available())
     with pytest.raises(Exit, match=r"2 of 2 tool\(s\) missing: ruff, pytest"):
         env.check_tools(make_context())
 
 
 @pytest.mark.usefixtures("_two_tools")
 def test_check_tools_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available())
+    monkeypatch.setattr(env, "find_tool", _available())
     with pytest.raises(Exit) as excinfo:
         env.check_tools(make_context())
     assert excinfo.value.code == 127
@@ -332,7 +332,7 @@ def test_check_tools_missing_tool_exits_with_code_127(monkeypatch: pytest.Monkey
 def test_check_tools_uses_the_hint_of_the_program(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available())
+    monkeypatch.setattr(env, "find_tool", _available())
     with pytest.raises(Exit, match=r"tool\(s\) missing"):
         env.check_tools(make_context())
     assert f"❌ uv: program not found. {PROGRAM_HINTS['uv']}" in capsys.readouterr().out
@@ -346,21 +346,21 @@ def test_check_tools_looks_the_module_up_as_a_module(monkeypatch: pytest.MonkeyP
         calls.append((name, module))
         return name
 
-    monkeypatch.setattr(env, "_find_tool", find)
+    monkeypatch.setattr(env, "find_tool", find)
     env.check_tools(make_context())
     assert calls == [("ruff", False), ("pytest", True)]
 
 
 @pytest.mark.usefixtures("_two_tools")
 def test_check_tools_does_not_run_any_command(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available("ruff", "pytest"))
+    monkeypatch.setattr(env, "find_tool", _available("ruff", "pytest"))
     c = make_context()
     env.check_tools(c)
     assert commands(c) == []
 
 
 def test_check_tools_does_not_need_the_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(env, "_find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
+    monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
     env.check_tools(make_context())
 
 

@@ -163,7 +163,7 @@ TOOL_MODULES: tuple[str, ...] = (
 r"""The Python modules and pytest plugins that the tasks need."""
 
 
-def _find_tool(name: str, *, module: bool = False) -> str | None:
+def find_tool(name: str, *, module: bool = False) -> str | None:
     r"""Find a program on the ``PATH`` or a module of the interpreter.
 
     Args:
@@ -178,10 +178,10 @@ def _find_tool(name: str, *, module: bool = False) -> str | None:
     Example usage:
 
     ```pycon
-    >>> from invoke_tasklib.env import _find_tool
-    >>> _find_tool("no-such-program") is None
+    >>> from invoke_tasklib.env import find_tool
+    >>> find_tool("no-such-program") is None
     True
-    >>> _find_tool("no_such_module", module=True) is None
+    >>> find_tool("no_such_module", module=True) is None
     True
 
     ```
@@ -213,7 +213,7 @@ def check_tools(c: Context) -> None:
     lookups = [(name, False) for name in TOOL_PROGRAMS] + [(name, True) for name in TOOL_MODULES]
     missing: list[str] = []
     for name, module in lookups:
-        found = _find_tool(name, module=module)
+        found = find_tool(name, module=module)
         if found is not None:
             say(c, f"✅ {name}: {found}")
             continue
