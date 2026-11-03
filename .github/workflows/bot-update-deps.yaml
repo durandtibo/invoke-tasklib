@@ -39,11 +39,6 @@ jobs:
         run: |
           inv env.update
 
-      # Install dependencies including documentation dependencies
-      - name: Install dependencies with docs
-        run: |
-          inv env.install --groups dev,docs
-
       # Display updated dependency tree
       - name: Show dependency tree
         shell: bash
