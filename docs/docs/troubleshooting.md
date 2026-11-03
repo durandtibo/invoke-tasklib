@@ -64,8 +64,9 @@ See [Doc](uguide/doc.md).
 
 ## `release.pypi` fails to authenticate
 
-`release.pypi` runs `uv publish --token ${PYPI_TOKEN}`. Make sure the `PYPI_TOKEN` environment
-variable is set (e.g. as a CI secret) before running it:
+`release.pypi` passes the `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`) environment variable to
+`uv publish` and stops with a clear message if neither is set. Make sure the variable is set (e.g.
+as a CI secret) before running it:
 
 ```shell
 export PYPI_TOKEN=pypi-...

@@ -34,8 +34,10 @@ invoke release.build --check
 invoke release.pypi
 ```
 
-Builds the package (via `release.build`) and then runs `uv publish`, using the `PYPI_TOKEN`
-environment variable for authentication.
+Builds the package (via `release.build`, which clears `dist/` first so stale artifacts are never
+uploaded) and then runs `uv publish`. The token is read from the `PYPI_TOKEN` environment variable
+(or `UV_PUBLISH_TOKEN`) and handed to `uv publish` through its environment, so it never appears on
+the command line. The task fails before building if no token is set.
 
 !!! warning
 This publishes a new version to PyPI, which cannot be undone. Make sure `PYPI_TOKEN` is set
