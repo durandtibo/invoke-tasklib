@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from invoke_tasklib import format  # noqa: A004
+from invoke_tasklib import formatting
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def _find_scripts(root: Path) -> list[str]:
     result = subprocess.run(  # noqa: S603 (fixed command built from constants)
-        ["/bin/sh", "-c", format._FIND_SH], cwd=root, capture_output=True, check=True
+        ["/bin/sh", "-c", formatting._FIND_SH], cwd=root, capture_output=True, check=True
     )
     return sorted(result.stdout.decode().split("\0")[:-1])
 

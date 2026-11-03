@@ -1,4 +1,4 @@
-# Benchmark workflow. Runs performance benchmarks (src/invoke_tasklib/test.py's
+# Benchmark workflow. Runs performance benchmarks (src/invoke_tasklib/testing.py's
 # benchmark task) nightly on its own schedule instead of gating every PR/push,
 # since a benchmark regression isn't a merge blocker.
 

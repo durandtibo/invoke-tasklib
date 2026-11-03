@@ -1,6 +1,6 @@
 # Format
 
-:book: This page describes the `invoke_tasklib.format` module, which provides tasks for checking
+:book: This page describes the `invoke_tasklib.formatting` module, which provides tasks for checking
 and fixing code, docstring, and shell script formatting.
 
 ## Overview
@@ -65,5 +65,5 @@ never checked or rewritten.
 
 - [Config](config.md): where `paths.src` (used by the docstring tasks) comes from.
 - [Lint](lint.md): the companion `lint.check-python` task.
-- [`invoke_tasklib.format` reference](../refs/format.md)
+- [`invoke_tasklib.formatting` reference](../refs/format.md)
 - [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

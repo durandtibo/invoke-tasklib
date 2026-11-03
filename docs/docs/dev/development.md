@@ -100,10 +100,10 @@ invoke-tasklib/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `ns` and individual task modules
 │       ├── config.py         # Shared config resolution (`get_config`)
-│       ├── format.py         # format.* tasks
+│       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
-│       ├── types.py          # types.* tasks
-│       ├── test.py           # test.* tasks
+│       ├── typecheck.py      # types.* tasks
+│       ├── testing.py        # test.* tasks
 │       ├── env.py            # env.* tasks
 │       ├── release.py        # release.* tasks
 │       └── doc.py            # doc.* tasks
@@ -116,7 +116,7 @@ invoke-tasklib/
 
 ## Adding a New Task
 
-1. Pick the right module (`format.py`, `lint.py`, `types.py`, `test.py`, `env.py`, `release.py`,
+1. Pick the right module (`formatting.py`, `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`,
    or `doc.py`), or create a new one if the task doesn't fit an existing namespace.
 2. Follow the `check_<target>`/`fix_<target>` naming convention when applicable (see
    [Format](../uguide/format.md)).

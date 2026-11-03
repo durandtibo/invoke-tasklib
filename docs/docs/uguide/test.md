@@ -1,6 +1,6 @@
 # Test
 
-:book: This page describes the `invoke_tasklib.test` module, which provides tasks to run
+:book: This page describes the `invoke_tasklib.testing` module, which provides tasks to run
 doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 
 ## Overview
@@ -124,5 +124,5 @@ with a message if `paths.benchmarks` does not exist.
 ## See Also
 
 - [Config](config.md): the `paths.*_tests` and `paths.benchmarks` config used by these tasks.
-- [`invoke_tasklib.test` reference](../refs/test.md)
+- [`invoke_tasklib.testing` reference](../refs/test.md)
 - [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.

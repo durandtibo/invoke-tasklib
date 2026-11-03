@@ -1,5 +1,5 @@
 # Comprehensive test suite workflow.
-# Runs unit, integration and functional tests (src/invoke_tasklib/test.py's
+# Runs unit, integration and functional tests (src/invoke_tasklib/testing.py's
 # `all` task, which runs all three with combined coverage) across every
 # supported Python version and OS.
 # The ubuntu-latest/3.14 cell also uploads coverage to Codecov, so coverage

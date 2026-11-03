@@ -206,10 +206,14 @@ pre-built `ns` is `make_ns()`. Individual task modules can also be composed by h
 
 ```python
 from invoke import Collection
-from invoke_tasklib import lint, test
+from invoke_tasklib import lint, testing
 
-ns = Collection(lint, test, my_custom_task)
+ns = Collection(lint, Collection.from_module(testing, name="test"), my_custom_task)
 ```
+
+The modules of the `format`, `types` and `test` namespaces are named `formatting`, `typecheck`
+and `testing` so that they do not shadow the standard library (`types`, `test`) or a builtin
+(`format`); pass `name=` to `Collection.from_module` to keep the task names.
 
 Prefer adding a config knob to a shared task over forking it; reserve custom
 composition for things that are genuinely one-off to a single project.
