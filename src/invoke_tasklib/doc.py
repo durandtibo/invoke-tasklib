@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from invoke.exceptions import Exit
 from invoke.tasks import task
 
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import run
 
@@ -57,7 +57,7 @@ def _parse_release(version: str) -> tuple[str, bool]:
 @task
 def publish_dev(c: Context) -> None:
     r"""Publish development (e.g. unstable) docs."""
-    cfg = get_config(c)
+    cfg = load_config(c)
     docs_config = cfg["paths"]["docs_config"]
     say(c, "📚 Publishing development documentation...")
     say(c, "🗑️  Deleting previous 'main' version if it exists...")
@@ -92,7 +92,7 @@ def publish_latest(c: Context, version: str | None = None) -> None:
         Exit: If no version is given and no version tag exists, or if the
             version cannot be parsed.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     docs_config = cfg["paths"]["docs_config"]
     if version is None:
         from feu.local_git import get_last_version_tag_name  # noqa: PLC0415 (optional dependency)

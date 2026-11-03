@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
+import pytest
 from invoke.config import Config
 from invoke.context import MockContext
+from invoke.exceptions import Exit
 
 from invoke_tasklib import format  # noqa: A004
 
@@ -29,6 +31,11 @@ def test_check_docstrings_uses_configured_src_path() -> None:
     c = _context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     format.check_docstrings(c)
     assert _commands(c) == ["docformatter --config ./pyproject.toml --check src/mypkg"]
+
+
+def test_check_docstrings_without_package_name_exits_with_a_message() -> None:
+    with pytest.raises(Exit, match=r"'tasklib.package.name' must be set"):
+        format.check_docstrings(MockContext(config=Config(), run=True))
 
 
 def test_fix_python() -> None:

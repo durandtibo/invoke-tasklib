@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import EXCLUDED_DIRS, get_config
+from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import run
 
@@ -42,7 +42,7 @@ def check_docstrings(c: Context) -> None:
 
     The files are not modified.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Checking docstring formatting...")
     run(c, f"docformatter --config ./pyproject.toml --check {src}")
@@ -70,7 +70,7 @@ def fix_docstrings(c: Context) -> None:
         This modifies files in place. Ensure your work is committed before
         running this task.
     """
-    cfg = get_config(c)
+    cfg = load_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Formatting docstrings...")
     run(c, f"docformatter --config ./pyproject.toml --in-place {src}")

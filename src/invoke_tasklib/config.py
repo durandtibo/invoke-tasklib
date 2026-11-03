@@ -19,6 +19,8 @@ import difflib
 import re
 from typing import TYPE_CHECKING, TypedDict
 
+from invoke.exceptions import Exit
+
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
@@ -282,3 +284,40 @@ def get_config(c: Context) -> TasklibConfig:
             update=_normalize_groups("update", groups["update"]),
         ),
     }
+
+
+def load_config(c: Context) -> TasklibConfig:
+    r"""Return the effective tasklib config, exiting cleanly on an
+    invalid config.
+
+    The tasks use this function instead of ``get_config`` so that an
+    invalid config is reported as a one-line message and the exit code
+    2 rather than as a Python traceback. ``get_config`` is the function
+    to use programmatically, because it raises a ``ValueError``.
+
+    Args:
+        c: The invoke context.
+
+    Returns:
+        The resolved config, see ``get_config``.
+
+    Raises:
+        Exit: If ``get_config`` raises a ``ValueError``. The message is
+            the one of the ``ValueError``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.config import load_config
+    >>> c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
+    >>> load_config(c)["package"]["name"]
+    'mypkg'
+
+    ```
+    """
+    try:
+        return get_config(c)
+    except ValueError as exc:
+        raise Exit(str(exc), code=2) from exc

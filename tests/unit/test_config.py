@@ -3,12 +3,14 @@ from __future__ import annotations
 import pytest
 from invoke.config import Config
 from invoke.context import Context
+from invoke.exceptions import Exit
 
 from invoke_tasklib.config import (
     _check_keys,
     _normalize_groups,
     _validate_python_version,
     get_config,
+    load_config,
 )
 
 
@@ -280,3 +282,30 @@ def test_check_keys_reports_all_unknown_keys() -> None:
 def test_check_keys_suggests_closest_key() -> None:
     with pytest.raises(ValueError, match=r"\(did you mean 'tests'\?\)"):
         _check_keys("paths", {"test": "x"}, ["src", "tests"])
+
+
+#################################
+#     Tests for load_config     #
+#################################
+
+
+def test_load_config_returns_the_resolved_config() -> None:
+    c = Context(config=Config(overrides={"tasklib": {"package": {"name": "mypkg"}}}))
+    assert load_config(c) == get_config(c)
+
+
+def test_load_config_exits_on_missing_package_name() -> None:
+    with pytest.raises(Exit, match=r"'tasklib.package.name' must be set"):
+        load_config(Context(config=Config()))
+
+
+def test_load_config_exit_code_is_2() -> None:
+    with pytest.raises(Exit) as excinfo:
+        load_config(Context(config=Config()))
+    assert excinfo.value.code == 2
+
+
+def test_load_config_exits_on_unknown_key() -> None:
+    c = Context(config=Config(overrides={"tasklib": {"paths": {"sr": "x"}}}))
+    with pytest.raises(Exit, match=r"Unknown key 'sr'"):
+        load_config(c)
