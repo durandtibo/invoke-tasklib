@@ -13,7 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import run
+from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -28,43 +28,69 @@ _FIND_SH = (
 )
 
 
-@task
-def check_python(c: Context) -> None:
-    r"""Check code format with ruff without modifying files."""
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def check_python(c: Context, args: str | None = None, paths: str | None = None) -> None:
+    r"""Check code format with ruff without modifying files.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to ruff.
+        paths: The files or directories to check instead of the whole
+            project (``.``).
+    """
     say(c, "🎨 Checking code format with ruff...")
-    run(c, "ruff format --check .")
+    run(c, build_command("ruff format --check", args=args, paths=paths, default_paths=["."]))
     say(c, "✅ Code format check passed")
 
 
-@task
-def check_docstrings(c: Context) -> None:
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def check_docstrings(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Check docstring format with docformatter.
 
     The files are not modified.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to docformatter.
+        paths: The files or directories to check instead of
+            ``paths.src``.
     """
     cfg = load_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Checking docstring formatting...")
-    run(c, f"docformatter --config ./pyproject.toml --check {src}")
+    cmd = "docformatter --config ./pyproject.toml --check"
+    run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
     say(c, "✅ Docstring format check passed")
 
 
-@task
-def fix_python(c: Context) -> None:
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def fix_python(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Format code in place with ruff.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to ruff.
+        paths: The files or directories to format instead of the whole
+            project (``.``).
 
     Note:
         This modifies files in place. Ensure your work is committed before
         running this task.
     """
     say(c, "🎨 Formatting code with ruff...")
-    run(c, "ruff format .")
+    run(c, build_command("ruff format", args=args, paths=paths, default_paths=["."]))
     say(c, "✅ Code formatting complete")
 
 
-@task
-def fix_docstrings(c: Context) -> None:
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def fix_docstrings(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Format docstrings in source code with docformatter.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to docformatter.
+        paths: The files or directories to format instead of
+            ``paths.src``.
 
     Note:
         This modifies files in place. Ensure your work is committed before
@@ -73,7 +99,8 @@ def fix_docstrings(c: Context) -> None:
     cfg = load_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Formatting docstrings...")
-    run(c, f"docformatter --config ./pyproject.toml --in-place {src}")
+    cmd = "docformatter --config ./pyproject.toml --in-place"
+    run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
     say(c, "✅ Docstring formatting complete")
 
 

@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Any
 from invoke.exceptions import Exit
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from invoke.context import Context
     from invoke.runners import Result
 
@@ -38,9 +40,91 @@ def python_executable() -> str:
     return shlex.quote(sys.executable)
 
 
+ARGS_HELP = 'Extra arguments for the tool, as one string, e.g. "-k foo -x".'
+r"""Help of the ``--args`` option of the tasks."""
+
+PATHS_HELP = "Files or directories to run on, as one string, instead of the default."
+r"""Help of the ``--paths`` option of the tasks."""
+
 UNCHECKED_PROGRAMS: frozenset[str] = frozenset({"command", "find"})
 r"""First words of a command that are not looked up on the ``PATH``
 (shell builtins and tools that every system has)."""
+
+
+def build_command(
+    program: str,
+    *,
+    args: str | None = None,
+    paths: str | None = None,
+    default_paths: Sequence[str] = (),
+) -> str:
+    r"""Build a command line from a program and the options of a task.
+
+    Args:
+        program: The program and its fixed arguments, e.g.
+            ``"ruff check"``. It is used as it is (not quoted).
+        args: Extra arguments of the user, as one string that is split
+            like a shell does, e.g. ``"-k foo -x"``. They come after the
+            fixed arguments.
+        paths: Paths of the user, as one string that is split like a
+            shell does. They replace ``default_paths``.
+        default_paths: The paths used when ``paths`` is not set.
+
+    Returns:
+        The command line. The arguments and the paths are quoted when
+        needed.
+
+    Raises:
+        Exit: If ``args`` or ``paths`` cannot be split (for example an
+            unclosed quote).
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import build_command
+    >>> build_command("ruff check", default_paths=["."])
+    'ruff check .'
+    >>> build_command("ruff check", args="--select E", paths="src tests", default_paths=["."])
+    'ruff check --select E src tests'
+
+    ```
+    """
+    words = [program, *_split(args, "--args"), *(_split(paths, "--paths") or default_paths)]
+    return " ".join(words[:1] + [shlex.quote(w) for w in words[1:]])
+
+
+def _split(value: str | None, option: str) -> list[str]:
+    r"""Split the value of an option like a shell does.
+
+    Args:
+        value: The value, or ``None`` if the option is not set.
+        option: The name of the option, used in the error message.
+
+    Returns:
+        The words of the value (empty if it is not set).
+
+    Raises:
+        Exit: If the value cannot be split, for example because of an
+            unclosed quote.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _split
+    >>> _split('-k "a b" -x', "--args")
+    ['-k', 'a b', '-x']
+    >>> _split(None, "--args")
+    []
+
+    ```
+    """
+    if not value:
+        return []
+    try:
+        return shlex.split(value)
+    except ValueError as exc:
+        msg = f"Cannot parse the value of {option} ({exc}): {value!r}"
+        raise Exit(msg, code=2) from exc
 
 
 def check_program(command: str) -> None:

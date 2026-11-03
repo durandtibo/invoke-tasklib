@@ -9,12 +9,13 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import python_executable, run
+from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, python_executable, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
 
 COV_HELP = "Generate coverage reports (html, xml and terminal)."
+PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
 
 
 def _directory_exists(c: Context, path: str, what: str) -> bool:
@@ -92,6 +93,8 @@ def _run_pytest(
     cov: bool = False,
     append: bool = False,
     skip_missing: bool = False,
+    args: str | None = None,
+    paths: str | None = None,
 ) -> None:
     r"""Run pytest on a directory of tests.
 
@@ -112,7 +115,10 @@ def _run_pytest(
         append: If True and ``cov`` is True, append to the coverage data
             of the previous runs instead of replacing it.
         skip_missing: If True, a message is written and nothing is run
-            when ``path`` is not an existing directory.
+            when ``path`` is not an existing directory. It is ignored
+            when ``paths`` is set.
+        args: Extra arguments passed to pytest, placed before the paths.
+        paths: Paths of the user that replace ``path``.
 
     Raises:
         UnexpectedExit: If pytest fails.
@@ -133,7 +139,7 @@ def _run_pytest(
     ```
     """
     cfg = load_config(c)
-    if skip_missing and not _directory_exists(c, path, label):
+    if skip_missing and not paths and not _directory_exists(c, path, label):
         return
     options = cfg["test"]
     say(c, f"🧪 Running {label}...")
@@ -149,13 +155,12 @@ def _run_pytest(
         if options["cov_fail_under"] is not None:
             cmd.append(f"--cov-fail-under={options['cov_fail_under']}")
         say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))
-    cmd.append(path)
-    run(c, " ".join(cmd))
+    run(c, build_command(" ".join(cmd), args=args, paths=paths, default_paths=[path]))
     say(c, f"✅ {label.capitalize()} complete")
 
 
-@task(name="all", help={"cov": COV_HELP})
-def all_(c: Context, cov: bool = False) -> None:
+@task(name="all", help=PYTEST_HELP)
+def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | None = None) -> None:
     r"""Run all tests (unit, integration, and functional).
 
     The whole tests directory is run in one pytest call, so the timeout
@@ -167,17 +172,28 @@ def all_(c: Context, cov: bool = False) -> None:
         c: The invoke context.
         cov: If True, generate coverage reports in HTML, XML, and terminal
             formats. Default is False.
+        args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
+        paths: The files or directories to run instead of the tests
+            directory.
     """
     cfg = load_config(c)
     options = cfg["test"]
     timeout = max(
         options["unit_timeout"], options["integration_timeout"], options["functional_timeout"]
     )
-    _run_pytest(c, cfg["paths"]["tests"], label="all tests", timeout=timeout, cov=cov)
+    _run_pytest(
+        c,
+        cfg["paths"]["tests"],
+        label="all tests",
+        timeout=timeout,
+        cov=cov,
+        args=args,
+        paths=paths,
+    )
 
 
-@task(help={"cov": COV_HELP})
-def unit(c: Context, cov: bool = False) -> None:
+@task(help=PYTEST_HELP)
+def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | None = None) -> None:
     r"""Run unit tests.
 
     The timeout of each test is ``tasklib.test.unit_timeout`` (10
@@ -186,6 +202,9 @@ def unit(c: Context, cov: bool = False) -> None:
     Args:
         c: The invoke context.
         cov: If True, generate coverage reports. Default is False.
+        args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
+        paths: The files or directories to run instead of the tests of
+            this scope.
     """
     cfg = load_config(c)
     _run_pytest(
@@ -194,11 +213,15 @@ def unit(c: Context, cov: bool = False) -> None:
         label="unit tests",
         timeout=cfg["test"]["unit_timeout"],
         cov=cov,
+        args=args,
+        paths=paths,
     )
 
 
-@task(help={"cov": COV_HELP})
-def integration(c: Context, cov: bool = False) -> None:
+@task(help=PYTEST_HELP)
+def integration(
+    c: Context, cov: bool = False, args: str | None = None, paths: str | None = None
+) -> None:
     r"""Run integration tests.
 
     The timeout of each test is ``tasklib.test.integration_timeout`` (60
@@ -208,6 +231,9 @@ def integration(c: Context, cov: bool = False) -> None:
         c: The invoke context.
         cov: If True, generate coverage reports, appended to the
             existing coverage data. Default is False.
+        args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
+        paths: The files or directories to run instead of the tests of
+            this scope.
     """
     cfg = load_config(c)
     _run_pytest(
@@ -216,13 +242,17 @@ def integration(c: Context, cov: bool = False) -> None:
         label="integration tests",
         timeout=cfg["test"]["integration_timeout"],
         cov=cov,
+        args=args,
+        paths=paths,
         append=True,
         skip_missing=True,
     )
 
 
-@task(help={"cov": COV_HELP})
-def functional(c: Context, cov: bool = False) -> None:
+@task(help=PYTEST_HELP)
+def functional(
+    c: Context, cov: bool = False, args: str | None = None, paths: str | None = None
+) -> None:
     r"""Run functional tests.
 
     The timeout of each test is ``tasklib.test.functional_timeout`` (60
@@ -232,6 +262,9 @@ def functional(c: Context, cov: bool = False) -> None:
         c: The invoke context.
         cov: If True, generate coverage reports, appended to the
             existing coverage data. Default is False.
+        args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
+        paths: The files or directories to run instead of the tests of
+            this scope.
     """
     cfg = load_config(c)
     _run_pytest(
@@ -240,6 +273,8 @@ def functional(c: Context, cov: bool = False) -> None:
         label="functional tests",
         timeout=cfg["test"]["functional_timeout"],
         cov=cov,
+        args=args,
+        paths=paths,
         append=True,
         skip_missing=True,
     )

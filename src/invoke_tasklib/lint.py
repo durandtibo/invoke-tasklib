@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import run
+from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -20,10 +20,17 @@ if TYPE_CHECKING:
         "output_format": (
             "Ruff output format. Defaults to 'github' when GITHUB_ACTIONS is 'true', "
             "ruff's own default otherwise."
-        )
+        ),
+        "args": ARGS_HELP,
+        "paths": PATHS_HELP,
     }
 )
-def check_python(c: Context, output_format: str | None = None) -> None:
+def check_python(
+    c: Context,
+    output_format: str | None = None,
+    args: str | None = None,
+    paths: str | None = None,
+) -> None:
     r"""Check code linting with ruff.
 
     Args:
@@ -32,23 +39,32 @@ def check_python(c: Context, output_format: str | None = None) -> None:
             ``github`` is used when running in GitHub Actions
             (``GITHUB_ACTIONS=true``), where it creates annotations, and
             ruff's default format is used otherwise.
+        args: Extra arguments passed to ruff, e.g. ``"--select E"``.
+        paths: The files or directories to check instead of the whole
+            project (``.``).
     """
     if output_format is None and os.environ.get("GITHUB_ACTIONS") == "true":
         output_format = "github"
     say(c, "🔍 Checking code linting with ruff...")
     option = f" --output-format={shlex.quote(output_format)}" if output_format else ""
-    run(c, f"ruff check{option} .")
+    run(c, build_command(f"ruff check{option}", args=args, paths=paths, default_paths=["."]))
     say(c, "✅ Linting check passed")
 
 
-@task
-def fix_python(c: Context) -> None:
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def fix_python(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Fix auto-fixable linting issues in place with ruff.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to ruff, e.g. ``"--select I"``.
+        paths: The files or directories to fix instead of the whole
+            project (``.``).
 
     Note:
         This modifies files in place. Ensure your work is committed before
         running this task.
     """
     say(c, "🔧 Fixing linting issues with ruff...")
-    run(c, "ruff check --fix .")
+    run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))
     say(c, "✅ Linting fix complete")

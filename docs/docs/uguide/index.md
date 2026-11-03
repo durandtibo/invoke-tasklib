@@ -62,6 +62,26 @@ invoke test.all --cov
 Since Invoke lets you chain multiple task names in one command, all of the above run as a single
 `invoke` call each.
 
+## Passing Arguments to the Tools
+
+The tasks that run `pytest` (`test.all`, `test.unit`, `test.integration`, `test.functional`),
+`ruff` (`format.check-python`, `format.fix-python`, `lint.check-python`, `lint.fix-python`),
+`docformatter` (`format.check-docstrings`, `format.fix-docstrings`) and `ty` (`types.check`) have
+two options:
+
+- `--args` adds arguments to the command. The value is one string, split like a shell does.
+- `--paths` runs the tool on these files or directories instead of the default ones (the
+  project for `ruff`, `paths.src` for `docformatter`, the scope directory for `pytest`).
+
+```shell
+invoke test.unit --args "-k foo -x" --paths tests/unit/test_foo.py
+invoke lint.check-python --args "--select E" --paths "src/a.py src/b.py"
+invoke format.check-python --paths src/a.py
+```
+
+For `types.check`, `--args` goes to `ty` only and `--paths` goes to `ty` and `pyright`. The
+arguments and the paths are quoted, so they are never interpreted by the shell.
+
 ## External Tools
 
 Tasks are thin wrappers around external command-line tools. Each is expected to be available on

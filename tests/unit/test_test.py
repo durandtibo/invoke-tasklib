@@ -239,6 +239,67 @@ def test_fail_under_zero_is_forwarded() -> None:
     assert "--cov-fail-under=0" in _commands(c)[0]
 
 
+def test_unit_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit(c, args="-k foo -x")
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --xdoctest --timeout 10 -k foo -x tests/unit"
+    ]
+
+
+def test_unit_args_are_quoted() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit(c, args='-k "a or b"')
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --xdoctest --timeout 10 -k 'a or b' tests/unit"
+    ]
+
+
+def test_unit_paths_replace_the_unit_tests_directory() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit(c, paths="tests/unit/test_a.py")
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit/test_a.py"
+    ]
+
+
+def test_unit_args_come_after_coverage_options() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.unit(c, cov=True, args="-x")
+    assert _commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report html --cov-report xml --cov-report term --cov=mypkg -x tests/unit"
+        )
+    ]
+
+
+def test_all_args_and_paths() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.all_(c, args="-x", paths="tests/unit tests/integration")
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --xdoctest --timeout 60 -x tests/unit tests/integration"
+    ]
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_integration_paths_run_even_if_the_directory_is_missing() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, paths="tests/integration/test_a.py")
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration/test_a.py"
+    ]
+
+
+@pytest.mark.usefixtures("test_dirs")
+def test_functional_args() -> None:
+    c = _context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, args="-x")
+    assert _commands(c) == [
+        "/venv/bin/python -m pytest --xdoctest --timeout 60 -x tests/functional"
+    ]
+
+
 def test_coverage_report() -> None:
     c = _context()
     test_tasks.coverage_report(c)
