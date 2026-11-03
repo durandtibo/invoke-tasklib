@@ -66,7 +66,8 @@ functional tests, since they typically exercise more of the system. The timeouts
 `test.unit_timeout`, `test.integration_timeout` and `test.functional_timeout` values of the
 [config](config.md). If the directory of `test.integration` or
 `test.functional` does not exist, the task prints a message and skips it instead of failing with a
-pytest error.
+pytest error. `test.unit` does the same, except that when `paths.unit_tests` does not exist but
+`paths.tests` does (a flat `tests/` layout), it runs the whole `paths.tests` directory.
 
 ```shell
 invoke test.all
@@ -78,7 +79,9 @@ Runs everything in `paths.tests` in a single `pytest` invocation, with the large
 ## Coverage
 
 Pass `--cov` to `test.unit`, `test.integration`, `test.functional`, or `test.all` to generate
-coverage reports in HTML, XML, and terminal formats:
+coverage reports. The formats are the `test.cov_reports` value of the [config](config.md)
+(`html,xml,term` by default, each one is a `--cov-report` of pytest-cov; an empty value leaves the
+choice to pytest-cov):
 
 ```shell
 invoke test.unit --cov
@@ -103,7 +106,7 @@ what was run before.
 invoke test.coverage-report
 ```
 
-Regenerates the HTML report and prints the terminal summary from whatever coverage data (`.coverage`)
+Runs `python -m coverage` (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (`.coverage`)
 is currently on disk — the data produced by an earlier `--cov` run — without re-running the tests.
 Pass `--open-browser` to also open `htmlcov/index.html` in your default browser:
 

@@ -73,6 +73,7 @@ class TestConfig:
     functional_timeout: int
     xdoctest: bool
     cov_fail_under: int | None
+    cov_reports: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -114,12 +115,19 @@ DEFAULT_GROUPS: dict[str, str] = {
     "update": "dev,docs",
 }
 
-DEFAULT_TEST: dict[str, int | bool | None] = {
+COV_REPORTS: frozenset[str] = frozenset(
+    {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
+)
+r"""The valid values of ``test.cov_reports`` (the formats of
+``--cov-report`` of pytest-cov)."""
+
+DEFAULT_TEST: dict[str, int | bool | str | None] = {
     "unit_timeout": 10,
     "integration_timeout": 60,
     "functional_timeout": 60,
     "xdoctest": True,
     "cov_fail_under": None,
+    "cov_reports": "html,xml,term",
 }
 
 
@@ -413,6 +421,52 @@ def _validate_str(section: str, key: str, value: object) -> str:
     return value
 
 
+def _validate_cov_reports(value: object) -> tuple[str, ...]:
+    r"""Validate the ``test.cov_reports`` config value.
+
+    Args:
+        value: The raw config value: a comma-separated string or a list
+            of report formats.
+
+    Returns:
+        The report formats, without duplicates, in the order given.
+
+    Raises:
+        ValueError: If the value is neither a string nor a list of
+            strings, or if a format is not one of ``COV_REPORTS``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _validate_cov_reports
+    >>> _validate_cov_reports("html, term")
+    ('html', 'term')
+    >>> _validate_cov_reports(["xml"])
+    ('xml',)
+
+    ```
+    """
+    if isinstance(value, str):
+        names = [name.strip() for name in value.split(",")]
+    elif isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value):
+        names = [name.strip() for name in value]
+    else:
+        msg = (
+            "'tasklib.test.cov_reports' must be a comma-separated string or a list of "
+            f"strings, got {value!r}"
+        )
+        raise ValueError(msg)
+    names = list(dict.fromkeys(name for name in names if name))
+    unknown = [name for name in names if name not in COV_REPORTS]
+    if unknown:
+        msg = (
+            f"Unknown coverage report {unknown} in 'tasklib.test.cov_reports'. "
+            f"Valid reports: {', '.join(sorted(COV_REPORTS))}"
+        )
+        raise ValueError(msg)
+    return tuple(names)
+
+
 def _validate_bool(key: str, value: object) -> bool:
     r"""Validate a boolean value of the ``test`` config section.
 
@@ -469,7 +523,8 @@ def get_config(c: Context) -> TasklibConfig:
             example a typo such as ``unit_test`` for ``unit_tests``), or
             if a ``tasklib.test`` value is invalid (a timeout and
             ``cov_fail_under`` must be integers, with a timeout > 0 and
-            ``cov_fail_under`` between 0 and 100, and ``xdoctest`` must be a
+            ``cov_fail_under`` between 0 and 100, ``cov_reports`` must be
+            report formats, and ``xdoctest`` must be a
             boolean).
 
     Example usage:
@@ -552,6 +607,7 @@ def get_config(c: Context) -> TasklibConfig:
                 if test["cov_fail_under"] is None
                 else _validate_int("cov_fail_under", test["cov_fail_under"], minimum=0, maximum=100)
             ),
+            cov_reports=_validate_cov_reports(test["cov_reports"]),
         ),
     )
 
