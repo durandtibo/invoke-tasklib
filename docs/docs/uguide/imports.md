@@ -4,9 +4,9 @@
 
 ## Overview
 
-| Task                     | Behavior                                                                          |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `imports.check-cycles`   | Checks for import cycles with a static import graph, and prints them (read-only)  |
+| Task                     | Behavior                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `imports.check-cycles`   | Checks for import cycles with a static import graph, and prints them (read-only)    |
 | `imports.check-isolated` | Checks that every module imports on its own, one interpreter per module (read-only) |
 
 ## Checking for cycles
@@ -30,10 +30,10 @@ Found 1 import cycle(s) in mypkg:
 An import that does not run when a module is imported cannot cause a cycle, so by default the
 imports under `if TYPE_CHECKING:` and the imports inside functions are ignored:
 
-| Option             | Effect                                                    |
-| ------------------ | --------------------------------------------------------- |
-| `--lazy`           | Also follows the imports inside functions                 |
-| `--type-checking`  | Also follows the imports under `if TYPE_CHECKING:`        |
+| Option            | Effect                                             |
+| ----------------- | -------------------------------------------------- |
+| `--lazy`          | Also follows the imports inside functions          |
+| `--type-checking` | Also follows the imports under `if TYPE_CHECKING:` |
 
 A syntax error is reported as such (with the module), and a missing optional dependency is not
 reported at all, because neither is a cycle.

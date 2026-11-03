@@ -4,8 +4,8 @@
 
 ## Overview
 
-| Task             | Behavior                                                            |
-| ---------------- | ------------------------------------------------------------------- |
+| Task             | Behavior                                                             |
+| ---------------- | -------------------------------------------------------------------- |
 | `security.audit` | Audits the locked dependencies for known vulnerabilities (read-only) |
 
 ## Usage

@@ -7,13 +7,13 @@ documented in the reference pages ([`runner`](../refs/runner.md), [`output`](../
 
 ## Overview
 
-| Helper                                | Use it to                                                           |
-| ------------------------------------- | ------------------------------------------------------------------- |
-| `invoke_tasklib.config.load_config`   | Read the [resolved config](config.md); an invalid one exits cleanly |
-| `invoke_tasklib.runner.build_command` | Build a command line with quoted arguments and paths                |
-| `invoke_tasklib.runner.run`           | Run a command: echo, pty only on a terminal, program check         |
-| `invoke_tasklib.runner.check_program` | Check that the programs of a command are installed                  |
-| `invoke_tasklib.output.say`           | Print a progress message                                            |
+| Helper                                | Use it to                                                            |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| `invoke_tasklib.config.load_config`   | Read the [resolved config](config.md); an invalid one exits cleanly  |
+| `invoke_tasklib.runner.build_command` | Build a command line with quoted arguments and paths                 |
+| `invoke_tasklib.runner.run`           | Run a command: echo, pty only on a terminal, program check           |
+| `invoke_tasklib.runner.check_program` | Check that the programs of a command are installed                   |
+| `invoke_tasklib.output.say`           | Print a progress message                                             |
 | `invoke_tasklib.output.step`          | Print the start and the end of a step, and `❌ Failed: ...` on error |
 
 ## Example

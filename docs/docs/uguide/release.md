@@ -7,10 +7,10 @@ publish the package to PyPI using [`uv`](https://docs.astral.sh/uv/).
 
 `release.pypi` was renamed to `release.publish`; the old name is no longer available.
 
-| Task            | Behavior                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| `release.build` | Builds the package and verifies installation (`--check` also validates metadata with twine) |
-| `release.publish` | Checks the git state, then builds and publishes the package to PyPI or TestPyPI           |
+| Task              | Behavior                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `release.build`   | Builds the package and verifies installation (`--check` also validates metadata with twine) |
+| `release.publish` | Checks the git state, then builds and publishes the package to PyPI or TestPyPI             |
 
 ## Building
 
@@ -49,17 +49,17 @@ Credentials, in this order:
   so it never appears on the command line;
 - [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), used
   automatically in GitHub Actions with the `id-token: write` permission (`--trusted-publishing
-  always`); no token is needed.
+always`); no token is needed.
 
 Without either, the task fails before building.
 
-| Option          | Effect                                                                           |
-| --------------- | -------------------------------------------------------------------------------- |
-| `--test-pypi`   | Publishes to [TestPyPI](https://test.pypi.org/) instead of PyPI                  |
-| `--dry-run`     | Runs the checks and the build, and gives `--dry-run` to `uv publish`; no token   |
-| `--yes`         | Does not ask for a confirmation                                                  |
-| `--skip-checks` | Does not check the git state                                                     |
-| `--args`        | Extra arguments for `uv publish`                                                 |
+| Option          | Effect                                                                         |
+| --------------- | ------------------------------------------------------------------------------ |
+| `--test-pypi`   | Publishes to [TestPyPI](https://test.pypi.org/) instead of PyPI                |
+| `--dry-run`     | Runs the checks and the build, and gives `--dry-run` to `uv publish`; no token |
+| `--yes`         | Does not ask for a confirmation                                                |
+| `--skip-checks` | Does not check the git state                                                   |
+| `--args`        | Extra arguments for `uv publish`                                               |
 
 ```shell
 invoke release.publish --dry-run

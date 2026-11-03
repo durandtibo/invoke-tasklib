@@ -38,7 +38,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Env](env.md)           | `env.show-installed-packages` | Show installed packages                             |    ❌    |
 | [Env](env.md)           | `env.show-python-config`      | Show the Python configuration                       |    ❌    |
 | [Release](release.md)   | `release.build`               | Build the package and verify installation           |    ✅    |
-| [Release](release.md)   | `release.publish`                | Build and publish the package to PyPI               |    ✅    |
+| [Release](release.md)   | `release.publish`             | Build and publish the package to PyPI               |    ✅    |
 | [Doc](doc.md)           | `doc.build`                   | Build the docs, failing on warnings                 |    ❌    |
 | [Doc](doc.md)           | `doc.serve`                   | Serve the docs locally                              |    ❌    |
 | [Doc](doc.md)           | `doc.publish-dev`             | Publish development (unstable) docs                 |    ✅    |
@@ -88,22 +88,22 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
   for `pytest`, every `*.sh` file for `shellcheck` and `shfmt`, every markdown file for the
   markdown doctests).
 
-| Tasks                                                                                | `--args` goes to       | `--paths` |
-| ------------------------------------------------------------------------------------ | ---------------------- | :-------: |
-| `test.all`, `test.unit`, `test.integration`, `test.functional`, `test.benchmark`     | `pytest`               |    ✅     |
-| `test.doctest-src`                                                                   | `pytest`               |    ✅     |
-| `test.doctest-markdown`                                                              | `python -m doctest`    |    ✅     |
-| `test.coverage-report`                                                               | `coverage report`      |    ❌     |
-| `format.*-python`, `lint.check-python`, `lint.fix-python`                            | `ruff`                 |    ✅     |
-| `format.*-docstrings`                                                                | `docformatter`         |    ✅     |
-| `format.check-shell`, `format.fix-shell`                                             | `shellcheck`, `shfmt`  |    ✅     |
-| `lint.check-spelling`                                                                | `codespell`            |    ✅     |
-| `lint.pre-commit`                                                                    | `pre-commit`           |    ❌     |
-| `types.check`                                                                        | `ty` (only)            |    ✅     |
-| `security.audit`                                                                     | `pip-audit`            |    ❌     |
-| `doc.build`, `doc.serve`                                                             | `mkdocs`               |    ❌     |
-| `release.build`                                                                      | `uv build`             |    ❌     |
-| `release.publish`                                                                    | `uv publish`           |    ❌     |
+| Tasks                                                                            | `--args` goes to      | `--paths` |
+| -------------------------------------------------------------------------------- | --------------------- | :-------: |
+| `test.all`, `test.unit`, `test.integration`, `test.functional`, `test.benchmark` | `pytest`              |    ✅     |
+| `test.doctest-src`                                                               | `pytest`              |    ✅     |
+| `test.doctest-markdown`                                                          | `python -m doctest`   |    ✅     |
+| `test.coverage-report`                                                           | `coverage report`     |    ❌     |
+| `format.*-python`, `lint.check-python`, `lint.fix-python`                        | `ruff`                |    ✅     |
+| `format.*-docstrings`                                                            | `docformatter`        |    ✅     |
+| `format.check-shell`, `format.fix-shell`                                         | `shellcheck`, `shfmt` |    ✅     |
+| `lint.check-spelling`                                                            | `codespell`           |    ✅     |
+| `lint.pre-commit`                                                                | `pre-commit`          |    ❌     |
+| `types.check`                                                                    | `ty` (only)           |    ✅     |
+| `security.audit`                                                                 | `pip-audit`           |    ❌     |
+| `doc.build`, `doc.serve`                                                         | `mkdocs`              |    ❌     |
+| `release.build`                                                                  | `uv build`            |    ❌     |
+| `release.publish`                                                                | `uv publish`          |    ❌     |
 
 The tasks that have no option are the composite tasks (`check.all`, `test.doctest`), the tasks
 that run no external tool (`clean.*`, `imports.*`) and the tasks with their own options
@@ -126,29 +126,29 @@ arguments and the paths are quoted, so they are never interpreted by the shell.
 Tasks are thin wrappers around external command-line tools. Each is expected to be available on
 `PATH` (or installed via [`env.install`](env.md)/[`env.create-venv`](env.md)):
 
-| Tool                                                            | Used by                                                         |
-| --------------------------------------------------------------- | --------------------------------------------------------------- |
-| [`ruff`](https://docs.astral.sh/ruff/)                          | `format.check-python`, `format.fix-python`, `lint.check-python` |
-| [`docformatter`](https://docformatter.readthedocs.io/)          | `format.check-docstrings`, `format.fix-docstrings`              |
-| [`shellcheck`](https://www.shellcheck.net/)                     | `format.check-shell`                                            |
-| [`shfmt`](https://github.com/mvdan/sh)                          | `format.fix-shell`                                              |
-| [`ty`](https://docs.astral.sh/ty/)                              | `types.check`                                                   |
-| [`pyright`](https://microsoft.github.io/pyright/)               | `types.check --complete`                                        |
-| [`pytest`](https://docs.pytest.org/)                            | `test.*` except `test.doctest` and `test.doctest-markdown`      |
-| [`pytest-timeout`](https://pypi.org/project/pytest-timeout/)    | `test.unit`, `test.integration`, `test.functional`, `test.all`  |
-| [`pytest-cov`](https://pytest-cov.readthedocs.io/)              | the `--cov` option of the `test.*` tasks                        |
-| [`coverage`](https://coverage.readthedocs.io/)                  | `test.coverage-report`                                          |
-| [`xdoctest`](https://github.com/Erotemic/xdoctest)              | `test.*` (unless `test.xdoctest` is false), `test.doctest-src`  |
-| [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)  | `test.benchmark`                                                |
-| [`uv`](https://docs.astral.sh/uv/)                              | `env.*`, `release.*`                                            |
-| [`twine`](https://twine.readthedocs.io/) (via `uvx`)            | `release.build --check`                                         |
-| [`codespell`](https://github.com/codespell-project/codespell)   | `lint.check-spelling`                                           |
-| [`pre-commit`](https://pre-commit.com/)                         | `lint.pre-commit`                                               |
-| [`mkdocs`](https://www.mkdocs.org/)                             | `doc.build`, `doc.serve`                                        |
-| [`mkdocs-material`](https://squidfunk.github.io/mkdocs-material/) | the theme of the docs built by `doc.build`, `doc.serve`       |
-| [`mike`](https://github.com/jimporter/mike)                     | `doc.publish-dev`, `doc.publish-latest`                         |
-| [`git`](https://git-scm.com/)                                   | `doc.publish-latest`                                            |
-| [`pip-audit`](https://github.com/pypa/pip-audit) (via `uvx`)    | `security.audit`                                                |
+| Tool                                                              | Used by                                                         |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| [`ruff`](https://docs.astral.sh/ruff/)                            | `format.check-python`, `format.fix-python`, `lint.check-python` |
+| [`docformatter`](https://docformatter.readthedocs.io/)            | `format.check-docstrings`, `format.fix-docstrings`              |
+| [`shellcheck`](https://www.shellcheck.net/)                       | `format.check-shell`                                            |
+| [`shfmt`](https://github.com/mvdan/sh)                            | `format.fix-shell`                                              |
+| [`ty`](https://docs.astral.sh/ty/)                                | `types.check`                                                   |
+| [`pyright`](https://microsoft.github.io/pyright/)                 | `types.check --complete`                                        |
+| [`pytest`](https://docs.pytest.org/)                              | `test.*` except `test.doctest` and `test.doctest-markdown`      |
+| [`pytest-timeout`](https://pypi.org/project/pytest-timeout/)      | `test.unit`, `test.integration`, `test.functional`, `test.all`  |
+| [`pytest-cov`](https://pytest-cov.readthedocs.io/)                | the `--cov` option of the `test.*` tasks                        |
+| [`coverage`](https://coverage.readthedocs.io/)                    | `test.coverage-report`                                          |
+| [`xdoctest`](https://github.com/Erotemic/xdoctest)                | `test.*` (unless `test.xdoctest` is false), `test.doctest-src`  |
+| [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)    | `test.benchmark`                                                |
+| [`uv`](https://docs.astral.sh/uv/)                                | `env.*`, `release.*`                                            |
+| [`twine`](https://twine.readthedocs.io/) (via `uvx`)              | `release.build --check`                                         |
+| [`codespell`](https://github.com/codespell-project/codespell)     | `lint.check-spelling`                                           |
+| [`pre-commit`](https://pre-commit.com/)                           | `lint.pre-commit`                                               |
+| [`mkdocs`](https://www.mkdocs.org/)                               | `doc.build`, `doc.serve`                                        |
+| [`mkdocs-material`](https://squidfunk.github.io/mkdocs-material/) | the theme of the docs built by `doc.build`, `doc.serve`         |
+| [`mike`](https://github.com/jimporter/mike)                       | `doc.publish-dev`, `doc.publish-latest`                         |
+| [`git`](https://git-scm.com/)                                     | `doc.publish-latest`                                            |
+| [`pip-audit`](https://github.com/pypa/pip-audit) (via `uvx`)      | `security.audit`                                                |
 
 Most of these come from your project's own dev/docs dependency groups; see
 [Env](env.md#installing-dependencies) for how `env.install` wires them up, and the

@@ -90,17 +90,17 @@ CI/release steps call this repo's own `invoke_tasklib` tasks (via
 checks a contributor runs locally (`make`, `uv run inv --list`) are exactly
 what CI runs. Key mappings:
 
-| Workflow job                | Invoke task                                            |
-| --------------------------- | ------------------------------------------------------ |
-| `ci-format.yaml` / `format` | `format.check-python`, `lint.check-python`             |
-| `ci-format.yaml` / `shell`  | `make check-format-shell`, `make lint-shell` (no task) |
-| `ci-lint.yaml`              | `lint.check-python`                                    |
-| `ci-type-checking.yaml`     | `types.check`                                          |
-| `ci-doctest.yaml`           | `test.doctest`                                         |
-| `ci-test.yaml`              | `test.all --cov`                                       |
-| `ci-build.yaml`             | `release.build --check`                                |
+| Workflow job                | Invoke task                                                  |
+| --------------------------- | ------------------------------------------------------------ |
+| `ci-format.yaml` / `format` | `format.check-python`, `lint.check-python`                   |
+| `ci-format.yaml` / `shell`  | `make check-format-shell`, `make lint-shell` (no task)       |
+| `ci-lint.yaml`              | `lint.check-python`                                          |
+| `ci-type-checking.yaml`     | `types.check`                                                |
+| `ci-doctest.yaml`           | `test.doctest`                                               |
+| `ci-test.yaml`              | `test.all --cov`                                             |
+| `ci-build.yaml`             | `release.build --check`                                      |
 | `release-pypi.yaml`         | `build-package` (via `durandtibo/build-pypi-package-action`) |
-| `release-docs-publish.yaml` | `doc.publish-latest`, `doc.publish-dev`                |
+| `release-docs-publish.yaml` | `doc.publish-latest`, `doc.publish-dev`                      |
 
 `ci-pre-commit.yaml` runs `.pre-commit-config.yaml` directly via
 `pre-commit/action` rather than an invoke task, since pre-commit already
