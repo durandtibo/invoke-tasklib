@@ -22,9 +22,9 @@ Both tasks read `paths.docs_config` from the [resolved config](config.md) (defau
 invoke doc.publish-dev
 ```
 
-Deletes any previously published `main` version (if it exists) and deploys the current docs under
-the `main` version with the `dev` alias, then pushes to the configured remote (typically
-`gh-pages`).
+Deploys the current docs under the `main` version with the `dev` alias (`mike deploy` replaces an
+existing `main` version, so it is not deleted first), then pushes to the configured remote
+(typically `gh-pages`). Pass `--no-push` to only commit the docs branch locally.
 
 ## Publishing Latest (Stable) Docs
 
@@ -32,13 +32,12 @@ the `main` version with the `dev` alias, then pushes to the configured remote (t
 invoke doc.publish-latest
 ```
 
-Determines the version to publish from the most recent git version tag (via
-[`feu.local_git.get_last_version_tag_name`](https://github.com/durandtibo/feu)), truncated to
-`<major>.<minor>` (e.g. `1.2`). It then deploys the current docs under that tag with the `latest`
-alias, and sets `latest` as the default version shown to visitors.
+Determines the version to publish from the most recent git version tag (a tag like `v1.2.3`, read
+with `git tag --list 'v[0-9]*' --sort=-v:refname`), truncated to `<major>.<minor>` (e.g. `1.2`). It
+then deploys the current docs under that tag with the `latest` alias, and sets `latest` as the
+default version shown to visitors. Pass `--no-push` to only commit the docs branch locally.
 
-To publish a specific version without looking at the git tags, pass it explicitly (this does not
-need `feu`):
+To publish a specific version without looking at the git tags, pass it explicitly:
 
 ```shell
 invoke doc.publish-latest --version 1.2
@@ -48,10 +47,9 @@ The task fails if there is no version tag and no `--version`, because publishing
 version would be a setup error. Pre-release versions (`1.2.0rc1`, `1.2.0a1`, `1.2.0.dev1`, ...) are
 skipped, so they never become `latest`.
 
-<!-- prettier-ignore -->
-!!! note
-    Reading the git tag requires the `feu` package. Install documentation dependencies with
-    `invoke env.install --groups dev,docs` before running it, or pass `--version`.
+The task also refuses to move `latest` backwards: if a newer `<major>.<minor>` is already published
+(`mike list --json`), for example when releasing a `1.1.5` backport after `1.2.0`, it fails with
+`Refusing to publish 1.1 as latest`. Pass `--force` to publish the older version anyway.
 
 ## Local Preview
 
@@ -71,4 +69,4 @@ with live reload. Both use `paths.docs_config` and need the `docs` dependency gr
 
 - [Config](config.md): where `paths.docs_config` comes from.
 - [`invoke_tasklib.doc` reference](../refs/doc.md)
-- [Troubleshooting](../troubleshooting.md): fixes for missing `feu` errors.
+- [Troubleshooting](../troubleshooting.md): fixes for missing tools.

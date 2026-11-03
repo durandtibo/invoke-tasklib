@@ -57,7 +57,7 @@ the missing tool, either directly or via your project's dependency groups:
 
 ```shell
 invoke env.install                  # installs dev deps: ruff, ty, pytest, ...
-invoke env.install --groups dev,docs  # additionally installs mike, feu
+invoke env.install --groups dev,docs  # additionally installs mike
 ```
 
 `shellcheck` and `shfmt` are not Python packages; install them with your system package manager
@@ -65,15 +65,19 @@ invoke env.install --groups dev,docs  # additionally installs mike, feu
 [Format](uguide/format.md) page. The full external-tool matrix is in the
 [User Guide overview](uguide/index.md#external-tools).
 
-## `doc.publish-latest` fails with `ModuleNotFoundError: feu`
+## `doc.publish-latest` fails with `No version tag found`
 
-`doc.publish-latest` needs the `feu` package to read the last version tag. Install documentation
-dependencies first, or skip the tag lookup by passing the version:
+`doc.publish-latest` reads the last git tag that looks like `v1.2.3`. Create a release tag (and
+fetch the tags in CI: `git fetch --tags`), or skip the tag lookup by passing the version:
 
 ```shell
-invoke env.install --groups dev,docs
 invoke doc.publish-latest --version 1.2
 ```
+
+## `doc.publish-latest` fails with `Refusing to publish ... as latest`
+
+A newer version of the docs is already published, so publishing this one would move `latest`
+backwards. Pass `--force` if that is what you want.
 
 See [Doc](uguide/doc.md).
 

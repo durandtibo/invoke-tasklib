@@ -112,7 +112,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`pre-commit`](https://pre-commit.com/)                         | `lint.pre-commit`                                               |
 | [`mkdocs`](https://www.mkdocs.org/)                             | `doc.build`, `doc.serve`                                        |
 | [`mike`](https://github.com/jimporter/mike)                     | `doc.publish-dev`, `doc.publish-latest`                         |
-| [`feu`](https://github.com/durandtibo/feu)                      | `doc.publish-latest`                                            |
+| [`git`](https://git-scm.com/)                                   | `doc.publish-latest`                                            |
 | [`pip-audit`](https://github.com/pypa/pip-audit) (via `uv run`) | `security.audit`                                                |
 
 Most of these come from your project's own dev/docs dependency groups; see
