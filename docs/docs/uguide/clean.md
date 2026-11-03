@@ -21,8 +21,10 @@ invoke clean
 Removes, if present, at the repository root:
 
 - Directories: `build`, `dist`, `.pytest_cache`, `.ruff_cache`, `.coverage_html`, `htmlcov`,
-  `.benchmarks`, `site`
-- Glob-matched directories: `*.egg-info`, `**/__pycache__`
+  `.benchmarks`, `.mypy_cache`, `site`
+- Glob-matched directories: `*.egg-info` (at the root) and every `__pycache__` directory of the
+  project. The `.venv`, `.git`, `.pytest_cache` and `node_modules` directories are never walked
+  into, so nothing inside them is removed.
 - Files: `.coverage`, `coverage.xml`
 
 Nothing is removed if the corresponding directory or file doesn't exist, so `clean` is safe to run

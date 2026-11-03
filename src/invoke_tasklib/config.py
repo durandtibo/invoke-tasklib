@@ -55,6 +55,9 @@ class TasklibConfig(TypedDict):
     groups: GroupsConfig
 
 
+EXCLUDED_DIRS: frozenset[str] = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
+r"""Directories that the tasks never walk into (not owned by the project)."""
+
 DEFAULT_PACKAGE: dict[str, str | None] = {
     "name": None,
     "python_version": "3.14",
