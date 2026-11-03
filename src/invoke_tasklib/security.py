@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.output import say
+from invoke_tasklib.output import step
 from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -36,8 +36,14 @@ def audit(c: Context, args: str | None = None) -> None:
         UnexpectedExit: If the lock file is out of date, or if a
             vulnerability is found.
     """
-    say(c, "🔒 Auditing locked dependencies for known vulnerabilities...")
-    with tempfile.TemporaryDirectory() as tmp:
+    with (
+        step(
+            c,
+            "🔒 Auditing locked dependencies for known vulnerabilities...",
+            "✅ Dependency audit passed",
+        ),
+        tempfile.TemporaryDirectory() as tmp,
+    ):
         requirements = shlex.quote(str(Path(tmp) / "requirements.txt"))
         run(
             c,
@@ -46,4 +52,3 @@ def audit(c: Context, args: str | None = None) -> None:
         )
         cmd = f"uvx pip-audit -r {requirements} --no-deps --disable-pip"
         run(c, build_command(cmd, args=args))
-    say(c, "✅ Dependency audit passed")

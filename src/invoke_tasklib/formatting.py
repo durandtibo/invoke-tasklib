@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -38,9 +38,8 @@ def check_python(c: Context, args: str | None = None, paths: str | None = None) 
         paths: The files or directories to check instead of the whole
             project (``.``).
     """
-    say(c, "🎨 Checking code format with ruff...")
-    run(c, build_command("ruff format --check", args=args, paths=paths, default_paths=["."]))
-    say(c, "✅ Code format check passed")
+    with step(c, "🎨 Checking code format with ruff...", "✅ Code format check passed"):
+        run(c, build_command("ruff format --check", args=args, paths=paths, default_paths=["."]))
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -57,10 +56,9 @@ def check_docstrings(c: Context, args: str | None = None, paths: str | None = No
     """
     cfg = load_config(c)
     src = cfg.paths.src
-    say(c, "📖 Checking docstring formatting...")
-    cmd = "docformatter --config ./pyproject.toml --check"
-    run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
-    say(c, "✅ Docstring format check passed")
+    with step(c, "📖 Checking docstring formatting...", "✅ Docstring format check passed"):
+        cmd = "docformatter --config ./pyproject.toml --check"
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -77,9 +75,8 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
         This modifies files in place. Ensure your work is committed
         before running this task.
     """
-    say(c, "🎨 Formatting code with ruff...")
-    run(c, build_command("ruff format", args=args, paths=paths, default_paths=["."]))
-    say(c, "✅ Code formatting complete")
+    with step(c, "🎨 Formatting code with ruff...", "✅ Code formatting complete"):
+        run(c, build_command("ruff format", args=args, paths=paths, default_paths=["."]))
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -98,10 +95,9 @@ def fix_docstrings(c: Context, args: str | None = None, paths: str | None = None
     """
     cfg = load_config(c)
     src = cfg.paths.src
-    say(c, "📖 Formatting docstrings...")
-    cmd = "docformatter --config ./pyproject.toml --in-place"
-    run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
-    say(c, "✅ Docstring formatting complete")
+    with step(c, "📖 Formatting docstrings...", "✅ Docstring formatting complete"):
+        cmd = "docformatter --config ./pyproject.toml --in-place"
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
 def _shell_command(tool: str, args: str | None, paths: str | None) -> str:
@@ -142,9 +138,8 @@ def check_shell(c: Context, args: str | None = None, paths: str | None = None) -
         paths: The scripts to check instead of every ``*.sh`` file of
             the project.
     """
-    say(c, "🐚 Running shellcheck on shell scripts...")
-    run(c, _shell_command("shellcheck", args, paths))
-    say(c, "✅ Shellcheck passed")
+    with step(c, "🐚 Running shellcheck on shell scripts...", "✅ Shellcheck passed"):
+        run(c, _shell_command("shellcheck", args, paths))
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -161,6 +156,5 @@ def fix_shell(c: Context, args: str | None = None, paths: str | None = None) -> 
         This modifies files in place. Ensure your work is committed
         before running this task.
     """
-    say(c, "🔧 Running shfmt to format shell scripts...")
-    run(c, _shell_command("shfmt -l -w", args, paths))
-    say(c, "✅ Shell formatting complete")
+    with step(c, "🔧 Running shfmt to format shell scripts...", "✅ Shell formatting complete"):
+        run(c, _shell_command("shfmt -l -w", args, paths))

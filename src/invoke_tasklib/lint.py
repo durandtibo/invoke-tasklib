@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.output import say
+from invoke_tasklib.output import step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -45,10 +45,9 @@ def check_python(
     """
     if output_format is None and os.environ.get("GITHUB_ACTIONS") == "true":
         output_format = "github"
-    say(c, "🔍 Checking code linting with ruff...")
-    option = f" --output-format={shlex.quote(output_format)}" if output_format else ""
-    run(c, build_command(f"ruff check{option}", args=args, paths=paths, default_paths=["."]))
-    say(c, "✅ Linting check passed")
+    with step(c, "🔍 Checking code linting with ruff...", "✅ Linting check passed"):
+        option = f" --output-format={shlex.quote(output_format)}" if output_format else ""
+        run(c, build_command(f"ruff check{option}", args=args, paths=paths, default_paths=["."]))
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -65,9 +64,8 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
         This modifies files in place. Ensure your work is committed
         before running this task.
     """
-    say(c, "🔧 Fixing linting issues with ruff...")
-    run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))
-    say(c, "✅ Linting fix complete")
+    with step(c, "🔧 Fixing linting issues with ruff...", "✅ Linting fix complete"):
+        run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -83,9 +81,8 @@ def check_spelling(c: Context, args: str | None = None, paths: str | None = None
         paths: The files or directories to check instead of the whole
             project (``.``).
     """
-    say(c, "🔤 Checking spelling with codespell...")
-    run(c, build_command("codespell", args=args, paths=paths, default_paths=["."]))
-    say(c, "✅ Spelling check passed")
+    with step(c, "🔤 Checking spelling with codespell...", "✅ Spelling check passed"):
+        run(c, build_command("codespell", args=args, paths=paths, default_paths=["."]))
 
 
 @task(help={"args": ARGS_HELP})
@@ -100,6 +97,5 @@ def pre_commit(c: Context, args: str | None = None) -> None:
     Note:
         The hooks may modify files in place.
     """
-    say(c, "🪝 Running the pre-commit hooks...")
-    run(c, build_command("pre-commit run --all-files", args=args))
-    say(c, "✅ Pre-commit hooks passed")
+    with step(c, "🪝 Running the pre-commit hooks...", "✅ Pre-commit hooks passed"):
+        run(c, build_command("pre-commit run --all-files", args=args))

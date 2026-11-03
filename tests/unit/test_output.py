@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from io import BytesIO, StringIO, TextIOWrapper
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
+from unittest.mock import Mock
 
+import pytest
 from invoke.config import Config
 from invoke.context import Context, MockContext
+from invoke.exceptions import Exit, UnexpectedExit
+from invoke.runners import Result
 
 from invoke_tasklib import lint
-from invoke_tasklib.output import say
-
-if TYPE_CHECKING:
-    import pytest
+from invoke_tasklib.output import _failure_title, say, step
 
 #######################
 #     Tests for say     #
@@ -80,3 +81,93 @@ def test_task_progress_messages_are_visible_without_logging_setup(
     assert capsys.readouterr().out == (
         "🔍 Checking code linting with ruff...\n✅ Linting check passed\n"
     )
+
+
+#########################
+#     Tests for step    #
+#########################
+
+
+def _context() -> tuple[StringIO, Context]:
+    stream = StringIO()
+    return stream, Context(config=Config(overrides={"run": {"out_stream": stream}}))
+
+
+def test_step_writes_the_start_then_the_done_message() -> None:
+    stream, c = _context()
+    with step(c, "🎨 Checking...", "✅ Done"):
+        pass
+    assert stream.getvalue() == "🎨 Checking...\n✅ Done\n"
+
+
+def test_step_writes_the_start_message_before_the_body() -> None:
+    stream, c = _context()
+    with step(c, "start", "done"):
+        seen = stream.getvalue()
+    assert seen == "start\n"
+
+
+def _fail_in_step(c: Context, start: str, error: BaseException) -> None:
+    with step(c, start, "done"):
+        raise error
+
+
+def test_step_writes_a_failure_message_instead_of_the_done_message() -> None:
+    stream, c = _context()
+    with pytest.raises(Exit, match=r"boom"):
+        _fail_in_step(c, "🎨 Checking code...", Exit("boom"))
+    assert stream.getvalue() == "🎨 Checking code...\n❌ Failed: Checking code\n"
+
+
+def test_step_raises_the_same_exception() -> None:
+    _, c = _context()
+    error = UnexpectedExit(Result(exited=2, command="ruff"))
+    with pytest.raises(UnexpectedExit) as info:
+        _fail_in_step(c, "start", error)
+    assert info.value is error
+
+
+def test_step_does_not_report_a_keyboard_interrupt_as_a_failure() -> None:
+    stream, c = _context()
+    with pytest.raises(KeyboardInterrupt, match=r"stop"):
+        _fail_in_step(c, "start", KeyboardInterrupt("stop"))
+    assert stream.getvalue() == "start\n"
+
+
+def test_step_can_be_nested() -> None:
+    stream, c = _context()
+    with step(c, "outer", "outer done"), step(c, "inner", "inner done"):
+        pass
+    assert stream.getvalue() == "outer\ninner\ninner done\nouter done\n"
+
+
+def test_task_failure_is_visible_after_the_start_message(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = MockContext(config=Config(), run=True)
+    c.run = Mock(side_effect=UnexpectedExit(Result(exited=1)))
+    with pytest.raises(UnexpectedExit):
+        lint.check_python(c)
+    assert capsys.readouterr().out == (
+        "🔍 Checking code linting with ruff...\n❌ Failed: Checking code linting with ruff\n"
+    )
+
+
+################################
+#     Tests for _failure_title #
+################################
+
+
+@pytest.mark.parametrize(
+    ("start", "expected"),
+    [
+        ("🎨 Checking code format with ruff...", "Checking code format with ruff"),
+        ("🗑️  Removing build", "Removing build"),
+        ("Plain text...", "Plain text"),
+        ("🔍 Verifying é.whl...", "Verifying é.whl"),
+        ("...", ""),
+        ("", ""),
+    ],
+)
+def test_failure_title(start: str, expected: str) -> None:
+    assert _failure_title(start) == expected

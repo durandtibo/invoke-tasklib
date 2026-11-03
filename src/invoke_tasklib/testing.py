@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, python_executable, run
 
 if TYPE_CHECKING:
@@ -79,10 +79,9 @@ def doctest_src(c: Context, args: str | None = None, paths: str | None = None) -
     """
     cfg = load_config(c)
     src = cfg.paths.src
-    say(c, "📚 Running doctests on source code...")
-    cmd = f"{python_executable()} -m pytest --xdoctest"
-    run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
-    say(c, "✅ Doctest validation complete")
+    with step(c, "📚 Running doctests on source code...", "✅ Doctest validation complete"):
+        cmd = f"{python_executable()} -m pytest --xdoctest"
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
 def _find_markdown_files(root: Path) -> list[Path]:
@@ -208,21 +207,20 @@ def _run_pytest(
     if skip_missing and not paths and not _directory_exists(c, path, label):
         return
     options = cfg.test
-    say(c, f"🧪 Running {label}...")
-    cmd = [f"{python_executable()} -m pytest"]
-    if options.xdoctest:
-        cmd.append("--xdoctest")
-    cmd.append(f"--timeout {timeout}")
-    if cov:
-        cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
-        if append:
-            cmd.append("--cov-append")
-        cmd.append(f"--cov={cfg.package.import_name}")
-        if options.cov_fail_under is not None:
-            cmd.append(f"--cov-fail-under={options.cov_fail_under}")
-        say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))
-    run(c, build_command(" ".join(cmd), args=args, paths=paths, default_paths=[path]))
-    say(c, f"✅ {label.capitalize()} complete")
+    with step(c, f"🧪 Running {label}...", f"✅ {label.capitalize()} complete"):
+        cmd = [f"{python_executable()} -m pytest"]
+        if options.xdoctest:
+            cmd.append("--xdoctest")
+        cmd.append(f"--timeout {timeout}")
+        if cov:
+            cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
+            if append:
+                cmd.append("--cov-append")
+            cmd.append(f"--cov={cfg.package.import_name}")
+            if options.cov_fail_under is not None:
+                cmd.append(f"--cov-fail-under={options.cov_fail_under}")
+            say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))
+        run(c, build_command(" ".join(cmd), args=args, paths=paths, default_paths=[path]))
 
 
 @task(name="all", help=PYTEST_HELP)
@@ -365,13 +363,12 @@ def coverage_report(c: Context, open_browser: bool = False, args: str | None = N
         args: Extra arguments passed to ``coverage report``, e.g.
             ``"--fail-under=90"``.
     """
-    say(c, "📊 Generating coverage report...")
-    run(c, f"{python_executable()} -m coverage html")
-    run(c, build_command(f"{python_executable()} -m coverage report", args=args))
-    if open_browser:
-        say(c, "🌐 Opening coverage report in the browser...")
-        run(c, f"{python_executable()} -m webbrowser -t htmlcov/index.html")
-    say(c, "✅ Coverage report generated in htmlcov/")
+    with step(c, "📊 Generating coverage report...", "✅ Coverage report generated in htmlcov/"):
+        run(c, f"{python_executable()} -m coverage html")
+        run(c, build_command(f"{python_executable()} -m coverage report", args=args))
+        if open_browser:
+            say(c, "🌐 Opening coverage report in the browser...")
+            run(c, f"{python_executable()} -m webbrowser -t htmlcov/index.html")
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})

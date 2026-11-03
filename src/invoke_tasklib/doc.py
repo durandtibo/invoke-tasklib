@@ -12,7 +12,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -114,10 +114,9 @@ def build(c: Context, args: str | None = None) -> None:
         UnexpectedExit: If mkdocs reports a warning or an error.
     """
     docs_config = _docs_config(c)
-    say(c, "📚 Building the documentation...")
-    cmd = f"mkdocs build --strict --config-file {shlex.quote(docs_config)}"
-    run(c, build_command(cmd, args=args))
-    say(c, "✅ Documentation built")
+    with step(c, "📚 Building the documentation...", "✅ Documentation built"):
+        cmd = f"mkdocs build --strict --config-file {shlex.quote(docs_config)}"
+        run(c, build_command(cmd, args=args))
 
 
 @task(help={"args": ARGS_HELP})
