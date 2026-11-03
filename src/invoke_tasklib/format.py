@@ -13,6 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, get_config
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -31,7 +32,7 @@ _FIND_SH = (
 def check_python(c: Context) -> None:
     r"""Check code format with ruff without modifying files."""
     say(c, "🎨 Checking code format with ruff...")
-    c.run("ruff format --check .", pty=True)
+    run(c, "ruff format --check .")
     say(c, "✅ Code format check passed")
 
 
@@ -44,7 +45,7 @@ def check_docstrings(c: Context) -> None:
     cfg = get_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Checking docstring formatting...")
-    c.run(f"docformatter --config ./pyproject.toml --check {src}", pty=True)
+    run(c, f"docformatter --config ./pyproject.toml --check {src}")
     say(c, "✅ Docstring format check passed")
 
 
@@ -57,7 +58,7 @@ def fix_python(c: Context) -> None:
         running this task.
     """
     say(c, "🎨 Formatting code with ruff...")
-    c.run("ruff format .", pty=True)
+    run(c, "ruff format .")
     say(c, "✅ Code formatting complete")
 
 
@@ -72,7 +73,7 @@ def fix_docstrings(c: Context) -> None:
     cfg = get_config(c)
     src = cfg["paths"]["src"]
     say(c, "📖 Formatting docstrings...")
-    c.run(f"docformatter --config ./pyproject.toml --in-place {src}", pty=True)
+    run(c, f"docformatter --config ./pyproject.toml --in-place {src}")
     say(c, "✅ Docstring formatting complete")
 
 
@@ -80,7 +81,7 @@ def fix_docstrings(c: Context) -> None:
 def check_shell(c: Context) -> None:
     r"""Check shell scripts with shellcheck."""
     say(c, "🐚 Running shellcheck on shell scripts...")
-    c.run(f"{_FIND_SH} | xargs -0 -r shellcheck --", pty=True)
+    run(c, f"{_FIND_SH} | xargs -0 -r shellcheck --")
     say(c, "✅ Shellcheck passed")
 
 
@@ -93,5 +94,5 @@ def fix_shell(c: Context) -> None:
         running this task.
     """
     say(c, "🔧 Running shfmt to format shell scripts...")
-    c.run(f"{_FIND_SH} | xargs -0 -r shfmt -l -w --", pty=True)
+    run(c, f"{_FIND_SH} | xargs -0 -r shfmt -l -w --")
     say(c, "✅ Shell formatting complete")

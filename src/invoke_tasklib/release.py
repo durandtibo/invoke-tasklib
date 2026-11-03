@@ -12,6 +12,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -67,19 +68,19 @@ def build(c: Context, check: bool = False) -> None:
     cfg = get_config(c)
     name = cfg["package"]["name"]
     say(c, "📦 Building package...")
-    c.run("uv build --clear", pty=True)
+    run(c, "uv build --clear")
     say(c, "🔍 Verifying package installation...")
     for pattern in ("*.whl", "*.tar.gz"):
         artifact = _latest_artifact(Path("dist"), pattern)
         say(c, f"🔍 Verifying {artifact}...")
-        c.run(
+        run(
+            c,
             f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
             f"python -c {shlex.quote(f'import {name}')}",
-            pty=True,
         )
     if check:
         say(c, "🔍 Checking package metadata with twine...")
-        c.run("uvx twine check dist/*", pty=True)
+        run(c, "uvx twine check dist/*")
 
 
 @task
@@ -102,5 +103,5 @@ def pypi(c: Context) -> None:
         raise Exit(msg, code=1)
     build(c)
     say(c, "🚀 Publishing to PyPI...")
-    c.run("uv publish", env={"UV_PUBLISH_TOKEN": token}, pty=True)
+    run(c, "uv publish", env={"UV_PUBLISH_TOKEN": token})
     say(c, "✅ Package published successfully")

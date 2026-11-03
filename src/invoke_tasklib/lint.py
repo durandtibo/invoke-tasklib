@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -36,7 +37,7 @@ def check_python(c: Context, output_format: str | None = None) -> None:
         output_format = "github"
     say(c, "🔍 Checking code linting with ruff...")
     option = f" --output-format={shlex.quote(output_format)}" if output_format else ""
-    c.run(f"ruff check{option} .", pty=True)
+    run(c, f"ruff check{option} .")
     say(c, "✅ Linting check passed")
 
 
@@ -49,5 +50,5 @@ def fix_python(c: Context) -> None:
         running this task.
     """
     say(c, "🔧 Fixing linting issues with ruff...")
-    c.run("ruff check --fix .", pty=True)
+    run(c, "ruff check --fix .")
     say(c, "✅ Linting fix complete")

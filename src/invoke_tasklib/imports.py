@@ -9,7 +9,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import get_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import python_executable
+from invoke_tasklib.runner import python_executable, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -33,10 +33,12 @@ def check_cycles(c: Context) -> None:
     name = cfg["package"]["name"]
     python = python_executable()
     say(c, f"🔍 Discovering modules of {name}...")
-    discover = c.run(f"{python} -m invoke_tasklib._discover {shlex.quote(name)}", hide=True)
+    discover = run(
+        c, f"{python} -m invoke_tasklib._discover {shlex.quote(name)}", hide=True, echo=False
+    )
     modules = [line for line in discover.stdout.splitlines() if line]
     say(c, f"🔍 Checking {len(modules)} module(s) for cyclic imports...")
     for module in modules:
         say(c, f"🔍 Checking: {module}")
-        c.run(f"{python} -c {shlex.quote(f'import {module}')}", pty=True)
+        run(c, f"{python} -c {shlex.quote(f'import {module}')}")
     say(c, f"✅ All {len(modules)} module(s) imported without cyclic dependency errors")

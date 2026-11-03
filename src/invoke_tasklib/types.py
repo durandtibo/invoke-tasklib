@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.output import say
+from invoke_tasklib.runner import run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -26,8 +27,8 @@ def check(c: Context, complete: bool = False) -> None:
         complete: If ``True``, run ``pyright`` after ``ty``.
     """
     say(c, "🔬 Checking type hints with ty...")
-    c.run("ty check", pty=True)
+    run(c, "ty check")
     if complete:
         say(c, "🔬 Checking type hints with pyright...")
-        c.run("pyright", pty=True)
+        run(c, "pyright")
     say(c, "✅ Type check passed")
