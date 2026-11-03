@@ -55,7 +55,8 @@ works but is deprecated and warns.)
 
 ## A task fails with "command not found" (`ruff`, `ty`, `shellcheck`, ...)
 
-`invoke-tasklib` tasks are wrappers around external CLI tools — it does not vendor them. Install
+`invoke-tasklib` tasks are wrappers around external CLI tools — it does not vendor them. Run
+`invoke env.check-tools` to see, in one list, which tools are available and which are missing. Install
 the missing tool, either directly or via your project's dependency groups:
 
 ```shell

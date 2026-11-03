@@ -10,6 +10,7 @@ inspect a project's Python environment using [`uv`](https://docs.astral.sh/uv/).
 | `env.create-venv`             | Creates a virtual environment and installs invoke        |
 | `env.install`                 | Installs project dependencies and the package (editable) |
 | `env.update`                  | Updates dependencies and pre-commit hooks                |
+| `env.check-tools`             | Checks which tools of the tasks are available            |
 | `env.show-installed-packages` | Shows the installed packages                             |
 | `env.show-python-config`      | Shows the Python configuration                           |
 
@@ -85,6 +86,26 @@ invoke env.show-python-config
 `env.show-python-config` prints the installed Python versions known to `uv`, the interpreter `uv`
 would select, and the interpreter currently on `PATH`. It does not fail when no `python` is on
 the `PATH`.
+
+## Checking the Tools
+
+```shell
+invoke env.check-tools
+```
+
+`env.check-tools` gives a single view of the tools that the tasks run: the programs (`uv`, `uvx`,
+`git`, `ruff`, `ty`, `pyright`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`,
+`mkdocs`, `mike`) and the Python modules of the interpreter (`pytest`, `coverage`, `xdoctest`,
+`pytest_timeout`, `pytest_cov`). Each tool has one line, with its path when it is available:
+
+```text
+✅ ruff: /project/.venv/bin/ruff
+❌ shfmt: program not found. Install shfmt with your system package manager, ...
+```
+
+All the tools are listed, so one run shows everything that is missing. The task does not read the
+config, so it can be run before `invoke.yaml` is set up. It exits with the code 127 if a tool is
+missing, so it can also gate a CI job. It does not install anything: see `env.install`.
 
 ## See Also
 

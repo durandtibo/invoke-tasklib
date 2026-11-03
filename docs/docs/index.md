@@ -111,7 +111,7 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 ### 🐍 **Environment Management**
 
-- `env.create-venv`, `env.install`, `env.update`, `env.show-installed-packages`,
+- `env.create-venv`, `env.install`, `env.update`, `env.check-tools`, `env.show-installed-packages`,
   `env.show-python-config`
 
 [Learn more →](uguide/env.md)

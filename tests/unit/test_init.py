@@ -24,6 +24,7 @@ def test_ns_contains_the_complete_list_of_tasks() -> None:
         "doc.publish-dev",
         "doc.publish-latest",
         "doc.serve",
+        "env.check-tools",
         "env.create-venv",
         "env.install",
         "env.show-installed-packages",
@@ -253,6 +254,7 @@ _WITHOUT_ARGS = frozenset(
         # Tasks with their own, specific options.
         "doc.publish-dev",
         "doc.publish-latest",
+        "env.check-tools",
         "env.create-venv",
         "env.install",
         "env.show-installed-packages",

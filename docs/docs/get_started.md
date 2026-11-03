@@ -81,6 +81,7 @@ Available tasks:
   doc.publish-latest            Publish latest (e.g. stable) docs.
   doc.serve                     Serve the documentation locally with live
                                 reload.
+  env.check-tools               Check which tools of the tasks are available.
   env.create-venv               Create a virtual environment and install invoke
                                 in it.
   env.install                   Install the dependencies and the package

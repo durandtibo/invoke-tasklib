@@ -34,6 +34,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Test](test.md)         | `test.benchmark`              | Run performance benchmarks                          |    ❌    |
 | [Env](env.md)           | `env.create-venv`             | Create a virtual environment and install invoke     |    ✅    |
 | [Env](env.md)           | `env.install`                 | Install project dependencies and the package        |    ✅    |
+| [Env](env.md)           | `env.check-tools`             | Check which tools are available                     |    ❌    |
 | [Env](env.md)           | `env.update`                  | Update dependencies and pre-commit hooks            |    ✅    |
 | [Env](env.md)           | `env.show-installed-packages` | Show installed packages                             |    ❌    |
 | [Env](env.md)           | `env.show-python-config`      | Show the Python configuration                       |    ❌    |

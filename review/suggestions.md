@@ -147,13 +147,68 @@ Today the first missing tool stops the task, the user installs it and finds the 
 `check.all` needs `ruff`, `docformatter`, `ty`, `pytest` plugins, and `--only docs` needs
 `mkdocs`. Suggestions:
 
-- A task `env.check-tools` (read-only) that lists each tool of the project with `OK`/`MISSING` and
-  the hint, and exits 127 if one is missing. It is the first thing a contributor runs after
-  cloning. The list comes from `PROGRAM_HINTS` plus the group table of 1.2.
+- A task `env.check-tools` (read-only): one view of the tools that the tasks run. Requested
+  by the maintainer; the design is in 1.6.1.
 - A pre-flight in `check.all`: before running the selected steps, compute the programs of those
   steps (a `PROGRAMS` dict per step, next to `STEPS`) and report all the missing ones in one
   message, instead of running 20 s of formatting before failing on `ty`.
   With `--keep-going` the pre-flight should still run and list the steps that cannot run.
+
+#### 1.6.1 Design of `env.check-tools`
+
+**Goal**: answer "is `ruff`, `pyright`, ... available?" with a single command, before running
+anything. Suggested behaviour:
+
+- **Name and location**: `env.check-tools`, function `check_tools` in `env.py`. It follows the
+  rule `check_<target>` never modifies anything, and it sits next to `show-python-config`.
+- **What is checked**: two closed lists, declared once as module constants.
+  - Programs, looked up with `shutil.which`: `uv`, `uvx`, `git`, `ruff`, `ty`, `pyright`,
+    `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`, `mkdocs`, `mike`.
+  - Python modules of the running interpreter, looked up with `importlib.util.find_spec`:
+    `pytest`, `coverage` and the plugins the test tasks pass options to (`xdoctest`,
+    `pytest_timeout`, `pytest_cov`).
+- **Output**: one line per tool, the path when it is found, the install hint when it is not, all
+  tools listed (no stop at the first one):
+
+  ```text
+  ✅ ruff: /project/.venv/bin/ruff
+  ❌ shfmt: program not found. Install shfmt with your system package manager, ...
+  ```
+
+- **Exit code**: 127 (the code already used for a missing program) with the message
+  `12 of 18 tool(s) missing: uv, ruff, ...` when something is missing, 0 otherwise. A CI job can
+  use it as a gate.
+- **No config needed**: it does not call `load_config`, so it works before `invoke.yaml` exists;
+  this is when a new contributor needs it most.
+- **No side effect**: it runs no subprocess (no `--version`), so it is instant and cannot hang;
+  it installs nothing (`env.install` does that).
+- **Hints**: reuse `PROGRAM_HINTS` and `DEFAULT_HINT` of `runner.py`; the improvements of 1.2
+  (hints for `git`, `uvx`, `pre-commit`, the group table) then apply to this task for free.
+
+Possible extensions, not needed for a first version:
+
+- `--only`/`--group` to restrict the list (`dev`, `docs`, `shell`), and `--json` for scripts.
+- Derive the lists from the tasks instead of declaring them: the `PROGRAMS` per step of the
+  `check.all` pre-flight (1.6) and the test of 1.2 (every program built by a task has a hint)
+  would keep the list in sync, so a new tool cannot be added to a task and forgotten here.
+- Report the version (`ruff 0.16.1`) through `importlib.metadata` for the modules, and an opt-in
+  `--versions` for the programs.
+
+Tests to write (one behaviour each): `_find_tool` for a program and a module, found, missing and
+a module with no origin; the whole output when everything is available and when one program or one
+module is missing; the message and the exit code 127; all the missing tools are listed; the module
+is looked up as a module; no command is run; no config is needed; every program of
+`PROGRAM_HINTS` is in the list. Integration (no patching): real lookups of a program and of a
+module, and the task run in a subprocess with `PATH=/nonexistent`, checking the output, the code
+127 and that it works without an `invoke.yaml`.
+
+Docs to update (rule of `CLAUDE.md`): the README task table, `docs/docs/index.md`,
+`uguide/index.md`, a section in `uguide/env.md`, the `invoke --list` sample of `get_started.md`,
+and a sentence in `troubleshooting.md` (the "command not found" entry).
+
+**Status**: a prototype of this design was written in the working tree on the branch
+`feat/add-check-tools` before the decision to only document it. It is not committed and not in a
+PR; it can be reviewed or discarded.
 
 ### 1.7 Messages go through `Exit`, so they depend on invoke's formatting — low **[reading]**
 
