@@ -3,6 +3,7 @@ r"""Documentation build and publishing tasks (mkdocs and mike)."""
 from __future__ import annotations
 
 import re
+import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -109,7 +110,7 @@ def build(c: Context) -> None:
     """
     docs_config = _docs_config(c)
     say(c, "📚 Building the documentation...")
-    run(c, f"mkdocs build --strict --config-file {docs_config}")
+    run(c, f"mkdocs build --strict --config-file {shlex.quote(docs_config)}")
     say(c, "✅ Documentation built")
 
 
@@ -121,7 +122,7 @@ def serve(c: Context) -> None:
     """
     docs_config = _docs_config(c)
     say(c, "📚 Serving the documentation...")
-    run(c, f"mkdocs serve --config-file {docs_config}")
+    run(c, f"mkdocs serve --config-file {shlex.quote(docs_config)}")
 
 
 @task
@@ -130,9 +131,9 @@ def publish_dev(c: Context) -> None:
     docs_config = _docs_config(c)
     say(c, "📚 Publishing development documentation...")
     say(c, "🗑️  Deleting previous 'main' version if it exists...")
-    run(c, f"mike delete --config-file {docs_config} main", warn=True)
+    run(c, f"mike delete --config-file {shlex.quote(docs_config)} main", warn=True)
     say(c, "🚀 Deploying 'main' and 'dev' aliases...")
-    run(c, f"mike deploy --config-file {docs_config} --push --update-aliases main dev")
+    run(c, f"mike deploy --config-file {shlex.quote(docs_config)} --push --update-aliases main dev")
     say(c, "✅ Development documentation published")
 
 
@@ -183,7 +184,10 @@ def publish_latest(c: Context, version: str | None = None) -> None:
     say(c, "📚 Publishing latest documentation...")
     say(c, f"📌 Using version tag: {tag}")
     say(c, f"🚀 Deploying '{tag}' and 'latest' aliases...")
-    run(c, f"mike deploy --config-file {docs_config} --push --update-aliases {tag} latest")
+    run(
+        c,
+        f"mike deploy --config-file {shlex.quote(docs_config)} --push --update-aliases {tag} latest",
+    )
     say(c, "🎯 Setting 'latest' as default...")
-    run(c, f"mike set-default --config-file {docs_config} --push --allow-empty latest")
+    run(c, f"mike set-default --config-file {shlex.quote(docs_config)} --push --allow-empty latest")
     say(c, "✅ Latest documentation published")
