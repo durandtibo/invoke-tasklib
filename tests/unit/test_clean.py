@@ -64,6 +64,46 @@ def test_all_removes_egg_info(project: Path) -> None:
     assert not (project / "pkg.egg-info").exists()
 
 
+def test_all_removes_src_egg_info(project: Path) -> None:
+    _mkdir("src", "demo.egg-info")(project)
+    clean.all_(_context())
+    assert not (project / "src" / "demo.egg-info").exists()
+
+
+def test_all_keeps_the_src_directory_with_its_egg_info(project: Path) -> None:
+    _mkdir("src", "demo.egg-info")(project)
+    clean.all_(_context())
+    assert (project / "src").is_dir()
+
+
+@pytest.mark.parametrize("name", [".tox", ".nox", ".hypothesis"])
+def test_all_removes_tool_caches(project: Path, name: str) -> None:
+    _mkdir(name)(project)
+    clean.all_(_context())
+    assert not (project / name).exists()
+
+
+def test_all_removes_parallel_coverage_files(project: Path) -> None:
+    (project / ".coverage.host.123.456").write_text("")
+    clean.all_(_context())
+    assert not (project / ".coverage.host.123.456").exists()
+
+
+def test_all_keeps_site_without_mkdocs_config(project: Path) -> None:
+    site = _mkdir("site")(project)
+    clean.all_(_context())
+    assert site.exists()
+
+
+@pytest.mark.parametrize("config", ["mkdocs.yml", "docs/mkdocs.yml"])
+def test_all_removes_site_with_mkdocs_config(project: Path, config: str) -> None:
+    _mkdir("site")(project)
+    (project / config).parent.mkdir(exist_ok=True)
+    (project / config).write_text("")
+    clean.all_(_context())
+    assert not (project / "site").exists()
+
+
 def test_all_removes_nested_pycache(project: Path) -> None:
     _mkdir("src", "pkg", "__pycache__")(project)
     clean.all_(_context())
@@ -160,6 +200,32 @@ def test_find_pycache_dirs_does_not_descend_into_pycache(tmp_path: Path) -> None
     assert clean._find_pycache_dirs(tmp_path) == [tmp_path / "__pycache__"]
 
 
+########################################
+#     Tests for _has_mkdocs_config     #
+########################################
+
+
+@pytest.mark.usefixtures("project")
+def test_has_mkdocs_config_is_false_without_a_config() -> None:
+    assert not clean._has_mkdocs_config()
+
+
+def test_has_mkdocs_config_finds_the_root_config(project: Path) -> None:
+    (project / "mkdocs.yml").write_text("")
+    assert clean._has_mkdocs_config()
+
+
+def test_has_mkdocs_config_finds_the_docs_config(project: Path) -> None:
+    _mkdir("docs")(project)
+    (project / "docs" / "mkdocs.yml").write_text("")
+    assert clean._has_mkdocs_config()
+
+
+def test_has_mkdocs_config_ignores_a_directory_named_like_the_config(project: Path) -> None:
+    _mkdir("mkdocs.yml")(project)
+    assert not clean._has_mkdocs_config()
+
+
 #################################
 #     Tests for _remove_dir     #
 #################################
@@ -174,6 +240,21 @@ def test_remove_dir_removes_existing_dir(tmp_path: Path) -> None:
 def test_remove_dir_ignores_missing_dir(tmp_path: Path) -> None:
     clean._remove_dir(_context(), tmp_path / "missing")
     assert tmp_path.exists()
+
+
+def test_remove_dir_removes_a_symlink_to_a_directory(tmp_path: Path) -> None:
+    target = _mkdir("real")(tmp_path)
+    link = tmp_path / "link"
+    link.symlink_to(target, target_is_directory=True)
+    clean._remove_dir(_context(), link)
+    assert not link.is_symlink()
+
+
+def test_remove_dir_keeps_the_target_of_a_symlink(tmp_path: Path) -> None:
+    target = _mkdir("real")(tmp_path)
+    (tmp_path / "link").symlink_to(target, target_is_directory=True)
+    clean._remove_dir(_context(), tmp_path / "link")
+    assert target.is_dir()
 
 
 def test_remove_dir_reports_removal(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

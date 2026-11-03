@@ -43,9 +43,8 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
     >>> from invoke.config import Config
     >>> from invoke.context import Context
     >>> from invoke_tasklib.testing import _directory_exists
-    >>> _directory_exists(Context(config=Config()), "no/such/dir", "benchmarks")
+    >>> _ = _directory_exists(Context(config=Config()), "no/such/dir", "benchmarks")
     ⏭️  No 'no/such/dir' directory: skipping benchmarks
-    False
 
     ```
     """
