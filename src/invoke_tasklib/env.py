@@ -55,8 +55,9 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
             defined in the project extras. Default is True.
         groups: Comma-separated list of dependency groups to install,
             e.g. ``"dev,docs"``. Use an empty string to install no
-            group. Defaults to the ``tasklib.groups.install`` config
-            value (``"dev"`` unless overridden in ``invoke.yaml``).
+            group. A group listed twice is installed once. Defaults to
+            the ``tasklib.groups.install`` config value (``"dev"``
+            unless overridden in ``invoke.yaml``).
     """
     if groups is None:
         groups = ",".join(load_config(c).groups.install)
@@ -64,10 +65,8 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
     cmd = ["uv sync --locked"]
     if optional_deps:
         cmd.append("--all-extras")
-    cmd.extend(
-        f"--group {shlex.quote(group)}"
-        for group in filter(None, (g.strip() for g in groups.split(",")))
-    )
+    names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
+    cmd.extend(f"--group {shlex.quote(group)}" for group in names)
     run(c, " ".join(cmd))
     say(c, "✅ Installation complete")
 
