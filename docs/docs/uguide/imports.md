@@ -54,6 +54,6 @@ traceback of the subprocess is shown as it is).
 
 ## See Also
 
-- [Config](config.md): where `package.name` comes from.
+- [Config](config.md): where `package.name` and `package.import_name` come from.
 - [`invoke_tasklib.imports` reference](../refs/imports.md)
 - [Troubleshooting](../troubleshooting.md): fixes for "command not found" errors.
