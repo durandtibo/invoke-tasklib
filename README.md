@@ -76,6 +76,9 @@ or with `pip`:
 pip install invoke-tasklib
 ```
 
+**Platforms:** Linux and macOS. Windows is not supported: the tasks rely on
+POSIX tools (`which`, `find`, ...) and a POSIX shell.
+
 ## Quickstart
 
 **1. Add a `tasks.py`** at the root of your project:
