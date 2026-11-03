@@ -61,13 +61,16 @@ invoke test.functional
 
 Each targets its own path (`paths.unit_tests`, `paths.integration_tests`,
 `paths.functional_tests`), with a longer timeout (60s vs 10s) for integration and functional
-tests, since they typically exercise more of the system.
+tests, since they typically exercise more of the system. If the directory of `test.integration` or
+`test.functional` does not exist, the task prints a message and skips it instead of failing with a
+pytest error.
 
 ```shell
 invoke test.all
 ```
 
-Runs everything in `paths.tests` in a single `pytest` invocation, with a 10s timeout.
+Runs everything in `paths.tests` in a single `pytest` invocation, with a 60s timeout (the one of the
+integration and functional tests, which are part of that directory).
 
 ## Coverage
 
@@ -107,7 +110,8 @@ invoke test.benchmark
 ```
 
 Runs `pytest --benchmark-only` against `paths.benchmarks`. This requires
-[`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed.
+[`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task is skipped
+with a message if `paths.benchmarks` does not exist.
 
 ## See Also
 
