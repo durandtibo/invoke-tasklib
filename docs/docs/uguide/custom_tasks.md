@@ -45,7 +45,8 @@ ns.add_task(check_complexity)
   available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test` and `cfg.check`.
 - **Build the command with `build_command`**: the program is used as it is, and the user's `args`
   and `paths` (and the default paths) are split like a shell does and quoted, so a space or a `;`
-  never splits or injects a command.
+  never splits or injects a command. For the same reason a glob (`*.py`), `~` or `$HOME` reaches
+  the tool as it is: the shell does not expand it.
 - **Run it with `run`**: it echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the `PATH` (with an installation hint if it is not). Do not call `c.run`
   directly. For `python -m <module>`, the module is checked only when the command uses the running
