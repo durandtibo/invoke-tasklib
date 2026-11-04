@@ -11,7 +11,8 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say
-from invoke_tasklib.runner import find_tool, not_found_message, run
+from invoke_tasklib.runner import run
+from invoke_tasklib.tools import find_tool, not_found_message
 
 if TYPE_CHECKING:
     from invoke.context import Context

@@ -72,14 +72,19 @@ same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, excep
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
-Five small modules support the task modules:
+Six small modules support the task modules:
 
 - `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
-  the program is on the `PATH` (with a hint per program when it is not), echoes the command, and
+  the program is on the `PATH` (with `tools.check_program`), echoes the command, and
   uses a pty only on a terminal. `capture(c, command)` is `run` for a command whose output the task
   reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
   `build_command` builds a command line and quotes the arguments, and
   `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options.
+- `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
+  a module up for the running interpreter, `check_program` checks the first word of a command (and
+  the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
+  `not_found_message` say how to install a tool (`PROGRAM_HINTS`, `PROGRAM_GROUPS` and
+  `MODULE_GROUPS`).
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.
@@ -105,7 +110,7 @@ A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the progra
    import the task modules, and a test checks that the names agree with `STEPS`.
 3. Add the programs and modules to `TOOL_PROGRAMS` and `TOOL_MODULES` of `env.py` (a test checks
    that every tool of `STEPS` is listed), and their install hints to `PROGRAM_HINTS` or
-   `PROGRAM_GROUPS` of `runner.py` (a test checks that too).
+   `PROGRAM_GROUPS` (or `MODULE_GROUPS` for a module) of `tools.py` (a test checks that too).
 4. To run the step by default, add it to the default of `check.tasks` (or `fix.tasks`) in
    `config/_schema.py`; update the tables of the user guide (`uguide/check.md`, `uguide/fix.md`).
 
@@ -139,7 +144,7 @@ load_config(c) resolves package.name and paths.unit_tests
     ↓
 Task builds the pytest command line with build_command (quoted)
     ↓
-runner.run(c, cmd) checks the program, echoes the command and
+runner.run(c, cmd) checks the program (tools.check_program), echoes the command and
 executes it with c.run (pty only on a terminal)
 ```
 

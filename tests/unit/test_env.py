@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.runner import DEFAULT_HINT, PROGRAM_HINTS, hint
+from invoke_tasklib.tools import DEFAULT_HINT, PROGRAM_HINTS, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -433,9 +433,14 @@ def test_every_program_with_a_hint_is_checked() -> None:
     assert set(PROGRAM_HINTS) <= set(env.TOOL_PROGRAMS)
 
 
-@pytest.mark.parametrize("name", [*env.TOOL_PROGRAMS, *env.TOOL_MODULES])
-def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
+@pytest.mark.parametrize("name", env.TOOL_PROGRAMS)
+def test_every_checked_program_has_an_explicit_hint(name: str) -> None:
     assert hint(name) != DEFAULT_HINT
+
+
+@pytest.mark.parametrize("name", env.TOOL_MODULES)
+def test_every_checked_module_has_an_explicit_hint(name: str) -> None:
+    assert hint(name, module=True) != DEFAULT_HINT
 
 
 def test_install_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:

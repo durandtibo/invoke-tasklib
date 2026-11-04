@@ -40,8 +40,9 @@
   `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
   `imports.py`, `clean.py`, `check.py`, `fix.py`, `configuration.py`), plus `config/` (config
   resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`
-  and `__init__.py` with `get_config` and `load_config`), `runner.py` (the command runner) and
-  `output.py` (progress messages). Three private modules support the tasks: `_steps.py` (the
+  and `__init__.py` with `get_config` and `load_config`), `runner.py` (the command runner),
+  `tools.py` (tool lookup and install hints) and `output.py` (progress messages). Three private
+  modules support the tasks: `_steps.py` (the
   step runner shared by `check.py` and `fix.py`, so a change to the steps of `check.all` usually
   needs the same change in `fix.all`), `_graph.py` (the static import graph used by
   `imports.check-cycles`) and `_discover.py` (the module listing run in a subprocess by
