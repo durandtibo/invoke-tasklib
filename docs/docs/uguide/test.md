@@ -137,7 +137,9 @@ invoke test.coverage-report --open-browser
 invoke test.benchmark
 ```
 
-Runs `pytest --benchmark-only` against `paths.benchmarks`. This requires
+Runs `pytest --benchmark-only --benchmark-enable` against `paths.benchmarks` (`--benchmark-enable` measures even if
+the pytest config has `--benchmark-disable` in `addopts`, which this repository uses so that a normal test run
+executes each benchmark once). This requires
 [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task is skipped
 with a message if `paths.benchmarks` does not exist.
 

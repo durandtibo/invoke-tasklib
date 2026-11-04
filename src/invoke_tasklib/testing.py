@@ -471,6 +471,11 @@ def coverage_report(c: Context, *, open_browser: bool = False, args: str | None 
 def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run performance benchmarks.
 
+    The command is ``pytest --benchmark-only --benchmark-enable``:
+    ``--benchmark-enable`` turns the benchmarks on even if the pytest
+    config disables them (``--benchmark-disable`` in ``addopts``, to
+    run each benchmark once in the normal test runs).
+
     Args:
         c: The invoke context.
         args: Extra arguments passed to pytest.
@@ -483,6 +488,6 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
         return
     with report_failure(c, "⏱️  Running benchmarks..."):
         say(c, "⏱️  Running benchmarks...")
-        cmd = f"{python_executable()} -m pytest --benchmark-only"
+        cmd = f"{python_executable()} -m pytest --benchmark-only --benchmark-enable"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
     say(c, "✅ Benchmarks complete")

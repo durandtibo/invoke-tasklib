@@ -129,7 +129,8 @@ invoke-tasklib/
 ├── tests/
 │   ├── helpers.py            # `make_context` and `commands`, shared by the tests
 │   ├── unit/                 # Unit tests, one module per source module
-│   └── integration/          # Tests that run the real tools
+│   ├── integration/          # Tests that run the real tools
+│   └── benchmarks/           # Benchmarks (`inv test.benchmark`), run once by `pytest tests`
 ├── review/                   # Review notes of the repository
 ├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `make_ns`)
 ├── invoke.yaml                # invoke-tasklib's own tasklib config

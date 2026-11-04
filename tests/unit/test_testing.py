@@ -579,7 +579,9 @@ def test_benchmark_quotes_the_benchmarks_path(tmp_path: Path) -> None:
     (tmp_path / "my bench").mkdir()
     c = make_context({"package": {"name": "mypkg"}, "paths": {"benchmarks": "my bench"}})
     test_tasks.benchmark(c)
-    assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only 'my bench/'"]
+    assert commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-enable 'my bench/'"
+    ]
 
 
 @pytest.mark.usefixtures("_project_dirs")
@@ -587,7 +589,10 @@ def test_benchmark_with_args() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c, args="--benchmark-save=x")
     assert commands(c) == [
-        "/venv/bin/python -m pytest --benchmark-only --benchmark-save=x tests/benchmarks/"
+        (
+            "/venv/bin/python -m pytest --benchmark-only --benchmark-enable "
+            "--benchmark-save=x tests/benchmarks/"
+        )
     ]
 
 
@@ -595,14 +600,18 @@ def test_benchmark_with_args() -> None:
 def test_benchmark_with_paths_runs_without_the_default_directory() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c, paths="bench/test_a.py")
-    assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only bench/test_a.py"]
+    assert commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-enable bench/test_a.py"
+    ]
 
 
 @pytest.mark.usefixtures("_project_dirs")
 def test_benchmark() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
-    assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only tests/benchmarks/"]
+    assert commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-enable tests/benchmarks/"
+    ]
 
 
 ##############################################
