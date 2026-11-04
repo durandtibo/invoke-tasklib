@@ -22,7 +22,7 @@ invoke env.create-venv
 
 Creates (or recreates) a `.venv` with `uv venv`, using the `package.python_version` from the
 [resolved config](config.md) if it is set (`--python`), and the version that `uv` chooses otherwise
-(the `.python-version` file, then `requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync --locked`), so
+(the `.python-version` file, then `requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync`), so
 the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
 imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
 available (for example through `uv tool install invoke`) to run it. Use `env.install` to choose
@@ -41,8 +41,10 @@ the dependency groups.
 invoke env.install
 ```
 
-Runs `uv sync --locked`, which also installs the package itself in editable mode. `--locked` fails if `uv.lock`
-is out of date with `pyproject.toml` instead of silently using it (run `uv lock` to refresh it).
+Runs `uv sync`, which also installs the package itself in editable mode. If the project has a `uv.lock`,
+the task passes `--locked`, which fails if the lock file is out of date with `pyproject.toml` instead of
+silently using it (run `uv lock` to refresh it). Without a `uv.lock` (common for libraries), the task says
+so, and `uv sync` resolves the dependencies and creates the file.
 
 | Flag              | Default                          | Adds to `uv sync`                               |
 | ----------------- | -------------------------------- | ----------------------------------------------- |
