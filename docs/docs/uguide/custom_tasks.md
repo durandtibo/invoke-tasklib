@@ -70,6 +70,28 @@ importers.
 
 ```
 
+## Adding a Shortcut for an Existing Task
+
+`add_task` with a `name` registers a task of the library under one more name, at the top level of
+the collection. The task keeps its own name in its namespace:
+
+```pycon
+>>> from invoke_tasklib import make_ns
+>>> from invoke_tasklib.release import build
+>>> ns = make_ns()
+>>> ns.add_task(build, name="build-package")
+>>> "build-package" in ns.task_names
+True
+>>> "release.build" in ns.task_names
+True
+
+```
+
+The `tasks.py` of this repository does it for `release.build`: `inv build-package` is the command
+that the composite action `durandtibo/build-pypi-package-action` runs, as the release workflow
+shows. Such a shortcut shows up in `invoke --list` of the project, so add one only for a name that
+something else (a CI action, a script) depends on.
+
 ## Testing a Custom Task
 
 `invoke.context.MockContext` records the commands without running them:
