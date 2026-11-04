@@ -14,7 +14,7 @@ from invoke.tasks import task
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import build_command, capture
-from invoke_tasklib.testing import _coverage_html_dir
+from invoke_tasklib.testing import coverage_outputs
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -50,10 +50,12 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
 
     The removed paths are ``dist``, ``build``, ``__pycache__``,
     ``.pytest_cache``, ``.coverage``, etc., and the HTML coverage
-    report (``htmlcov``, or the ``directory`` of
-    ``[tool.coverage.html]`` in ``pyproject.toml``). The ``site``
-    directory is only removed if the project has a MkDocs config file,
-    because that is what produces it: the ``site_dir`` of
+    report and the coverage files, from where they are written:
+    the argument of ``tasklib.test.cov_reports`` (``html:cov_html``,
+    ``xml:cov.xml``), else the options of ``[tool.coverage.*]`` in
+    ``pyproject.toml``, else ``htmlcov`` and ``coverage.xml``. The
+    ``site`` directory is only removed if the project has a MkDocs
+    config file, because that is what produces it: the ``site_dir`` of
     ``paths.docs_config`` (relative to the config file, ``docs/site``
     by default), or ``site`` if the config is not valid. The
     ``*.egg-info`` directories are removed at the root and in ``src``.
@@ -62,7 +64,9 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     ``site_dir``, is never removed.
 
     A top-level directory (``build``, ``dist``, ``site``, ...) that
-    contains files tracked by git is kept, and the task says so.
+    contains files tracked by git is kept, and the task says so. So is
+    a coverage file (``.coverage``, ``coverage.xml``, ...) that git
+    tracks.
 
     Args:
         c: The invoke context.
@@ -72,7 +76,8 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     say(c, "🧹 Cleaning build artifacts and caches" + (" (dry run)..." if dry_run else "..."))
     dirs = [Path(d) for d in DIRS]
     dirs.extend(_site_dirs(c))
-    html_dir = Path(_coverage_html_dir())
+    outputs = coverage_outputs(_cov_reports(c))
+    html_dir = Path(outputs.html_dir)
     if html_dir not in dirs:
         dirs.append(html_dir)
     for d in dirs:
@@ -82,8 +87,8 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
             _remove_dir(c, p, dry_run=dry_run)
     for p in _find_pycache_dirs(Path()):
         _remove_dir(c, p, dry_run=dry_run)
-    for f in FILES:
-        _remove_file(c, Path(f), dry_run=dry_run)
+    for f in dict.fromkeys((*FILES, *outputs.files)):
+        _remove_file(c, Path(f), dry_run=dry_run, keep_tracked=True)
     for pattern in FILE_GLOBS:
         for p in sorted(Path().glob(pattern)):
             _remove_file(c, p, dry_run=dry_run)
@@ -162,6 +167,34 @@ def _find_pycache_dirs(root: Path) -> list[Path]:
             dirnames.remove("__pycache__")
             found.append(Path(dirpath) / "__pycache__")
     return sorted(found)
+
+
+def _cov_reports(c: Context) -> tuple[str, ...]:
+    r"""Return the coverage reports of the config.
+
+    Args:
+        c: The invoke context.
+
+    Returns:
+        The ``test.cov_reports`` value, or an empty tuple if the config
+        is not valid (for example there is no ``package.name`` yet), so
+        the default places are cleaned.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.clean import _cov_reports
+    >>> _cov_reports(Context(config=Config()))
+    ()
+
+    ```
+    """
+    try:
+        return load_config(c).test.cov_reports
+    except Exit:
+        return ()
 
 
 def _site_dirs(c: Context) -> list[Path]:
@@ -326,7 +359,9 @@ def _remove_dir(
         shutil.rmtree(path)
 
 
-def _remove_file(c: Context, path: Path, *, dry_run: bool = False) -> None:
+def _remove_file(
+    c: Context, path: Path, *, dry_run: bool = False, keep_tracked: bool = False
+) -> None:
     r"""Remove a file, if it exists.
 
     Args:
@@ -334,10 +369,14 @@ def _remove_file(c: Context, path: Path, *, dry_run: bool = False) -> None:
         path: The file to remove.
         dry_run: If True, say that the file would be removed and leave
             it.
+        keep_tracked: If True, leave a file that is tracked by git, and
+            say so.
     """
     if not path.is_file():
         return
-    if dry_run:
+    if keep_tracked and _has_tracked_files(c, path):
+        say(c, f"⏭️  Keeping {path}: it is tracked by git")
+    elif dry_run:
         say(c, f"🗑️  Would remove {path}")
     else:
         say(c, f"🗑️  Removing {path}")

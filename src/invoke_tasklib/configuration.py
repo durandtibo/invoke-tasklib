@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import PROJECT_PREFIX_ATTRIBUTE, SCHEMA, load_config
+from invoke_tasklib.config import PROJECT_PREFIX_ATTRIBUTE, SCHEMA, Unset, load_config
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
@@ -170,7 +170,7 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
     for attribute, label in reversed(LEVELS):
         level = getattr(config, attribute, None)
         given = level.get("tasklib", {}).get(section, {}).get(key) if level else None
-        if given is not None:
+        if given is not None and not isinstance(given, Unset):
             if attribute == "_env":
                 return f"{label} INVOKE_TASKLIB_{section.upper()}_{key.upper()}"
             return label

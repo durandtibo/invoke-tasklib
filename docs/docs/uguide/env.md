@@ -22,7 +22,7 @@ invoke env.create-venv
 
 Creates (or recreates) a `.venv` with `uv venv`, using the `package.python_version` from the
 [resolved config](config.md) if it is set (`--python`), and the version that `uv` chooses otherwise
-(the `.python-version` file, then `requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync --locked`), so
+(the `.python-version` file, then `requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync`), so
 the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
 imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
 available (for example through `uv tool install invoke`) to run it. Use `env.install` to choose
@@ -41,8 +41,10 @@ the dependency groups.
 invoke env.install
 ```
 
-Runs `uv sync --locked`, which also installs the package itself in editable mode. `--locked` fails if `uv.lock`
-is out of date with `pyproject.toml` instead of silently using it (run `uv lock` to refresh it).
+Runs `uv sync`, which also installs the package itself in editable mode. If the project has a `uv.lock`,
+the task passes `--locked`, which fails if the lock file is out of date with `pyproject.toml` instead of
+silently using it (run `uv lock` to refresh it). Without a `uv.lock` (common for libraries), the task says
+so, and `uv sync` resolves the dependencies and creates the file.
 
 | Flag              | Default                          | Adds to `uv sync`                               |
 | ----------------- | -------------------------------- | ----------------------------------------------- |
@@ -103,11 +105,11 @@ invoke env.check-tools
 `env.check-tools` gives a single view of the tools that the tasks run: the programs (`uv`, `uvx`,
 `git`, `ruff`, `ty`, `pyright`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`,
 `mkdocs`, `mike`) and the Python modules of the interpreter (`pytest`, `coverage`, `xdoctest`,
-`pytest_timeout`, `pytest_cov`). Each tool has one line, with its path when it is available:
+`pytest_timeout`, `pytest_cov`, `pytest_benchmark`). Each tool has one line, with its path when it is available:
 
 ```text
 ✅ ruff: /project/.venv/bin/ruff
-❌ 'shfmt' was not found on the PATH. Install shfmt with your system package manager, ...
+❌ 'shfmt' was not found on the PATH or next to the Python interpreter. Install shfmt with your system package manager, ...
 ```
 
 All the tools are listed, so one run shows everything that is missing. The task does not read the

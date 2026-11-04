@@ -8,7 +8,7 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib import configuration
-from invoke_tasklib.config import default_config, get_config
+from invoke_tasklib.config import Unset, default_config, get_config
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -126,6 +126,11 @@ def test_origin_of_a_derived_value() -> None:
 def test_origin_of_an_unset_value_is_default() -> None:
     config = Config(defaults=_BASE_DEFAULTS)
     assert configuration._origin(config, "test", "cov_fail_under", None) == "default"
+
+
+def test_origin_of_a_placeholder_is_default() -> None:
+    config = Config(defaults={"tasklib": {"test": {"xdoctest": Unset()}}})
+    assert configuration._origin(config, "test", "xdoctest", True) == "default"
 
 
 def test_origin_of_an_override() -> None:
