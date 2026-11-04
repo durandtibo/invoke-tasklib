@@ -614,7 +614,7 @@ def test_load_config_exit_code_is_2_from_a_subdirectory(
 ) -> None:
     (tmp_path / "sub").mkdir()
     monkeypatch.chdir(tmp_path / "sub")
-    with pytest.raises(Exit) as info:
+    with pytest.raises(Exit, match=r"inv must run from the project root") as info:
         load_config(_located_context(tmp_path))
     assert info.value.code == 2
 
