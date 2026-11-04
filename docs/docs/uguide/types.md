@@ -23,8 +23,17 @@ more thorough):
 invoke types.check --complete
 ```
 
-`--args` is passed to `ty` only; `--paths` is passed to both tools (see
-[Passing Arguments to the Tools](index.md#passing-arguments-to-the-tools)).
+`--args` is passed to `ty` only, and `--pyright-args` to `pyright` only (it is used with
+`--complete`); `--paths` is passed to both tools (see
+[Passing Arguments to the Tools](index.md#passing-arguments-to-the-tools)):
+
+```shell
+invoke types.check --complete --args "--python-version 3.12" --pyright-args "--pythonversion 3.12"
+```
+
+Without `--paths`, `ty` checks the project and `pyright` the files of its own `include` setting (in
+`pyproject.toml` or `pyrightconfig.json`), so the two tools can look at different files. Set the
+same files in both, or pass `--paths`, to keep them aligned.
 
 ## See Also
 

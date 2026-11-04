@@ -125,6 +125,7 @@ def build_command(
     args: str | None = None,
     paths: str | None = None,
     default_paths: Sequence[str] = (),
+    args_option: str = "--args",
 ) -> str:
     r"""Build a command line from a program and the options of a task.
 
@@ -137,6 +138,9 @@ def build_command(
         paths: Paths of the user, as one string that is split like a
             shell does. They replace ``default_paths``.
         default_paths: The paths used when ``paths`` is not set.
+        args_option: The name of the option that ``args`` comes from,
+            used in the error message (for a task that has more than
+            one set of arguments, e.g. ``"--pyright-args"``).
 
     Returns:
         The command line. The arguments and the paths are quoted when
@@ -157,7 +161,7 @@ def build_command(
 
     ```
     """
-    words = [program, *_split(args, "--args"), *(_split(paths, "--paths") or default_paths)]
+    words = [program, *_split(args, args_option), *(_split(paths, "--paths") or default_paths)]
     return " ".join(words[:1] + [shlex.quote(w) for w in words[1:]])
 
 
