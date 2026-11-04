@@ -51,6 +51,8 @@ date. `NORMALIZE_WHITESPACE` and `ELLIPSIS` make output comparisons more forgivi
 differences are ignored, and `...` in expected output matches any text), and `REPORT_NDIFF` gives
 a readable diff when an example's output doesn't match. A markdown file with no `>>>` doctest
 blocks is still visited but simply reports zero tests, so it always "passes".
+The task reports the number of files it checks: the files of `--paths` when it is set, otherwise
+every markdown file of the project.
 
 ## Running Tests by Scope
 

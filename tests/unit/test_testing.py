@@ -131,6 +131,28 @@ def test_doctest_markdown_with_paths(tmp_path: Path, monkeypatch: MonkeyPatch) -
     ]
 
 
+def test_doctest_markdown_with_paths_counts_the_given_files(
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _touch(tmp_path, "README.md", "docs/index.md", "docs/a.md")
+    monkeypatch.chdir(tmp_path)
+    test_tasks.doctest_markdown(make_context(), paths="README.md")
+    assert capsys.readouterr().out == (
+        "📚 Found 1 markdown files\n✅ All 1 markdown files have been checked\n"
+    )
+
+
+def test_doctest_markdown_counts_the_found_files(
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _touch(tmp_path, "README.md", "docs/index.md")
+    monkeypatch.chdir(tmp_path)
+    test_tasks.doctest_markdown(make_context())
+    assert capsys.readouterr().out == (
+        "📚 Found 2 markdown files\n✅ All 2 markdown files have been checked\n"
+    )
+
+
 def test_doctest_markdown_with_args(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     _touch(tmp_path, "README.md")
     monkeypatch.chdir(tmp_path)
