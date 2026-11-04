@@ -61,6 +61,14 @@ def test_environment_variable_overrides_a_boolean(tmp_path: Path) -> None:
     assert _show(tmp_path, INVOKE_TASKLIB_TEST_XDOCTEST="0") == "src/demo 10 False None"
 
 
+def test_environment_variable_false_turns_a_boolean_off(tmp_path: Path) -> None:
+    assert _show(tmp_path, INVOKE_TASKLIB_TEST_XDOCTEST="false") == "src/demo 10 False None"
+
+
+def test_environment_variable_yes_turns_a_boolean_on(tmp_path: Path) -> None:
+    assert _show(tmp_path, INVOKE_TASKLIB_TEST_XDOCTEST="Yes") == "src/demo 10 True None"
+
+
 def test_environment_variable_sets_the_coverage_threshold(tmp_path: Path) -> None:
     assert _show(tmp_path, INVOKE_TASKLIB_TEST_COV_FAIL_UNDER="90") == "src/demo 10 True 90"
 
@@ -107,3 +115,26 @@ def test_config_show_reports_a_derived_value(tmp_path: Path) -> None:
 def test_config_show_reports_an_environment_variable(tmp_path: Path) -> None:
     lines = _config_show(tmp_path, INVOKE_TASKLIB_TEST_UNIT_TIMEOUT="30")
     assert "    unit_timeout: 30  # environment variable INVOKE_TASKLIB_TEST_UNIT_TIMEOUT" in lines
+
+
+def test_config_show_reports_a_default_boolean(tmp_path: Path) -> None:
+    assert "    xdoctest: true  # default" in _config_show(tmp_path)
+
+
+def test_config_show_reports_a_boolean_from_the_environment(tmp_path: Path) -> None:
+    lines = _config_show(tmp_path, INVOKE_TASKLIB_TEST_XDOCTEST="false")
+    assert "    xdoctest: false  # environment variable INVOKE_TASKLIB_TEST_XDOCTEST" in lines
+
+
+def test_invalid_integer_variable_exits_with_a_message(tmp_path: Path) -> None:
+    (tmp_path / "tasks.py").write_text("from invoke_tasklib import make_ns\n\nns = make_ns()\n")
+    (tmp_path / "invoke.yaml").write_text("tasklib:\n  package:\n    name: demo\n")
+    proc = subprocess.run(
+        [sys.executable, "-m", "invoke", "config.show"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "INVOKE_TASKLIB_TEST_UNIT_TIMEOUT": "abc"},
+    )
+    assert (proc.returncode, "must be an integer >= 1, got 'abc'" in proc.stderr) == (2, True)
