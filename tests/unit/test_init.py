@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import inspect
+import warnings
 
 import pytest
 from invoke.collection import Collection
 from invoke.tasks import Task
 
 import invoke_tasklib
-from invoke_tasklib import _installed_version, _matches, make_ns
+from invoke_tasklib import (
+    _installed_version,
+    _matches,
+    _warn_if_unsupported_platform,
+    make_ns,
+)
 from invoke_tasklib.config import default_config
 
 ns = make_ns()
@@ -324,3 +330,39 @@ def test_installed_version_of_a_distribution() -> None:
 
 def test_installed_version_of_a_missing_distribution() -> None:
     assert _installed_version("no-such-distribution-xyz") == "0+unknown"
+
+
+#########################################
+#     Tests for the Windows warning     #
+#########################################
+
+
+def test_warn_if_unsupported_platform_warns_on_windows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.platform", "win32")
+    with pytest.warns(RuntimeWarning, match=r"does not support Windows"):
+        _warn_if_unsupported_platform()
+
+
+@pytest.mark.parametrize("platform", ["linux", "darwin"])
+def test_warn_if_unsupported_platform_is_silent_on_posix(
+    monkeypatch: pytest.MonkeyPatch, platform: str
+) -> None:
+    monkeypatch.setattr("sys.platform", platform)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _warn_if_unsupported_platform()
+
+
+def test_make_ns_warns_on_windows(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.platform", "win32")
+    with pytest.warns(RuntimeWarning, match=r"does not support Windows"):
+        make_ns()
+
+
+def test_make_ns_blames_the_caller_on_windows(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.platform", "win32")
+    with pytest.warns(RuntimeWarning) as record:
+        make_ns()
+    assert record[0].filename == __file__

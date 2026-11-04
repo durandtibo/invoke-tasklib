@@ -33,6 +33,8 @@ needs the name ``test`` to keep the task names):
 from __future__ import annotations
 
 import importlib.metadata
+import sys
+import warnings
 from typing import TYPE_CHECKING
 
 from invoke.collection import Collection
@@ -148,6 +150,26 @@ def _matches(name: str, patterns: Iterable[str]) -> bool:
     return any(name == p or name.startswith(f"{p}.") for p in patterns)
 
 
+def _warn_if_unsupported_platform() -> None:
+    r"""Warn that Windows is not supported.
+
+    The tasks rely on a POSIX shell for the quoting of the commands,
+    so on Windows they fail with an error that does not name the
+    cause.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib import _warn_if_unsupported_platform
+    >>> _warn_if_unsupported_platform()
+
+    ```
+    """
+    if sys.platform == "win32":
+        msg = "invoke-tasklib does not support Windows: the tasks need a POSIX shell"
+        warnings.warn(msg, RuntimeWarning, stacklevel=3)
+
+
 def make_ns(
     *,
     exclude: str | Iterable[str] = (),
@@ -177,6 +199,10 @@ def make_ns(
         ValueError: If a name of ``exclude`` or ``include`` is not a
             namespace or a task, which is usually a typo.
 
+    Warns:
+        RuntimeWarning: On Windows, which is not supported (the tasks
+            need a POSIX shell).
+
     Example usage:
 
     ```pycon
@@ -187,6 +213,7 @@ def make_ns(
 
     ```
     """
+    _warn_if_unsupported_platform()
     exclude = (exclude,) if isinstance(exclude, str) else tuple(exclude)
     if isinstance(include, str):
         include = (include,)
