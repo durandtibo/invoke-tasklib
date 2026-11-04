@@ -35,8 +35,14 @@ jobs:
         uses: ./.github/actions/setup-uv-env
         with:
           python-version: ${{ matrix.python-version }}
+          # The integration tests of doc.publish-* need mike, which is in the
+          # docs group. One cell installs it, and fails (instead of skipping)
+          # if it is missing.
+          docs-deps: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14' && 'true' || 'false' }}
 
       - name: Run all tests with coverage
+        env:
+          REQUIRE_MIKE: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14' && 'true' || 'false' }}
         run: |
           uv run inv test.all --cov
 
