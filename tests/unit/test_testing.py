@@ -654,10 +654,24 @@ def test_scope_without_directory_runs_nothing(task: Callable[..., None]) -> None
 
 
 @pytest.mark.usefixtures("empty_project")
-def test_benchmark_without_directory_runs_nothing() -> None:
+def test_benchmark_without_directory_fails() -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks.benchmark(c)
-    assert commands(c) == []
+    with pytest.raises(Exit, match=r"No 'tests/benchmarks' directory"):
+        test_tasks.benchmark(c)
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_without_directory_fails_with_the_code_1() -> None:
+    with pytest.raises(Exit, match=r"there is no benchmark to run") as info:
+        test_tasks.benchmark(make_context({"package": {"name": "mypkg"}}))
+    assert info.value.code == 1
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_without_the_configured_directory_names_it() -> None:
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"benchmarks": "bench"}})
+    with pytest.raises(Exit, match=r"No 'bench' directory"):
+        test_tasks.benchmark(c)
 
 
 @pytest.mark.usefixtures("empty_project")
