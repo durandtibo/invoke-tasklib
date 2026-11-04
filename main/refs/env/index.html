@@ -1733,9 +1733,10 @@
 
 <details class="note" open>
   <summary>Note</summary>
-  <p>The virtual environment will be created in the .venv directory and any
-existing environment will be cleared. The task itself runs with
-<code>invoke</code>, so <code>invoke</code> must already be available to run it.</p>
+  <p>The virtual environment will be created in the .venv directory
+and any existing environment will be cleared. The task itself
+runs with <code>invoke</code>, so <code>invoke</code> must already be available to
+run it.</p>
 </details>
 
     </div>
@@ -1800,8 +1801,8 @@ other command is needed.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True, install all optional dependencies defined in
-the project extras. Default is True.</p>
+                <p>If True, install all optional dependencies
+defined in the project extras. Default is True.</p>
               </div>
             </td>
             <td>
@@ -1817,10 +1818,10 @@ the project extras. Default is True.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Comma-separated list of dependency groups to install, e.g.
-<code>"dev,docs"</code>. Use an empty string to install no group. Defaults
-to the <code>tasklib.groups.install</code> config value (<code>"dev"</code> unless
-overridden in <code>invoke.yaml</code>).</p>
+                <p>Comma-separated list of dependency groups to install,
+e.g. <code>"dev,docs"</code>. Use an empty string to install no
+group. Defaults to the <code>tasklib.groups.install</code> config
+value (<code>"dev"</code> unless overridden in <code>invoke.yaml</code>).</p>
               </div>
             </td>
             <td>
@@ -1933,10 +1934,10 @@ machine are not touched: they are not part of the project.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Comma-separated list of dependency groups to reinstall after
-updating, e.g. <code>"dev,docs"</code>. Defaults to the
-<code>tasklib.groups.update</code> config value (<code>"dev,docs"</code> unless
-overridden in <code>invoke.yaml</code>).</p>
+                <p>Comma-separated list of dependency groups to reinstall
+after updating, e.g. <code>"dev,docs"</code>. Defaults to the
+<code>tasklib.groups.update</code> config value (<code>"dev,docs"</code>
+unless overridden in <code>invoke.yaml</code>).</p>
               </div>
             </td>
             <td>
@@ -1949,14 +1950,14 @@ overridden in <code>invoke.yaml</code>).</p>
 
 <details class="note" open>
   <summary>Note</summary>
-  <p>The lock file is upgraded first, then the environment is synced once
-with the dependency groups.</p>
+  <p>The lock file is upgraded first, then the environment is synced
+once with the dependency groups.</p>
 </details>
 
 <details class="warning" open>
   <summary>Warning</summary>
-  <p>This may introduce breaking changes. Review the changes and run tests
-after updating.</p>
+  <p>This may introduce breaking changes. Review the changes and run
+tests after updating.</p>
 </details>
 
     </div>
