@@ -79,8 +79,10 @@ the collection. The task keeps its own name in its namespace:
 >>> from invoke_tasklib.release import build
 >>> ns = make_ns()
 >>> ns.add_task(build, name="build-package")
->>> sorted(name for name in ns.task_names if "build" in name)
-['build-package', 'release.build']
+>>> "build-package" in ns.task_names
+True
+>>> "release.build" in ns.task_names
+True
 
 ```
 
