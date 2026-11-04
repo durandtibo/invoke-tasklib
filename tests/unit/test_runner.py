@@ -18,6 +18,7 @@ from invoke_tasklib.runner import (
     _program_of,
     _split,
     _stages,
+    _strip_assignments,
     build_command,
     check_program,
     hint,
@@ -177,6 +178,63 @@ def test_run_missing_program_does_not_run_the_command(monkeypatch: pytest.Monkey
     with pytest.raises(Exit, match=r"'ruff' was not found"):
         run(c, "ruff check .")
     assert not _run_mock(c).called
+
+
+def test_run_without_check_runs_a_missing_program(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
+    c = _context()
+    run(c, "my-alias --flag", check=False)
+    assert _run_mock(c).call_args.args[0] == "my-alias --flag"
+
+
+def test_run_without_check_does_not_pass_check_to_the_context() -> None:
+    c = _context()
+    run(c, "ls", check=False)
+    assert "check" not in _run_mock(c).call_args.kwargs
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "FOO=1 ruff check",
+        "FOO=1 BAR=2 ruff check",
+        "FOO= ruff check",
+        "VAR=$(date) ruff check",
+        "(ruff check)",
+        "{ ruff check; }",
+        "$(echo ruff) check",
+        "cd docs && ruff check",
+        "export FOO=1 && ruff check",
+        "test -d docs && ruff check",
+        "[ -d docs ] && ruff check",
+        "exec ruff check",
+        "source env.sh && ruff check",
+        ". env.sh && ruff check",
+        ": && ruff check",
+        "FOO=1",
+    ],
+)
+def test_check_program_accepts_valid_shell_forms(
+    monkeypatch: pytest.MonkeyPatch, command: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ruff"))
+    assert check_program(command) is None
+
+
+def test_check_program_still_checks_the_program_after_an_assignment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=r"^'ruff' was not found on the PATH"):
+        check_program("FOO=1 ruff check")
+
+
+def test_check_program_still_checks_the_program_after_a_builtin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=r"^'ruff' was not found on the PATH"):
+        check_program("cd docs && ruff check")
 
 
 ###################################
@@ -462,3 +520,44 @@ def test_program_of_xargs_is_the_command_it_runs() -> None:
 
 def test_program_of_xargs_without_command_is_none() -> None:
     assert _program_of(["xargs", "-0"]) is None
+
+
+@pytest.mark.parametrize("words", [["(", "ls", ")"], ["{", "ls"], ["}"], ["$", "(", "ls", ")"]])
+def test_program_of_a_subshell_group_or_substitution_is_none(words: list[str]) -> None:
+    assert _program_of(words) is None
+
+
+########################################
+#     Tests for _strip_assignments     #
+########################################
+
+
+def test_strip_assignments_removes_the_leading_assignments() -> None:
+    assert _strip_assignments(["FOO=1", "BAR=", "ruff", "check"]) == ["ruff", "check"]
+
+
+def test_strip_assignments_keeps_a_command_without_assignment() -> None:
+    assert _strip_assignments(["ruff", "check"]) == ["ruff", "check"]
+
+
+def test_strip_assignments_keeps_an_assignment_after_the_program() -> None:
+    assert _strip_assignments(["env", "FOO=1", "ruff"]) == ["env", "FOO=1", "ruff"]
+
+
+def test_strip_assignments_only_assignments_is_empty() -> None:
+    assert _strip_assignments(["FOO=1"]) == []
+
+
+def test_strip_assignments_empty_is_empty() -> None:
+    assert _strip_assignments([]) == []
+
+
+@pytest.mark.parametrize("word", ["--flag=1", "1A=2", "=1", "a-b=1"])
+def test_strip_assignments_keeps_a_word_that_is_not_a_variable_name(word: str) -> None:
+    assert _strip_assignments([word, "x"]) == [word, "x"]
+
+
+def test_strip_assignments_does_not_mutate_its_input() -> None:
+    words = ["FOO=1", "ruff"]
+    _strip_assignments(words)
+    assert words == ["FOO=1", "ruff"]

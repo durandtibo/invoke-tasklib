@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shlex
+import subprocess
 import sys
 
 import pytest
@@ -20,3 +21,30 @@ def test_check_program_missing_program_of_a_pipeline_exits_with_its_hint(
 def test_check_program_missing_module_of_the_running_interpreter_exits() -> None:
     with pytest.raises(Exit, match=r"The Python module 'no_such_module_xyz' is not installed"):
         check_program(f"{shlex.quote(sys.executable)} -m no_such_module_xyz")
+
+
+def test_check_program_accepts_an_assignment_before_a_real_program(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    assert check_program("FOO=1 ls") is None
+
+
+def test_check_program_accepts_a_builtin_without_an_executable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PATH", "/nonexistent")
+    assert check_program("cd . && export FOO=1") is None
+
+
+def test_run_executes_a_command_with_an_assignment_and_a_builtin() -> None:
+    code = (
+        "from invoke.config import Config\n"
+        "from invoke.context import Context\n"
+        "from invoke_tasklib.runner import run\n"
+        "run(Context(config=Config()), 'FOO=hello; cd . && echo $FOO', echo=False, pty=False)\n"
+    )
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stdout == "hello\n"

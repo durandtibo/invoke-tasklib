@@ -26,8 +26,12 @@ The hint depends on the program: `uv` and `uvx` point to the installation page o
 (`env.install` itself needs it), `git`, `shellcheck` and `shfmt` to the system package manager, and
 `codespell` to the project dependencies. The tools of the `dev` group (`ruff`, `ty`, `pyright`,
 `docformatter`, `pre-commit`, `pytest` and its plugins) and of the `docs` group (`mkdocs`, `mike`)
-name their group, for example `uv sync --group docs`. Every command of a pipeline is checked, and so is the module of
-`python -m <module>` (for example `pytest`), which is reported as
+name their group, for example `uv sync --group docs`.
+
+Every command of a pipeline is checked. The `NAME=value` words before a program, the shell builtins
+(`cd`, `export`, `test`, `[`, `exec`, `source`, `.`, `:`) and the subshells and groups (`(...)`,
+`{ ...; }`, `$(...)`) are not looked up. Pass `check=False` to `run` to skip the check of a command.
+The module of `python -m <module>` is checked too (for example `pytest`), and is reported as
 `The Python module 'pytest' is not installed for ...` instead of Python's own `No module named`.
 
 ## `invoke: command not found` after installing
