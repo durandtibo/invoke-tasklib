@@ -102,6 +102,12 @@ def check_isolated(c: Context) -> None:
     per module, so it is slow for a package with heavy imports; see
     ``check_cycles`` for the static check.
 
+    The package that is checked is the one that the running
+    interpreter finds: the installed (editable) package, or the one in
+    the current directory for a flat layout. It is the source tree,
+    not a built artifact, which ``release.build`` checks in isolated
+    mode.
+
     The output is one line per step and one line per module that
     fails, with the last line of its traceback, then the summary. The
     commands are not echoed, so a package of 300 modules does not

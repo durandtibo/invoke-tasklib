@@ -138,3 +138,29 @@ def test_invalid_integer_variable_exits_with_a_message(tmp_path: Path) -> None:
         env={**os.environ, "INVOKE_TASKLIB_TEST_UNIT_TIMEOUT": "abc"},
     )
     assert (proc.returncode, "must be an integer >= 1, got 'abc'" in proc.stderr) == (2, True)
+
+
+def _show_failure(project: Path, invoke_yaml: str) -> subprocess.CompletedProcess[str]:
+    (project / "tasks.py").write_text(TASKS)
+    (project / "invoke.yaml").write_text(invoke_yaml)
+    return subprocess.run(
+        [sys.executable, "-m", "invoke", "show"],
+        cwd=project,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_a_null_integer_in_invoke_yaml_is_an_error(tmp_path: Path) -> None:
+    proc = _show_failure(
+        tmp_path, "tasklib:\n  package:\n    name: demo\n  test:\n    unit_timeout: ~\n"
+    )
+    assert "'tasklib.test.unit_timeout' must be an integer" in proc.stderr
+
+
+def test_a_null_boolean_in_invoke_yaml_is_an_error(tmp_path: Path) -> None:
+    proc = _show_failure(
+        tmp_path, "tasklib:\n  package:\n    name: demo\n  test:\n    xdoctest: null\n"
+    )
+    assert "'tasklib.test.xdoctest' must be a boolean" in proc.stderr

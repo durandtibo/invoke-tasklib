@@ -12,6 +12,7 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import release
+from invoke_tasklib.tools import tool_path
 from tests.helpers import commands, make_context, run_kwargs
 
 
@@ -25,12 +26,19 @@ def dist(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return dist_dir
 
 
+def _env(c: MockContext) -> dict[str, str]:
+    r"""Return the credential variables of the ``env`` of the last
+    command."""
+    env = run_kwargs(c)[-1]["env"]
+    return {k: v for k, v in env.items() if k.startswith("UV_PUBLISH_")}
+
+
 _WHEEL_CHECK_CMD = (
     "uv run --isolated --no-project --with dist/mypkg-0.0.8-py3-none-any.whl -- "
-    "python -c 'import mypkg'"
+    "python -I -c 'import mypkg'"
 )
 _SDIST_CHECK_CMD = (
-    "uv run --isolated --no-project --with dist/mypkg-0.0.8.tar.gz -- python -c 'import mypkg'"
+    "uv run --isolated --no-project --with dist/mypkg-0.0.8.tar.gz -- python -I -c 'import mypkg'"
 )
 
 ###########################
@@ -56,14 +64,14 @@ def test_build_with_args() -> None:
 def test_build_imports_the_import_name() -> None:
     c = make_context({"package": {"name": "my-pkg"}})
     release.build(c)
-    assert commands(c)[1].endswith("-- python -c 'import my_pkg'")
+    assert commands(c)[1].endswith("-- python -I -c 'import my_pkg'")
 
 
 @pytest.mark.usefixtures("dist")
 def test_build_imports_the_configured_import_name() -> None:
     c = make_context({"package": {"name": "my-pkg", "import_name": "other"}})
     release.build(c)
-    assert commands(c)[2].endswith("-- python -c 'import other'")
+    assert commands(c)[2].endswith("-- python -I -c 'import other'")
 
 
 @pytest.mark.usefixtures("dist")
@@ -204,7 +212,7 @@ def test_publish_dry_run_needs_no_credentials() -> None:
 def test_publish_passes_token_through_environment() -> None:
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "pypi-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "pypi-secret"}
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -219,7 +227,7 @@ def test_publish_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "uv-secret"}
 
 
 @pytest.mark.usefixtures("dist", "oidc")
@@ -233,7 +241,7 @@ def test_publish_uses_trusted_publishing_without_token() -> None:
 def test_publish_sends_no_token_with_trusted_publishing() -> None:
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {}
+    assert _env(c) == {}
 
 
 @pytest.mark.usefixtures("dist", "oidc", "token")
@@ -337,6 +345,15 @@ def test_check_release_state_accepts_a_clean_tagged_matching_state() -> None:
     assert release._check_release_state(_git_context()) is None
 
 
+def test_check_release_state_rejects_an_invalid_pyproject(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project\n")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(Exit, match=r"pyproject\.toml is not valid TOML"):
+        release._check_release_state(_git_context())
+
+
 @pytest.mark.usefixtures("project_version")
 def test_check_release_state_rejects_a_dirty_tree() -> None:
     with pytest.raises(Exit, match=r"working tree is not clean"):
@@ -388,6 +405,14 @@ def test_project_version_is_none_without_project_table(tmp_path: Path) -> None:
     path = tmp_path / "pyproject.toml"
     path.write_text("[tool.x]\na = 1\n")
     assert release._project_version(path) is None
+
+
+def test_project_version_rejects_an_invalid_file(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text("[project\n")
+    with pytest.raises(Exit, match=r"pyproject\.toml is not valid TOML") as info:
+        release._project_version(path)
+    assert info.value.code == 1
 
 
 def test_project_version_is_none_for_a_missing_file(tmp_path: Path) -> None:
@@ -487,7 +512,7 @@ def test_latest_artifact_raises_when_missing(tmp_path: Path) -> None:
 def test_publish_to_test_pypi_reads_test_pypi_token() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -516,14 +541,14 @@ def test_publish_to_test_pypi_prefers_test_pypi_token_over_uv_publish_token(
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
 
 
 @pytest.mark.usefixtures("dist")
 def test_publish_to_test_pypi_dry_run_needs_no_token() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {}
+    assert _env(c) == {}
 
 
 def test_build_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
@@ -611,3 +636,93 @@ def test_check_release_state_reads_the_status_without_a_pty_nor_an_echo() -> Non
         release._check_release_state(c)
     kwargs = run_kwargs(c)[0]
     assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)
+
+
+##########################################
+#     Tests for _publish_environment     #
+##########################################
+
+
+@pytest.fixture
+def _clean_environ(monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Run with a small, known process environment."""
+    monkeypatch.setattr(os, "environ", {"HOME": "/home/u", "PATH": "/usr/bin"})
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_is_the_complete_environment() -> None:
+    env = release._publish_environment("secret")
+    env.pop("PYTEST_CURRENT_TEST", None)
+    assert env == {
+        "HOME": "/home/u",
+        "PATH": tool_path(),
+        "UV_PUBLISH_TOKEN": "secret",
+    }
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_without_token_has_no_token() -> None:
+    assert "UV_PUBLISH_TOKEN" not in release._publish_environment(None)
+
+
+@pytest.mark.parametrize("name", ["UV_PUBLISH_TOKEN", "UV_PUBLISH_USERNAME", "UV_PUBLISH_PASSWORD"])
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_removes_an_inherited_credential(
+    monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    monkeypatch.setitem(os.environ, name, "inherited")
+    assert name not in release._publish_environment(None)
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_token_replaces_an_inherited_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "inherited")
+    env = release._publish_environment("chosen")
+    assert ("UV_PUBLISH_TOKEN", "chosen") in env.items()
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_does_not_modify_the_process_environment() -> None:
+    before = dict(os.environ)
+    release._publish_environment("secret")
+    assert dict(os.environ) == before
+
+
+def test_publish_environment_keeps_the_other_variables(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SOME_OTHER_VARIABLE", "kept")
+    assert release._publish_environment(None)["SOME_OTHER_VARIABLE"] == "kept"
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_publish_replaces_the_environment() -> None:
+    c = make_context(_CFG)
+    release.publish(c, yes=True, skip_checks=True)
+    assert run_kwargs(c)[-1]["replace_env"] is True
+
+
+@pytest.mark.usefixtures("dist")
+def test_publish_to_test_pypi_does_not_send_an_inherited_token_with_trusted_publishing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("TEST_PYPI_TOKEN", raising=False)
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "pypi-secret")
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("ACTIONS_ID_TOKEN_REQUEST_URL", "https://example.com")
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, yes=True, skip_checks=True)
+    assert _env(c) == {}
+
+
+@pytest.mark.usefixtures("dist")
+def test_publish_to_test_pypi_dry_run_does_not_send_an_inherited_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("TEST_PYPI_TOKEN", raising=False)
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "pypi-secret")
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
+    assert _env(c) == {}

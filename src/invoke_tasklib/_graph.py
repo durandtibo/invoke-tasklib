@@ -7,11 +7,10 @@ imported and the result does not depend on the order of the imports.
 from __future__ import annotations
 
 import ast
-import importlib.util
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from invoke_tasklib._discover import discover_modules
+from invoke_tasklib._discover import discover_modules, find_spec
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Iterator, Mapping
@@ -429,7 +428,7 @@ def read_sources(name: str) -> tuple[dict[str, str], set[str]]:
 
     ```
     """
-    spec = importlib.util.find_spec(name)
+    spec = find_spec(name)
     if spec is None:
         msg = f"No module named '{name}'"
         raise ModuleNotFoundError(msg, name=name)
@@ -450,8 +449,9 @@ def _source_path(module: str, top: str, roots: list[Path], origin: str | None) -
 
     Args:
         module: The dotted name of the module.
-        top: The name of the top-level package.
-        roots: The directories of the top-level package.
+        top: The name of the checked package, dotted if it is in a
+            namespace package (``"company.package"``).
+        roots: The directories of that package.
         origin: The file of the top-level module, if it is not a
             package.
 
@@ -470,7 +470,7 @@ def _source_path(module: str, top: str, roots: list[Path], origin: str | None) -
 
     ```
     """
-    relative = Path(*module.split(".")[1:])
+    relative = Path(*module.removeprefix(top).lstrip(".").split("."))
     if module == top and not roots:
         return Path(origin) if origin and origin.endswith(".py") else None
     for root in roots:

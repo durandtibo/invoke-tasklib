@@ -3,10 +3,12 @@ r"""Find the tools that the tasks run and say how to install them."""
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import shlex
 import shutil
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
@@ -63,6 +65,7 @@ MODULE_GROUPS: dict[str, str] = {
     "xdoctest": "dev",
     "pytest_timeout": "dev",
     "pytest_cov": "dev",
+    "pytest_benchmark": "dev",
 }
 r"""The dependency group that provides a Python module, by name."""
 
@@ -80,7 +83,12 @@ PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
     "--cov-report": ("pytest_cov", "pytest-cov"),
     "--cov-append": ("pytest_cov", "pytest-cov"),
     "--cov-fail-under": ("pytest_cov", "pytest-cov"),
+    "--cov-branch": ("pytest_cov", "pytest-cov"),
+    "--cov-config": ("pytest_cov", "pytest-cov"),
+    "--no-cov": ("pytest_cov", "pytest-cov"),
     "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
+    "--benchmark-compare": ("pytest_benchmark", "pytest-benchmark"),
+    "--benchmark-disable": ("pytest_benchmark", "pytest-benchmark"),
 }
 r"""The pytest options that come from a plugin, as a tuple of the module
 and of the package to install, by option."""
@@ -185,6 +193,39 @@ def _check_plugin_options(words: Sequence[str]) -> None:
             raise Exit(msg, code=127)
 
 
+def tool_path() -> str:
+    r"""Return the ``PATH`` that the tasks use to find the programs.
+
+    The directory of the running interpreter comes first: it is where
+    ``uv sync`` installs the programs (``ruff``, ``ty``, ``mkdocs``,
+    ...) of the virtual environment. Python modules are found with the
+    running interpreter, so the programs of the same environment are
+    found the same way, with no need to activate it. It also makes the
+    task run the program of the environment, not another one that is
+    earlier on the ``PATH``.
+
+    Returns:
+        The ``PATH`` of the process with the directory of
+        ``sys.executable`` added to the front.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from pathlib import Path
+    >>> import sys
+    >>> from invoke_tasklib.tools import tool_path
+    >>> first = tool_path().split(os.pathsep)[0]
+    >>> first == str(Path(sys.executable).parent)
+    True
+
+    ```
+    """
+    directories = [str(Path(sys.executable).parent)]
+    directories.extend(filter(None, [os.environ.get("PATH")]))
+    return os.pathsep.join(directories)
+
+
 def not_found_message(name: str, *, module: bool = False, interpreter: str | None = None) -> str:
     r"""Build the message for a program or a module that is missing.
 
@@ -202,7 +243,7 @@ def not_found_message(name: str, *, module: bool = False, interpreter: str | Non
     ```pycon
     >>> from invoke_tasklib.tools import not_found_message
     >>> not_found_message("uv")[:36]
-    "'uv' was not found on the PATH. Inst"
+    "'uv' was not found on the PATH or ne"
 
     ```
     """
@@ -211,7 +252,7 @@ def not_found_message(name: str, *, module: bool = False, interpreter: str | Non
             f"The Python module '{name}' is not installed for "
             f"{interpreter or sys.executable}. {hint(name, module=True)}"
         )
-    return f"'{name}' was not found on the PATH. {hint(name)}"
+    return f"'{name}' was not found on the PATH or next to the Python interpreter. {hint(name)}"
 
 
 def _check_module(words: Sequence[str]) -> None:
@@ -249,12 +290,13 @@ def _check_module(words: Sequence[str]) -> None:
 
 
 def find_tool(name: str, *, module: bool = False) -> str | None:
-    r"""Find a program on the ``PATH`` or a module of the interpreter.
+    r"""Find a program on the tool path or a module of the interpreter.
 
     Args:
         name: The name of the program, or of the module.
         module: If True, look ``name`` up as a Python module of the
-            running interpreter instead of as a program.
+            running interpreter instead of as a program. A program is
+            looked up in ``tool_path()``.
 
     Returns:
         The path of the program or of the module, or ``None`` if it is
@@ -274,7 +316,7 @@ def find_tool(name: str, *, module: bool = False) -> str | None:
     if module:
         spec = importlib.util.find_spec(name)
         return None if spec is None else (spec.origin or name)
-    return shutil.which(name)
+    return shutil.which(name, path=tool_path())
 
 
 def check_program(command: str) -> None:
@@ -324,5 +366,5 @@ def check_program(command: str) -> None:
     program = words[0]
     if "/" in program or program in UNCHECKED_PROGRAMS:
         _check_module(words)
-    elif shutil.which(program) is None:
+    elif shutil.which(program, path=tool_path()) is None:
         raise Exit(not_found_message(program), code=127)

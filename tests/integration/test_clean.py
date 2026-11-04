@@ -68,3 +68,17 @@ def test_all_removes_an_untracked_configured_coverage_html_dir(repo: Path) -> No
     (repo / "reports" / "html").mkdir(parents=True)
     clean.all_(_context())
     assert not (repo / "reports" / "html").exists()
+
+
+def test_all_keeps_a_coverage_file_tracked_by_git(repo: Path) -> None:
+    (repo / "coverage.xml").write_text("<coverage/>")
+    _git("add", "coverage.xml")
+    _git("commit", "-q", "-m", "add the report")
+    clean.all_(_context())
+    assert (repo / "coverage.xml").is_file()
+
+
+def test_all_removes_an_untracked_coverage_file(repo: Path) -> None:
+    (repo / "coverage.xml").write_text("<coverage/>")
+    clean.all_(_context())
+    assert not (repo / "coverage.xml").exists()

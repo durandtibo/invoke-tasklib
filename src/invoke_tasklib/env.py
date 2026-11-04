@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
 VENV_DIR = ".venv"
+LOCK_FILE = "uv.lock"
 
 
 def _confirm_clear(directory: str) -> None:
@@ -117,7 +118,10 @@ def install(c: Context, *, optional_deps: bool = True, groups: str | None = None
 def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
     r"""Install the dependencies and the package, without a report.
 
-    It is the body of ``install``, without its failure line. A task
+    It is the body of ``install``, without its failure line. The
+    lock file is enforced (``uv sync --locked``) only if the project
+    has a ``uv.lock``; without one, ``uv sync`` resolves the
+    dependencies and creates it. A task
     that installs as one step of a longer job (``create_venv``,
     ``update``) calls it inside its own ``report_failure`` block, so a
     failure is reported once, with the title of the outer job.
@@ -130,8 +134,12 @@ def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
         optional_deps: If True, install all the optional dependencies
             (extras) of the project.
     """
-    say(c, "📦 Installing project dependencies...")
-    cmd = ["uv sync --locked"]
+    if Path(LOCK_FILE).is_file():
+        say(c, f"📦 Installing from {LOCK_FILE}...")
+        cmd = ["uv sync --locked"]
+    else:
+        say(c, f"📦 No {LOCK_FILE}: resolving the dependencies...")
+        cmd = ["uv sync"]
     if optional_deps:
         cmd.append("--all-extras")
     names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
@@ -224,6 +232,7 @@ TOOL_MODULES: tuple[str, ...] = (
     "xdoctest",
     "pytest_timeout",
     "pytest_cov",
+    "pytest_benchmark",
 )
 r"""The Python modules and pytest plugins that the tasks need."""
 
