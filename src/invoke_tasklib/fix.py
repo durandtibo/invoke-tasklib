@@ -7,29 +7,29 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib import formatting, lint
-from invoke_tasklib._steps import missing_tools, parse_steps, run_steps, select_steps
+from invoke_tasklib._steps import (
+    Step,
+    missing_tools,
+    parse_steps,
+    run_steps,
+    select_steps,
+    tasks_of,
+)
 from invoke_tasklib.config import FIX_STEPS, load_config
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from invoke.context import Context
 
-STEPS: dict[str, Callable[[Context], None]] = {
-    "lint": lint.fix_python,
-    "format-python": formatting.fix_python,
-    "format-docstrings": formatting.fix_docstrings,
-    "shell": formatting.fix_shell,
+STEPS: dict[str, Step] = {
+    "lint": Step(lint.fix_python, programs=("ruff",)),
+    "format-python": Step(formatting.fix_python, programs=("ruff",)),
+    "format-docstrings": Step(formatting.fix_docstrings, programs=("docformatter",)),
+    "shell": Step(formatting.fix_shell, programs=("shfmt",)),
 }
-r"""The task of each step of ``fix.all``, by step name."""
+r"""The steps of ``fix.all`` (task and programs), by step name.
 
-# The programs that each step of ``fix.all`` runs, by step name.
-PROGRAMS: dict[str, tuple[str, ...]] = {
-    "lint": ("ruff",),
-    "format-python": ("ruff",),
-    "format-docstrings": ("docformatter",),
-    "shell": ("shfmt",),
-}
+To add a step, add its name to ``FIX_STEPS`` in ``config/_constants.py``
+(a test checks that the names agree)."""
 
 
 @task(
@@ -59,10 +59,10 @@ def all_(
     step is run and the failed ones are listed at the end.
 
     Before any step is run, the programs that the selected steps need
-    (``PROGRAMS``) are looked up and all the missing ones are reported
-    at once, with the code 127 and nothing run. With ``keep_going``,
-    only the steps that miss a tool are not run: they are reported as
-    failed, with the missing tools as the reason.
+    (the programs of ``STEPS``) are looked up and all the missing ones
+    are reported at once, with the code 127 and nothing run. With
+    ``keep_going``, only the steps that miss a tool are not run: they
+    are reported as failed, with the missing tools as the reason.
 
     Args:
         c: The invoke context.
@@ -83,11 +83,13 @@ def all_(
         parse_steps("--only", only, FIX_STEPS),
         parse_steps("--skip", skip, FIX_STEPS),
     )
-    blocked = {step: missing for step in steps if (missing := missing_tools(PROGRAMS[step], ()))}
+    blocked = {
+        step: missing for step in steps if (missing := missing_tools(STEPS[step].programs, ()))
+    }
     run_steps(
         c,
         steps,
-        STEPS,
+        tasks_of(STEPS),
         blocked,
         keep_going=keep_going,
         label="fix(es)",

@@ -12,6 +12,7 @@ from invoke.runners import Result
 
 from invoke_tasklib import _steps, check, env
 from invoke_tasklib.config import CHECK_STEPS, load_config
+from invoke_tasklib.runner import PROGRAM_GROUPS, PROGRAM_HINTS
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
@@ -458,29 +459,28 @@ def test_unit_with_cov() -> None:
 
 
 def test_unit_step_is_the_unit_wrapper() -> None:
-    assert check.STEPS["unit"] is check._unit
+    assert check.STEPS["unit"].task is check._unit
 
 
 def test_steps_are_the_valid_steps_of_the_config() -> None:
     assert tuple(check.STEPS) == CHECK_STEPS
 
 
-#######################################
-#     Tests for PROGRAMS, MODULES     #
-#######################################
-
-
-def test_programs_have_an_entry_for_every_step() -> None:
-    assert tuple(check.PROGRAMS) == CHECK_STEPS
-
-
-def test_modules_have_an_entry_for_every_step() -> None:
-    assert tuple(check.MODULES) == CHECK_STEPS
+############################################
+#     Tests for the tools of the steps     #
+############################################
 
 
 def test_programs_are_checked_by_env_check_tools() -> None:
-    assert {name for names in check.PROGRAMS.values() for name in names} <= set(env.TOOL_PROGRAMS)
+    assert {name for step in check.STEPS.values() for name in step.programs} <= set(
+        env.TOOL_PROGRAMS
+    )
 
 
 def test_modules_are_checked_by_env_check_tools() -> None:
-    assert {name for names in check.MODULES.values() for name in names} <= set(env.TOOL_MODULES)
+    assert {name for step in check.STEPS.values() for name in step.modules} <= set(env.TOOL_MODULES)
+
+
+def test_programs_of_the_steps_have_an_install_hint() -> None:
+    programs = {name for step in check.STEPS.values() for name in step.programs}
+    assert {p for p in programs if p not in PROGRAM_HINTS and p not in PROGRAM_GROUPS} == set()

@@ -7,12 +7,17 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib import doc, formatting, imports, lint, security, testing, typecheck
-from invoke_tasklib._steps import missing_tools, parse_steps, run_steps, select_steps
+from invoke_tasklib._steps import (
+    Step,
+    missing_tools,
+    parse_steps,
+    run_steps,
+    select_steps,
+    tasks_of,
+)
 from invoke_tasklib.config import CHECK_STEPS, load_config
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from invoke.context import Context
 
     from invoke_tasklib.config import TasklibConfig
@@ -30,53 +35,27 @@ def _unit(c: Context) -> None:
     testing.unit(c, cov=load_config(c).check.cov)
 
 
-STEPS: dict[str, Callable[[Context], None]] = {
-    "format-python": formatting.check_python,
-    "format-docstrings": formatting.check_docstrings,
-    "lint": lint.check_python,
-    "types": typecheck.check,
-    "imports": imports.check_cycles,
-    "unit": _unit,
-    "doctest": testing.doctest,
-    "shell": formatting.check_shell,
-    "spelling": lint.check_spelling,
-    "docs": doc.build,
-    "audit": security.audit,
+STEPS: dict[str, Step] = {
+    "format-python": Step(formatting.check_python, programs=("ruff",)),
+    "format-docstrings": Step(formatting.check_docstrings, programs=("docformatter",)),
+    "lint": Step(lint.check_python, programs=("ruff",)),
+    "types": Step(typecheck.check, programs=("ty",)),
+    "imports": Step(imports.check_cycles),
+    "unit": Step(_unit, modules=("pytest", "pytest_timeout")),
+    "doctest": Step(testing.doctest, modules=("pytest", "xdoctest")),
+    "shell": Step(formatting.check_shell, programs=("shellcheck",)),
+    "spelling": Step(lint.check_spelling, programs=("codespell",)),
+    "docs": Step(doc.build, programs=("mkdocs",)),
+    "audit": Step(security.audit, programs=("uv", "uvx")),
 }
-r"""The task of each step of ``check.all``, by step name."""
+r"""The steps of ``check.all`` (task, programs and Python modules), by
+step name.
 
-PROGRAMS: dict[str, tuple[str, ...]] = {
-    "format-python": ("ruff",),
-    "format-docstrings": ("docformatter",),
-    "lint": ("ruff",),
-    "types": ("ty",),
-    "imports": (),
-    "unit": (),
-    "doctest": (),
-    "shell": ("shellcheck",),
-    "spelling": ("codespell",),
-    "docs": ("mkdocs",),
-    "audit": ("uv", "uvx"),
-}
-r"""The programs that each step of ``check.all`` runs, by step name."""
-
-# The Python modules that each step of ``check.all`` runs, by step name.
-# ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true,
-# and does not need ``pytest_timeout`` if ``tasklib.test.timeout`` is
-# false.
-MODULES: dict[str, tuple[str, ...]] = {
-    "format-python": (),
-    "format-docstrings": (),
-    "lint": (),
-    "types": (),
-    "imports": (),
-    "unit": ("pytest", "pytest_timeout"),
-    "doctest": ("pytest", "xdoctest"),
-    "shell": (),
-    "spelling": (),
-    "docs": (),
-    "audit": (),
-}
+``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true,
+and does not need ``pytest_timeout`` if ``tasklib.test.timeout`` is
+false. To add a step, add its name to ``CHECK_STEPS`` in
+``config/_constants.py`` (a test checks that the names agree), and its
+install hints to ``runner.py`` and its tools to ``env.py``."""
 
 
 def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
@@ -87,8 +66,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
         cfg: The resolved config.
 
     Returns:
-        A ``(tool, reason)`` pair for each program of ``PROGRAMS`` that
-        is not on the ``PATH`` and each module of ``MODULES`` that is
+        A ``(tool, reason)`` pair for each program of a step that
+        is not on the ``PATH`` and each module of a step that is
         not installed, in that order. The reason says how to install it.
         ``xdoctest`` is only needed with ``tasklib.test.xdoctest`` and
         ``pytest_timeout`` only with ``tasklib.test.timeout``.
@@ -107,12 +86,12 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
 
     ```
     """
-    modules = MODULES[step]
+    modules = STEPS[step].modules
     if step == "unit" and cfg.test.xdoctest:
         modules = (*modules, "xdoctest")
     if step == "unit" and not cfg.test.timeout:
         modules = tuple(module for module in modules if module != "pytest_timeout")
-    return missing_tools(PROGRAMS[step], modules)
+    return missing_tools(STEPS[step].programs, modules)
 
 
 @task(
@@ -144,10 +123,11 @@ def all_(
     failed ones are listed at the end.
 
     Before any step is run, the tools that the selected steps need
-    (``PROGRAMS`` and ``MODULES``) are looked up and all the missing
-    ones are reported at once, with the code 127 and nothing run. With
-    ``keep_going``, only the steps that miss a tool are not run: they
-    are reported as failed, with the missing tools as the reason.
+    (the programs and modules of ``STEPS``) are looked up and all the
+    missing ones are reported at once, with the code 127 and nothing
+    run. With ``keep_going``, only the steps that miss a tool are not
+    run: they are reported as failed, with the missing tools as the
+    reason.
 
     Args:
         c: The invoke context.
@@ -172,7 +152,7 @@ def all_(
     run_steps(
         c,
         steps,
-        STEPS,
+        tasks_of(STEPS),
         blocked,
         keep_going=keep_going,
         label="check(s)",

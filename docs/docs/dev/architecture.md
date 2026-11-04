@@ -92,6 +92,21 @@ Five small modules support the task modules:
 `config.EXCLUDED_DIRS` lists the directories that the tasks that walk the file tree (`clean`,
 `format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...).
 
+### Adding a step to `check.all` or `fix.all`
+
+A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the programs it looks up on the
+`PATH`, the Python modules it imports). To add one:
+
+1. Write the task in its module, and add `"name": Step(task, programs=..., modules=...)` to
+   `check.STEPS` (or `fix.STEPS`).
+2. Add the name to `CHECK_STEPS` (or `FIX_STEPS`) in `config/_constants.py`: the config must not
+   import the task modules, and a test checks that the names agree with `STEPS`.
+3. Add the programs and modules to `TOOL_PROGRAMS` and `TOOL_MODULES` of `env.py` (a test checks
+   that every tool of `STEPS` is listed), and their install hints to `PROGRAM_HINTS` or
+   `PROGRAM_GROUPS` of `runner.py` (a test checks that too).
+4. To run the step by default, add it to the default of `check.tasks` (or `fix.tasks`) in
+   `config/_schema.py`; update the tables of the user guide (`uguide/check.md`, `uguide/fix.md`).
+
 ### 3. The Namespace
 
 `invoke_tasklib/__init__.py` has `make_ns(*, exclude=(), include=None)`, which builds a new

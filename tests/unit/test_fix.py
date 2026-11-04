@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from invoke.exceptions import Exit
 
-from invoke_tasklib import _steps, fix
+from invoke_tasklib import _steps, env, fix
 from invoke_tasklib.config import FIX_STEPS
 from tests.helpers import commands, make_context
 
@@ -112,5 +112,5 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
     assert tuple(fix.STEPS) == FIX_STEPS
 
 
-def test_programs_have_an_entry_for_every_step() -> None:
-    assert tuple(fix.PROGRAMS) == FIX_STEPS
+def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:
+    assert {name for step in fix.STEPS.values() for name in step.programs} <= set(env.TOOL_PROGRAMS)
