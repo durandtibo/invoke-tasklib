@@ -53,7 +53,8 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 `format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project. The
 `.git`, `.venv`, `.pytest_cache`, `node_modules`, `build`, `dist` and `site` directories are not
 searched, so third-party scripts (for example the activation scripts of a virtual environment) are
-never checked or rewritten.
+never checked or rewritten. The files are found by a walk in Python (no `find` or `xargs`) and given
+to the tool as arguments; if there is no `*.sh` file, the tool is not run and the task says so.
 
 <!-- prettier-ignore -->
 !!! note

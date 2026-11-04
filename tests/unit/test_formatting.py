@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from invoke.config import Config
 from invoke.context import MockContext
@@ -7,6 +9,9 @@ from invoke.exceptions import Exit
 
 from invoke_tasklib import formatting
 from tests.helpers import commands, make_context
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_check_python() -> None:
@@ -38,16 +43,46 @@ def test_fix_docstrings_uses_configured_src_path() -> None:
     assert commands(c) == ["docformatter --config ./pyproject.toml --in-place src/mypkg"]
 
 
+@pytest.fixture
+def scripts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "run.sh").write_text("")
+    (tmp_path / "top.sh").write_text("")
+    (tmp_path / ".venv").mkdir()
+    (tmp_path / ".venv" / "activate.sh").write_text("")
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def no_scripts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.mark.usefixtures("scripts")
 def test_check_shell() -> None:
     c = make_context()
     formatting.check_shell(c)
-    assert commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shellcheck --"]
+    assert commands(c) == ["shellcheck -- src/run.sh top.sh"]
 
 
+@pytest.mark.usefixtures("scripts")
 def test_check_shell_with_args() -> None:
     c = make_context()
     formatting.check_shell(c, args="-x")
-    assert commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shellcheck -x --"]
+    assert commands(c) == ["shellcheck -x -- src/run.sh top.sh"]
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_check_shell_without_script_runs_nothing() -> None:
+    c = make_context()
+    formatting.check_shell(c)
+    assert commands(c) == []
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_check_shell_without_script_says_it_skips(capsys: pytest.CaptureFixture[str]) -> None:
+    formatting.check_shell(make_context())
+    assert "⏭️  No shell script found: skipping" in capsys.readouterr().out
 
 
 def test_check_shell_with_paths_does_not_search_the_project() -> None:
@@ -68,29 +103,25 @@ def test_fix_shell_with_args_and_paths() -> None:
     assert commands(c) == ["shfmt -l -w -i 2 -- a.sh"]
 
 
+@pytest.mark.usefixtures("scripts")
 def test_fix_shell_with_args() -> None:
     c = make_context()
     formatting.fix_shell(c, args="-i 2")
-    assert commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shfmt -l -w -i 2 --"]
+    assert commands(c) == ["shfmt -l -w -i 2 -- src/run.sh top.sh"]
 
 
+@pytest.mark.usefixtures("scripts")
 def test_fix_shell() -> None:
     c = make_context()
     formatting.fix_shell(c)
-    assert commands(c) == [f"{formatting._FIND_SH} | xargs -0 -r shfmt -l -w --"]
+    assert commands(c) == ["shfmt -l -w -- src/run.sh top.sh"]
 
 
-##############################
-#     Tests for _FIND_SH     #
-##############################
-
-
-def test_find_sh_command() -> None:
-    assert formatting._FIND_SH == (
-        "find . \\( -name .git -o -name .pytest_cache -o -name .venv -o -name build "
-        "-o -name dist -o -name node_modules -o -name site \\) -type d -prune "
-        "-o -name '*.sh' -type f -print0"
-    )
+@pytest.mark.usefixtures("no_scripts")
+def test_fix_shell_without_script_runs_nothing() -> None:
+    c = make_context()
+    formatting.fix_shell(c)
+    assert commands(c) == []
 
 
 def test_check_python_args() -> None:
@@ -150,10 +181,19 @@ def test_fix_docstrings_args() -> None:
 #####################################
 
 
+@pytest.mark.usefixtures("scripts")
 def test_shell_command_searches_the_project_by_default() -> None:
-    assert formatting._shell_command("shfmt -l", None, None) == (
-        f"{formatting._FIND_SH} | xargs -0 -r shfmt -l --"
-    )
+    assert formatting._shell_command("shfmt -l", None, None) == "shfmt -l -- src/run.sh top.sh"
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_shell_command_without_script_is_none() -> None:
+    assert formatting._shell_command("shfmt -l", None, None) is None
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_shell_command_with_paths_does_not_need_a_script() -> None:
+    assert formatting._shell_command("shfmt -l", None, "a.sh") == "shfmt -l -- a.sh"
 
 
 def test_shell_command_puts_args_before_the_separator() -> None:
