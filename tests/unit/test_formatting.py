@@ -97,6 +97,48 @@ def test_check_shell_with_args_and_paths() -> None:
     assert commands(c) == ["shellcheck -x -- a.sh"]
 
 
+@pytest.mark.usefixtures("scripts")
+def test_check_shell_format() -> None:
+    c = make_context()
+    formatting.check_shell_format(c)
+    assert commands(c) == ["shfmt -d -- src/run.sh top.sh"]
+
+
+@pytest.mark.usefixtures("scripts")
+def test_check_shell_format_with_args() -> None:
+    c = make_context()
+    formatting.check_shell_format(c, args="-i 2")
+    assert commands(c) == ["shfmt -d -i 2 -- src/run.sh top.sh"]
+
+
+def test_check_shell_format_with_paths_does_not_search_the_project() -> None:
+    c = make_context()
+    formatting.check_shell_format(c, paths="a.sh 'b c.sh'")
+    assert commands(c) == ["shfmt -d -- a.sh 'b c.sh'"]
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_check_shell_format_without_script_runs_nothing() -> None:
+    c = make_context()
+    formatting.check_shell_format(c)
+    assert commands(c) == []
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_check_shell_format_without_script_says_it_skips(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    formatting.check_shell_format(make_context())
+    assert "⏭️  No shell script found: skipping" in capsys.readouterr().out
+
+
+def test_check_shell_format_says_what_it_does(capsys: pytest.CaptureFixture[str]) -> None:
+    formatting.check_shell_format(make_context(), paths="a.sh")
+    assert capsys.readouterr().out == (
+        "🔎 Running shfmt on shell scripts...\n✅ Shell format is correct\n"
+    )
+
+
 def test_fix_shell_with_args_and_paths() -> None:
     c = make_context()
     formatting.fix_shell(c, args="-i 2", paths="a.sh")

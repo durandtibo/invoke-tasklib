@@ -7,7 +7,7 @@ import pytest
 from invoke.config import Config
 from invoke.exceptions import Exit
 
-from invoke_tasklib import testing
+from invoke_tasklib import clean, testing
 from tests.integration.test_imports import _SubprocessContext
 
 if TYPE_CHECKING:
@@ -115,6 +115,32 @@ def test_benchmark_measures_a_benchmark_file(flat_project: Path) -> None:
         "def test_b(benchmark):\n    assert benchmark(sum, [1, 2]) == 3\n"
     )
     assert testing.benchmark(_context(), args="-p no:cacheprovider", paths="bench") is None
+
+
+def test_coverage_report_writes_to_the_directory_of_cov_reports(flat_project: Path) -> None:
+    context = _context(cov_reports="html:cov_html")
+    testing.unit(context, cov=True, args="-p no:cacheprovider")
+    testing.coverage_report(context)
+    assert (flat_project / "cov_html" / "index.html").is_file()
+
+
+def test_coverage_report_does_not_write_the_default_directory_when_moved(
+    flat_project: Path,
+) -> None:
+    context = _context(cov_reports="html:cov_html")
+    testing.unit(context, cov=True, args="-p no:cacheprovider")
+    testing.coverage_report(context)
+    assert not (flat_project / "htmlcov").exists()
+
+
+def test_clean_removes_the_moved_coverage_reports(flat_project: Path) -> None:
+    context = _context(cov_reports="html:cov_html,xml:cov.xml")
+    testing.unit(context, cov=True, args="-p no:cacheprovider")
+    clean.all_(context)
+    assert [(flat_project / "cov_html").exists(), (flat_project / "cov.xml").exists()] == [
+        False,
+        False,
+    ]
 
 
 def test_doctest_markdown_does_not_walk_into_the_venv(

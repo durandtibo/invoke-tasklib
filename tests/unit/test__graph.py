@@ -570,6 +570,25 @@ def test_read_sources_whole_output() -> None:
     )
 
 
+@pytest.mark.usefixtures("package")
+def test_read_sources_of_a_dotted_name() -> None:
+    assert read_sources("graphpkg.sub") == (
+        {"graphpkg.sub": "", "graphpkg.sub.b": "B = 2\n"},
+        {"graphpkg.sub"},
+    )
+
+
+def test_read_sources_of_a_dotted_name_does_not_import_the_parent(package: Path) -> None:
+    (package / "__init__.py").write_text("raise RuntimeError('imported')\n")
+    assert read_sources("graphpkg.sub")[1] == {"graphpkg.sub"}
+
+
+@pytest.mark.usefixtures("package")
+def test_read_sources_of_an_unknown_dotted_name() -> None:
+    with pytest.raises(ModuleNotFoundError, match=r"No module named 'graphpkg\.nope'"):
+        read_sources("graphpkg.nope")
+
+
 def test_read_sources_leaves_out_an_extension_module(package: Path) -> None:
     (package / f"native{importlib.machinery.EXTENSION_SUFFIXES[0]}").write_text("")
     assert "graphpkg.native" not in read_sources("graphpkg")[0]

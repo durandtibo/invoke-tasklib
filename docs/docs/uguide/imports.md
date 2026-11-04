@@ -52,6 +52,10 @@ depends on something that is only initialized as a side effect of importing anot
 which is often the symptom of a cycle. It also fails on a missing dependency or a syntax error, and
 it starts one interpreter per module, so it is slow for a package with heavy imports.
 
+The package that is checked is the one the interpreter finds: the installed (editable) package, or
+the one in the current directory for a flat layout. The task checks the source tree, not a built
+artifact: use `release.build` to check an artifact (it imports the package in isolated mode).
+
 The commands are not echoed and their output is hidden. The task prints one line for the discovery,
 one for the check, and then either one `✅` summary or one `❌ <module>: <last line of the traceback>`
 line for each module that failed and the exit code 1. Every module is tried, so one run lists all

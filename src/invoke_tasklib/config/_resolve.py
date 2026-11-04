@@ -12,6 +12,7 @@ from invoke_tasklib.config._schema import (
     _SECTION_CLASSES,
     SCHEMA,
     TasklibConfig,
+    Unset,
     _defaults,
 )
 from invoke_tasklib.config._validate import _as_mapping, _check_keys, _validate_str
@@ -67,12 +68,9 @@ def get_config(c: Context) -> TasklibConfig:
         given = _as_mapping(f"tasklib.{section}", user.get(section, {}))
         _check_keys(section, given, options)
         # ``default_config`` registers the booleans and the integers
-        # with ``None``, which is not a value given by the user.
-        given = {
-            key: value
-            for key, value in given.items()
-            if value is not None or not isinstance(options[key].default, int)
-        }
+        # with ``Unset``, which is not a value given by the user (a
+        # ``null`` is one, and is rejected by the validation).
+        given = {key: value for key, value in given.items() if not isinstance(value, Unset)}
         merged[section] = {**_defaults(section), **given}
     package = merged["package"]
 

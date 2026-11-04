@@ -21,6 +21,7 @@ from invoke_tasklib.runner import (
     run,
     split_args,
 )
+from invoke_tasklib.tools import tool_path
 
 #######################################
 #     Tests for python_executable     #
@@ -100,7 +101,19 @@ def test_run_forwards_extra_arguments() -> None:
     c = _context()
     run(c, "ls", warn=True, env={"A": "1"})
     kwargs = _run_mock(c).call_args.kwargs
-    assert (kwargs["warn"], kwargs["env"]) == (True, {"A": "1"})
+    assert (kwargs["warn"], kwargs["env"]["A"]) == (True, "1")
+
+
+def test_run_puts_the_interpreter_directory_first_on_the_path() -> None:
+    c = _context()
+    run(c, "ls")
+    assert _run_mock(c).call_args.kwargs["env"]["PATH"] == tool_path()
+
+
+def test_run_lets_the_caller_set_the_path() -> None:
+    c = _context()
+    run(c, "ls", env={"PATH": "/custom"})
+    assert _run_mock(c).call_args.kwargs["env"] == {"PATH": "/custom"}
 
 
 def test_run_returns_the_result_of_the_context() -> None:
@@ -109,7 +122,7 @@ def test_run_returns_the_result_of_the_context() -> None:
 
 
 def test_run_missing_program_does_not_run_the_command(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program: None)
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
     c = _context()
     with pytest.raises(Exit, match=r"'ruff' was not found"):
         run(c, "ruff check .")
@@ -117,7 +130,7 @@ def test_run_missing_program_does_not_run_the_command(monkeypatch: pytest.Monkey
 
 
 def test_run_without_check_runs_a_missing_program(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program: None)
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
     c = _context()
     run(c, "my-alias --flag", check=False)
     assert _run_mock(c).call_args.args[0] == "my-alias --flag"
@@ -287,13 +300,13 @@ def test_capture_returns_the_result_of_the_context() -> None:
 
 
 def test_capture_checks_the_program_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(shutil, "which", lambda _name: None)
+    monkeypatch.setattr(shutil, "which", lambda _name, **_kwargs: None)
     with pytest.raises(Exit, match=r"'nonexistent-tool' was not found"):
         capture(_context(), "nonexistent-tool --version")
 
 
 def test_capture_can_skip_the_program_check(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(shutil, "which", lambda _name: None)
+    monkeypatch.setattr(shutil, "which", lambda _name, **_kwargs: None)
     c = _context()
     capture(c, "nonexistent-tool --version", check=False)
     assert _run_mock(c).call_args.args == ("nonexistent-tool --version",)

@@ -30,7 +30,10 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         monkeypatch.setenv(f"GIT_{name}_EMAIL", "tester@example.com")
     monkeypatch.setenv("PATH", f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}")
     if shutil.which("mike") is None:
-        pytest.skip("mike is not installed")
+        reason = "mike is not installed: install the 'docs' group with `uv sync --group docs`"
+        if os.environ.get("REQUIRE_MIKE") == "true":
+            pytest.fail(reason)
+        pytest.skip(reason)
     monkeypatch.chdir(tmp_path)
     _git("init", "-q")
     (tmp_path / "mkdocs.yml").write_text("site_name: demo\n")
