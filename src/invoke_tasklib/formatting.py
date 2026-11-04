@@ -19,7 +19,9 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
-# Directories whose shell scripts are never checked or formatted.
+# Directories that the walk skips when looking for shell scripts outside
+# a git work tree. In a work tree git decides (a tracked ``build/run.sh``
+# is checked), see ``project_files``.
 SHELL_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {"build", "dist", "site"}
 
 

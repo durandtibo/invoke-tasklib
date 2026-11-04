@@ -38,7 +38,12 @@ MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
     ".mypy_cache",
     ".ruff_cache",
 }
-r"""Directories whose markdown files are never checked."""
+r"""Directories that the walk skips when looking for markdown files
+outside a git work tree.
+
+In a git work tree git decides which files are checked (a tracked
+``site/index.md`` is checked), see ``project_files``.
+"""
 
 APPEND_HELP = (
     "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
