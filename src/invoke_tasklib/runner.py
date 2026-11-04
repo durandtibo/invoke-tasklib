@@ -52,8 +52,11 @@ UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
     {"command", "find", "cd", "export", "test", "[", "exec", "source", ".", ":"}
 )
 r"""First words of a command that are not looked up on the ``PATH``
-(shell builtins and tools that every system has). Some of them have an
-executable on some systems only (for example ``cd`` on macOS)."""
+(shell builtins and tools that every system has).
+
+Some of them have an executable on some systems only (for example ``cd``
+on macOS).
+"""
 
 PROGRAM_HINTS: dict[str, str] = {
     "uv": "Install uv, see https://docs.astral.sh/uv/getting-started/installation/.",
@@ -108,8 +111,8 @@ PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
     "--cov-fail-under": ("pytest_cov", "pytest-cov"),
     "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
 }
-r"""The pytest options that come from a plugin, as a tuple of the
-module and of the package to install, by option."""
+r"""The pytest options that come from a plugin, as a tuple of the module
+and of the package to install, by option."""
 
 _SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
 
