@@ -33,7 +33,7 @@ def _missing_docstrings(source: str) -> list[str]:
 ######################################
 
 
-@pytest.mark.parametrize("path", sorted(SRC.glob("*.py")), ids=lambda p: p.name)
+@pytest.mark.parametrize("path", sorted(SRC.rglob("*.py")), ids=lambda p: str(p.relative_to(SRC)))
 def test_every_function_of_src_has_a_docstring(path: Path) -> None:
     assert _missing_docstrings(path.read_text()) == []
 
