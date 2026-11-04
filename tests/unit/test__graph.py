@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import importlib.machinery
+import itertools
 import sys
 from pathlib import Path
 
@@ -436,6 +437,107 @@ def test_find_cycles_whole_output() -> None:
 def test_find_cycles_is_sorted_and_deterministic() -> None:
     graph = {"z": ["y"], "y": ["z"], "a": ["b"], "b": ["a"]}
     assert find_cycles(graph) == find_cycles(dict(reversed(graph.items())))
+
+
+def _random_graph(seed: int) -> dict[str, list[str]]:
+    r"""Create a small pseudo-random graph, with self-loops allowed.
+
+    The numbers come from a linear congruential generator, so the graph
+    only depends on the seed.
+
+    Args:
+        seed: The seed of the generator.
+
+    Returns:
+        The nodes that each node points to, for 2 to 7 nodes named
+        ``n0``, ``n1``, ...
+    """
+    state = seed
+
+    def draw(modulo: int) -> int:
+        nonlocal state
+        state = (state * 6364136223846793005 + 1442695040888963407) % 2**64
+        return (state >> 33) % modulo
+
+    nodes = [f"n{i}" for i in range(2 + draw(6))]
+    return {node: [t for t in nodes if draw(4) == 0] for node in nodes}
+
+
+def _reachable(graph: dict[str, list[str]], start: str) -> set[str]:
+    r"""Return the nodes reachable from a node by one edge or more.
+
+    Args:
+        graph: The nodes that each node points to.
+        start: The node to start from.
+
+    Returns:
+        The reachable nodes. ``start`` is in it only if it is on a
+        cycle.
+    """
+    seen: set[str] = set()
+    todo = list(graph[start])
+    while todo:
+        node = todo.pop()
+        if node not in seen:
+            seen.add(node)
+            todo.extend(graph[node])
+    return seen
+
+
+def _brute_force_components(graph: dict[str, list[str]]) -> set[frozenset[str]]:
+    r"""Find the groups of at least two nodes that reach each other.
+
+    Args:
+        graph: The nodes that each node points to.
+
+    Returns:
+        The strongly connected components of two nodes or more, found
+        from the reachability of every node.
+    """
+    reach = {node: _reachable(graph, node) for node in graph}
+    components = {
+        frozenset(m for m in graph if m == node or (m in reach[node] and node in reach[m]))
+        for node in graph
+        if node in reach[node]
+    }
+    return {component for component in components if len(component) > 1}
+
+
+_RANDOM_GRAPHS = [_random_graph(seed) for seed in range(40)]
+
+
+def _component_of(node: str, components: set[frozenset[str]]) -> list[str]:
+    r"""Return the sorted nodes of the component that has a node.
+
+    Args:
+        node: The node to look for.
+        components: The components.
+
+    Returns:
+        The sorted nodes of the first component that has ``node``.
+    """
+    return sorted(next(c for c in components if node in c))
+
+
+@pytest.mark.parametrize("graph", _RANDOM_GRAPHS)
+def test_find_cycles_reports_one_cycle_per_component_of_a_random_graph(
+    graph: dict[str, list[str]],
+) -> None:
+    components = _brute_force_components(graph)
+    assert sorted(_component_of(cycle[0], components) for cycle in find_cycles(graph)) == sorted(
+        sorted(component) for component in components
+    )
+
+
+@pytest.mark.parametrize("graph", _RANDOM_GRAPHS)
+def test_find_cycles_returns_closed_paths_of_a_random_graph(
+    graph: dict[str, list[str]],
+) -> None:
+    cycles = find_cycles(graph)
+    assert all(
+        cycle[0] == cycle[-1] and all(b in graph[a] for a, b in itertools.pairwise(cycle))
+        for cycle in cycles
+    )
 
 
 ##################################
