@@ -324,7 +324,7 @@ def test_check_tools_lists_all_the_missing_tools_not_only_the_first(
 @pytest.mark.usefixtures("_two_tools")
 def test_check_tools_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(env, "find_tool", _available())
-    with pytest.raises(Exit) as excinfo:
+    with pytest.raises(Exit, match=r"tool\(s\) missing") as excinfo:
         env.check_tools(make_context())
     assert excinfo.value.code == 127
 

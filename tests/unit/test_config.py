@@ -583,7 +583,7 @@ def test_load_config_exits_on_missing_package_name() -> None:
 
 
 def test_load_config_exit_code_is_2() -> None:
-    with pytest.raises(Exit) as excinfo:
+    with pytest.raises(Exit, match=r"'tasklib\.package\.name' must be set") as excinfo:
         load_config(Context(config=Config()))
     assert excinfo.value.code == 2
 

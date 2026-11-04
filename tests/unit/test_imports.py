@@ -147,7 +147,7 @@ def test_check_cycles_exits_with_code_1(make_package: _Maker) -> None:
         "cyc_code",
         {"a.py": "import cyc_code.b\n", "b.py": "import cyc_code.a\n", "__init__.py": ""},
     )
-    with pytest.raises(Exit) as info:
+    with pytest.raises(Exit, match=r"Found 1 import cycle") as info:
         imports.check_cycles(make_context({"package": {"name": "cyc_code"}}))
     assert info.value.code == 1
 

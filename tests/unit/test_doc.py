@@ -466,7 +466,7 @@ def test_docs_config_missing_file_exits() -> None:
 
 def test_docs_config_missing_file_exit_code() -> None:
     c = make_context({"package": {"name": "mypkg"}, "paths": {"docs_config": "no/such.yml"}})
-    with pytest.raises(Exit) as excinfo:
+    with pytest.raises(Exit, match=r"no/such\.yml") as excinfo:
         _docs_config(c)
     assert excinfo.value.code == 2
 

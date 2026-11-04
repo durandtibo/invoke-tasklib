@@ -79,7 +79,7 @@ def test_check_isolated_detects_cycle_between_sibling_modules(project: Path) -> 
             "cycpkg/b.py": "from cycpkg.a import X\nY = 2\n",
         },
     )
-    with pytest.raises(UnexpectedExit):
+    with pytest.raises(UnexpectedExit, match=r"Encountered a bad command exit code"):
         imports.check_isolated(_context("cycpkg"))
 
 
