@@ -118,6 +118,15 @@ _SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
 
 _ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 
+_SHELL_KEYWORDS = frozenset(
+    {"!", "if", "then", "elif", "else", "fi", "for", "while", "until", "do", "done", "case", "esac"}
+)
+r"""The reserved words of the shell: they are not programs."""
+
+_WRAPPERS = frozenset({"env", "sudo", "time", "nice"})
+r"""The programs that run the command that follows them, like ``xargs``
+but without an option that takes a value."""
+
 
 def build_command(
     program: str,
@@ -261,9 +270,15 @@ def _program_of(words: Sequence[str]) -> str | None:
     r"""Return the program that a command really runs.
 
     ``xargs`` runs the command that follows its options, so that command
-    is the one that has to be installed. A command that starts a
-    subshell or a group (``(``, ``{``, ``}``) or a substitution
-    (``$(``) has no program that can be looked up.
+    is the one that has to be installed. The same goes for ``env``,
+    ``sudo``, ``time`` and ``nice``, but only without an option, because
+    an option can take a value (``sudo -u root ruff``) and the word
+    that follows it is not known to be the program. A command that
+    starts a subshell or a group (``(``, ``{``, ``}``), a substitution
+    (``$(``) or a reserved word of the shell (``if``, ``for``, ``!``,
+    ...) has no program that can be looked up, and neither has a program
+    given by a path (``~/bin/tool``, ``./run.sh``), which the shell
+    resolves and ``shutil.which`` does not.
 
     Args:
         words: The words of a command, without the assignments of
@@ -271,7 +286,7 @@ def _program_of(words: Sequence[str]) -> str | None:
 
     Returns:
         The program, or ``None`` if there is none (``xargs`` with no
-        command, a subshell or a group).
+        command, a subshell, a group, a reserved word, a path).
 
     Example usage:
 
@@ -281,16 +296,28 @@ def _program_of(words: Sequence[str]) -> str | None:
     'ruff'
     >>> _program_of(["xargs", "-0", "-r", "shellcheck", "--"])
     'shellcheck'
+    >>> _program_of(["sudo", "ruff", "check"])
+    'ruff'
     >>> _program_of(["(", "ls", ")"]) is None
+    True
+    >>> _program_of(["!", "grep", "x", "f"]) is None
     True
 
     ```
     """
-    if words[0] in {"(", "{", "}"} or words[0].startswith("$"):
+    first = words[0]
+    if first in {"(", "{", "}"} or first.startswith("$") or first in _SHELL_KEYWORDS:
         return None
-    if words[0] != "xargs":
-        return words[0]
-    return next((w for w in words[1:] if not w.startswith("-")), None)
+    if first == "xargs":
+        program = next((w for w in words[1:] if not w.startswith("-")), None)
+    elif first in _WRAPPERS:
+        rest = _strip_assignments(words[1:]) if first == "env" else list(words[1:])
+        program = _program_of(rest) if rest and not rest[0].startswith("-") else None
+    else:
+        program = first
+    if program is not None and "/" in program and not program.startswith("/"):
+        return None
+    return program
 
 
 def hint(program: str) -> str:
@@ -400,12 +427,14 @@ def check_program(command: str) -> None:
     r"""Check that the programs of a command are available.
 
     Every command of a pipeline (``a | b``, ``a && b``) is checked, and
-    the command run by ``xargs`` is checked instead of ``xargs``. A
-    program is not checked when it is an absolute path (for example the
-    running interpreter, see ``python_executable``) or one of
+    the command run by ``xargs``, ``env``, ``sudo``, ``time`` or
+    ``nice`` is checked instead of the wrapper. A program is not
+    checked when it is a path (for example the running interpreter, see
+    ``python_executable``, or ``~/bin/tool``) or one of
     ``UNCHECKED_PROGRAMS`` (the shell builtins). The ``NAME=value``
     words before a program are ignored, and so is a command that starts
-    a subshell, a group or a substitution (``(``, ``{``, ``$(``). For
+    a subshell, a group, a substitution (``(``, ``{``, ``$(``) or a
+    reserved word of the shell (``if``, ``for``, ``!``, ...). For
     ``python -m <module>`` with the running interpreter, the module is
     checked, and so are the plugins of the pytest options (see
     ``PLUGIN_OPTIONS``).
