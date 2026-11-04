@@ -21,7 +21,8 @@ invoke env.create-venv
 ```
 
 Creates (or recreates) a `.venv` using the `package.python_version` from the
-[resolved config](config.md), and installs `invoke` into it with `uv pip install invoke`. The task is run with `invoke`, so
+[resolved config](config.md) (by default the version of `.python-version` or the lower bound of
+`requires-python`), and installs `invoke` into it with `uv pip install invoke`. The task is run with `invoke`, so
 `invoke` must already be available (for example through `uv tool install invoke`) to run it.
 
 <!-- prettier-ignore -->
