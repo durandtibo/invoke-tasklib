@@ -21,6 +21,7 @@ from invoke_tasklib.runner import (
     in_github_actions,
     run,
 )
+from invoke_tasklib.tools import tool_path
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -269,6 +270,51 @@ def _confirm(target: str) -> None:
         raise Exit(msg, code=1)
 
 
+PUBLISH_CREDENTIAL_VARIABLES: tuple[str, ...] = (
+    "UV_PUBLISH_TOKEN",
+    "UV_PUBLISH_USERNAME",
+    "UV_PUBLISH_PASSWORD",
+)
+r"""The variables from which ``uv publish`` reads its credentials."""
+
+
+def _publish_environment(token: str | None) -> dict[str, str]:
+    r"""Build the complete environment of ``uv publish``.
+
+    The process environment is copied without the variables of
+    ``PUBLISH_CREDENTIAL_VARIABLES``, so a credential that the job
+    defines for another target is never read by ``uv publish`` (for
+    example a ``UV_PUBLISH_TOKEN`` for PyPI when the task publishes to
+    TestPyPI). The chosen token is then added. The command must be run
+    with ``replace_env=True``, otherwise Invoke merges the environment
+    into the inherited one.
+
+    Args:
+        token: The token chosen for the target, or ``None`` if there is
+            none (Trusted Publishing, or a dry run).
+
+    Returns:
+        The environment, with the ``PATH`` of ``tool_path()``.
+
+    Example usage:
+
+    ```pycon
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.release import _publish_environment
+    >>> with patch.dict("os.environ", {"UV_PUBLISH_TOKEN": "old"}):
+    ...     env = _publish_environment("new")
+    >>> env["UV_PUBLISH_TOKEN"]
+    'new'
+
+    ```
+    """
+    env = {k: v for k, v in os.environ.items() if k not in PUBLISH_CREDENTIAL_VARIABLES}
+    env["PATH"] = tool_path()
+    if token:
+        env["UV_PUBLISH_TOKEN"] = token
+    return env
+
+
 @task(
     help={
         "test_pypi": "Publish to TestPyPI instead of PyPI.",
@@ -302,8 +348,12 @@ def publish(
     without ``--test-pypi`` only, from ``UV_PUBLISH_TOKEN``, which
     ``uv publish`` reads natively. It is passed to ``uv publish``
     through its environment, so it does not appear on the command
-    line. ``dist/`` is cleared by the build, so only the freshly built
-    artifacts are uploaded.
+    line. The credential variables that ``uv publish`` reads
+    (``UV_PUBLISH_TOKEN``, ``UV_PUBLISH_USERNAME`` and
+    ``UV_PUBLISH_PASSWORD``) are removed from its environment, and only
+    the chosen token is given, so a token meant for PyPI is never sent
+    to TestPyPI. ``dist/`` is cleared by the build, so only the freshly
+    built artifacts are uploaded.
 
     Args:
         c: The invoke context.
@@ -351,6 +401,7 @@ def publish(
         run(
             c,
             build_command(" ".join(cmd), args=args),
-            env={"UV_PUBLISH_TOKEN": token} if token else {},
+            env=_publish_environment(token),
+            replace_env=True,
         )
     say(c, "✅ Package published successfully" if not dry_run else "✅ Dry run complete")
