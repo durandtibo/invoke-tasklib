@@ -30,9 +30,12 @@ tasklib:
   test:
     unit_timeout: 10
     xdoctest: true
+    timeout: true
+    cov_fail_under: 90
     cov_reports: html,xml,term
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit
+    cov: false
   fix:
     tasks: lint,format-python,format-docstrings
 ```
@@ -101,7 +104,7 @@ If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the ta
 code 2 (no traceback).
 
 Unknown keys in `tasklib` itself (typically a typo of a section such as `path`) and in the
-`package`, `paths`, `groups` or `test` sections (such as `paths.unit_test`) also raise a
+`package`, `paths`, `groups`, `test`, `check` or `fix` sections (such as `paths.unit_test`) also raise a
 `ValueError` that lists the valid keys and suggests the closest one, instead of being silently
 ignored. Each section must be a mapping, `package.name` and every `paths.*` value must be a
 non-empty string, and `test.cov_fail_under` must be between 0 and 100.
