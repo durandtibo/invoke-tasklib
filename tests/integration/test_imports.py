@@ -162,3 +162,41 @@ def test_check_cycles_reports_the_cycle_that_import_order_hides(
     imports.check_isolated(_context("hidpkg"))
     with pytest.raises(Exit, match=r"Found 1 import cycle"):
         imports.check_cycles(_context("hidpkg"))
+
+
+#################################################
+#     Tests for a dotted package import name    #
+#################################################
+
+
+def _dotted_context() -> Context:
+    package = {"name": "inner-pkg", "import_name": "outerpkg.inner"}
+    return _SubprocessContext(config=Config(overrides={"tasklib": {"package": package}}))
+
+
+@pytest.fixture
+def dotted_project(project: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    _write(
+        project,
+        {
+            "outerpkg/__init__.py": "open('imported.marker', 'w').close()\n",
+            "outerpkg/inner/__init__.py": "",
+            "outerpkg/inner/a.py": "import outerpkg.inner.b\n",
+            "outerpkg/inner/b.py": "X = 1\n",
+        },
+    )
+    monkeypatch.syspath_prepend(str(project))
+    return project
+
+
+def test_check_cycles_of_a_dotted_name_does_not_import_the_parent(dotted_project: Path) -> None:
+    imports.check_cycles(_dotted_context())
+    assert not (dotted_project / "imported.marker").exists()
+
+
+def test_check_cycles_of_a_dotted_name_finds_its_cycle(dotted_project: Path) -> None:
+    (dotted_project / "outerpkg" / "inner" / "b.py").write_text("import outerpkg.inner.a\n")
+    with pytest.raises(
+        Exit, match=r"outerpkg\.inner\.a -> outerpkg\.inner\.b -> outerpkg\.inner\.a"
+    ):
+        imports.check_cycles(_dotted_context())

@@ -97,7 +97,9 @@ layout).
 `package.import_name` is the name used to import the package. It is used by `imports.check-cycles`, `imports.check-isolated`,
 `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
 Set it when it is not the distribution name with `-` replaced by `_`. It must be a Python module
-name.
+name, which may be dotted for a package of a namespace package (`company.package`): the tasks that
+read the source of the package (`imports.check-cycles`, `imports.check-isolated`) find it without
+importing `company`.
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the tasks use
 `load_config`, which turns it into an `invoke.exceptions.Exit` with the same message and the exit
