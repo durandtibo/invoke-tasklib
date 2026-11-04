@@ -93,20 +93,23 @@ choice to pytest-cov):
 invoke test.unit --cov
 ```
 
-`test.integration --cov` and `test.functional --cov` **append** to any existing coverage data
-(`--cov-append`), so they compose with a prior `test.unit --cov` run to build up combined coverage
-across scopes:
+A run with `--cov` replaces the coverage data of the previous run. `test.integration` and
+`test.functional` have an `--append` option that adds to the existing data (`--cov-append`), so
+they compose with a prior `test.unit --cov` run to build up combined coverage across scopes:
 
 ```shell
 invoke test.unit --cov
-invoke test.integration --cov
-invoke test.functional --cov
+invoke test.integration --cov --append
+invoke test.functional --cov --append
 ```
 
+Without `--append`, `invoke test.integration --cov` reports only the integration tests, whatever
+a previous run left in `.coverage`. `--append` without `--cov` does nothing.
+
 If `tasklib.test.cov_fail_under` is set, it is passed as `--cov-fail-under` and the task fails when
-the coverage is lower. Since the integration and functional tasks append to the existing data, run
-`test.unit --cov` first (it replaces the data) or `coverage erase`, otherwise the result depends on
-what was run before.
+the coverage is lower. With `--append`, the threshold applies to the combined data: start with
+`test.unit --cov` (it replaces the data) or `coverage erase`, otherwise the result depends on what
+was run before.
 
 ```shell
 invoke test.coverage-report

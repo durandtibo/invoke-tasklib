@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 import pytest
@@ -47,6 +48,44 @@ def test_unit_with_coverage_generates_only_the_configured_reports(flat_project: 
 def test_unit_with_coverage_does_not_generate_the_other_reports(flat_project: Path) -> None:
     testing.unit(_context(cov_reports="xml"), cov=True, args="-p no:cacheprovider")
     assert not (flat_project / "htmlcov").exists()
+
+
+@pytest.fixture
+def scoped_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    (tmp_path / "demo").mkdir()
+    (tmp_path / "demo" / "__init__.py").write_text("")
+    for module in ("one", "two"):
+        (tmp_path / "demo" / f"{module}.py").write_text("def run():\n    return 1\n")
+    for scope, module in (("unit", "one"), ("integration", "two")):
+        (tmp_path / "tests" / scope).mkdir(parents=True)
+        (tmp_path / "tests" / scope / f"test_{module}.py").write_text(
+            f"from demo import {module}\n\n\ndef test_run():\n    assert {module}.run() == 1\n"
+        )
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+def _covered_files(project: Path) -> list[str]:
+    xml = (project / "coverage.xml").read_text()
+    classes = re.findall(r'filename="(one|two)\.py"[^>]*line-rate="([\d.]+)"', xml)
+    return sorted(f"{name}.py" for name, rate in classes if float(rate) > 0)
+
+
+def _run_scopes(*, append: bool) -> None:
+    testing.unit(_context(cov_reports="xml"), cov=True, args="-p no:cacheprovider")
+    testing.integration(
+        _context(cov_reports="xml"), cov=True, append=append, args="-p no:cacheprovider"
+    )
+
+
+def test_integration_coverage_replaces_the_data_by_default(scoped_project: Path) -> None:
+    _run_scopes(append=False)
+    assert _covered_files(scoped_project) == ["two.py"]
+
+
+def test_integration_coverage_appends_on_request(scoped_project: Path) -> None:
+    _run_scopes(append=True)
+    assert _covered_files(scoped_project) == ["one.py", "two.py"]
 
 
 def test_doctest_markdown_does_not_walk_into_the_venv(
