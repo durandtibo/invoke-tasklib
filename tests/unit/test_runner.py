@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import itertools
 import re
+import shlex
 import shutil
 import sys
 from importlib.machinery import ModuleSpec
@@ -323,6 +325,30 @@ def test_build_command_does_not_quote_the_program() -> None:
 def test_build_command_unclosed_quote_exits() -> None:
     with pytest.raises(Exit, match=r"Cannot parse the value of --args"):
         build_command("pytest", args="-k 'a")
+
+
+_TRICKY_CHARACTERS = "a *~$'\"\\;&#(é"
+_TRICKY_WORDS = ["".join(chars) for chars in itertools.product(_TRICKY_CHARACTERS, repeat=3)][::17]
+r"""Words made of the characters that a shell treats specially, every
+17th of the 1,331 combinations of three characters."""
+
+
+@pytest.mark.parametrize("word", _TRICKY_WORDS)
+def test_build_command_args_round_trip_through_a_shell_split(word: str) -> None:
+    command = build_command("tool", args=shlex.join([word, "x"]))
+    assert shlex.split(command) == ["tool", word, "x"]
+
+
+@pytest.mark.parametrize("word", _TRICKY_WORDS)
+def test_build_command_paths_round_trip_through_a_shell_split(word: str) -> None:
+    command = build_command("tool", paths=shlex.join([word, "x"]))
+    assert shlex.split(command) == ["tool", word, "x"]
+
+
+@pytest.mark.parametrize("word", _TRICKY_WORDS)
+def test_build_command_default_paths_round_trip_through_a_shell_split(word: str) -> None:
+    command = build_command("tool", default_paths=[word])
+    assert shlex.split(command) == ["tool", word]
 
 
 def test_build_command_unclosed_quote_in_paths_exits() -> None:
