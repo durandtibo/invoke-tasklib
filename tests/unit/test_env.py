@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import shutil
 from importlib.machinery import ModuleSpec
 from typing import TYPE_CHECKING
@@ -26,6 +27,11 @@ def _project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.fixture
+def _existing_venv(_project: Path) -> None:
+    (_project / ".venv").mkdir()
+
+
+@pytest.fixture
 def _pre_commit_config(_project: Path) -> None:
     (_project / ".pre-commit-config.yaml").write_text("repos: []\n")
 
@@ -37,6 +43,70 @@ def test_create_venv_uses_configured_python_version() -> None:
         "uv venv --python 3.11 --clear",
         "uv sync --locked --all-extras --group dev",
     ]
+
+
+def test_create_venv_dry_run_runs_nothing() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c, dry_run=True)
+    assert commands(c) == []
+
+
+def test_create_venv_dry_run_says_what_it_would_do(capsys: pytest.CaptureFixture[str]) -> None:
+    env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
+    assert capsys.readouterr().out == "🐍 Would create .venv with Python 3.14 (dry run)\n"
+
+
+@pytest.mark.usefixtures("_existing_venv")
+def test_create_venv_dry_run_does_not_ask() -> None:
+    env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
+
+
+@pytest.mark.usefixtures("_existing_venv")
+def test_create_venv_asks_before_clearing_an_existing_venv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("n\n"))
+    c = make_context({"package": {"name": "mypkg"}})
+    with pytest.raises(Exit, match=r"Environment '\.venv' not cleared$"):
+        env.create_venv(c)
+
+
+@pytest.mark.usefixtures("_existing_venv")
+def test_create_venv_runs_nothing_when_the_clearing_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("n\n"))
+    c = make_context({"package": {"name": "mypkg"}})
+    with pytest.raises(Exit, match=r"not cleared"):
+        env.create_venv(c)
+    assert commands(c) == []
+
+
+@pytest.mark.usefixtures("_existing_venv")
+def test_create_venv_goes_on_after_a_confirmation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c)
+    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+
+
+@pytest.mark.usefixtures("_existing_venv")
+def test_create_venv_yes_does_not_ask(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c, yes=True)
+    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+
+
+def test_create_venv_does_not_ask_without_an_existing_venv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c)
+    assert commands(c)[0] == "uv venv --python 3.14 --clear"
 
 
 def test_create_venv_default_python_version() -> None:
@@ -411,3 +481,48 @@ def test_every_program_with_a_hint_is_checked() -> None:
 @pytest.mark.parametrize("name", [*env.TOOL_PROGRAMS, *env.TOOL_MODULES])
 def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
     assert hint(name) != DEFAULT_HINT
+
+
+####################################
+#     Tests for _confirm_clear     #
+####################################
+
+
+@pytest.mark.parametrize("answer", ["y", "yes", "Y", " YES "])
+def test_confirm_clear_accepts(answer: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(f"{answer}\n"))
+    assert env._confirm_clear(".venv") is None
+
+
+@pytest.mark.parametrize("answer", ["", "n", "no", "maybe"])
+def test_confirm_clear_refuses(answer: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(f"{answer}\n"))
+    with pytest.raises(Exit, match=r"Environment '\.venv' not cleared$"):
+        env._confirm_clear(".venv")
+
+
+def test_confirm_clear_refuses_without_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    with pytest.raises(Exit, match=r"not cleared: pass --yes to clear it without a terminal"):
+        env._confirm_clear(".venv")
+
+
+def test_confirm_clear_refuses_when_interrupted(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("builtins.input", Mock(side_effect=KeyboardInterrupt("interrupted")))
+    with pytest.raises(Exit, match=r"not cleared: pass --yes"):
+        env._confirm_clear(".venv")
+
+
+def test_confirm_clear_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("n\n"))
+    with pytest.raises(Exit, match=r"not cleared") as info:
+        env._confirm_clear(".venv")
+    assert info.value.code == 1
+
+
+def test_confirm_clear_names_the_directory(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
+    env._confirm_clear("my-env")
+    assert "Clear the existing environment 'my-env'?" in capsys.readouterr().out
