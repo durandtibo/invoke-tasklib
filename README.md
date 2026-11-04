@@ -130,6 +130,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `format`   | `format.check-docstrings`     | Check docstring formatting with docformatter                                             |    ❌    |
 | `format`   | `format.fix-docstrings`       | Format docstrings with docformatter                                                      |    ✅    |
 | `format`   | `format.check-shell`          | Check shell scripts with shellcheck                                                      |    ❌    |
+| `format`   | `format.check-shell-format`   | Check the format of shell scripts with shfmt                                             |    ❌    |
 | `format`   | `format.fix-shell`            | Format shell scripts with shfmt                                                          |    ✅    |
 | `lint`     | `lint.check-python`           | Check linting with ruff                                                                  |    ❌    |
 | `lint`     | `lint.fix-python`             | Fix auto-fixable linting issues with ruff                                                |    ✅    |
