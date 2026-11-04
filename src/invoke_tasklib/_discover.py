@@ -9,25 +9,71 @@ and prints one module name per line.
 
 from __future__ import annotations
 
+import importlib.machinery
 import importlib.util
 import pkgutil
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from importlib.machinery import ModuleSpec
 
 IGNORED_MODULES = frozenset({"__main__"})
+
+
+def find_spec(name: str) -> ModuleSpec | None:
+    r"""Find the spec of a module, without importing anything.
+
+    ``importlib.util.find_spec("a.b")`` imports ``a`` to read its
+    ``__path__``. This function finds the top-level package with
+    ``find_spec`` (which imports nothing) and each next part in the
+    directories of the previous one, so a dotted name such as
+    ``company.package`` does not run the code of ``company``.
+
+    Args:
+        name: The dotted name of the package or of the module.
+
+    Returns:
+        The spec, or ``None`` if the module cannot be found.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._discover import find_spec
+    >>> find_spec("invoke_tasklib.config").name
+    'invoke_tasklib.config'
+    >>> find_spec("invoke_tasklib.no_such_module") is None
+    True
+
+    ```
+    """
+    first, *others = name.split(".")
+    spec = importlib.util.find_spec(first)
+    prefix = first
+    for part in others:
+        if spec is None or not spec.submodule_search_locations:
+            return None
+        prefix = f"{prefix}.{part}"
+        spec = importlib.machinery.PathFinder.find_spec(
+            prefix, list(spec.submodule_search_locations)
+        )
+    return spec
 
 
 def discover_modules(name: str) -> list[str]:
     r"""Find a package and all its modules, without importing them.
 
-    The package is located with ``importlib.util.find_spec`` and its
+    The package is located with ``find_spec`` (the parent of a dotted
+    name is not imported either) and its
     submodules are found by walking the directories of the package, so
     no module code is executed. A cyclic import is therefore reported
     when each module is imported by the caller, not as a traceback
     during the discovery.
 
     Args:
-        name: The name of the top-level package (or module).
+        name: The name of the package (or module), dotted if it is in
+            a namespace package, e.g. ``"company.package"``.
 
     Returns:
         The name of the package followed by the sorted names of all its
@@ -46,7 +92,7 @@ def discover_modules(name: str) -> list[str]:
 
     ```
     """
-    spec = importlib.util.find_spec(name)
+    spec = find_spec(name)
     if spec is None:
         msg = f"No module named '{name}'"
         raise ModuleNotFoundError(msg, name=name)
