@@ -25,6 +25,13 @@ def dist(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return dist_dir
 
 
+def _env(c: MockContext) -> dict[str, str]:
+    r"""Return the ``env`` of the last command, without its ``PATH``."""
+    env = dict(run_kwargs(c)[-1]["env"])
+    del env["PATH"]
+    return env
+
+
 _WHEEL_CHECK_CMD = (
     "uv run --isolated --no-project --with dist/mypkg-0.0.8-py3-none-any.whl -- "
     "python -c 'import mypkg'"
@@ -204,7 +211,7 @@ def test_publish_dry_run_needs_no_credentials() -> None:
 def test_publish_passes_token_through_environment() -> None:
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "pypi-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "pypi-secret"}
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -219,7 +226,7 @@ def test_publish_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "uv-secret"}
 
 
 @pytest.mark.usefixtures("dist", "oidc")
@@ -233,7 +240,7 @@ def test_publish_uses_trusted_publishing_without_token() -> None:
 def test_publish_sends_no_token_with_trusted_publishing() -> None:
     c = make_context(_CFG)
     release.publish(c, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {}
+    assert _env(c) == {}
 
 
 @pytest.mark.usefixtures("dist", "oidc", "token")
@@ -487,7 +494,7 @@ def test_latest_artifact_raises_when_missing(tmp_path: Path) -> None:
 def test_publish_to_test_pypi_reads_test_pypi_token() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -516,14 +523,14 @@ def test_publish_to_test_pypi_prefers_test_pypi_token_over_uv_publish_token(
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
+    assert _env(c) == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
 
 
 @pytest.mark.usefixtures("dist")
 def test_publish_to_test_pypi_dry_run_needs_no_token() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {}
+    assert _env(c) == {}
 
 
 def test_build_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:

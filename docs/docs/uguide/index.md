@@ -129,7 +129,7 @@ arguments and the paths are quoted, so they are never interpreted by the shell.
 ## External Tools
 
 Tasks are thin wrappers around external command-line tools. Each is expected to be available on
-`PATH` (or installed via [`env.install`](env.md)/[`env.create-venv`](env.md)):
+`PATH` or next to the Python interpreter that runs `invoke` (or installed via [`env.install`](env.md)/[`env.create-venv`](env.md)):
 
 | Tool                                                              | Used by                                                         |
 | ----------------------------------------------------------------- | --------------------------------------------------------------- |

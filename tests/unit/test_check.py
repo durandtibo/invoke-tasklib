@@ -240,10 +240,15 @@ def test_all_keep_going_prints_the_reason_of_the_failure(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     c = _context({"tasks": "lint"})
-    c.run = Mock(side_effect=Exit("'ruff' was not found on the PATH."))
+    c.run = Mock(
+        side_effect=Exit("'ruff' was not found on the PATH or next to the Python interpreter.")
+    )
     with pytest.raises(Exit, match=r"failed"):
         check.all_(c, keep_going=True)
-    assert "   'ruff' was not found on the PATH.\n" in capsys.readouterr().err
+    assert (
+        "   'ruff' was not found on the PATH or next to the Python interpreter.\n"
+        in capsys.readouterr().err
+    )
 
 
 def test_all_keep_going_prints_the_reason_after_the_step_name(
@@ -288,11 +293,14 @@ def test_all_missing_tools_are_all_listed(monkeypatch: pytest.MonkeyPatch) -> No
         check.all_(c)
     assert str(info.value) == (
         "3 tool(s) missing for the selected steps:\n"
-        "  'docformatter' was not found on the PATH. Install it with the 'dev' group: "
+        "  'docformatter' was not found on the PATH or next to the "
+        "Python interpreter. Install it with the 'dev' group: "
         "`uv sync --group dev`. (needed by: format-docstrings)\n"
-        "  'ty' was not found on the PATH. Install it with the 'dev' group: "
+        "  'ty' was not found on the PATH or next to the "
+        "Python interpreter. Install it with the 'dev' group: "
         "`uv sync --group dev`. (needed by: types)\n"
-        "  'codespell' was not found on the PATH. Add codespell to the dependencies of the "
+        "  'codespell' was not found on the PATH or next to the "
+        "Python interpreter. Add codespell to the dependencies of the "
         "project, e.g. `uv add --dev codespell`. (needed by: spelling)"
     )
 
@@ -338,7 +346,8 @@ def test_all_keep_going_prints_the_missing_tool_of_a_step(
         check.all_(_context({"tasks": "types"}), keep_going=True)
     assert capsys.readouterr().err == (
         "❌ Step failed: types\n"
-        "   'ty' was not found on the PATH. Install it with the 'dev' group: "
+        "   'ty' was not found on the PATH or next to the "
+        "Python interpreter. Install it with the 'dev' group: "
         "`uv sync --group dev`.\n"
     )
 
@@ -388,7 +397,8 @@ def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
         (
             "ty",
             (
-                "'ty' was not found on the PATH. "
+                "'ty' was not found on the PATH or next to the "
+                "Python interpreter. "
                 "Install it with the 'dev' group: `uv sync --group dev`."
             ),
         )
