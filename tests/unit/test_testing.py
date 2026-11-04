@@ -204,6 +204,26 @@ def test_all_without_coverage() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests"]
 
 
+@pytest.mark.usefixtures("empty_project")
+def test_all_without_tests_directory_runs_nothing() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.all_(c)
+    assert commands(c) == []
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_all_without_tests_directory_says_it_skips(capsys: pytest.CaptureFixture[str]) -> None:
+    test_tasks.all_(make_context({"package": {"name": "mypkg"}}))
+    assert capsys.readouterr().out == "⏭️  No 'tests' directory: skipping all tests\n"
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_all_with_paths_runs_even_without_tests_directory() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.all_(c, paths="other")
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 other"]
+
+
 def test_all_with_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.all_(c, cov=True)
