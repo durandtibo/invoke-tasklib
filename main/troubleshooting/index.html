@@ -1003,10 +1003,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#docpublish-latest-fails-with-modulenotfounderror-feu" class="md-nav__link">
+  <a href="#docpublish-latest-fails-with-no-version-tag-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        doc.publish-latest fails with ModuleNotFoundError: feu
+        doc.publish-latest fails with No version tag found
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docpublish-latest-fails-with-refusing-to-publish-as-latest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        doc.publish-latest fails with Refusing to publish ... as latest
       
     </span>
   </a>
@@ -1684,10 +1695,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#docpublish-latest-fails-with-modulenotfounderror-feu" class="md-nav__link">
+  <a href="#docpublish-latest-fails-with-no-version-tag-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        doc.publish-latest fails with ModuleNotFoundError: feu
+        doc.publish-latest fails with No version tag found
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docpublish-latest-fails-with-refusing-to-publish-as-latest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        doc.publish-latest fails with Refusing to publish ... as latest
       
     </span>
   </a>
@@ -1799,18 +1821,20 @@ renamed the import or wrapped it, Invoke won't find it.</p>
 <p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Install
 the missing tool, either directly or via your project's dependency groups:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install<span class="w">                  </span><span class="c1"># installs dev deps: ruff, ty, pytest, ...</span>
-invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs<span class="w">  </span><span class="c1"># additionally installs mike, feu</span>
+invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs<span class="w">  </span><span class="c1"># additionally installs mike</span>
 </code></pre></div>
 <p><code>shellcheck</code> and <code>shfmt</code> are not Python packages; install them with your system package manager
 (e.g. <code>brew install shellcheck shfmt</code> on macOS) — see the
 <a href="../uguide/format/">Format</a> page. The full external-tool matrix is in the
 <a href="../uguide/#external-tools">User Guide overview</a>.</p>
-<h2 id="docpublish-latest-fails-with-modulenotfounderror-feu"><code>doc.publish-latest</code> fails with <code>ModuleNotFoundError: feu</code><a class="headerlink" href="#docpublish-latest-fails-with-modulenotfounderror-feu" title="Permanent link">&para;</a></h2>
-<p><code>doc.publish-latest</code> needs the <code>feu</code> package to read the last version tag. Install documentation
-dependencies first, or skip the tag lookup by passing the version:</p>
-<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs
-invoke<span class="w"> </span>doc.publish-latest<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.2
+<h2 id="docpublish-latest-fails-with-no-version-tag-found"><code>doc.publish-latest</code> fails with <code>No version tag found</code><a class="headerlink" href="#docpublish-latest-fails-with-no-version-tag-found" title="Permanent link">&para;</a></h2>
+<p><code>doc.publish-latest</code> reads the last git tag that looks like <code>v1.2.3</code>. Create a release tag (and
+fetch the tags in CI: <code>git fetch --tags</code>), or skip the tag lookup by passing the version:</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>doc.publish-latest<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.2
 </code></pre></div>
+<h2 id="docpublish-latest-fails-with-refusing-to-publish-as-latest"><code>doc.publish-latest</code> fails with <code>Refusing to publish ... as latest</code><a class="headerlink" href="#docpublish-latest-fails-with-refusing-to-publish-as-latest" title="Permanent link">&para;</a></h2>
+<p>A newer version of the docs is already published, so publishing this one would move <code>latest</code>
+backwards. Pass <code>--force</code> if that is what you want.</p>
 <p>See <a href="../uguide/doc/">Doc</a>.</p>
 <h2 id="releasepypi-fails-to-authenticate"><code>release.pypi</code> fails to authenticate<a class="headerlink" href="#releasepypi-fails-to-authenticate" title="Permanent link">&para;</a></h2>
 <p><code>release.pypi</code> passes the <code>PYPI_TOKEN</code> (or <code>UV_PUBLISH_TOKEN</code>) environment variable to

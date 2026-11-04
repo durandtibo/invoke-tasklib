@@ -1687,29 +1687,25 @@ versioned documentation with <a href="https://github.com/jimporter/mike"><code>m
 <h2 id="publishing-development-docs">Publishing Development Docs<a class="headerlink" href="#publishing-development-docs" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>doc.publish-dev
 </code></pre></div>
-<p>Deletes any previously published <code>main</code> version (if it exists) and deploys the current docs under
-the <code>main</code> version with the <code>dev</code> alias, then pushes to the configured remote (typically
-<code>gh-pages</code>).</p>
+<p>Deploys the current docs under the <code>main</code> version with the <code>dev</code> alias (<code>mike deploy</code> replaces an
+existing <code>main</code> version, so it is not deleted first), then pushes to the configured remote
+(typically <code>gh-pages</code>). Pass <code>--no-push</code> to only commit the docs branch locally.</p>
 <h2 id="publishing-latest-stable-docs">Publishing Latest (Stable) Docs<a class="headerlink" href="#publishing-latest-stable-docs" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>doc.publish-latest
 </code></pre></div>
-<p>Determines the version to publish from the most recent git version tag (via
-<a href="https://github.com/durandtibo/feu"><code>feu.local_git.get_last_version_tag_name</code></a>), truncated to
-<code>&lt;major&gt;.&lt;minor&gt;</code> (e.g. <code>1.2</code>). It then deploys the current docs under that tag with the <code>latest</code>
-alias, and sets <code>latest</code> as the default version shown to visitors.</p>
-<p>To publish a specific version without looking at the git tags, pass it explicitly (this does not
-need <code>feu</code>):</p>
+<p>Determines the version to publish from the most recent git version tag (a tag like <code>v1.2.3</code>, read
+with <code>git tag --list 'v[0-9]*' --sort=-v:refname</code>), truncated to <code>&lt;major&gt;.&lt;minor&gt;</code> (e.g. <code>1.2</code>). It
+then deploys the current docs under that tag with the <code>latest</code> alias, and sets <code>latest</code> as the
+default version shown to visitors. Pass <code>--no-push</code> to only commit the docs branch locally.</p>
+<p>To publish a specific version without looking at the git tags, pass it explicitly:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>doc.publish-latest<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.2
 </code></pre></div>
 <p>The task fails if there is no version tag and no <code>--version</code>, because publishing under a made-up
 version would be a setup error. Pre-release versions (<code>1.2.0rc1</code>, <code>1.2.0a1</code>, <code>1.2.0.dev1</code>, ...) are
 skipped, so they never become <code>latest</code>.</p>
-<!-- prettier-ignore -->
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Reading the git tag requires the <code>feu</code> package. Install documentation dependencies with
-<code>invoke env.install --groups dev,docs</code> before running it, or pass <code>--version</code>.</p>
-</div>
+<p>The task also refuses to move <code>latest</code> backwards: if a newer <code>&lt;major&gt;.&lt;minor&gt;</code> is already published
+(<code>mike list --json</code>), for example when releasing a <code>1.1.5</code> backport after <code>1.2.0</code>, it fails with
+<code>Refusing to publish 1.1 as latest</code>. Pass <code>--force</code> to publish the older version anyway.</p>
 <h2 id="local-preview">Local Preview<a class="headerlink" href="#local-preview" title="Permanent link">&para;</a></h2>
 <p>The publishing tasks are meant for CI (they <code>--push</code> to the remote). To check and preview docs
 locally:</p>
@@ -1723,7 +1719,7 @@ with live reload. Both use <code>paths.docs_config</code> and need the <code>doc
 <ul>
 <li><a href="../config/">Config</a>: where <code>paths.docs_config</code> comes from.</li>
 <li><a href="../../refs/doc/"><code>invoke_tasklib.doc</code> reference</a></li>
-<li><a href="../../troubleshooting/">Troubleshooting</a>: fixes for missing <code>feu</code> errors.</li>
+<li><a href="../../troubleshooting/">Troubleshooting</a>: fixes for missing tools.</li>
 </ul>
 
 

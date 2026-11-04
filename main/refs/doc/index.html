@@ -1747,12 +1747,63 @@ the task. It does not publish anything.</p>
 
 
 <a href="#invoke_tasklib.doc.publish_dev" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">publish_dev</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">publish_dev</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">push</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Publish development (e.g. unstable) docs.</p>
+<p>The <code>main</code> version is deployed with the <code>dev</code> alias. An existing
+<code>main</code> version is replaced by <code>mike deploy</code>, so it is not
+deleted first (a failed deployment would otherwise remove it).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>push</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, the docs branch is pushed. Use <code>--no-push</code> to
+commit it locally only.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -1768,7 +1819,10 @@ the task. It does not publish anything.</p>
 
 <a href="#invoke_tasklib.doc.publish_latest" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">publish_latest</span><span class="p">(</span>
-    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">push</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -1777,7 +1831,10 @@ the task. It does not publish anything.</p>
         <p>Publish latest (e.g. stable) docs.</p>
 <p>The docs are published as <code>&lt;major&gt;.&lt;minor&gt;</code> of the version with the
 <code>latest</code> alias, and <code>latest</code> is set as the default version.
-Pre-release versions (<code>1.2.0rc1</code>) are skipped.</p>
+Pre-release versions (<code>1.2.0rc1</code>) are skipped. The task refuses to
+publish a version that is older than one that is already published
+(for example a <code>1.1.5</code> backport after <code>1.2.0</code>), because it would
+move <code>latest</code> backwards, unless <code>force</code> is set.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1817,12 +1874,44 @@ Pre-release versions (<code>1.2.0rc1</code>) are skipped.</p>
             <td>
               <div class="doc-md-description">
                 <p>The version to publish, e.g. <code>"1.2"</code> or <code>"1.2.3"</code>.
-Defaults to the last git version tag, which requires the
-<code>feu</code> package.</p>
+Defaults to the last git version tag (<code>v1.2.3</code>).</p>
               </div>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>force</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, publish even if a newer version is published.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>push</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, the docs branch is pushed. Use <code>--no-push</code> to
+commit it locally only.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
             </td>
           </tr>
       </tbody>
@@ -1845,7 +1934,8 @@ Defaults to the last git version tag, which requires the
             <td>
               <div class="doc-md-description">
                 <p>If no version is given and no version tag exists, or if the
-version cannot be parsed.</p>
+version cannot be parsed, or if a newer version is already
+published and <code>force</code> is False.</p>
               </div>
             </td>
           </tr>
