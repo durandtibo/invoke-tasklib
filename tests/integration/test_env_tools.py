@@ -5,7 +5,7 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING
 
-from invoke_tasklib.runner import find_tool
+from invoke_tasklib.tools import find_tool
 
 if TYPE_CHECKING:
     from pathlib import Path

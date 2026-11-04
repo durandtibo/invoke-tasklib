@@ -40,7 +40,11 @@ MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
 }
 r"""Directories whose markdown files are never checked."""
 
+APPEND_HELP = (
+    "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
+)
 PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
+APPEND_PYTEST_HELP = {**PYTEST_HELP, "append": APPEND_HELP}
 
 
 def _directory_exists(c: Context, path: str, what: str) -> bool:
@@ -234,7 +238,7 @@ def _run_pytest(
         if options.timeout:
             cmd.append(f"--timeout {timeout}")
         if cov:
-            cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
+            cmd.extend(f"--cov-report {shlex.quote(report)}" for report in options.cov_reports)
             if append:
                 cmd.append("--cov-append")
             cmd.append(f"--cov={cfg.package.import_name}")
@@ -316,9 +320,14 @@ def unit(
     )
 
 
-@task(help=PYTEST_HELP)
+@task(help=APPEND_PYTEST_HELP)
 def integration(
-    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
+    c: Context,
+    *,
+    cov: bool = False,
+    append: bool = False,
+    args: str | None = None,
+    paths: str | None = None,
 ) -> None:
     r"""Run integration tests.
 
@@ -327,8 +336,11 @@ def integration(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports, appended to the
-            existing coverage data. Default is False.
+        cov: If True, generate coverage reports. Default is False.
+        append: If True and ``cov`` is True, add to the coverage data
+            of the previous runs (``--cov-append``) instead of
+            replacing it, e.g. after ``test.unit --cov``. Default is
+            False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests of
             this scope.
@@ -343,14 +355,19 @@ def integration(
         cov=cov,
         args=args,
         paths=paths,
-        append=True,
+        append=append,
         skip_missing=True,
     )
 
 
-@task(help=PYTEST_HELP)
+@task(help=APPEND_PYTEST_HELP)
 def functional(
-    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
+    c: Context,
+    *,
+    cov: bool = False,
+    append: bool = False,
+    args: str | None = None,
+    paths: str | None = None,
 ) -> None:
     r"""Run functional tests.
 
@@ -359,8 +376,11 @@ def functional(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports, appended to the
-            existing coverage data. Default is False.
+        cov: If True, generate coverage reports. Default is False.
+        append: If True and ``cov`` is True, add to the coverage data
+            of the previous runs (``--cov-append``) instead of
+            replacing it, e.g. after ``test.unit --cov``. Default is
+            False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests of
             this scope.
@@ -375,7 +395,7 @@ def functional(
         cov=cov,
         args=args,
         paths=paths,
-        append=True,
+        append=append,
         skip_missing=True,
     )
 

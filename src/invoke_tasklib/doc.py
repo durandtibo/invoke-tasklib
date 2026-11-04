@@ -13,13 +13,15 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say, step
-from invoke_tasklib.runner import ARGS_HELP, build_command, run
+from invoke_tasklib.runner import ARGS_HELP, build_command, capture, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
 
 _VERSION_PATTERN = re.compile(r"v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.\d+)*(?P<rest>.*)")
-_PRERELEASE_PATTERN = re.compile(r"[-._]?(a|b|c|rc|alpha|beta|pre|preview|dev)\d*", re.IGNORECASE)
+_PRERELEASE_PATTERN = re.compile(
+    r"[-._]?(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?![a-z])", re.IGNORECASE
+)
 
 
 def _parse_release(version: str) -> tuple[str, bool]:
@@ -32,7 +34,9 @@ def _parse_release(version: str) -> tuple[str, bool]:
     Returns:
         A tuple ``(tag, is_prerelease)`` where ``tag`` is
         ``<major>.<minor>`` and ``is_prerelease`` is ``True`` for alpha,
-        beta, release candidate and development versions.
+        beta, release candidate and development versions. A suffix
+        that only starts like a pre-release keyword (``-backport``,
+        ``-cool``, ``-alpine``) is not a pre-release.
 
     Raises:
         ValueError: If the version does not start with
@@ -46,6 +50,8 @@ def _parse_release(version: str) -> tuple[str, bool]:
     ('1.2', False)
     >>> _parse_release("1.2.0rc1")
     ('1.2', True)
+    >>> _parse_release("1.2.0-backport")
+    ('1.2', False)
 
     ```
     """
@@ -196,7 +202,7 @@ def _last_version_tag(c: Context) -> str | None:
 
     ```
     """
-    result = run(c, "git tag --list 'v[0-9]*'", hide=True, pty=False)
+    result = capture(c, "git tag --list 'v[0-9]*'")
     releases = [
         tag
         for tag in result.stdout.split()
@@ -277,7 +283,7 @@ def _published_releases(c: Context, docs_config: str) -> list[tuple[int, int]]:
         UnexpectedExit: If ``mike`` fails.
     """
     command = f"mike list --config-file {shlex.quote(docs_config)} --json"
-    result = run(c, command, hide=True, pty=False)
+    result = capture(c, command)
     return _parse_releases(result.stdout, command)
 
 

@@ -13,7 +13,14 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say
-from invoke_tasklib.runner import ARGS_HELP, build_command, run
+from invoke_tasklib.runner import (
+    ARGS_HELP,
+    build_command,
+    capture,
+    in_ci,
+    in_github_actions,
+    run,
+)
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -192,7 +199,7 @@ def _head_tag(c: Context) -> str | None:
 
     ```
     """
-    result = run(c, "git describe --exact-match --tags HEAD", hide=True, warn=True, echo=False)
+    result = capture(c, "git describe --exact-match --tags HEAD", warn=True)
     return result.stdout.strip() if result.ok and result.stdout.strip() else None
 
 
@@ -224,7 +231,7 @@ def _check_release_state(c: Context) -> None:
 
     ```
     """
-    status = run(c, "git status --porcelain", hide=True, echo=False)
+    status = capture(c, "git status --porcelain")
     if status.stdout.strip():
         msg = "The working tree is not clean: commit or stash the changes before publishing"
         raise Exit(msg, code=1)
@@ -257,34 +264,6 @@ def _confirm(target: str) -> None:
     if answer.strip().lower() not in {"y", "yes"}:
         msg = "Publication cancelled"
         raise Exit(msg, code=1)
-
-
-def _in_ci() -> bool:
-    r"""Tell whether the ``CI`` environment variable turns CI mode on.
-
-    Any value is accepted except an empty string, ``0`` and ``false``
-    (case-insensitive), so ``CI=false`` does not count as CI.
-
-    Returns:
-        True if ``CI`` is set to a value other than ``""``, ``"0"``
-            and ``"false"``.
-
-    Example usage:
-
-    ```pycon
-    >>> import os
-    >>> from unittest.mock import patch
-    >>> from invoke_tasklib.release import _in_ci
-    >>> with patch.dict(os.environ, {"CI": "true"}):
-    ...     _in_ci()
-    True
-    >>> with patch.dict(os.environ, {"CI": "false"}):
-    ...     _in_ci()
-    False
-
-    ```
-    """
-    return os.environ.get("CI", "").strip().lower() not in {"", "0", "false"}
 
 
 @task(
@@ -342,9 +321,7 @@ def publish(
     token = os.environ.get(token_name)
     if not test_pypi:
         token = token or os.environ.get("UV_PUBLISH_TOKEN")
-    trusted = os.environ.get("GITHUB_ACTIONS") == "true" and bool(
-        os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
-    )
+    trusted = in_github_actions() and bool(os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL"))
     if not (token or trusted or dry_run):
         alternative = "" if test_pypi else " (or UV_PUBLISH_TOKEN)"
         msg = (
@@ -354,7 +331,7 @@ def publish(
         raise Exit(msg, code=1)
     if not skip_checks:
         _check_release_state(c)
-    if not (yes or dry_run or _in_ci()):
+    if not (yes or dry_run or in_ci()):
         _confirm(target)
     build(c)
     cmd = ["uv publish"]

@@ -543,27 +543,6 @@ def test_publish_reports_a_failure_of_the_upload(capsys: pytest.CaptureFixture[s
     assert "❌ Failed: Publishing" in capsys.readouterr().err
 
 
-############################
-#     Tests for _in_ci     #
-############################
-
-
-@pytest.mark.parametrize("value", ["1", "true", "True", "yes", "anything"])
-def test_in_ci_true(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CI", value)
-    assert release._in_ci() is True
-
-
-@pytest.mark.parametrize("value", ["", "0", "false", "FALSE", "False", " false "])
-def test_in_ci_false(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CI", value)
-    assert release._in_ci() is False
-
-
-def test_in_ci_false_when_unset() -> None:
-    assert release._in_ci() is False
-
-
 ####################################
 #     Tests for _build_targets     #
 ####################################
@@ -601,3 +580,23 @@ def test_build_targets_out_dir_without_value_is_the_default() -> None:
 
 def test_build_targets_ignores_other_options() -> None:
     assert release._build_targets("--no-sources") == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+def test_head_tag_reads_git_without_a_pty_nor_an_echo() -> None:
+    c = make_context()
+    release._head_tag(c)
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["warn"], kwargs["echo"], kwargs["pty"]) == (
+        True,
+        True,
+        False,
+        False,
+    )
+
+
+def test_check_release_state_reads_the_status_without_a_pty_nor_an_echo() -> None:
+    c = make_context()
+    with pytest.raises(Exit, match=r"HEAD is not tagged"):
+        release._check_release_state(c)
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)

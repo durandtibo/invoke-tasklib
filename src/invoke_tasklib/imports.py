@@ -11,7 +11,7 @@ from invoke.tasks import task
 from invoke_tasklib._graph import find_cycles, import_graph, read_sources
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say
-from invoke_tasklib.runner import python_executable, run
+from invoke_tasklib.runner import capture, python_executable, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -83,9 +83,7 @@ def check_isolated(c: Context) -> None:
     python = python_executable()
     with report_failure(c, "🔍 Checking that each module imports on its own..."):
         say(c, f"🔍 Discovering modules of {name}...")
-        discover = run(
-            c, f"{python} -m invoke_tasklib._discover {shlex.quote(name)}", hide=True, echo=False
-        )
+        discover = capture(c, f"{python} -m invoke_tasklib._discover {shlex.quote(name)}")
         modules = [line for line in discover.stdout.splitlines() if line]
         say(c, f"🔍 Checking {len(modules)} module(s) one at a time...")
         for module in modules:
