@@ -183,31 +183,34 @@ def test_fix_docstrings_args() -> None:
 
 @pytest.mark.usefixtures("scripts")
 def test_shell_command_searches_the_project_by_default() -> None:
-    assert formatting._shell_command("shfmt -l", None, None) == "shfmt -l -- src/run.sh top.sh"
+    assert (
+        formatting._shell_command(make_context(), "shfmt -l", None, None)
+        == "shfmt -l -- src/run.sh top.sh"
+    )
 
 
 @pytest.mark.usefixtures("no_scripts")
 def test_shell_command_without_script_is_none() -> None:
-    assert formatting._shell_command("shfmt -l", None, None) is None
+    assert formatting._shell_command(make_context(), "shfmt -l", None, None) is None
 
 
 @pytest.mark.usefixtures("no_scripts")
 def test_shell_command_with_paths_does_not_need_a_script() -> None:
-    assert formatting._shell_command("shfmt -l", None, "a.sh") == "shfmt -l -- a.sh"
+    assert formatting._shell_command(make_context(), "shfmt -l", None, "a.sh") == "shfmt -l -- a.sh"
 
 
 def test_shell_command_puts_args_before_the_separator() -> None:
-    assert formatting._shell_command("shellcheck", "-x -e SC1091", "a.sh") == (
+    assert formatting._shell_command(make_context(), "shellcheck", "-x -e SC1091", "a.sh") == (
         "shellcheck -x -e SC1091 -- a.sh"
     )
 
 
 def test_shell_command_quotes_the_paths() -> None:
-    assert formatting._shell_command("shellcheck", None, "'a b.sh' ';rm'") == (
+    assert formatting._shell_command(make_context(), "shellcheck", None, "'a b.sh' ';rm'") == (
         "shellcheck -- 'a b.sh' ';rm'"
     )
 
 
 def test_shell_command_rejects_an_unclosed_quote() -> None:
     with pytest.raises(Exit, match="--paths"):
-        formatting._shell_command("shellcheck", None, "'a.sh")
+        formatting._shell_command(make_context(), "shellcheck", None, "'a.sh")

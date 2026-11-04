@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.runner import DEFAULT_HINT, PROGRAM_HINTS, hint
+from invoke_tasklib.tools import DEFAULT_HINT, PROGRAM_HINTS, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -48,14 +48,31 @@ def test_create_venv_dry_run_runs_nothing() -> None:
     assert commands(c) == []
 
 
+def test_create_venv_dry_run_names_the_configured_python_version(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context({"package": {"name": "mypkg", "python_version": "3.11"}})
+    env.create_venv(c, dry_run=True)
+    assert capsys.readouterr().out == "🐍 Would create .venv with Python 3.11 (dry run)\n"
+
+
+def test_create_venv_says_the_configured_python_version(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    env.create_venv(make_context({"package": {"name": "mypkg", "python_version": "3.11"}}))
+    assert "🐍 Creating virtual environment with Python 3.11...\n" in capsys.readouterr().out
+
+
 def test_create_venv_dry_run_says_what_it_would_do(capsys: pytest.CaptureFixture[str]) -> None:
     env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
-    assert capsys.readouterr().out == "🐍 Would create .venv with Python 3.14 (dry run)\n"
+    assert capsys.readouterr().out == "🐍 Would create .venv (dry run)\n"
 
 
 @pytest.mark.usefixtures("_existing_venv")
 def test_create_venv_dry_run_does_not_ask() -> None:
-    env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c, dry_run=True)
+    assert commands(c) == []
 
 
 @pytest.mark.usefixtures("_existing_venv")
@@ -86,7 +103,7 @@ def test_create_venv_goes_on_after_a_confirmation(
     monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert commands(c)[0] == "uv venv --clear"
 
 
 @pytest.mark.usefixtures("_existing_venv")
@@ -94,7 +111,7 @@ def test_create_venv_yes_does_not_ask(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO(""))
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c, yes=True)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert commands(c)[0] == "uv venv --clear"
 
 
 def test_create_venv_does_not_ask_without_an_existing_venv(
@@ -103,13 +120,13 @@ def test_create_venv_does_not_ask_without_an_existing_venv(
     monkeypatch.setattr("sys.stdin", io.StringIO(""))
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert commands(c)[0] == "uv venv --clear"
 
 
-def test_create_venv_default_python_version() -> None:
+def test_create_venv_without_python_version_leaves_the_choice_to_uv() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert "--python" not in commands(c)[0]
 
 
 def test_create_venv_installs_the_configured_groups() -> None:
@@ -129,13 +146,13 @@ def test_create_venv_does_not_sync_when_the_venv_cannot_be_created() -> None:
     c.run = Mock(side_effect=Exit("no uv", code=127))
     with pytest.raises(Exit, match=r"no uv"):
         env.create_venv(c)
-    assert commands(c) == ["uv venv --python 3.14 --clear"]
+    assert commands(c) == ["uv venv --clear"]
 
 
 def test_create_venv_says_what_it_does(capsys: pytest.CaptureFixture[str]) -> None:
     env.create_venv(make_context({"package": {"name": "mypkg"}}))
     assert capsys.readouterr().out == (
-        "🐍 Creating virtual environment with Python 3.14...\n"
+        "🐍 Creating virtual environment...\n"
         "📦 Installing project dependencies...\n"
         "✅ Installation complete\n"
         "✅ Virtual environment created successfully\n"
@@ -424,18 +441,26 @@ def test_check_tools_does_not_run_any_command(monkeypatch: pytest.MonkeyPatch) -
     assert commands(c) == []
 
 
-def test_check_tools_does_not_need_the_config(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_tools_does_not_need_the_config(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
     env.check_tools(make_context())
+    assert "✅ All the 18 tools are available\n" in capsys.readouterr().out
 
 
 def test_every_program_with_a_hint_is_checked() -> None:
     assert set(PROGRAM_HINTS) <= set(env.TOOL_PROGRAMS)
 
 
-@pytest.mark.parametrize("name", [*env.TOOL_PROGRAMS, *env.TOOL_MODULES])
-def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
+@pytest.mark.parametrize("name", env.TOOL_PROGRAMS)
+def test_every_checked_program_has_an_explicit_hint(name: str) -> None:
     assert hint(name) != DEFAULT_HINT
+
+
+@pytest.mark.parametrize("name", env.TOOL_MODULES)
+def test_every_checked_module_has_an_explicit_hint(name: str) -> None:
+    assert hint(name, module=True) != DEFAULT_HINT
 
 
 def test_install_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:

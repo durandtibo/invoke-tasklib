@@ -72,30 +72,47 @@ same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, excep
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
-Five small modules support the task modules:
+Seven small modules support the task modules:
 
 - `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
-  the program is on the `PATH` (with a hint per program when it is not), echoes the command, and
-  uses a pty only on a terminal. `build_command` builds a command line and quotes the arguments, and
+  the program is on the `PATH` (with `tools.check_program`), echoes the command, and
+  uses a pty only on a terminal. `capture(c, command)` is `run` for a command whose output the task
+  reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
+  `in_ci()` and `in_github_actions()` are the only readers of `CI` and `GITHUB_ACTIONS`.
+  `build_command` builds a command line and quotes the arguments, and
   `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options.
+- `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
+  a module up for the running interpreter, `check_program` checks the first word of a command (and
+  the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
+  `not_found_message` say how to install a tool (`PROGRAM_HINTS`, `PROGRAM_GROUPS` and
+  `MODULE_GROUPS`).
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.
 - `_steps.py`: the step runner shared by `check.all` and `fix.all`: the selection of the steps
   (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
   `--keep-going` mode and the final summary of the failures.
+- `_files.py`: `find_files(root, suffix, excluded)` finds the files with a suffix by a walk in
+  Python, without `find` or `xargs`, and skips the `EXCLUDED_DIRS` at any depth. It is used by the
+  format and test tasks that work on shell scripts and markdown files.
 - `_graph.py`: the static import graph of a package (built with `ast`, without importing
   anything) and its cycles. It is used by `imports.check-cycles`.
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
   subprocess by `imports.check-isolated`.
 
 `config.EXCLUDED_DIRS` lists the directories that the tasks that walk the file tree (`clean`,
-`format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...).
+`format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...). The format and
+test tasks find their files with `_files.project_files`: in a git work tree they ask
+`git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and there is no
+list of directories to maintain (the `EXCLUDED_DIRS` are still left out); outside a work tree they
+walk the tree and skip the excluded directories. `clean` keeps its own walk, because the
+`__pycache__` directories it removes are ignored by git.
 
 ### Adding a step to `check.all` or `fix.all`
 
 A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the programs it looks up on the
-`PATH`, the Python modules it imports). To add one:
+`PATH`, the Python modules it imports). `modules` is a tuple, or a function of the config that
+returns one, for a step whose modules depend on an option (`check._unit_modules`). To add one:
 
 1. Write the task in its module, and add `"name": Step(task, programs=..., modules=...)` to
    `check.STEPS` (or `fix.STEPS`).
@@ -103,9 +120,11 @@ A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the progra
    import the task modules, and a test checks that the names agree with `STEPS`.
 3. Add the programs and modules to `TOOL_PROGRAMS` and `TOOL_MODULES` of `env.py` (a test checks
    that every tool of `STEPS` is listed), and their install hints to `PROGRAM_HINTS` or
-   `PROGRAM_GROUPS` of `runner.py` (a test checks that too).
-4. To run the step by default, add it to the default of `check.tasks` (or `fix.tasks`) in
-   `config/_schema.py`; update the tables of the user guide (`uguide/check.md`, `uguide/fix.md`).
+   `PROGRAM_GROUPS` (or `MODULE_GROUPS` for a module) of `tools.py` (a test checks that too).
+4. To run the step by default, put it among the first steps of `CHECK_STEPS` (or `FIX_STEPS`) and
+   extend `DEFAULT_CHECK_STEPS` (or `DEFAULT_FIX_STEPS`) in `config/_constants.py`, which derive the
+   default of `check.tasks` (or `fix.tasks`) in `config/_schema.py`; update the tables of the user
+   guide (`uguide/check.md`, `uguide/fix.md`).
 
 ### 3. The Namespace
 
@@ -137,7 +156,7 @@ load_config(c) resolves package.name and paths.unit_tests
     ↓
 Task builds the pytest command line with build_command (quoted)
     ↓
-runner.run(c, cmd) checks the program, echoes the command and
+runner.run(c, cmd) checks the program (tools.check_program), echoes the command and
 executes it with c.run (pty only on a terminal)
 ```
 
@@ -151,7 +170,7 @@ guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.
 
 **Trade-off**: Every task pays the (cheap) cost of re-resolving config on each call, rather than
 resolving it once. This is negligible since `load_config` does no I/O beyond reading `c.config` and, for the defaults
-that come from the project, two small files (`.python-version` and `pyproject.toml`).
+that come from the project, whether the source directory exists.
 
 ### Why `check_<target>`/`fix_<target>` Naming?
 

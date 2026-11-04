@@ -7,15 +7,15 @@ import sys
 import pytest
 from invoke.exceptions import Exit
 
-from invoke_tasklib.runner import check_program
+from invoke_tasklib.tools import check_program
 
 
-def test_check_program_missing_program_of_a_pipeline_exits_with_its_hint(
+def test_check_program_missing_program_exits_with_its_hint(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("PATH", "/usr/bin:/bin")
     with pytest.raises(Exit, match=r"'no-such-shellcheck' was not found on the PATH"):
-        check_program("find . -name '*.sh' -print0 | xargs -0 -r no-such-shellcheck --")
+        check_program("no-such-shellcheck --version")
 
 
 def test_check_program_missing_module_of_the_running_interpreter_exits() -> None:

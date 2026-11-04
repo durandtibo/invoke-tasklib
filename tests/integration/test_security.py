@@ -13,7 +13,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _UV = """#!/bin/sh
-# fake `uv export ... -o FILE`: write the file named after -o
+# fake `uv export ... -o FILE`: record the arguments, write the file named after -o
+echo "$@" > "$FAKE_AUDIT_LOG.args"
 while [ "$1" != "-o" ]; do shift; done
 echo "demo==1.0" > "$2"
 """
@@ -41,3 +42,9 @@ def fake_uv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_audit_gives_the_exported_requirements_to_the_audit(fake_uv: Path) -> None:
     security.audit(_SubprocessContext(config=Config()))
     assert fake_uv.read_text() == "demo==1.0\n"
+
+
+def test_audit_exports_the_extras_and_the_groups(fake_uv: Path) -> None:
+    security.audit(_SubprocessContext(config=Config()))
+    args = fake_uv.with_name("audit.log.args").read_text().split()
+    assert ("--all-extras" in args, "--all-groups" in args) == (True, True)

@@ -9,6 +9,7 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib.config import SCHEMA, get_config, load_config
+from invoke_tasklib.config._resolve import _check_project_root
 from invoke_tasklib.config._schema import _defaults
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ def test_get_config_requires_package_name() -> None:
 def test_get_config_defaults() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}}))
     assert asdict(cfg) == {
-        "package": {"name": "mypkg", "import_name": "mypkg", "python_version": "3.14"},
+        "package": {"name": "mypkg", "import_name": "mypkg", "python_version": None},
         "paths": {
             "src": "src/mypkg",
             "tests": "tests",
@@ -330,14 +331,18 @@ def test_get_config_rejects_non_string_python_version(version: object) -> None:
         get_config(c)
 
 
-def test_get_config_python_version_comes_from_the_python_version_file(tmp_path: Path) -> None:
+def test_get_config_python_version_is_none_by_default() -> None:
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version is None
+
+
+def test_get_config_python_version_ignores_the_python_version_file(tmp_path: Path) -> None:
     (tmp_path / ".python-version").write_text("3.12\n")
-    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version == "3.12"
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version is None
 
 
-def test_get_config_python_version_comes_from_requires_python(tmp_path: Path) -> None:
+def test_get_config_python_version_ignores_requires_python(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.11"\n')
-    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version == "3.11"
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version is None
 
 
 def test_get_config_python_version_of_the_config_wins(tmp_path: Path) -> None:
@@ -536,6 +541,82 @@ def test_get_config_rejects_an_unknown_fix_key() -> None:
     c = _context({"package": {"name": "mypkg"}, "fix": {"task": "lint"}})
     with pytest.raises(ValueError, match=r"Unknown key 'task' \(did you mean 'tasks'"):
         get_config(c)
+
+
+#####################################
+#     Tests for _check_project_root #
+#####################################
+
+
+def _located_context(location: Path | None, name: str = "mypkg") -> Context:
+    config = Config(
+        overrides={"tasklib": {"package": {"name": name}}},
+        project_location=location,
+    )
+    return Context(config=config)
+
+
+def test_check_project_root_accepts_the_directory_of_tasks_py(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert _check_project_root(_located_context(tmp_path)) is None
+
+
+def test_check_project_root_accepts_a_context_without_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert _check_project_root(_located_context(None)) is None
+
+
+def test_check_project_root_rejects_a_subdirectory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    with pytest.raises(ValueError, match=r"inv must run from the project root, where tasks\.py is"):
+        _check_project_root(_located_context(tmp_path))
+
+
+def test_check_project_root_names_both_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    root = tmp_path.resolve()
+    with pytest.raises(
+        ValueError, match=rf"{root}.*\(the current directory is {root}/sub\)\. Run 'cd {root}'"
+    ):
+        _check_project_root(_located_context(tmp_path))
+
+
+def test_check_project_root_follows_symlinks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "real").mkdir()
+    (tmp_path / "link").symlink_to(tmp_path / "real", target_is_directory=True)
+    monkeypatch.chdir(tmp_path / "link")
+    assert _check_project_root(_located_context(tmp_path / "real")) is None
+
+
+def test_load_config_exits_from_a_subdirectory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    with pytest.raises(Exit, match=r"inv must run from the project root"):
+        load_config(_located_context(tmp_path))
+
+
+def test_load_config_exit_code_is_2_from_a_subdirectory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    with pytest.raises(Exit) as info:
+        load_config(_located_context(tmp_path))
+    assert info.value.code == 2
 
 
 def test_get_config_ignores_the_none_registered_for_a_boolean() -> None:

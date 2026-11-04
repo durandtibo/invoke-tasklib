@@ -12,13 +12,6 @@ PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
 r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 ``3.10.4``)."""
 
-DEFAULT_PYTHON_VERSION = "3.14"
-r"""The Python version used when neither ``.python-version`` nor the
-``requires-python`` of ``pyproject.toml`` gives one."""
-
-REQUIRES_PYTHON_LOWER_BOUND = re.compile(r"(?:>=|~=|==)\s*(\d+\.\d+)")
-
-
 COV_REPORTS: frozenset[str] = frozenset(
     {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
 )
@@ -40,6 +33,11 @@ CHECK_STEPS: tuple[str, ...] = (
 )
 r"""The steps that ``check.all`` can run (``tasklib.check.tasks``)."""
 
+DEFAULT_CHECK_STEPS: tuple[str, ...] = CHECK_STEPS[:6]
+r"""The steps that ``check.all`` runs by default: the first six of
+``CHECK_STEPS`` (the formatting, the lint, the types, the imports and
+the unit tests)."""
+
 FIX_STEPS: tuple[str, ...] = (
     "lint",
     "format-python",
@@ -51,6 +49,10 @@ r"""The steps that ``fix.all`` can run (``tasklib.fix.tasks``).
 They are listed in the order that converges: the lint fixes come before
 the formatting, which has the last word on the layout.
 """
+
+DEFAULT_FIX_STEPS: tuple[str, ...] = FIX_STEPS[:3]
+r"""The steps that ``fix.all`` runs by default: the first three of
+``FIX_STEPS`` (everything but ``shell``)."""
 
 TEST_SCOPES: dict[str, str] = {
     "unit_tests": "unit",

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib._files import find_files
+from invoke_tasklib._files import project_files
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import report_failure, say, step
 from invoke_tasklib.runner import (
@@ -40,7 +40,11 @@ MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
 }
 r"""Directories whose markdown files are never checked."""
 
+APPEND_HELP = (
+    "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
+)
 PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
+APPEND_PYTEST_HELP = {**PYTEST_HELP, "append": APPEND_HELP}
 
 
 def _directory_exists(c: Context, path: str, what: str) -> bool:
@@ -100,14 +104,17 @@ def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-def _find_markdown_files(root: Path) -> list[Path]:
+def _find_markdown_files(c: Context, root: Path) -> list[Path]:
     r"""Find the markdown files under a root directory.
 
-    The directories in ``MARKDOWN_EXCLUDED_DIRS`` (``.venv``, ``.git``,
-    ``site``, ...) are not walked into, so a virtual environment or a
-    build directory is never traversed.
+    In a git work tree the files are the ones that git lists (the
+    rules of ``.gitignore`` are followed), see ``project_files``.
+    Otherwise the directories in ``MARKDOWN_EXCLUDED_DIRS`` (``.venv``,
+    ``.git``, ``site``, ...) are not walked into, so a virtual
+    environment or a build directory is never traversed.
 
     Args:
+        c: The invoke context.
         root: The directory to search.
 
     Returns:
@@ -118,20 +125,23 @@ def _find_markdown_files(root: Path) -> list[Path]:
     ```pycon
     >>> import tempfile
     >>> from pathlib import Path
+    >>> from invoke.config import Config
+    >>> from invoke.context import MockContext
     >>> from invoke_tasklib.testing import _find_markdown_files
+    >>> c = MockContext(config=Config(), run=True)
     >>> with tempfile.TemporaryDirectory() as tmp:
     ...     (Path(tmp) / "docs").mkdir()
     ...     (Path(tmp) / ".venv").mkdir()
     ...     _ = (Path(tmp) / "docs" / "a.md").write_text("")
     ...     _ = (Path(tmp) / ".venv" / "b.md").write_text("")
-    ...     found = _find_markdown_files(Path(tmp))
+    ...     found = _find_markdown_files(c, Path(tmp))
     ...     [p.relative_to(tmp).as_posix() for p in found]
     ...
     ['docs/a.md']
 
     ```
     """
-    return find_files(root, ".md", MARKDOWN_EXCLUDED_DIRS)
+    return project_files(c, root, ".md", MARKDOWN_EXCLUDED_DIRS)
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -145,7 +155,7 @@ def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None =
             file of the project.
     """
     with report_failure(c, "📚 Running doctests on markdown files..."):
-        files = split_args(paths, "--paths") or [str(f) for f in _find_markdown_files(Path())]
+        files = split_args(paths, "--paths") or [str(f) for f in _find_markdown_files(c, Path())]
         say(c, f"📚 Found {len(files)} markdown files")
         if files:
             cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
@@ -234,7 +244,7 @@ def _run_pytest(
         if options.timeout:
             cmd.append(f"--timeout {timeout}")
         if cov:
-            cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
+            cmd.extend(f"--cov-report {shlex.quote(report)}" for report in options.cov_reports)
             if append:
                 cmd.append("--cov-append")
             cmd.append(f"--cov={cfg.package.import_name}")
@@ -316,9 +326,14 @@ def unit(
     )
 
 
-@task(help=PYTEST_HELP)
+@task(help=APPEND_PYTEST_HELP)
 def integration(
-    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
+    c: Context,
+    *,
+    cov: bool = False,
+    append: bool = False,
+    args: str | None = None,
+    paths: str | None = None,
 ) -> None:
     r"""Run integration tests.
 
@@ -327,8 +342,11 @@ def integration(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports, appended to the
-            existing coverage data. Default is False.
+        cov: If True, generate coverage reports. Default is False.
+        append: If True and ``cov`` is True, add to the coverage data
+            of the previous runs (``--cov-append``) instead of
+            replacing it, e.g. after ``test.unit --cov``. Default is
+            False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests of
             this scope.
@@ -343,14 +361,19 @@ def integration(
         cov=cov,
         args=args,
         paths=paths,
-        append=True,
+        append=append,
         skip_missing=True,
     )
 
 
-@task(help=PYTEST_HELP)
+@task(help=APPEND_PYTEST_HELP)
 def functional(
-    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
+    c: Context,
+    *,
+    cov: bool = False,
+    append: bool = False,
+    args: str | None = None,
+    paths: str | None = None,
 ) -> None:
     r"""Run functional tests.
 
@@ -359,8 +382,11 @@ def functional(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports, appended to the
-            existing coverage data. Default is False.
+        cov: If True, generate coverage reports. Default is False.
+        append: If True and ``cov`` is True, add to the coverage data
+            of the previous runs (``--cov-append``) instead of
+            replacing it, e.g. after ``test.unit --cov``. Default is
+            False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests of
             this scope.
@@ -375,7 +401,7 @@ def functional(
         cov=cov,
         args=args,
         paths=paths,
-        append=True,
+        append=append,
         skip_missing=True,
     )
 

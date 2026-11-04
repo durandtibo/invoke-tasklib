@@ -9,7 +9,7 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import imports
-from tests.helpers import commands, make_context
+from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -93,7 +93,6 @@ def test_check_isolated_reports_progress(capsys: pytest.CaptureFixture[str]) -> 
     assert capsys.readouterr().out == (
         "🔍 Discovering modules of mypkg...\n"
         "🔍 Checking 1 module(s) one at a time...\n"
-        "🔍 Checking: mypkg\n"
         "✅ All 1 module(s) imported on their own\n"
     )
 
@@ -261,3 +260,99 @@ def test_check_isolated_reports_a_failure(capsys: pytest.CaptureFixture[str]) ->
     with pytest.raises(Exit, match=r"boom"):
         imports.check_isolated(c)
     assert "❌ Failed: Checking that each module imports on its own" in capsys.readouterr().err
+
+
+def test_check_isolated_reads_the_modules_without_a_pty_nor_an_echo() -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
+    imports.check_isolated(c)
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)
+
+
+def _failing() -> dict[str, Result]:
+    r"""Fresh results: ``MockContext`` changes the dict it is given."""
+    return {
+        _DISCOVER_CMD: Result(stdout="mypkg\nmypkg.a\nmypkg.b\n"),
+        "/venv/bin/python -c 'import mypkg'": Result(),
+        "/venv/bin/python -c 'import mypkg.a'": Result(
+            stderr="Traceback (most recent call last):\nImportError: cannot import name 'X'\n",
+            exited=1,
+        ),
+        "/venv/bin/python -c 'import mypkg.b'": Result(stderr="SyntaxError: bad\n", exited=1),
+    }
+
+
+def test_check_isolated_exits_when_a_module_fails() -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    with pytest.raises(Exit, match=r"^2 of 3 module\(s\) failed to import on their own$"):
+        imports.check_isolated(c)
+
+
+def test_check_isolated_failure_exit_code_is_1() -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    with pytest.raises(Exit, match=r"failed to import") as info:
+        imports.check_isolated(c)
+    assert info.value.code == 1
+
+
+def test_check_isolated_tries_every_module_after_a_failure() -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    with pytest.raises(Exit, match=r"failed to import"):
+        imports.check_isolated(c)
+    assert commands(c) == [
+        _DISCOVER_CMD,
+        "/venv/bin/python -c 'import mypkg'",
+        "/venv/bin/python -c 'import mypkg.a'",
+        "/venv/bin/python -c 'import mypkg.b'",
+    ]
+
+
+def test_check_isolated_lists_the_failed_modules_with_their_error(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    with pytest.raises(Exit, match=r"failed to import"):
+        imports.check_isolated(c)
+    assert capsys.readouterr().err == (
+        "❌ mypkg.a: ImportError: cannot import name 'X'\n"
+        "❌ mypkg.b: SyntaxError: bad\n"
+        "❌ Failed: Checking that each module imports on its own\n"
+    )
+
+
+def test_check_isolated_does_not_echo_the_import_commands() -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    with pytest.raises(Exit, match=r"failed to import"):
+        imports.check_isolated(c)
+    assert [(k["hide"], k["echo"], k["pty"]) for k in run_kwargs(c)] == [(True, False, False)] * 4
+
+
+def test_check_isolated_does_not_report_success_after_a_failure(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    with pytest.raises(Exit, match=r"failed to import"):
+        imports.check_isolated(c)
+    assert "✅" not in capsys.readouterr().out
+
+
+#####################################
+#     Tests for _failure_reason     #
+#####################################
+
+
+def test_failure_reason_is_the_last_line_of_the_traceback() -> None:
+    result = Result(stderr="Traceback:\n  File x\nImportError: no module\n", exited=1)
+    assert imports._failure_reason(result) == "ImportError: no module"
+
+
+def test_failure_reason_skips_trailing_blank_lines() -> None:
+    assert imports._failure_reason(Result(stderr="Error: x\n\n  \n", exited=1)) == "Error: x"
+
+
+def test_failure_reason_without_output_is_the_exit_code() -> None:
+    assert imports._failure_reason(Result(exited=3)) == "exit code 3"
+
+
+def test_failure_reason_of_blank_output_is_the_exit_code() -> None:
+    assert imports._failure_reason(Result(stderr=" \n", exited=2)) == "exit code 2"

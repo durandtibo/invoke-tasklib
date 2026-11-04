@@ -5,15 +5,38 @@ from __future__ import annotations
 import textwrap
 from typing import TYPE_CHECKING, NamedTuple
 
-from invoke.exceptions import Exit, UnexpectedExit
+from invoke.exceptions import Exit, Failure, UnexpectedExit
 
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import find_tool, not_found_message
+from invoke_tasklib.tools import find_tool, not_found_message
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping
 
     from invoke.context import Context
+
+    from invoke_tasklib.config import TasklibConfig
+
+
+STEP_ERRORS: tuple[type[Exception], ...] = (
+    ArithmeticError,
+    AttributeError,
+    Failure,
+    ImportError,
+    LookupError,
+    OSError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+)
+r"""The errors of a step, other than ``Exit`` and ``UnexpectedExit``,
+that ``run_step`` reports as the reason of a failure.
+
+A step is a task, so it can also fail with an error of the code (a bug)
+or of the system (a missing file) or with another failure of Invoke (a
+timeout). ``KeyboardInterrupt`` and ``SystemExit`` are not listed: they
+stop the run.
+"""
 
 
 class Step(NamedTuple):
@@ -34,8 +57,37 @@ class Step(NamedTuple):
     programs: tuple[str, ...] = ()
     r"""The programs that the step runs, looked up on the ``PATH``."""
 
-    modules: tuple[str, ...] = ()
-    r"""The Python modules that the step runs."""
+    modules: tuple[str, ...] | Callable[[TasklibConfig], tuple[str, ...]] = ()
+    r"""The Python modules that the step runs, or a function of the
+    config that returns them (a step whose modules depend on the
+    options), see ``step_modules``."""
+
+
+def step_modules(step: Step, cfg: TasklibConfig) -> tuple[str, ...]:
+    r"""Return the Python modules that a step needs.
+
+    Args:
+        step: The step.
+        cfg: The resolved config, given to ``step.modules`` if it is a
+            function.
+
+    Returns:
+        ``step.modules``, or what it returns for ``cfg``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._steps import Step, step_modules
+    >>> step_modules(Step(lambda c: None, modules=("pytest",)), None)
+    ('pytest',)
+    >>> step = Step(lambda c: None, modules=lambda cfg: ("a",))
+    >>> step_modules(step, None)
+    ('a',)
+
+    ```
+    """
+    modules = step.modules
+    return modules if isinstance(modules, tuple) else modules(cfg)
 
 
 def tasks_of(steps: Mapping[str, Step]) -> dict[str, Callable[[Context], None]]:
@@ -195,8 +247,12 @@ def run_step(c: Context, tasks: Mapping[str, Callable[[Context], None]], step: s
 
     Returns:
         ``None`` if the step passed, else the reason of the failure:
-        the message of an ``Exit``, or the command and the exit code of
-        a command that failed (its output was already shown).
+        the message of an ``Exit``, the command and the exit code of
+        a command that failed (its output was already shown), or the
+        type and the message of an error of ``STEP_ERRORS`` (a bug in
+        a task, an ``OSError``, a timeout), so one broken step does
+        not hide the summary of the others. ``KeyboardInterrupt`` is
+        not caught.
 
     Example usage:
 
@@ -214,6 +270,8 @@ def run_step(c: Context, tasks: Mapping[str, Callable[[Context], None]], step: s
         return f"The command {result.command!r} exited with code {result.exited}"
     except Exit as exc:
         return str(exc).strip() or type(exc).__name__
+    except STEP_ERRORS as exc:
+        return f"{type(exc).__name__}: {exc}".removesuffix(": ")
     return None
 
 

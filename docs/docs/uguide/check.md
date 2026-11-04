@@ -60,7 +60,9 @@ run. With `--keep-going`, only the steps that miss a tool are not run: they are 
 with the missing tool as the reason. Run [`env.check-tools`](env.md) to see every tool of the tasks.
 
 By default the task stops at the first failure, as the CI jobs do; use `--keep-going` locally to
-learn about all the problems in one run. Use the tasks directly (with `--args` and `--paths`) to run only one
+learn about all the problems in one run. A step that fails with an error of the code or of the
+system (for example an `OSError`) is reported like any other failed step, with the type and the
+message of the error as the reason, and the other steps still run. Use the tasks directly (with `--args` and `--paths`) to run only one
 of them, or [`lint.pre-commit`](lint.md) to run the hooks of the project. To leave `check` out of a
 collection, use `make_ns(exclude=["check"])`.
 

@@ -21,7 +21,7 @@ def _audit_commands() -> list[str]:
 def test_audit_commands() -> None:
     assert _audit_commands() == [
         (
-            "uv export --locked --no-emit-project --no-hashes --all-groups "
+            "uv export --locked --no-emit-project --no-hashes --all-extras --all-groups "
             "--quiet -o /work/x/requirements.txt"
         ),
         (

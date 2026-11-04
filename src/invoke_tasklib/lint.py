@@ -2,14 +2,13 @@ r"""Lint tasks."""
 
 from __future__ import annotations
 
-import os
 import shlex
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
 from invoke_tasklib.output import step
-from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
+from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, in_github_actions, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -44,7 +43,7 @@ def check_python(
         paths: The files or directories to check instead of the whole
             project (``.``).
     """
-    if output_format is None and os.environ.get("GITHUB_ACTIONS") == "true":
+    if output_format is None and in_github_actions():
         output_format = "github"
     with step(c, "🔍 Checking code linting with ruff...", "✅ Linting check passed"):
         option = f" --output-format={shlex.quote(output_format)}" if output_format else ""

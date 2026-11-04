@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Use a fixed interpreter and ignore the installed plugins."""
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
-    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: object())
+    monkeypatch.setattr("invoke_tasklib.tools.importlib.util.find_spec", lambda _name: object())
 
 
 @pytest.fixture
@@ -67,7 +67,6 @@ def test_doctest_markdown_no_files() -> None:
     [
         ".venv/lib/pkg/README.md",
         ".pytest_cache/README.md",
-        ".git/README.md",
         "node_modules/pkg/README.md",
         "site/index.md",
         "build/lib/README.md",
@@ -192,7 +191,7 @@ def test_doctest_src_ignores_the_xdoctest_option() -> None:
 
 def test_doctest_src_names_the_missing_xdoctest_plugin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "invoke_tasklib.runner.importlib.util.find_spec",
+        "invoke_tasklib.tools.importlib.util.find_spec",
         lambda name: None if name == "xdoctest" else object(),
     )
     with pytest.raises(Exit, match=r"The option --xdoctest needs the pytest plugin 'xdoctest'"):
@@ -265,6 +264,32 @@ def test_unit_with_configured_coverage_reports() -> None:
     ]
 
 
+def test_unit_passes_the_argument_of_a_coverage_report() -> None:
+    reports = "term-missing:skip-covered,html:cov_html"
+    c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+    test_tasks.unit(c, cov=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report term-missing:skip-covered --cov-report html:cov_html "
+            "--cov=mypkg tests/unit"
+        )
+    ]
+
+
+def test_unit_quotes_a_coverage_report_with_a_space_or_a_dollar() -> None:
+    reports = ["html:my dir", "xml:$HOME/cov.xml"]
+    c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+    test_tasks.unit(c, cov=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report 'html:my dir' --cov-report 'xml:$HOME/cov.xml' "
+            "--cov=mypkg tests/unit"
+        )
+    ]
+
+
 def test_unit_with_no_coverage_report_has_no_report_option() -> None:
     c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": ""}})
     test_tasks.unit(c, cov=True)
@@ -310,9 +335,28 @@ def test_integration_with_coverage() -> None:
     assert commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "--cov-report term --cov=mypkg tests/integration"
+        )
+    ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_integration_with_coverage_appends_on_request() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, cov=True, append=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/integration"
         )
     ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_integration_append_without_coverage_is_ignored() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
 @pytest.mark.usefixtures("_project_dirs")
@@ -329,9 +373,28 @@ def test_functional_with_coverage() -> None:
     assert commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "--cov-report term --cov=mypkg tests/functional"
+        )
+    ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_functional_with_coverage_appends_on_request() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, cov=True, append=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/functional"
         )
     ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_functional_append_without_coverage_is_ignored() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
 def test_all_uses_the_largest_timeout() -> None:
@@ -643,7 +706,7 @@ def test_unit_with_custom_tests_directory_falls_back_to_it(
 
 def test_find_markdown_files_returns_sorted_paths(tmp_path: Path) -> None:
     _touch(tmp_path, "docs/z.md", "README.md", "docs/a.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [
         tmp_path / "README.md",
         tmp_path / "docs" / "a.md",
         tmp_path / "docs" / "z.md",
@@ -651,25 +714,25 @@ def test_find_markdown_files_returns_sorted_paths(tmp_path: Path) -> None:
 
 
 def test_find_markdown_files_empty(tmp_path: Path) -> None:
-    assert test_tasks._find_markdown_files(tmp_path) == []
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == []
 
 
 def test_find_markdown_files_ignores_other_extensions(tmp_path: Path) -> None:
     _touch(tmp_path, "a.txt", "b.mdx", "c.md.bak", "d.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [tmp_path / "d.md"]
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "d.md"]
 
 
 @pytest.mark.parametrize("excluded", sorted(test_tasks.MARKDOWN_EXCLUDED_DIRS))
 def test_find_markdown_files_does_not_walk_into_excluded_dirs(
     tmp_path: Path, excluded: str
 ) -> None:
-    _touch(tmp_path, f"{excluded}/a.md", "b.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [tmp_path / "b.md"]
+    _touch(tmp_path, f"pkg/{excluded}/a.md", "pkg/b.md")
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "pkg" / "b.md"]
 
 
 def test_find_markdown_files_skips_excluded_dirs_at_any_depth(tmp_path: Path) -> None:
     _touch(tmp_path, "pkg/.venv/a.md", "pkg/b.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [tmp_path / "pkg" / "b.md"]
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "pkg" / "b.md"]
 
 
 def test_find_markdown_files_current_directory_has_no_prefix(
@@ -677,7 +740,7 @@ def test_find_markdown_files_current_directory_has_no_prefix(
 ) -> None:
     _touch(tmp_path, "README.md")
     monkeypatch.chdir(tmp_path)
-    assert test_tasks._find_markdown_files(Path()) == [Path("README.md")]
+    assert test_tasks._find_markdown_files(make_context(), Path()) == [Path("README.md")]
 
 
 #######################################

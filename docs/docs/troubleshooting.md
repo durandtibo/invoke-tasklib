@@ -15,6 +15,15 @@ tasklib:
 
 See [Get Started](get_started.md) and [Config](uguide/config.md) for the full schema.
 
+## `inv must run from the project root, where tasks.py is: ...`
+
+Invoke looks for `tasks.py` in the parents of the current directory and loads the `invoke.yaml`
+next to it, but it does not change directory. The tasks use paths relative to the current directory
+(`tests/unit`, `pyproject.toml`, `dist`, ...), so from a subdirectory they would look in the wrong
+place, and a task like `test.unit` would skip the missing `tests/unit` directory and pass. A task
+that reads the config now exits with code 2 and this message instead. Run `inv` from the directory
+of `tasks.py`, as in `cd <project root> && inv check.all`, or use the `make` targets.
+
 ## `'ruff' was not found on the PATH`
 
 Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on
@@ -29,9 +38,11 @@ The hint depends on the program: `uv` and `uvx` point to the installation page o
 `docformatter`, `pre-commit`, `pytest` and its plugins) and of the `docs` group (`mkdocs`, `mike`)
 name their group, for example `uv sync --group docs`.
 
-Every command of a pipeline is checked. The `NAME=value` words before a program, the shell builtins
-(`cd`, `export`, `test`, `[`, `exec`, `source`, `.`, `:`) and the subshells and groups (`(...)`,
-`{ ...; }`, `$(...)`) are not looked up. Pass `check=False` to `run` to skip the check of a command.
+Only the first word of a command is checked, after the `NAME=value` words that set environment
+variables. A program given by a path (`./run.sh`, `~/bin/tool`) and the shell builtins (`cd`,
+`export`, `test`, `[`, `exec`, `source`, `.`, `:`) are not looked up. The command line is not parsed
+as shell, so a pipeline (`a | b`), a list (`a && b`) or a subshell is not understood: pass
+`check=False` to `run` to run it without the check.
 The module of `python -m <module>` is checked too (for example `pytest`), and is reported as
 `The Python module 'pytest' is not installed for ...` instead of Python's own `No module named`.
 
