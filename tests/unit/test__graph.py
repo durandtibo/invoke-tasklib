@@ -13,6 +13,7 @@ from invoke_tasklib._graph import (
     _is_type_checking,
     _resolve,
     _source_path,
+    _Tarjan,
     find_cycles,
     import_graph,
     parse_imports,
@@ -275,6 +276,81 @@ def test_import_graph_of_nothing_is_empty() -> None:
 def test_import_graph_rejects_invalid_source() -> None:
     with pytest.raises(SyntaxError, match=r"invalid syntax"):
         import_graph({"p.a": "def (:\n"})
+
+
+#############################
+#     Tests for _Tarjan     #
+#############################
+
+
+def _tarjan_with_stack(stack: list[str]) -> _Tarjan:
+    tarjan = _Tarjan({})
+    tarjan.stack = list(stack)
+    tarjan.on_stack = set(stack)
+    return tarjan
+
+
+def test_tarjan_push_puts_the_node_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": []})
+    tarjan._push("a")
+    assert tarjan.stack == ["a"]
+
+
+def test_tarjan_push_marks_the_node_as_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": []})
+    tarjan._push("a")
+    assert tarjan.on_stack == {"a"}
+
+
+def test_tarjan_push_returns_the_sorted_children() -> None:
+    node, children = _Tarjan({"a": ["c", "b"], "b": [], "c": []})._push("a")
+    assert (node, list(children)) == ("a", ["b", "c"])
+
+
+def test_tarjan_pop_component_removes_only_the_nodes_above_the_root() -> None:
+    tarjan = _tarjan_with_stack(["a", "b", "c"])
+    tarjan._pop_component("b")
+    assert tarjan.stack == ["a"]
+
+
+def test_tarjan_pop_component_unmarks_the_popped_nodes() -> None:
+    tarjan = _tarjan_with_stack(["a", "b", "c"])
+    tarjan._pop_component("b")
+    assert tarjan.on_stack == {"a"}
+
+
+def test_tarjan_pop_component_keeps_a_cycle() -> None:
+    tarjan = _tarjan_with_stack(["a", "b", "c"])
+    tarjan._pop_component("b")
+    assert tarjan.found == [["b", "c"]]
+
+
+def test_tarjan_pop_component_drops_a_single_node() -> None:
+    tarjan = _tarjan_with_stack(["a", "b"])
+    tarjan._pop_component("b")
+    assert tarjan.found == []
+
+
+def test_tarjan_pop_component_of_the_only_node_empties_the_stack() -> None:
+    tarjan = _tarjan_with_stack(["a"])
+    tarjan._pop_component("a")
+    assert (tarjan.stack, tarjan.on_stack) == ([], set())
+
+
+def test_tarjan_run_leaves_nothing_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["a", "c"], "c": []})
+    tarjan.run()
+    assert (tarjan.stack, tarjan.on_stack) == ([], set())
+
+
+def test_tarjan_run_ignores_an_edge_to_a_finished_component() -> None:
+    graph = {"a": ["b"], "b": ["a"], "c": ["a"], "d": ["c"]}
+    assert _Tarjan(graph).run() == [["a", "b"]]
+
+
+def test_tarjan_run_is_deterministic() -> None:
+    graph = {"a": ["b"], "b": ["c"], "c": ["a"], "d": ["a"]}
+    assert _Tarjan(graph).run() == _Tarjan(graph).run()
 
 
 #################################
