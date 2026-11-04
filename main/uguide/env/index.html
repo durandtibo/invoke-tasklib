@@ -803,6 +803,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#checking-the-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking the Tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1755,6 +1766,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#checking-the-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking the Tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1808,6 +1830,10 @@ inspect a project's Python environment using <a href="https://docs.astral.sh/uv/
 <tr>
 <td><code>env.update</code></td>
 <td>Updates dependencies and pre-commit hooks</td>
+</tr>
+<tr>
+<td><code>env.check-tools</code></td>
+<td>Checks which tools of the tasks are available</td>
 </tr>
 <tr>
 <td><code>env.show-installed-packages</code></td>
@@ -1887,6 +1913,19 @@ invoke<span class="w"> </span>env.show-python-config
 <p><code>env.show-python-config</code> prints the installed Python versions known to <code>uv</code>, the interpreter <code>uv</code>
 would select, and the interpreter currently on <code>PATH</code>. It does not fail when no <code>python</code> is on
 the <code>PATH</code>.</p>
+<h2 id="checking-the-tools">Checking the Tools<a class="headerlink" href="#checking-the-tools" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.check-tools
+</code></pre></div>
+<p><code>env.check-tools</code> gives a single view of the tools that the tasks run: the programs (<code>uv</code>, <code>uvx</code>,
+<code>git</code>, <code>ruff</code>, <code>ty</code>, <code>pyright</code>, <code>docformatter</code>, <code>codespell</code>, <code>pre-commit</code>, <code>shellcheck</code>, <code>shfmt</code>,
+<code>mkdocs</code>, <code>mike</code>) and the Python modules of the interpreter (<code>pytest</code>, <code>coverage</code>, <code>xdoctest</code>,
+<code>pytest_timeout</code>, <code>pytest_cov</code>). Each tool has one line, with its path when it is available:</p>
+<div class="highlight"><pre><span></span><code>✅ ruff: /project/.venv/bin/ruff
+❌ shfmt: program not found. Install shfmt with your system package manager, ...
+</code></pre></div>
+<p>All the tools are listed, so one run shows everything that is missing. The task does not read the
+config, so it can be run before <code>invoke.yaml</code> is set up. It exits with the code 127 if a tool is
+missing, so it can also gate a CI job. It does not install anything: see <code>env.install</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../config/">Config</a>: where <code>package.python_version</code> comes from.</li>

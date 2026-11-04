@@ -1933,7 +1933,8 @@ always put its console scripts on <code>PATH</code> the way you expect. Make sur
 renamed the variable or wrapped it, Invoke won't find it. (<code>from invoke_tasklib import ns</code> still
 works but is deprecated and warns.)</p>
 <h2 id="a-task-fails-with-command-not-found-ruff-ty-shellcheck">A task fails with "command not found" (<code>ruff</code>, <code>ty</code>, <code>shellcheck</code>, ...)<a class="headerlink" href="#a-task-fails-with-command-not-found-ruff-ty-shellcheck" title="Permanent link">&para;</a></h2>
-<p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Install
+<p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Run
+<code>invoke env.check-tools</code> to see, in one list, which tools are available and which are missing. Install
 the missing tool, either directly or via your project's dependency groups:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install<span class="w">                  </span><span class="c1"># installs dev deps: ruff, ty, pytest, ...</span>
 invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs<span class="w">  </span><span class="c1"># additionally installs mike</span>
