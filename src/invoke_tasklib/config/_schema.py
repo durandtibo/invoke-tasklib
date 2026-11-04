@@ -292,7 +292,6 @@ It is the single source of the known keys, the defaults, the validation
 and the JSON schema.
 """
 
-
 _SECTION_CLASSES: dict[str, type] = {
     "package": PackageConfig,
     "paths": PathsConfig,
@@ -328,22 +327,17 @@ def _defaults(section: str) -> dict[str, object]:
 DEFAULT_PACKAGE: dict[str, object] = _defaults("package")
 r"""Defaults of the ``package`` section."""
 
-
 DEFAULT_PATHS: dict[str, object] = _defaults("paths")
 r"""Defaults of the ``paths`` section."""
-
 
 DEFAULT_GROUPS: dict[str, object] = _defaults("groups")
 r"""Defaults of the ``groups`` section."""
 
-
 DEFAULT_TEST: dict[str, object] = _defaults("test")
 r"""Defaults of the ``test`` section."""
 
-
 DEFAULT_CHECK: dict[str, object] = _defaults("check")
 r"""Defaults of the ``check`` section."""
-
 
 DEFAULT_FIX: dict[str, object] = _defaults("fix")
 r"""Defaults of the ``fix`` section."""

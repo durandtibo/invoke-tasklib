@@ -29,8 +29,10 @@ LEVELS: tuple[tuple[str, str], ...] = (
     ("_overrides", "override"),
     ("_modifications", "override"),
 )
-r"""The sources of the config, from the lowest to the highest
-priority: the attribute of the invoke config and its label."""
+r"""The sources of the config, from the lowest to the highest priority:
+
+the attribute of the invoke config and its label.
+"""
 
 _PLAIN = re.compile(r"[A-Za-z_][A-Za-z0-9_./-]*")
 _KEYWORDS = frozenset({"true", "false", "null", "yes", "no", "on", "off", "y", "n", "~"})
