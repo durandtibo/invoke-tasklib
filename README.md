@@ -81,7 +81,8 @@ pip install invoke-tasklib
 it even if you install `invoke-tasklib` with `pip`.
 
 **Platforms:** Linux and macOS. Windows is not supported: the tasks rely on
-a POSIX shell (for the quoting of the commands).
+a POSIX shell (for the quoting of the commands), and `make_ns` emits a
+`RuntimeWarning` on Windows.
 
 ## Quickstart
 
