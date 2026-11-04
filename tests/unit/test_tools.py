@@ -17,9 +17,12 @@ from invoke_tasklib.tools import (
     PLUGIN_OPTIONS,
     PROGRAM_GROUPS,
     PROGRAM_HINTS,
+    TOOLS,
+    Tool,
     _check_module,
     _check_plugin_options,
     _strip_assignments,
+    _system_hint,
     check_program,
     find_tool,
     hint,
@@ -581,3 +584,118 @@ def test_not_found_message_for_a_module_names_the_given_interpreter() -> None:
 
 def test_not_found_message_for_an_unknown_program_uses_the_default_hint() -> None:
     assert not_found_message("zzz").endswith(DEFAULT_HINT)
+
+
+##############################
+#     Tests for the TOOLS    #
+##############################
+
+
+def test_tool_defaults() -> None:
+    assert Tool("ruff") == Tool("ruff", "program", None, None, ())
+
+
+def test_tools_are_keyed_by_their_name() -> None:
+    assert all(name == tool.name for name, tool in TOOLS.items())
+
+
+def test_tools_programs_in_the_order_of_env_check_tools() -> None:
+    assert [t.name for t in TOOLS.values() if t.kind == "program"] == [
+        "uv",
+        "uvx",
+        "git",
+        "ruff",
+        "ty",
+        "pyright",
+        "docformatter",
+        "codespell",
+        "pre-commit",
+        "shellcheck",
+        "shfmt",
+        "mkdocs",
+        "mike",
+    ]
+
+
+def test_tools_modules_in_the_order_of_env_check_tools() -> None:
+    assert [t.name for t in TOOLS.values() if t.kind == "module"] == [
+        "pytest",
+        "coverage",
+        "xdoctest",
+        "pytest_timeout",
+        "pytest_cov",
+        "pytest_benchmark",
+    ]
+
+
+@pytest.mark.parametrize("tool", TOOLS.values(), ids=list(TOOLS))
+def test_every_tool_has_a_group_or_a_hint(tool: Tool) -> None:
+    assert (tool.group is None) != (tool.hint is None)
+
+
+def test_program_groups_whole_table() -> None:
+    assert PROGRAM_GROUPS == {
+        "ruff": "dev",
+        "ty": "dev",
+        "pyright": "dev",
+        "docformatter": "dev",
+        "pre-commit": "dev",
+        "mkdocs": "docs",
+        "mike": "docs",
+    }
+
+
+def test_module_groups_whole_table() -> None:
+    assert MODULE_GROUPS == {
+        "pytest": "dev",
+        "coverage": "dev",
+        "xdoctest": "dev",
+        "pytest_timeout": "dev",
+        "pytest_cov": "dev",
+        "pytest_benchmark": "dev",
+    }
+
+
+def test_program_hints_are_the_programs_without_a_group() -> None:
+    assert sorted(PROGRAM_HINTS) == [
+        "codespell",
+        "git",
+        "shellcheck",
+        "shfmt",
+        "uv",
+        "uvx",
+    ]
+
+
+def test_plugin_options_whole_table() -> None:
+    assert PLUGIN_OPTIONS == {
+        "--xdoctest": ("xdoctest", "xdoctest"),
+        "--timeout": ("pytest_timeout", "pytest-timeout"),
+        "--cov": ("pytest_cov", "pytest-cov"),
+        "--cov-report": ("pytest_cov", "pytest-cov"),
+        "--cov-append": ("pytest_cov", "pytest-cov"),
+        "--cov-fail-under": ("pytest_cov", "pytest-cov"),
+        "--cov-branch": ("pytest_cov", "pytest-cov"),
+        "--cov-config": ("pytest_cov", "pytest-cov"),
+        "--no-cov": ("pytest_cov", "pytest-cov"),
+        "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
+        "--benchmark-compare": ("pytest_benchmark", "pytest-benchmark"),
+        "--benchmark-disable": ("pytest_benchmark", "pytest-benchmark"),
+    }
+
+
+def test_plugin_options_are_provided_by_modules() -> None:
+    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= {
+        t.name for t in TOOLS.values() if t.kind == "module"
+    }
+
+
+def test_system_hint() -> None:
+    assert _system_hint("jq") == (
+        "Install jq with your system package manager, for example "
+        "`brew install jq` or `apt install jq`."
+    )
+
+
+def test_system_hint_with_an_extra_sentence() -> None:
+    assert _system_hint("jq", extra=", or elsewhere").endswith("`apt install jq`, or elsewhere.")

@@ -84,8 +84,10 @@ Seven small modules support the task modules:
 - `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
   a module up for the running interpreter, `check_program` checks the first word of a command (and
   the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
-  `not_found_message` say how to install a tool (`PROGRAM_HINTS`, `PROGRAM_GROUPS` and
-  `MODULE_GROUPS`).
+  `not_found_message` say how to install a tool. Every program and module is one `Tool` of
+  `tools.TOOLS` (name, kind, dependency group or install hint, pytest options for a plugin);
+  `PROGRAM_HINTS`, `PROGRAM_GROUPS`, `MODULE_GROUPS`, `PLUGIN_OPTIONS` and `env.TOOL_PROGRAMS` /
+  `env.TOOL_MODULES` are derived from it.
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.
@@ -119,9 +121,9 @@ returns one, for a step whose modules depend on an option (`check._unit_modules`
    `check.STEPS` (or `fix.STEPS`).
 2. Add the name to `CHECK_STEPS` (or `FIX_STEPS`) in `config/_constants.py`: the config must not
    import the task modules, and a test checks that the names agree with `STEPS`.
-3. Add the programs and modules to `TOOL_PROGRAMS` and `TOOL_MODULES` of `env.py` (a test checks
-   that every tool of `STEPS` is listed), and their install hints to `PROGRAM_HINTS` or
-   `PROGRAM_GROUPS` (or `MODULE_GROUPS` for a module) of `tools.py` (a test checks that too).
+3. Add each new program or module to `TOOLS` of `tools.py` as a `Tool` with its dependency group
+   (or an install hint), and the pytest options of a plugin: `env.check-tools`, the hints and the
+   check of the plugins read it (a test checks that every tool of `STEPS` is listed).
 4. To run the step by default, put it among the first steps of `CHECK_STEPS` (or `FIX_STEPS`) and
    extend `DEFAULT_CHECK_STEPS` (or `DEFAULT_FIX_STEPS`) in `config/_constants.py`, which derive the
    default of `check.tasks` (or `fix.tasks`) in `config/_schema.py`; update the tables of the user
