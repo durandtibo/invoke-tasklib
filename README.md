@@ -200,13 +200,19 @@ tasklib:
     update: dev,docs # dependency groups of env.update
   test:
     unit_timeout: 10 # seconds, also integration_timeout and functional_timeout
-    xdoctest: true
+    xdoctest: true # pytest --xdoctest (needs xdoctest)
+    timeout: true # pytest --timeout (needs pytest-timeout)
+    cov_fail_under: 90 # threshold of --cov (default: not set)
     cov_reports: html,xml,term
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit # steps of check.all
+    cov: false # run the unit step of check.all with --cov
   fix:
     tasks: lint,format-python,format-docstrings # steps of fix.all
 ```
+
+`check.tasks` also accepts `doctest`, `shell`, `spelling`, `docs` and `audit`; `fix.tasks` also
+accepts `shell`. `invoke config.show` prints the resolved values and where each one comes from.
 
 See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)
 for how each path default is derived.
