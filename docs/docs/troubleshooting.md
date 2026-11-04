@@ -20,7 +20,8 @@ See [Get Started](get_started.md) and [Config](uguide/config.md) for the full sc
 Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on
 the `PATH` and exit with code 127 if it is not. Install the project tools with
 `invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`)
-or activate the virtual environment that has them.
+or activate the virtual environment that has them. Run `invoke env.check-tools` to list every missing
+tool at once; `invoke check` does the same for the steps it is going to run.
 
 The hint depends on the program: `uv` and `uvx` point to the installation page of `uv`
 (`env.install` itself needs it), `git`, `shellcheck` and `shfmt` to the system package manager, and

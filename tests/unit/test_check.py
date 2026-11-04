@@ -10,17 +10,31 @@ from invoke.context import MockContext
 from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
-from invoke_tasklib import check
-from invoke_tasklib.config import CHECK_STEPS
-from tests.helpers import commands
+from invoke_tasklib import check, env
+from invoke_tasklib.config import CHECK_STEPS, load_config
+from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
+
+    from invoke_tasklib.config import TasklibConfig
 
 
 @pytest.fixture(autouse=True)
 def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
+
+
+@pytest.fixture(autouse=True)
+def _tools_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Make every tool available, whatever is installed."""
+    monkeypatch.setattr(check, "find_tool", lambda name, **_kwargs: f"/found/{name}")
+
+
+def _available(*names: str) -> Callable[..., str | None]:
+    r"""Return a ``find_tool`` that only finds the tools ``names``."""
+    return lambda name, **_kwargs: f"/found/{name}" if name in names else None
 
 
 @pytest.fixture(autouse=True)
@@ -226,6 +240,93 @@ def test_all_keep_going_prints_the_exit_code_of_a_failed_command(
     assert "   The command 'ty check' exited with code 1\n" in capsys.readouterr().out
 
 
+def test_all_missing_tool_stops_before_any_step(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    c = _context({"tasks": "format-python,lint,types"})
+    with pytest.raises(Exit, match=r"1 tool\(s\) missing for the selected steps"):
+        check.all_(c)
+    assert commands(c) == []
+
+
+def test_all_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    with pytest.raises(Exit, match=r"missing") as info:
+        check.all_(_context({"tasks": "lint"}))
+    assert info.value.code == 127
+
+
+def test_all_missing_tools_are_all_listed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    c = _context({"tasks": "format-python,format-docstrings,types,spelling"})
+    with pytest.raises(Exit) as info:
+        check.all_(c)
+    assert str(info.value) == (
+        "3 tool(s) missing for the selected steps:\n"
+        "  'docformatter' was not found on the PATH. Install it with the 'dev' group: "
+        "`uv sync --group dev`. (needed by: format-docstrings)\n"
+        "  'ty' was not found on the PATH. Install it with the 'dev' group: "
+        "`uv sync --group dev`. (needed by: types)\n"
+        "  'codespell' was not found on the PATH. Add codespell to the dependencies of the "
+        "project, e.g. `uv add --dev codespell`. (needed by: spelling)"
+    )
+
+
+def test_all_missing_tool_shared_by_steps_is_listed_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    with pytest.raises(
+        Exit, match=r"1 tool\(s\) missing .*\n  'ruff' .*\(needed by: format-python, lint\)"
+    ):
+        check.all_(_context({"tasks": "format-python,lint"}))
+
+
+def test_all_does_not_look_up_the_tools_of_skipped_steps(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    c = _context({"tasks": "lint,types"})
+    check.all_(c, skip="types")
+    assert commands(c) == ["ruff check ."]
+
+
+def test_all_missing_module_names_the_interpreter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    with pytest.raises(
+        Exit, match=r"The Python module 'pytest' is not installed .*\(needed by: unit\)"
+    ):
+        check.all_(_context({"tasks": "unit"}))
+
+
+def test_all_keep_going_does_not_run_a_step_with_a_missing_tool(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    c = _context({"tasks": "lint,types"})
+    with pytest.raises(Exit, match=r"1 of 2 check\(s\) failed: types"):
+        check.all_(c, keep_going=True)
+    assert commands(c) == ["ruff check ."]
+
+
+def test_all_keep_going_prints_the_missing_tool_of_a_step(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    with pytest.raises(Exit, match=r"failed"):
+        check.all_(_context({"tasks": "types"}), keep_going=True)
+    assert capsys.readouterr().out == (
+        "🔎 Running all the checks...\n"
+        "❌ Step failed: types\n"
+        "   'ty' was not found on the PATH. Install it with the 'dev' group: "
+        "`uv sync --group dev`.\n"
+    )
+
+
+def test_all_keep_going_lists_every_missing_tool_of_a_step(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    with pytest.raises(Exit, match=r"failed"):
+        check.all_(_context({"tasks": "audit"}), keep_going=True)
+    assert capsys.readouterr().out.count("was not found on the PATH") == 2
+
+
 ##################################
 #     Tests for _parse_steps     #
 ##################################
@@ -302,6 +403,102 @@ def test_run_step_does_not_catch_other_exceptions() -> None:
         check._run_step(c, "types")
 
 
+###################################
+#     Tests for _missing_tools    #
+###################################
+
+
+def _cfg(xdoctest: bool = True) -> TasklibConfig:
+    return load_config(make_context({"package": {"name": "mypkg"}, "test": {"xdoctest": xdoctest}}))
+
+
+def test_missing_tools_none_missing() -> None:
+    assert check._missing_tools("lint", _cfg()) == []
+
+
+def test_missing_tools_step_without_tools() -> None:
+    assert check._missing_tools("imports", _cfg()) == []
+
+
+def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    assert check._missing_tools("types", _cfg()) == [
+        (
+            "ty",
+            "'ty' was not found on the PATH. Install it with the 'dev' group: `uv sync --group dev`.",
+        )
+    ]
+
+
+def test_missing_tools_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("pytest_timeout", "xdoctest"))
+    assert check._missing_tools("unit", _cfg()) == [
+        (
+            "pytest",
+            (
+                "The Python module 'pytest' is not installed for /venv/bin/python. "
+                "Install it with the 'dev' group: `uv sync --group dev`."
+            ),
+        )
+    ]
+
+
+def test_missing_tools_programs_come_before_modules(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(check, "find_tool", _available())
+    names = [name for name, _ in check._missing_tools("audit", _cfg())]
+    assert names == ["uv", "uvx"]
+
+
+def test_missing_tools_unit_needs_xdoctest_when_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("pytest", "pytest_timeout"))
+    assert [name for name, _ in check._missing_tools("unit", _cfg(xdoctest=True))] == ["xdoctest"]
+
+
+def test_missing_tools_unit_does_not_need_xdoctest_when_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(check, "find_tool", _available("pytest", "pytest_timeout"))
+    assert check._missing_tools("unit", _cfg(xdoctest=False)) == []
+
+
+def test_missing_tools_looks_modules_up_as_modules(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, bool]] = []
+
+    def find(name: str, *, module: bool = False) -> str:
+        calls.append((name, module))
+        return name
+
+    monkeypatch.setattr(check, "find_tool", find)
+    check._missing_tools("doctest", _cfg())
+    assert calls == [("pytest", True), ("xdoctest", True)]
+
+
+########################################
+#     Tests for _preflight_message     #
+########################################
+
+
+def test_preflight_message_one_tool() -> None:
+    assert check._preflight_message({"lint": [("ruff", "Install it.")]}) == (
+        "1 tool(s) missing for the selected steps:\n  Install it. (needed by: lint)"
+    )
+
+
+def test_preflight_message_merges_a_tool_of_several_steps() -> None:
+    blocked = {"lint": [("ruff", "Install it.")], "format-python": [("ruff", "Install it.")]}
+    assert check._preflight_message(blocked) == (
+        "1 tool(s) missing for the selected steps:\n  Install it. (needed by: lint, format-python)"
+    )
+
+
+def test_preflight_message_does_not_mutate_its_input() -> None:
+    blocked = {"lint": [("ruff", "Install it.")]}
+    check._preflight_message(blocked)
+    assert blocked == {"lint": [("ruff", "Install it.")]}
+
+
 ###########################
 #     Tests for STEPS     #
 ###########################
@@ -309,3 +506,24 @@ def test_run_step_does_not_catch_other_exceptions() -> None:
 
 def test_steps_are_the_valid_steps_of_the_config() -> None:
     assert tuple(check.STEPS) == CHECK_STEPS
+
+
+#######################################
+#     Tests for PROGRAMS, MODULES     #
+#######################################
+
+
+def test_programs_have_an_entry_for_every_step() -> None:
+    assert tuple(check.PROGRAMS) == CHECK_STEPS
+
+
+def test_modules_have_an_entry_for_every_step() -> None:
+    assert tuple(check.MODULES) == CHECK_STEPS
+
+
+def test_programs_are_checked_by_env_check_tools() -> None:
+    assert {name for names in check.PROGRAMS.values() for name in names} <= set(env.TOOL_PROGRAMS)
+
+
+def test_modules_are_checked_by_env_check_tools() -> None:
+    assert {name for names in check.MODULES.values() for name in names} <= set(env.TOOL_MODULES)
