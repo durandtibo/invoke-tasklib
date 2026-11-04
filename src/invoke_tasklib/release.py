@@ -83,8 +83,14 @@ def build(c: Context, check: bool = False, args: str | None = None) -> None:
         )
     if check:
         say(c, "🔍 Checking package metadata with twine...")
-        run(c, "uvx twine check dist/*")
+        run(c, f"uvx --from {shlex.quote(TWINE_REQUIREMENT)} twine check dist/*")
 
+
+TWINE_REQUIREMENT = "twine>=6.1,<7"
+r"""The version range of ``twine`` that ``release.build --check`` runs.
+
+``uvx`` installs the latest release in this range, so a new major
+version is never run without a change of this constant."""
 
 TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
 r"""The upload endpoint of TestPyPI."""

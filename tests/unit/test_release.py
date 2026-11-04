@@ -77,7 +77,7 @@ def test_build_with_check() -> None:
         "uv build --clear",
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
-        "uvx twine check dist/*",
+        "uvx --from 'twine>=6.1,<7' twine check dist/*",
     ]
 
 
