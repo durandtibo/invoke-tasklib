@@ -8,13 +8,19 @@ from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
-from invoke_tasklib.config._constants import CHECK_STEPS, COV_REPORTS, PYTHON_VERSION_PATTERN
+from invoke_tasklib.config._constants import (
+    CHECK_STEPS,
+    COV_REPORTS,
+    FIX_STEPS,
+    PYTHON_VERSION_PATTERN,
+)
 from invoke_tasklib.config._validate import (
     _normalize_groups,
     _validate_bool,
     _validate_check_tasks,
     _validate_cov_fail_under,
     _validate_cov_reports,
+    _validate_fix_tasks,
     _validate_import_name,
     _validate_int,
     _validate_python_version,
@@ -75,6 +81,13 @@ class CheckConfig:
 
 
 @dataclass(frozen=True)
+class FixConfig:
+    r"""Resolved ``fix`` config section."""
+
+    tasks: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class TasklibConfig:
     r"""Resolved tasklib config."""
 
@@ -83,6 +96,7 @@ class TasklibConfig:
     groups: GroupsConfig
     test: TestConfig
     check: CheckConfig
+    fix: FixConfig
 
 
 @dataclass(frozen=True)
@@ -258,6 +272,19 @@ SCHEMA: dict[str, dict[str, Option]] = {
             "Steps of check.all (comma-separated string or list).",
         ),
     },
+    "fix": {
+        "tasks": Option(
+            "lint,format-python,format-docstrings",
+            _validate_fix_tasks,
+            {
+                "anyOf": [
+                    {"type": "string"},
+                    {"type": "array", "items": {"enum": list(FIX_STEPS)}},
+                ]
+            },
+            "Steps of fix.all (comma-separated string or list).",
+        ),
+    },
 }
 r"""The declaration of every key of the ``tasklib`` config, by section.
 
@@ -272,6 +299,7 @@ _SECTION_CLASSES: dict[str, type] = {
     "groups": GroupsConfig,
     "test": TestConfig,
     "check": CheckConfig,
+    "fix": FixConfig,
 }
 r"""The dataclass of each section of ``SCHEMA``."""
 
@@ -317,6 +345,10 @@ DEFAULT_CHECK: dict[str, object] = _defaults("check")
 r"""Defaults of the ``check`` section."""
 
 
+DEFAULT_FIX: dict[str, object] = _defaults("fix")
+r"""Defaults of the ``fix`` section."""
+
+
 def default_config() -> dict[str, dict[str, object]]:
     r"""Return the defaults of the ``tasklib`` config section.
 
@@ -327,8 +359,8 @@ def default_config() -> dict[str, dict[str, object]]:
     the defaults.
 
     Returns:
-        A new dict with the ``package``, ``paths``, ``groups`` and
-        ``test`` and ``check`` sections, each a copy of its
+        A new dict with the ``package``, ``paths``, ``groups``,
+        ``test``, ``check`` and ``fix`` sections, each a copy of its
         ``DEFAULT_*`` dict.
 
     Example usage:
@@ -336,7 +368,7 @@ def default_config() -> dict[str, dict[str, object]]:
     ```pycon
     >>> from invoke_tasklib.config import default_config
     >>> sorted(default_config())
-    ['check', 'groups', 'package', 'paths', 'test']
+    ['check', 'fix', 'groups', 'package', 'paths', 'test']
     >>> default_config()["groups"]
     {'install': 'dev', 'update': 'dev,docs'}
 
@@ -348,6 +380,7 @@ def default_config() -> dict[str, dict[str, object]]:
         "groups": dict(DEFAULT_GROUPS),
         "test": dict(DEFAULT_TEST),
         "check": dict(DEFAULT_CHECK),
+        "fix": dict(DEFAULT_FIX),
     }
 
 
@@ -368,7 +401,7 @@ def json_schema() -> dict[str, Any]:
     >>> from invoke_tasklib.config import json_schema
     >>> schema = json_schema()
     >>> sorted(schema["properties"]["tasklib"]["properties"])
-    ['check', 'groups', 'package', 'paths', 'test']
+    ['check', 'fix', 'groups', 'package', 'paths', 'test']
 
     ```
     """

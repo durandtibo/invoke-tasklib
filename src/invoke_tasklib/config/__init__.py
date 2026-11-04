@@ -25,18 +25,21 @@ from invoke_tasklib.config._constants import (
     COV_REPORTS,
     DEFAULT_PYTHON_VERSION,
     EXCLUDED_DIRS,
+    FIX_STEPS,
     PYTHON_VERSION_PATTERN,
 )
 from invoke_tasklib.config._derive import _derive_defaults
 from invoke_tasklib.config._schema import (
     _SECTION_CLASSES,
     DEFAULT_CHECK,
+    DEFAULT_FIX,
     DEFAULT_GROUPS,
     DEFAULT_PACKAGE,
     DEFAULT_PATHS,
     DEFAULT_TEST,
     SCHEMA,
     CheckConfig,
+    FixConfig,
     GroupsConfig,
     Option,
     PackageConfig,
@@ -54,15 +57,18 @@ __all__ = [
     "CHECK_STEPS",
     "COV_REPORTS",
     "DEFAULT_CHECK",
+    "DEFAULT_FIX",
     "DEFAULT_GROUPS",
     "DEFAULT_PACKAGE",
     "DEFAULT_PATHS",
     "DEFAULT_PYTHON_VERSION",
     "DEFAULT_TEST",
     "EXCLUDED_DIRS",
+    "FIX_STEPS",
     "PYTHON_VERSION_PATTERN",
     "SCHEMA",
     "CheckConfig",
+    "FixConfig",
     "GroupsConfig",
     "Option",
     "PackageConfig",
@@ -89,14 +95,14 @@ def get_config(c: Context) -> TasklibConfig:
 
     Returns:
         A frozen dataclass with the resolved ``package``, ``paths``,
-        ``groups``, ``test`` and ``check`` sections, each a frozen
-        dataclass too,
-        e.g. ``cfg.paths.src``.
+        ``groups``, ``test``, ``check`` and ``fix`` sections, each a
+        frozen dataclass too, e.g. ``cfg.paths.src``.
 
     Raises:
         ValueError: If ``tasklib`` or one of its sections (``package``,
-            ``paths``, ``groups``, ``test`` and ``check``) is not a
-            mapping, or if ``tasklib`` or a section has an unknown key
+            ``paths``, ``groups``, ``test``, ``check`` and ``fix``) is
+            not a mapping, or if ``tasklib`` or a section has an
+            unknown key
             (for example a typo such as ``unit_test`` for
             ``unit_tests``), or if ``tasklib.package.name`` is not set
             or is not a string, or if a ``tasklib.paths`` value is not
@@ -110,7 +116,8 @@ def get_config(c: Context) -> TasklibConfig:
             with a timeout > 0 and ``cov_fail_under`` between 0 and
             100, ``cov_reports`` must be report formats, and
             ``xdoctest`` must be a boolean), or if
-            ``tasklib.check.tasks`` is empty or has an unknown step.
+            ``tasklib.check.tasks`` or ``tasklib.fix.tasks`` is empty
+            or has an unknown step.
 
     Example usage:
 

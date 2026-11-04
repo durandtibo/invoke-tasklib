@@ -91,6 +91,7 @@ Available tasks:
   env.show-installed-packages   Show the installed packages.
   env.show-python-config        Show the python configuration.
   env.update                    Update dependencies and pre-commit hooks.
+  fix.all (fix)                 Fix the lint and format issues of the project.
   format.check-docstrings       Check docstring format with docformatter.
   format.check-python           Check code format with ruff without modifying
                                 files.

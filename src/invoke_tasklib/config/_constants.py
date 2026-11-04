@@ -44,6 +44,18 @@ CHECK_STEPS: tuple[str, ...] = (
 )
 r"""The steps that ``check.all`` can run (``tasklib.check.tasks``)."""
 
+FIX_STEPS: tuple[str, ...] = (
+    "lint",
+    "format-python",
+    "format-docstrings",
+    "shell",
+)
+r"""The steps that ``fix.all`` can run (``tasklib.fix.tasks``).
+
+They are listed in the order that converges: the lint fixes come before
+the formatting, which has the last word on the layout.
+"""
+
 
 TEST_SCOPES: dict[str, str] = {
     "unit_tests": "unit",

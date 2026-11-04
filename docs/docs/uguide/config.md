@@ -33,6 +33,8 @@ tasklib:
     cov_reports: html,xml,term
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit
+  fix:
+    tasks: lint,format-python,format-docstrings
 ```
 
 Only `tasklib.package.name` (the distribution name, as on PyPI) is required. Everything else has a default, and most of the `paths`
@@ -61,6 +63,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `test.cov_fail_under`      | not set                                                                               |
 | `test.cov_reports`         | `html,xml,term`                                                                       |
 | `check.tasks`              | `format-python,format-docstrings,lint,types,imports,unit`                             |
+| `fix.tasks`                | `lint,format-python,format-docstrings`                                                |
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
 with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
@@ -73,6 +76,10 @@ value passes no `--cov-report`, so pytest-cov uses its default.
 `check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order:
 `format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,
 `spelling`, `docs` and `audit`. It must have at least one step and no unknown step.
+
+`fix.tasks` is the same for the steps of `fix.all`: `lint`, `format-python`, `format-docstrings` and
+`shell`, run in that order (the lint fixes first, so that the formatting has the last word on the
+layout).
 
 `package.import_name` is the name used to import the package. It is used by `imports.check-cycles`, `imports.check-isolated`,
 `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.

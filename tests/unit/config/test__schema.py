@@ -8,6 +8,7 @@ import pytest
 from invoke_tasklib import config as config_module
 from invoke_tasklib.config import (
     DEFAULT_CHECK,
+    DEFAULT_FIX,
     DEFAULT_GROUPS,
     DEFAULT_PACKAGE,
     DEFAULT_PATHS,
@@ -28,8 +29,8 @@ from invoke_tasklib.config._schema import _defaults, _path, _timeout
 ####################################
 
 
-def test_default_config_has_the_five_sections() -> None:
-    assert sorted(default_config()) == ["check", "groups", "package", "paths", "test"]
+def test_default_config_has_the_six_sections() -> None:
+    assert sorted(default_config()) == ["check", "fix", "groups", "package", "paths", "test"]
 
 
 def test_default_config_is_the_defaults() -> None:
@@ -39,6 +40,7 @@ def test_default_config_is_the_defaults() -> None:
         "groups": DEFAULT_GROUPS,
         "test": DEFAULT_TEST,
         "check": DEFAULT_CHECK,
+        "fix": DEFAULT_FIX,
     }
 
 
@@ -65,7 +67,7 @@ _SECTION_CLASSES = {
 
 
 def test_schema_sections() -> None:
-    assert list(SCHEMA) == ["package", "paths", "groups", "test", "check"]
+    assert list(SCHEMA) == ["package", "paths", "groups", "test", "check", "fix"]
 
 
 @pytest.mark.parametrize("section", sorted(_SECTION_CLASSES))

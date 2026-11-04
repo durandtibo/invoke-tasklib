@@ -50,6 +50,7 @@ def test_get_config_defaults() -> None:
         "check": {
             "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit")
         },
+        "fix": {"tasks": ("lint", "format-python", "format-docstrings")},
     }
 
 
@@ -189,7 +190,7 @@ def test_get_config_rejects_an_unknown_top_level_key() -> None:
 
 def test_get_config_top_level_error_lists_the_valid_sections() -> None:
     c = _context({"package": {"name": "mypkg"}, "zzz": {}})
-    with pytest.raises(ValueError, match=r"Valid keys: check, groups, package, paths, test"):
+    with pytest.raises(ValueError, match=r"Valid keys: check, fix, groups, package, paths, test"):
         get_config(c)
 
 
@@ -497,3 +498,20 @@ def test_get_config_does_not_mutate_the_user_config() -> None:
     user = {"package": {"name": "my-pkg"}}
     get_config(_context(user))
     assert user == {"package": {"name": "my-pkg"}}
+
+
+def test_get_config_fix_tasks_override() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "fix": {"tasks": "shell, lint"}}))
+    assert cfg.fix.tasks == ("shell", "lint")
+
+
+def test_get_config_rejects_an_unknown_fix_step() -> None:
+    c = _context({"package": {"name": "mypkg"}, "fix": {"tasks": "types"}})
+    with pytest.raises(ValueError, match=r"Unknown fix step \['types'\]"):
+        get_config(c)
+
+
+def test_get_config_rejects_an_unknown_fix_key() -> None:
+    c = _context({"package": {"name": "mypkg"}, "fix": {"task": "lint"}})
+    with pytest.raises(ValueError, match=r"Unknown key 'task' \(did you mean 'tasks'"):
+        get_config(c)

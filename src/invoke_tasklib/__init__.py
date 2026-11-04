@@ -45,6 +45,7 @@ from invoke_tasklib import (
     configuration,
     doc,
     env,
+    fix,
     formatting,
     imports,
     lint,
@@ -65,6 +66,7 @@ __all__ = [
     "configuration",
     "doc",
     "env",
+    "fix",
     "formatting",
     "imports",
     "lint",
@@ -116,6 +118,7 @@ _MODULES = {
     "security": security,
     "clean": clean,
     "check": check,
+    "fix": fix,
     "config": configuration,
 }
 r"""The task modules of the default collection, by namespace name."""

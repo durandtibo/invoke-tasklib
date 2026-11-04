@@ -206,6 +206,32 @@
               "default": "format-python,format-docstrings,lint,types,imports,unit"
             }
           }
+        },
+        "fix": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tasks": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "lint",
+                      "format-python",
+                      "format-docstrings",
+                      "shell"
+                    ]
+                  }
+                }
+              ],
+              "description": "Steps of fix.all (comma-separated string or list).",
+              "default": "lint,format-python,format-docstrings"
+            }
+          }
         }
       }
     }
