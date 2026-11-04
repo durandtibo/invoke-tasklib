@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import os
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
@@ -374,6 +375,25 @@ def test_confirm_accepts(answer: str, monkeypatch: pytest.MonkeyPatch) -> None:
 def test_confirm_refuses(answer: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO(f"{answer}\n"))
     with pytest.raises(Exit, match=r"Publication cancelled"):
+        release._confirm("PyPI")
+
+
+def test_confirm_refuses_without_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    with pytest.raises(Exit, match=r"Publication not confirmed: pass --yes"):
+        release._confirm("PyPI")
+
+
+def test_confirm_exits_with_code_1_without_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    with pytest.raises(Exit, match=r"Publication not confirmed") as info:
+        release._confirm("PyPI")
+    assert info.value.code == 1
+
+
+def test_confirm_refuses_when_interrupted(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("builtins.input", Mock(side_effect=KeyboardInterrupt("interrupted")))
+    with pytest.raises(Exit, match=r"Publication not confirmed: pass --yes"):
         release._confirm("PyPI")
 
 
