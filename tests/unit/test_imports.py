@@ -168,7 +168,9 @@ def test_check_cycles_ignores_type_checking_imports(
         "cyc_tc",
         {
             "__init__.py": "",
-            "a.py": "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from cyc_tc import b\n",
+            "a.py": (
+                "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from cyc_tc import b\n"
+            ),
             "b.py": "from cyc_tc import a\n",
         },
     )

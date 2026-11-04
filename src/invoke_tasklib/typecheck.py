@@ -18,7 +18,9 @@ if TYPE_CHECKING:
         "complete": "Also run pyright after ty (slower, more thorough).",
         "args": 'Extra arguments for ty, as one string, e.g. "--python-version 3.12".',
         "paths": PATHS_HELP + " Without it, ty checks the project and pyright its own include.",
-        "pyright_args": 'Extra arguments for pyright (with --complete), e.g. "--pythonversion 3.12".',
+        "pyright_args": (
+            'Extra arguments for pyright (with --complete), e.g. "--pythonversion 3.12".'
+        ),
     }
 )
 def check(

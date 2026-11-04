@@ -100,7 +100,10 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
     default=True,
     help={
         "keep_going": "Run every step and report all the failures, instead of stopping.",
-        "only": f"Comma-separated steps to run instead of tasklib.check.tasks ({', '.join(CHECK_STEPS)}).",
+        "only": (
+            f"Comma-separated steps to run instead of tasklib.check.tasks "
+            f"({', '.join(CHECK_STEPS)})."
+        ),
         "skip": "Comma-separated steps to leave out.",
     },
 )
