@@ -17,6 +17,7 @@ documented in the reference pages ([`runner`](../refs/runner.md), [`output`](../
 | `invoke_tasklib.runner.split_args`    | Split the value of an option like a shell does                       |
 | `invoke_tasklib.output.say`           | Print a progress message                                             |
 | `invoke_tasklib.output.step`          | Print the start and the end of a step, and `❌ Failed: ...` on error |
+| `invoke_tasklib.output.report_failure` | Print `❌ Failed: ...` if a block raises, for a task that uses `say` |
 
 ## Example
 

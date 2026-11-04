@@ -519,3 +519,19 @@ def test_publish_latest_with_a_missing_config_runs_nothing() -> None:
     with pytest.raises(Exit, match=r"does not exist"):
         doc.publish_latest(c, version="1.2")
     assert commands(c) == []
+
+
+def test_publish_dev_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        doc.publish_dev(c)
+    assert "❌ Failed: Publishing development documentation" in capsys.readouterr().err
+
+
+def test_publish_latest_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        doc.publish_latest(c, version="1.2.0")
+    assert "❌ Failed: Publishing latest documentation" in capsys.readouterr().err

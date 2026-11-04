@@ -10,7 +10,7 @@ from invoke.tasks import task
 
 from invoke_tasklib._graph import find_cycles, import_graph, read_sources
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import report_failure, say
 from invoke_tasklib.runner import python_executable, run
 
 if TYPE_CHECKING:
@@ -81,13 +81,14 @@ def check_isolated(c: Context) -> None:
     cfg = load_config(c)
     name = cfg.package.import_name
     python = python_executable()
-    say(c, f"🔍 Discovering modules of {name}...")
-    discover = run(
-        c, f"{python} -m invoke_tasklib._discover {shlex.quote(name)}", hide=True, echo=False
-    )
-    modules = [line for line in discover.stdout.splitlines() if line]
-    say(c, f"🔍 Checking {len(modules)} module(s) one at a time...")
-    for module in modules:
-        say(c, f"🔍 Checking: {module}")
-        run(c, f"{python} -c {shlex.quote(f'import {module}')}")
+    with report_failure(c, "🔍 Checking that each module imports on its own..."):
+        say(c, f"🔍 Discovering modules of {name}...")
+        discover = run(
+            c, f"{python} -m invoke_tasklib._discover {shlex.quote(name)}", hide=True, echo=False
+        )
+        modules = [line for line in discover.stdout.splitlines() if line]
+        say(c, f"🔍 Checking {len(modules)} module(s) one at a time...")
+        for module in modules:
+            say(c, f"🔍 Checking: {module}")
+            run(c, f"{python} -c {shlex.quote(f'import {module}')}")
     say(c, f"✅ All {len(modules)} module(s) imported on their own")

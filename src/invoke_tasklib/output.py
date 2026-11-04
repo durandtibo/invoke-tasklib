@@ -165,6 +165,45 @@ def _failure_title(start: str) -> str:
 
 
 @contextmanager
+def report_failure(c: Context, title: str) -> Generator[None]:
+    r"""Report a failure of a block of a task.
+
+    If the block raises, the failure message
+    (``❌ Failed: <title without symbol and dots>``) is written to the
+    error stream and the exception is raised again. Nothing is written
+    otherwise: use it in a task that writes its own progress messages
+    with ``say``; use ``step`` for a block with a start and a done
+    message.
+
+    Args:
+        c: The invoke context.
+        title: What was being done, e.g.
+            ``"📦 Installing project dependencies..."``.
+
+    Yields:
+        Nothing.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.output import report_failure
+    >>> c = Context(config=Config())
+    >>> with report_failure(c, "🎨 Checking..."):
+    ...     pass
+    ...
+
+    ```
+    """
+    try:
+        yield
+    except Exception:
+        say(c, f"❌ Failed: {_failure_title(title)}", err=True)
+        raise
+
+
+@contextmanager
 def step(c: Context, start: str, done: str) -> Generator[None]:
     r"""Report the start and the end of a step of a task.
 
@@ -199,9 +238,6 @@ def step(c: Context, start: str, done: str) -> Generator[None]:
     ```
     """
     say(c, start)
-    try:
+    with report_failure(c, start):
         yield
-    except Exception:
-        say(c, f"❌ Failed: {_failure_title(start)}", err=True)
-        raise
     say(c, done)

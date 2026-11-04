@@ -11,7 +11,7 @@ from invoke.tasks import task
 
 from invoke_tasklib._files import find_files
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
-from invoke_tasklib.output import say, step
+from invoke_tasklib.output import report_failure, say, step
 from invoke_tasklib.runner import (
     ARGS_HELP,
     PATHS_HELP,
@@ -144,11 +144,12 @@ def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None =
         paths: The markdown files to check instead of every markdown
             file of the project.
     """
-    files = split_args(paths, "--paths") or [str(f) for f in _find_markdown_files(Path())]
-    say(c, f"📚 Found {len(files)} markdown files")
-    if files:
-        cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
-        run(c, build_command(cmd, args=args, paths=paths, default_paths=files))
+    with report_failure(c, "📚 Running doctests on markdown files..."):
+        files = split_args(paths, "--paths") or [str(f) for f in _find_markdown_files(Path())]
+        say(c, f"📚 Found {len(files)} markdown files")
+        if files:
+            cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
+            run(c, build_command(cmd, args=args, paths=paths, default_paths=files))
     say(c, f"✅ All {len(files)} markdown files have been checked")
 
 
@@ -450,7 +451,8 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
     benchmarks = cfg.paths.benchmarks
     if not paths and not _directory_exists(c, benchmarks, "benchmarks"):
         return
-    say(c, "⏱️  Running benchmarks...")
-    cmd = f"{python_executable()} -m pytest --benchmark-only"
-    run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
+    with report_failure(c, "⏱️  Running benchmarks..."):
+        say(c, "⏱️  Running benchmarks...")
+        cmd = f"{python_executable()} -m pytest --benchmark-only"
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
     say(c, "✅ Benchmarks complete")

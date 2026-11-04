@@ -12,7 +12,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import report_failure, say
 from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -112,22 +112,23 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     """
     cfg = load_config(c)
     import_name = cfg.package.import_name
-    say(c, "📦 Building package...")
-    run(c, build_command("uv build --clear", args=args))
-    directory, patterns = _build_targets(args)
-    say(c, "🔍 Verifying package installation...")
-    for pattern in patterns:
-        artifact = _latest_artifact(directory, pattern)
-        say(c, f"🔍 Verifying {artifact}...")
-        run(
-            c,
-            f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
-            f"python -c {shlex.quote(f'import {import_name}')}",
-        )
-    if check:
-        say(c, "🔍 Checking package metadata with twine...")
-        twine = f"uvx --from {shlex.quote(TWINE_REQUIREMENT)} twine check"
-        run(c, f"{twine} {shlex.quote(str(directory))}/*")
+    with report_failure(c, "📦 Building package..."):
+        say(c, "📦 Building package...")
+        run(c, build_command("uv build --clear", args=args))
+        directory, patterns = _build_targets(args)
+        say(c, "🔍 Verifying package installation...")
+        for pattern in patterns:
+            artifact = _latest_artifact(directory, pattern)
+            say(c, f"🔍 Verifying {artifact}...")
+            run(
+                c,
+                f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
+                f"python -c {shlex.quote(f'import {import_name}')}",
+            )
+        if check:
+            say(c, "🔍 Checking package metadata with twine...")
+            twine = f"uvx --from {shlex.quote(TWINE_REQUIREMENT)} twine check"
+            run(c, f"{twine} {shlex.quote(str(directory))}/*")
 
 
 TWINE_REQUIREMENT = "twine>=6.1,<7"
@@ -365,10 +366,11 @@ def publish(
         cmd.append("--dry-run")
     if not token and trusted:
         cmd.append("--trusted-publishing always")
-    say(c, "🚀 Publishing" + (" (dry run)" if dry_run else "") + "...")
-    run(
-        c,
-        build_command(" ".join(cmd), args=args),
-        env={"UV_PUBLISH_TOKEN": token} if token else {},
-    )
+    with report_failure(c, "🚀 Publishing..."):
+        say(c, "🚀 Publishing" + (" (dry run)" if dry_run else "") + "...")
+        run(
+            c,
+            build_command(" ".join(cmd), args=args),
+            env={"UV_PUBLISH_TOKEN": token} if token else {},
+        )
     say(c, "✅ Package published successfully" if not dry_run else "✅ Dry run complete")

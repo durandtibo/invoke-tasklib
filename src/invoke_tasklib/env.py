@@ -10,7 +10,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import report_failure, say
 from invoke_tasklib.runner import find_tool, not_found_message, run
 
 if TYPE_CHECKING:
@@ -77,9 +77,10 @@ def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None
         return
     if not yes and Path(VENV_DIR).exists():
         _confirm_clear(VENV_DIR)
-    say(c, f"🐍 Creating virtual environment with Python {python_version}...")
-    run(c, f"uv venv --python {python_version} --clear")
-    install(c)
+    with report_failure(c, "🐍 Creating virtual environment..."):
+        say(c, f"🐍 Creating virtual environment with Python {python_version}...")
+        run(c, f"uv venv --python {python_version} --clear")
+        install(c)
     say(c, "✅ Virtual environment created successfully")
 
 
@@ -107,13 +108,14 @@ def install(c: Context, *, optional_deps: bool = True, groups: str | None = None
     """
     if groups is None:
         groups = ",".join(load_config(c).groups.install)
-    say(c, "📦 Installing project dependencies...")
-    cmd = ["uv sync --locked"]
-    if optional_deps:
-        cmd.append("--all-extras")
-    names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
-    cmd.extend(f"--group {shlex.quote(group)}" for group in names)
-    run(c, " ".join(cmd))
+    with report_failure(c, "📦 Installing project dependencies..."):
+        say(c, "📦 Installing project dependencies...")
+        cmd = ["uv sync --locked"]
+        if optional_deps:
+            cmd.append("--all-extras")
+        names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
+        cmd.extend(f"--group {shlex.quote(group)}" for group in names)
+        run(c, " ".join(cmd))
     say(c, "✅ Installation complete")
 
 
@@ -147,15 +149,16 @@ def update(c: Context, *, groups: str | None = None) -> None:
     """
     if groups is None:
         groups = ",".join(load_config(c).groups.update)
-    say(c, "🔄 Updating dependencies...")
-    run(c, "uv lock --upgrade")
-    if Path(PRE_COMMIT_CONFIG).is_file():
-        say(c, "🪝 Updating pre-commit hooks...")
-        run(c, "pre-commit autoupdate")
-    else:
-        say(c, f"⏭️  No {PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
-    say(c, f"📦 Reinstalling with dependency groups: {groups}...")
-    install(c, groups=groups)
+    with report_failure(c, "🔄 Updating dependencies..."):
+        say(c, "🔄 Updating dependencies...")
+        run(c, "uv lock --upgrade")
+        if Path(PRE_COMMIT_CONFIG).is_file():
+            say(c, "🪝 Updating pre-commit hooks...")
+            run(c, "pre-commit autoupdate")
+        else:
+            say(c, f"⏭️  No {PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
+        say(c, f"📦 Reinstalling with dependency groups: {groups}...")
+        install(c, groups=groups)
     say(c, "✅ Update complete")
 
 
