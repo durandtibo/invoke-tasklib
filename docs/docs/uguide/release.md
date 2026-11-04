@@ -47,8 +47,8 @@ must be tagged and the tag (without a leading `v`) must be the static `project.v
 Credentials, in this order:
 
 - a token in `PYPI_TOKEN` (`TEST_PYPI_TOKEN` with `--test-pypi`, because the two indexes reject
-  each other's tokens and a PyPI token must not be sent to TestPyPI) or in `UV_PUBLISH_TOKEN`,
-  handed to `uv publish` through its environment so it never appears on the command line;
+  each other's tokens and a PyPI token must not be sent to TestPyPI) or, without `--test-pypi`, in
+  `UV_PUBLISH_TOKEN` (usually the production token, so it is never used for TestPyPI), handed to `uv publish` through its environment so it never appears on the command line;
 - [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), used
   automatically in GitHub Actions with the `id-token: write` permission (`--trusted-publishing
 always`); no token is needed.
