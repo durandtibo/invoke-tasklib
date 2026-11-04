@@ -165,15 +165,18 @@ def _release_key(tag: str) -> tuple[int, int] | None:
 
 
 def _last_version_tag(c: Context) -> str | None:
-    r"""Return the most recent version tag of the git repository.
+    r"""Return the highest release version tag of the git repository.
 
-    A version tag is a tag such as ``v1.2.3``, sorted by version.
+    A version tag is a tag such as ``v1.2.3``. Pre-release tags such as
+    ``v1.2.0rc1`` are ignored and the tags are compared by their
+    numbers, not by git's own sort, so the result does not depend on
+    the ``versionsort.suffix`` setting of git.
 
     Args:
         c: The invoke context.
 
     Returns:
-        The name of the tag, or ``None`` if there is no version tag.
+        The name of the tag, or ``None`` if there is no release tag.
 
     Raises:
         UnexpectedExit: If ``git`` fails, for example outside of a git
@@ -185,18 +188,43 @@ def _last_version_tag(c: Context) -> str | None:
     >>> from invoke.context import MockContext
     >>> from invoke.runners import Result
     >>> from invoke_tasklib.doc import _last_version_tag
-    >>> cmd = "git tag --list 'v[0-9]*' --sort=-v:refname"
-    >>> c = MockContext(run={cmd: Result(stdout="v1.2.0\nv1.1.0\n")})
+    >>> cmd = "git tag --list 'v[0-9]*'"
+    >>> out = "v1.1.0\nv1.2.0rc1\nv1.2.0\n"
+    >>> c = MockContext(run={cmd: Result(stdout=out)})
     >>> _last_version_tag(c)
     'v1.2.0'
 
     ```
     """
-    result = run(c, "git tag --list 'v[0-9]*' --sort=-v:refname", hide=True, pty=False)
-    return next(
-        (tag for tag in result.stdout.split() if _VERSION_PATTERN.fullmatch(tag) is not None),
-        None,
-    )
+    result = run(c, "git tag --list 'v[0-9]*'", hide=True, pty=False)
+    releases = [
+        tag
+        for tag in result.stdout.split()
+        if _VERSION_PATTERN.fullmatch(tag) is not None and not _parse_release(tag)[1]
+    ]
+    return max(releases, key=_version_key, default=None)
+
+
+def _version_key(tag: str) -> tuple[int, ...]:
+    r"""Return the numbers of a version tag, to compare two tags.
+
+    Args:
+        tag: A tag such as ``"v1.10.0"``.
+
+    Returns:
+        The leading dotted numbers of the tag, e.g. ``(1, 10, 0)``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.doc import _version_key
+    >>> _version_key("v1.10.0")
+    (1, 10, 0)
+
+    ```
+    """
+    numbers = re.match(r"v?(\d+(?:\.\d+)*)", tag)
+    return tuple(int(n) for n in numbers.group(1).split(".")) if numbers else ()
 
 
 def _parse_releases(output: str, command: str) -> list[tuple[int, int]]:

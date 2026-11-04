@@ -79,6 +79,7 @@ class CheckConfig:
     r"""Resolved ``check`` config section."""
 
     tasks: tuple[str, ...]
+    cov: bool
 
 
 @dataclass(frozen=True)
@@ -277,6 +278,12 @@ SCHEMA: dict[str, dict[str, Option]] = {
                 ]
             },
             "Steps of check.all (comma-separated string or list).",
+        ),
+        "cov": Option(
+            False,
+            partial(_validate_bool, "check", "cov"),
+            {"type": "boolean"},
+            "Run the unit step of check.all with --cov, so cov_fail_under is enforced.",
         ),
     },
     "fix": {

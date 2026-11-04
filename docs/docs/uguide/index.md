@@ -89,7 +89,8 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
 - `--paths` runs the tool on these files or directories instead of the default ones (the
   project for `ruff`, `paths.src` for `docformatter` and the source doctests, the scope directory
   for `pytest`, every `*.sh` file for `shellcheck` and `shfmt`, every markdown file for the
-  markdown doctests).
+  markdown doctests). The value is quoted, so a glob (`src/*.py`) or `~` reaches the tool as it
+  is: only a tool that expands globs itself (like `ruff`) handles them.
 
 | Tasks                                                                            | `--args` goes to      | `--paths` |
 | -------------------------------------------------------------------------------- | --------------------- | :-------: |

@@ -19,10 +19,37 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
+VENV_DIR = ".venv"
 
 
-@task
-def create_venv(c: Context) -> None:
+def _confirm_clear(directory: str) -> None:
+    r"""Ask the user to confirm that an environment is cleared.
+
+    Args:
+        directory: The directory of the environment, e.g. ``".venv"``.
+
+    Raises:
+        Exit: If the answer is not ``y`` or ``yes``, if there is no
+            terminal to read the answer from (end of input), or if the
+            user interrupts the question.
+    """
+    try:
+        answer = input(f"Clear the existing environment '{directory}'? [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        msg = f"Environment '{directory}' not cleared: pass --yes to clear it without a terminal"
+        raise Exit(msg, code=1) from None
+    if answer.strip().lower() not in {"y", "yes"}:
+        msg = f"Environment '{directory}' not cleared"
+        raise Exit(msg, code=1)
+
+
+@task(
+    help={
+        "yes": "Do not ask for a confirmation before clearing an existing .venv.",
+        "dry_run": "Print what would be done, but do nothing.",
+    }
+)
+def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None:
     r"""Create a virtual environment and install the project in it.
 
     The project is installed with ``env.install`` (``uv sync``), so the
@@ -31,12 +58,27 @@ def create_venv(c: Context) -> None:
 
     Note:
         The virtual environment will be created in the .venv directory
-        and any existing environment will be cleared. The task itself
-        runs with ``invoke``, so ``invoke`` must already be available to
-        run it.
+        and any existing environment will be cleared, after a
+        confirmation (``--yes`` turns it off). The task itself runs with
+        ``invoke``, which is often installed in that very environment,
+        so ``invoke`` must be available from somewhere else to run it.
+
+    Args:
+        c: The invoke context.
+        yes: If True, do not ask for a confirmation before clearing an
+            existing ``.venv``.
+        dry_run: If True, print what would be done and do nothing.
+
+    Raises:
+        Exit: If the confirmation is refused or cannot be asked.
     """
     cfg = load_config(c)
     python_version = cfg.package.python_version
+    if dry_run:
+        say(c, f"🐍 Would create .venv with Python {python_version} (dry run)")
+        return
+    if not yes and Path(VENV_DIR).exists():
+        _confirm_clear(VENV_DIR)
     say(c, f"🐍 Creating virtual environment with Python {python_version}...")
     run(c, f"uv venv --python {python_version} --clear")
     install(c)

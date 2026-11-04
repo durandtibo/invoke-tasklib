@@ -60,6 +60,22 @@ def test_format_value(value: object, expected: str) -> None:
 #############################
 
 
+_LEVEL_ATTRIBUTES = [attribute for attribute, _ in configuration.LEVELS]
+
+
+# `_origin` reads these private attributes of Invoke with
+# `getattr(..., None)`, which would hide a rename in a new version of
+# Invoke: these tests make it fail loudly.
+@pytest.mark.parametrize("attribute", _LEVEL_ATTRIBUTES)
+def test_levels_exist_on_an_invoke_config(attribute: str) -> None:
+    assert hasattr(Config(), attribute)
+
+
+@pytest.mark.parametrize("attribute", _LEVEL_ATTRIBUTES)
+def test_levels_of_an_invoke_config_are_dicts(attribute: str) -> None:
+    assert isinstance(getattr(Config(), attribute), dict)
+
+
 def test_origin_of_a_default_value() -> None:
     config = Config(defaults=_BASE_DEFAULTS)
     assert configuration._origin(config, "paths", "tests", "tests") == "default"
@@ -152,6 +168,7 @@ def test_render_the_whole_config() -> None:
         "    cov_reports: [html, xml, term]  # default",
         "  check:",
         "    tasks: [format-python, format-docstrings, lint, types, imports, unit]  # default",
+        "    cov: false  # default",
         "  fix:",
         "    tasks: [lint, format-python, format-docstrings]  # default",
     ]
