@@ -124,7 +124,8 @@ invoke test.coverage-report
 
 Runs `python -m coverage` (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (`.coverage`)
 is currently on disk — the data produced by an earlier `--cov` run — without re-running the tests.
-The report goes to `htmlcov/`, or to the `directory` of `[tool.coverage.html]` in `pyproject.toml`.
+The report goes to the directory of the `html:<dir>` value of `test.cov_reports` if there is one, else to the
+`directory` of `[tool.coverage.html]` in `pyproject.toml`, else to `htmlcov/`.
 Pass `--open-browser` to also open its `index.html` in your default browser:
 
 ```shell
