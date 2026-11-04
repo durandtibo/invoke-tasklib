@@ -55,6 +55,9 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     ``site`` if the config is not valid. The ``*.egg-info`` directories
     are removed at the root and in ``src``.
 
+    A directory outside the project, for example an absolute
+    ``site_dir``, is never removed.
+
     A top-level directory (``build``, ``dist``, ``site``, ...) that
     contains files tracked by git is kept, and the task says so.
 
@@ -245,6 +248,41 @@ def _has_tracked_files(c: Context, path: Path) -> bool:
     return bool(result.ok and result.stdout.strip())
 
 
+def _is_inside_project(path: Path) -> bool:
+    r"""Check that a path is inside the current directory.
+
+    The directory that holds the path is resolved, so ``..`` and a
+    link to the outside are seen. The last part is not resolved (unless
+    it is ``.`` or ``..``): a link inside the project is removed as a
+    link and its target is not touched.
+
+    Args:
+        path: The path to check, relative to the current directory or
+            absolute.
+
+    Returns:
+        ``True`` if the path is below the current directory. The
+        current directory itself is not inside the project.
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.clean import _is_inside_project
+    >>> _is_inside_project(Path("build"))
+    True
+    >>> _is_inside_project(Path("../build"))
+    False
+    >>> _is_inside_project(Path("."))
+    False
+
+    ```
+    """
+    root = Path.cwd().resolve()
+    target = path.resolve() if path.name in {"", ".", ".."} else path.parent.resolve() / path.name
+    return target != root and target.is_relative_to(root)
+
+
 def _remove_dir(
     c: Context, path: Path, *, dry_run: bool = False, keep_tracked: bool = False
 ) -> None:
@@ -252,6 +290,10 @@ def _remove_dir(
 
     A symbolic link to a directory is removed as a link: the directory
     it points to is left untouched (``shutil.rmtree`` refuses a link).
+
+    A directory outside the current directory (an absolute path, a
+    path with ``..``) or the current directory itself is never removed:
+    the task says so and goes on.
 
     Args:
         c: The invoke context.
@@ -262,6 +304,9 @@ def _remove_dir(
             tracked by git, and say so.
     """
     if not (path.is_symlink() or path.is_dir()):
+        return
+    if not _is_inside_project(path):
+        say(c, f"⏭️  Not removing {path}: it is outside the project")
         return
     if keep_tracked and _has_tracked_files(c, path):
         say(c, f"⏭️  Keeping {path}: it contains files tracked by git")
