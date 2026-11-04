@@ -3,7 +3,7 @@ r"""Helpers shared by ``check.all`` and ``fix.all``."""
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from invoke.exceptions import Exit, UnexpectedExit
 
@@ -14,6 +14,49 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping
 
     from invoke.context import Context
+
+
+class Step(NamedTuple):
+    r"""A step of ``check.all`` or ``fix.all``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._steps import Step
+    >>> Step(lambda c: None, programs=("ruff",)).programs
+    ('ruff',)
+
+    ```
+    """
+
+    task: Callable[[Context], None]
+    r"""The task that runs the step."""
+    programs: tuple[str, ...] = ()
+    r"""The programs that the step runs, looked up on the ``PATH``."""
+    modules: tuple[str, ...] = ()
+    r"""The Python modules that the step runs."""
+
+
+def tasks_of(steps: Mapping[str, Step]) -> dict[str, Callable[[Context], None]]:
+    r"""Return the task of each step.
+
+    Args:
+        steps: The steps, by name.
+
+    Returns:
+        The task of each step, by step name, for ``run_steps``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._steps import Step, tasks_of
+    >>> task = lambda c: None
+    >>> tasks_of({"lint": Step(task)}) == {"lint": task}
+    True
+
+    ```
+    """
+    return {name: step.task for name, step in steps.items()}
 
 
 def missing_tools(programs: Collection[str], modules: Collection[str]) -> list[tuple[str, str]]:

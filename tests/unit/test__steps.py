@@ -11,12 +11,14 @@ from invoke.runners import Result
 
 from invoke_tasklib import _steps
 from invoke_tasklib._steps import (
+    Step,
     missing_tools,
     parse_steps,
     preflight_message,
     run_step,
     run_steps,
     select_steps,
+    tasks_of,
 )
 
 if TYPE_CHECKING:
@@ -354,3 +356,35 @@ def test_run_steps_keep_going_prints_the_reason(capsys: pytest.CaptureFixture[st
             messages=_MESSAGES,
         )
     assert capsys.readouterr().err == "❌ Step failed: lint\n   lint failed\n"
+
+
+##########################
+#     Tests for Step     #
+##########################
+
+
+def _noop(_c: object) -> None:
+    return None
+
+
+def test_step_has_no_tools_by_default() -> None:
+    assert Step(_noop) == (_noop, (), ())
+
+
+def test_step_keeps_programs_and_modules() -> None:
+    step = Step(_noop, programs=("ruff",), modules=("pytest",))
+    assert (step.programs, step.modules) == (("ruff",), ("pytest",))
+
+
+##############################
+#     Tests for tasks_of     #
+##############################
+
+
+def test_tasks_of_returns_the_task_of_each_step() -> None:
+    other = Mock()
+    assert tasks_of({"a": Step(_noop), "b": Step(other)}) == {"a": _noop, "b": other}
+
+
+def test_tasks_of_no_step_is_empty() -> None:
+    assert tasks_of({}) == {}
