@@ -8,9 +8,8 @@ from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit, UnexpectedExit
 
-from invoke_tasklib.env import find_tool
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import hint
+from invoke_tasklib.runner import find_tool, hint
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping

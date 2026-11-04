@@ -161,11 +161,15 @@ def build_command(
 
     ```
     """
-    words = [program, *_split(args, args_option), *(_split(paths, "--paths") or default_paths)]
+    words = [
+        program,
+        *split_args(args, args_option),
+        *(split_args(paths, "--paths") or default_paths),
+    ]
     return " ".join(words[:1] + [shlex.quote(w) for w in words[1:]])
 
 
-def _split(value: str | None, option: str) -> list[str]:
+def split_args(value: str | None, option: str) -> list[str]:
     r"""Split the value of an option like a shell does.
 
     Args:
@@ -182,10 +186,10 @@ def _split(value: str | None, option: str) -> list[str]:
     Example usage:
 
     ```pycon
-    >>> from invoke_tasklib.runner import _split
-    >>> _split('-k "a b" -x', "--args")
+    >>> from invoke_tasklib.runner import split_args
+    >>> split_args('-k "a b" -x', "--args")
     ['-k', 'a b', '-x']
-    >>> _split(None, "--args")
+    >>> split_args(None, "--args")
     []
 
     ```
@@ -394,6 +398,35 @@ def _check_module(words: Sequence[str]) -> None:
         raise Exit(msg, code=127)
     if module == "pytest":
         _check_plugin_options(words[3:])
+
+
+def find_tool(name: str, *, module: bool = False) -> str | None:
+    r"""Find a program on the ``PATH`` or a module of the interpreter.
+
+    Args:
+        name: The name of the program, or of the module.
+        module: If True, look ``name`` up as a Python module of the
+            running interpreter instead of as a program.
+
+    Returns:
+        The path of the program or of the module, or ``None`` if it is
+        not available.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import find_tool
+    >>> find_tool("no-such-program") is None
+    True
+    >>> find_tool("no_such_module", module=True) is None
+    True
+
+    ```
+    """
+    if module:
+        spec = importlib.util.find_spec(name)
+        return None if spec is None else (spec.origin or name)
+    return shutil.which(name)
 
 
 def check_program(command: str) -> None:

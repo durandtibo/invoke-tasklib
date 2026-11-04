@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import importlib.util
 import re
+import shutil
 import sys
+from importlib.machinery import ModuleSpec
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -17,14 +20,15 @@ from invoke_tasklib.runner import (
     _check_module,
     _check_plugin_options,
     _program_of,
-    _split,
     _stages,
     _strip_assignments,
     build_command,
     check_program,
+    find_tool,
     hint,
     python_executable,
     run,
+    split_args,
 )
 
 if TYPE_CHECKING:
@@ -298,26 +302,26 @@ def test_build_command_args_option_does_not_change_the_command() -> None:
     assert build_command("pytest", args="-x", args_option="--other-args") == "pytest -x"
 
 
-############################
-#     Tests for _split     #
-############################
+################################
+#     Tests for split_args     #
+################################
 
 
-def test_split_none() -> None:
-    assert _split(None, "--args") == []
+def testsplit_args_none() -> None:
+    assert split_args(None, "--args") == []
 
 
-def test_split_empty_string() -> None:
-    assert _split("", "--args") == []
+def testsplit_args_empty_string() -> None:
+    assert split_args("", "--args") == []
 
 
-def test_split_keeps_quoted_words_together() -> None:
-    assert _split("-k 'a b' -x", "--args") == ["-k", "a b", "-x"]
+def testsplit_args_keeps_quoted_words_together() -> None:
+    assert split_args("-k 'a b' -x", "--args") == ["-k", "a b", "-x"]
 
 
-def test_split_unclosed_quote_exit_code() -> None:
+def testsplit_args_unclosed_quote_exit_code() -> None:
     with pytest.raises(Exit, match=r"Cannot parse the value of --args") as excinfo:
-        _split("'a", "--args")
+        split_args("'a", "--args")
     assert excinfo.value.code == 2
 
 
@@ -684,3 +688,45 @@ def test_strip_assignments_does_not_mutate_its_input() -> None:
     words = ["FOO=1", "ruff"]
     _strip_assignments(words)
     assert words == ["FOO=1", "ruff"]
+
+
+###############################
+#     Tests for find_tool     #
+###############################
+
+
+def test_find_tool_program_found_returns_its_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
+    assert find_tool("ruff") == "/bin/ruff"
+
+
+def test_find_tool_program_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+    assert find_tool("ruff") is None
+
+
+def test_find_tool_program_is_not_looked_up_as_a_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+    assert find_tool("json") is None
+
+
+def test_find_tool_module_found_returns_its_origin(monkeypatch: pytest.MonkeyPatch) -> None:
+    spec = ModuleSpec("pytest", None, origin="/site/pytest/__init__.py")
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _: spec)
+    assert find_tool("pytest", module=True) == "/site/pytest/__init__.py"
+
+
+def test_find_tool_module_without_origin_returns_its_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _: ModuleSpec("pytest", None))
+    assert find_tool("pytest", module=True) == "pytest"
+
+
+def test_find_tool_module_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
+    assert find_tool("pytest", module=True) is None
+
+
+def test_find_tool_module_is_not_looked_up_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
+    assert find_tool("ruff", module=True) is None

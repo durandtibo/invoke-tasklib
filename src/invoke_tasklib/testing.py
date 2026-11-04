@@ -13,10 +13,10 @@ from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import (
     ARGS_HELP,
     PATHS_HELP,
-    _split,
     build_command,
     python_executable,
     run,
+    split_args,
 )
 
 if TYPE_CHECKING:
@@ -146,7 +146,7 @@ def doctest_markdown(c: Context, args: str | None = None, paths: str | None = No
         paths: The markdown files to check instead of every markdown
             file of the project.
     """
-    files = _split(paths, "--paths") or [str(f) for f in _find_markdown_files(Path())]
+    files = split_args(paths, "--paths") or [str(f) for f in _find_markdown_files(Path())]
     say(c, f"📚 Found {len(files)} markdown files")
     if files:
         cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"

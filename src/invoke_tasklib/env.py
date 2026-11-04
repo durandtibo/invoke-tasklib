@@ -2,9 +2,7 @@ r"""Environment and dependency management tasks."""
 
 from __future__ import annotations
 
-import importlib.util
 import shlex
-import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,7 +11,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import hint, run
+from invoke_tasklib.runner import find_tool, hint, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -164,35 +162,6 @@ TOOL_MODULES: tuple[str, ...] = (
     "pytest_cov",
 )
 r"""The Python modules and pytest plugins that the tasks need."""
-
-
-def find_tool(name: str, *, module: bool = False) -> str | None:
-    r"""Find a program on the ``PATH`` or a module of the interpreter.
-
-    Args:
-        name: The name of the program, or of the module.
-        module: If True, look ``name`` up as a Python module of the
-            running interpreter instead of as a program.
-
-    Returns:
-        The path of the program or of the module, or ``None`` if it is
-        not available.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.env import find_tool
-    >>> find_tool("no-such-program") is None
-    True
-    >>> find_tool("no_such_module", module=True) is None
-    True
-
-    ```
-    """
-    if module:
-        spec = importlib.util.find_spec(name)
-        return None if spec is None else (spec.origin or name)
-    return shutil.which(name)
 
 
 @task

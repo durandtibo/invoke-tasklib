@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
-import shutil
-from importlib.machinery import ModuleSpec
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -248,48 +245,6 @@ def test_update_does_not_sync_twice() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     env.update(c)
     assert len([cmd for cmd in commands(c) if cmd.startswith("uv sync")]) == 1
-
-
-###############################
-#     Tests for find_tool    #
-###############################
-
-
-def testfind_tool_program_found_returns_its_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
-    assert env.find_tool("ruff") == "/bin/ruff"
-
-
-def testfind_tool_program_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(shutil, "which", lambda _: None)
-    assert env.find_tool("ruff") is None
-
-
-def testfind_tool_program_is_not_looked_up_as_a_module(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(shutil, "which", lambda _: None)
-    assert env.find_tool("json") is None
-
-
-def testfind_tool_module_found_returns_its_origin(monkeypatch: pytest.MonkeyPatch) -> None:
-    spec = ModuleSpec("pytest", None, origin="/site/pytest/__init__.py")
-    monkeypatch.setattr(importlib.util, "find_spec", lambda _: spec)
-    assert env.find_tool("pytest", module=True) == "/site/pytest/__init__.py"
-
-
-def testfind_tool_module_without_origin_returns_its_name(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(importlib.util, "find_spec", lambda _: ModuleSpec("pytest", None))
-    assert env.find_tool("pytest", module=True) == "pytest"
-
-
-def testfind_tool_module_missing_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
-    assert env.find_tool("pytest", module=True) is None
-
-
-def testfind_tool_module_is_not_looked_up_as_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
-    monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
-    assert env.find_tool("ruff", module=True) is None
 
 
 #################################
