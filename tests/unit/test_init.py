@@ -60,6 +60,7 @@ def test_ns_contains_the_complete_list_of_tasks() -> None:
         "format.check-docstrings",
         "format.check-python",
         "format.check-shell",
+        "format.check-shell-format",
         "format.fix-docstrings",
         "format.fix-python",
         "format.fix-shell",

@@ -40,6 +40,21 @@ def _unit(c: Context) -> None:
     testing.unit(c, cov=load_config(c).check.cov)
 
 
+def _shell(c: Context) -> None:
+    r"""Check the shell scripts: the lint, then the format.
+
+    It runs ``format.check-shell`` (shellcheck) and
+    ``format.check-shell-format`` (``shfmt -d``), so the ``shell`` step
+    of ``check.all`` accepts what the ``shell`` step of ``fix.all``
+    would leave unchanged.
+
+    Args:
+        c: The invoke context.
+    """
+    formatting.check_shell(c)
+    formatting.check_shell_format(c)
+
+
 def _unit_modules(cfg: TasklibConfig) -> tuple[str, ...]:
     r"""List the Python modules that the ``unit`` step needs.
 
@@ -79,7 +94,7 @@ STEPS: dict[str, Step] = {
     "imports": Step(imports.check_cycles),
     "unit": Step(_unit, modules=_unit_modules),
     "doctest": Step(testing.doctest, modules=("pytest", "xdoctest")),
-    "shell": Step(formatting.check_shell, programs=("shellcheck",)),
+    "shell": Step(_shell, programs=("shellcheck", "shfmt")),
     "spelling": Step(lint.check_spelling, programs=("codespell",)),
     "docs": Step(doc.build, programs=("mkdocs",)),
     "audit": Step(security.audit, programs=("uv", "uvx")),

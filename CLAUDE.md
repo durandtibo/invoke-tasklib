@@ -52,6 +52,9 @@
 - Match the surrounding code: comment density, naming, docstring style (Google style with
   `Args:`, `Returns:`, `Raises:` and, where useful, an `Example usage:` with a `pycon` block that
   runs as a doctest).
+- `inv test.doctest` runs every `>>>` example of every tracked markdown file, `review/` included. In a
+  review (`review/*.md`), show an example that is not meant to pass (a bug that was fixed, a failing
+  command) in a `text` block without the `>>>` prompt, not in a `pycon` block.
 - Follow the current style of the repository in everything you add (source, tests, docs, commit
   messages, PR descriptions). Look at a few neighbouring files first, and do not introduce a new
   convention or reformat code you do not otherwise change.

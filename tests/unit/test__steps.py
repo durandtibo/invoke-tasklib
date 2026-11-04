@@ -105,7 +105,7 @@ def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
         (
             "ruff",
             (
-                "'ruff' was not found on the PATH. "
+                "'ruff' was not found on the PATH or next to the Python interpreter. "
                 "Install it with the 'dev' group: `uv sync --group dev`."
             ),
         )

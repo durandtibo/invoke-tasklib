@@ -538,6 +538,45 @@ def test_remove_dir_does_not_ask_git_about_a_missing_directory(tmp_path: Path) -
 ##################################
 
 
+def test_remove_file_keeps_a_tracked_file(tmp_path: Path) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target, keep_tracked=True)
+    assert target.is_file()
+
+
+def test_remove_file_says_it_keeps_a_tracked_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target, keep_tracked=True)
+    assert capsys.readouterr().out == f"⏭️  Keeping {target}: it is tracked by git\n"
+
+
+def test_remove_file_removes_an_untracked_file_when_keeping_tracked(tmp_path: Path) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context(""), target, keep_tracked=True)
+    assert not target.exists()
+
+
+def test_remove_file_removes_a_tracked_file_by_default(tmp_path: Path) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target)
+    assert not target.exists()
+
+
+def test_remove_file_dry_run_reports_a_tracked_file_as_kept(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target, dry_run=True, keep_tracked=True)
+    assert capsys.readouterr().out == f"⏭️  Keeping {target}: it is tracked by git\n"
+
+
 def test_remove_file_removes_existing_file(tmp_path: Path) -> None:
     target = tmp_path / ".coverage"
     target.write_text("data")
@@ -820,3 +859,84 @@ def test_all_keeps_a_coverage_html_dir_outside_the_project(tmp_path: Path) -> No
         m.chdir(project)
         clean.all_(_git_context(""))
     assert outside.is_dir()
+
+
+##########################################
+#     Tests for the coverage outputs     #
+##########################################
+
+
+def _cov_context(reports: str) -> MockContext:
+    return make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+
+
+def test_all_removes_the_html_dir_of_cov_reports(project: Path) -> None:
+    html = _mkdir("cov_html")(project)
+    clean.all_(_cov_context("html:cov_html,term"))
+    assert not html.exists()
+
+
+def test_all_removes_the_xml_file_of_cov_reports(project: Path) -> None:
+    (project / "reports").mkdir()
+    xml = project / "reports" / "cov.xml"
+    xml.write_text("")
+    clean.all_(_cov_context("xml:reports/cov.xml"))
+    assert not xml.exists()
+
+
+def test_all_removes_the_xml_output_of_pyproject(project: Path) -> None:
+    (project / "pyproject.toml").write_text('[tool.coverage.xml]\noutput = "cov.xml"\n')
+    xml = project / "cov.xml"
+    xml.write_text("")
+    clean.all_(_cov_context("xml"))
+    assert not xml.exists()
+
+
+@pytest.mark.parametrize("name", ["coverage.json", "coverage.lcov"])
+def test_all_removes_the_default_file_of_a_requested_report(project: Path, name: str) -> None:
+    path = project / name
+    path.write_text("")
+    clean.all_(_cov_context(f"{name.split('.')[1]}"))
+    assert not path.exists()
+
+
+def test_all_keeps_the_file_of_a_report_that_is_not_requested(project: Path) -> None:
+    path = project / "coverage.json"
+    path.write_text("")
+    clean.all_(_cov_context("html,xml"))
+    assert path.exists()
+
+
+def test_all_removes_the_default_xml_file_when_the_config_is_invalid(project: Path) -> None:
+    path = project / "coverage.xml"
+    path.write_text("")
+    clean.all_(make_context())
+    assert not path.exists()
+
+
+def test_all_keeps_a_coverage_file_tracked_by_git(project: Path) -> None:
+    path = project / "coverage.xml"
+    path.write_text("")
+    clean.all_(_git_context("coverage.xml\n"))
+    assert path.is_file()
+
+
+def test_all_removes_a_file_listed_twice_once(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (project / "coverage.xml").write_text("")
+    clean.all_(_cov_context("xml,xml:coverage.xml"))
+    assert capsys.readouterr().out.count("Removing coverage.xml") == 1
+
+
+##################################
+#     Tests for _cov_reports     #
+##################################
+
+
+def test_cov_reports_reads_the_config() -> None:
+    assert clean._cov_reports(_cov_context("html:cov_html,term")) == ("html:cov_html", "term")
+
+
+def test_cov_reports_of_an_invalid_config_is_empty() -> None:
+    assert clean._cov_reports(make_context()) == ()
