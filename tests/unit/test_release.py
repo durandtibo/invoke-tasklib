@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -13,9 +13,6 @@ from invoke.runners import Result
 
 from invoke_tasklib import release
 from tests.helpers import commands, make_context, run_kwargs
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 @pytest.fixture
@@ -79,6 +76,41 @@ def test_build_with_check() -> None:
         _SDIST_CHECK_CMD,
         "uvx twine check dist/*",
     ]
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_with_wheel_only_does_not_verify_the_sdist() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, args="--wheel")
+    assert commands(c) == ["uv build --clear --wheel", _WHEEL_CHECK_CMD]
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_with_sdist_only_does_not_verify_the_wheel() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, args="--sdist")
+    assert commands(c) == ["uv build --clear --sdist", _SDIST_CHECK_CMD]
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_verifies_the_out_dir_not_a_stale_dist(tmp_path: Path) -> None:
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "mypkg-0.0.9-py3-none-any.whl").write_text("")
+    (tmp_path / "out" / "mypkg-0.0.9.tar.gz").write_text("")
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, args="--out-dir out")
+    assert commands(c)[1].startswith("uv run --isolated --no-project --with out/mypkg-0.0.9-")
+
+
+def test_build_checks_the_out_dir_with_twine(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "mypkg-0.0.9-py3-none-any.whl").write_text("")
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, check=True, args="--wheel --out-dir out")
+    assert commands(c)[-1] == "uvx twine check out/*"
 
 
 def test_build_installs_the_built_wheel_not_the_package_name(dist: Path) -> None:
@@ -513,3 +545,42 @@ def test_in_ci_false(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_in_ci_false_when_unset() -> None:
     assert release._in_ci() is False
+
+
+####################################
+#     Tests for _build_targets     #
+####################################
+
+
+def test_build_targets_default() -> None:
+    assert release._build_targets(None) == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+def test_build_targets_empty_args() -> None:
+    assert release._build_targets("") == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+@pytest.mark.parametrize("args", ["--wheel", "-w"])
+def test_build_targets_wheel(args: str) -> None:
+    assert release._build_targets(args) == (Path("dist"), ("*.whl",))
+
+
+def test_build_targets_sdist() -> None:
+    assert release._build_targets("--sdist") == (Path("dist"), ("*.tar.gz",))
+
+
+def test_build_targets_wheel_and_sdist() -> None:
+    assert release._build_targets("--wheel --sdist") == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+@pytest.mark.parametrize("args", ["--out-dir out", "-o out", "--out-dir=out", "--wheel -o out"])
+def test_build_targets_out_dir(args: str) -> None:
+    assert release._build_targets(args)[0] == Path("out")
+
+
+def test_build_targets_out_dir_without_value_is_the_default() -> None:
+    assert release._build_targets("--out-dir")[0] == Path("dist")
+
+
+def test_build_targets_ignores_other_options() -> None:
+    assert release._build_targets("--no-sources") == (Path("dist"), ("*.whl", "*.tar.gz"))

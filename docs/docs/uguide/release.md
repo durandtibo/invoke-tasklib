@@ -21,7 +21,9 @@ invoke release.build
 Runs `uv build`, then verifies the artifacts it produced: the newest wheel and the newest source
 distribution in `dist/` are each installed in an isolated `uv run` environment
 (`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it.
-The task fails if the build did not produce a wheel or a source distribution.
+The task fails if the build did not produce a wheel or a source distribution. With `--wheel` or
+`--sdist` in `--args`, only that kind is verified, and with `--out-dir <dir>` (or `-o`) the files
+of `<dir>` are verified (and checked by `--check`) instead of `dist/`.
 
 Pass `--check` to additionally validate the package's PyPI metadata with
 [`twine check`](https://twine.readthedocs.io/):

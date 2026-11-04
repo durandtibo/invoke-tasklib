@@ -53,14 +53,56 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
     return candidates[-1]
 
 
+def _build_targets(args: str | None) -> tuple[Path, tuple[str, ...]]:
+    r"""Find what ``uv build`` produces from its arguments.
+
+    Args:
+        args: The extra arguments given to ``uv build``, as one string.
+
+    Returns:
+        A tuple ``(directory, patterns)``: the output directory
+        (``--out-dir`` or ``-o``, ``dist`` by default) and the glob
+        patterns of the artifacts that are built: the wheel with
+        ``--wheel`` or ``-w``, the source distribution with ``--sdist``,
+        both if none or both are given.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.release import _build_targets
+    >>> _build_targets(None)
+    (PosixPath('dist'), ('*.whl', '*.tar.gz'))
+    >>> _build_targets("--wheel --out-dir out")
+    (PosixPath('out'), ('*.whl',))
+
+    ```
+    """
+    words = shlex.split(args or "")
+    directory = Path("dist")
+    for i, word in enumerate(words):
+        if word in {"--out-dir", "-o"} and i + 1 < len(words):
+            directory = Path(words[i + 1])
+        elif word.startswith("--out-dir="):
+            directory = Path(word.removeprefix("--out-dir="))
+    patterns = []
+    if "--wheel" in words or "-w" in words:
+        patterns.append("*.whl")
+    if "--sdist" in words:
+        patterns.append("*.tar.gz")
+    return directory, tuple(patterns or ("*.whl", "*.tar.gz"))
+
+
 @task(help={"check": "Also check the package metadata with twine.", "args": ARGS_HELP})
 def build(c: Context, check: bool = False, args: str | None = None) -> None:
     r"""Build the package and verify the built artifacts.
 
     The artifacts are checked to be installable. The newest wheel and
-    the newest source distribution in ``dist/`` are each installed in an
-    isolated environment and the package is imported from it, using
-    ``package.import_name``.
+    the newest source distribution in the output directory (``dist/``,
+    or ``--out-dir`` of ``--args``) are each installed in an isolated
+    environment and the package is imported from it, using
+    ``package.import_name``. Only the kinds that the build produces are
+    verified: with ``--wheel`` or ``--sdist`` in ``--args``, the other
+    kind is not.
 
     Args:
         c: The invoke context.
@@ -72,9 +114,10 @@ def build(c: Context, check: bool = False, args: str | None = None) -> None:
     import_name = cfg.package.import_name
     say(c, "📦 Building package...")
     run(c, build_command("uv build --clear", args=args))
+    directory, patterns = _build_targets(args)
     say(c, "🔍 Verifying package installation...")
-    for pattern in ("*.whl", "*.tar.gz"):
-        artifact = _latest_artifact(Path("dist"), pattern)
+    for pattern in patterns:
+        artifact = _latest_artifact(directory, pattern)
         say(c, f"🔍 Verifying {artifact}...")
         run(
             c,
@@ -83,7 +126,7 @@ def build(c: Context, check: bool = False, args: str | None = None) -> None:
         )
     if check:
         say(c, "🔍 Checking package metadata with twine...")
-        run(c, "uvx twine check dist/*")
+        run(c, f"uvx twine check {shlex.quote(str(directory))}/*")
 
 
 TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
