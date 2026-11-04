@@ -9,7 +9,7 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import imports
-from tests.helpers import commands, make_context
+from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -261,3 +261,10 @@ def test_check_isolated_reports_a_failure(capsys: pytest.CaptureFixture[str]) ->
     with pytest.raises(Exit, match=r"boom"):
         imports.check_isolated(c)
     assert "❌ Failed: Checking that each module imports on its own" in capsys.readouterr().err
+
+
+def test_check_isolated_reads_the_modules_without_a_pty_nor_an_echo() -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
+    imports.check_isolated(c)
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)

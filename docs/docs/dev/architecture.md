@@ -76,7 +76,9 @@ Five small modules support the task modules:
 
 - `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
   the program is on the `PATH` (with a hint per program when it is not), echoes the command, and
-  uses a pty only on a terminal. `build_command` builds a command line and quotes the arguments, and
+  uses a pty only on a terminal. `capture(c, command)` is `run` for a command whose output the task
+  reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
+  `build_command` builds a command line and quotes the arguments, and
   `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options.
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
