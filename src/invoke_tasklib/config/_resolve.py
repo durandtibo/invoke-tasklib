@@ -66,6 +66,13 @@ def get_config(c: Context) -> TasklibConfig:
     for section, options in SCHEMA.items():
         given = _as_mapping(f"tasklib.{section}", user.get(section, {}))
         _check_keys(section, given, options)
+        # ``default_config`` registers the booleans and the integers
+        # with ``None``, which is not a value given by the user.
+        given = {
+            key: value
+            for key, value in given.items()
+            if value is not None or not isinstance(options[key].default, int)
+        }
         merged[section] = {**_defaults(section), **given}
     package = merged["package"]
 
