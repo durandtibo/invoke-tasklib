@@ -20,7 +20,9 @@ invoke release.build
 
 Runs `uv build`, then verifies the artifacts it produced: the newest wheel and the newest source
 distribution in `dist/` are each installed in an isolated `uv run` environment
-(`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it.
+(`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it with `python -I` (isolated mode: the current directory is not on
+`sys.path`, so a package of the source tree in a flat layout cannot hide an artifact that does not
+contain it).
 The task fails if the build did not produce a wheel or a source distribution. With `--wheel` or
 `--sdist` in `--args`, only that kind is verified, and with `--out-dir <dir>` (or `-o`) the files
 of `<dir>` are verified (and checked by `--check`) instead of `dist/`.

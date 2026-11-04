@@ -107,7 +107,10 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     the newest source distribution in the output directory (``dist/``,
     or ``--out-dir`` of ``--args``) are each installed in an isolated
     environment and the package is imported from it, using
-    ``package.import_name``. Only the kinds that the build produces are
+    ``package.import_name``. The import runs in isolated mode
+    (``python -I``), so the current directory is not on ``sys.path``:
+    a package of the source tree (flat layout) cannot hide an artifact
+    that does not contain it. Only the kinds that the build produces are
     verified: with ``--wheel`` or ``--sdist`` in ``--args``, the other
     kind is not.
 
@@ -130,7 +133,7 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
             run(
                 c,
                 f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
-                f"python -c {shlex.quote(f'import {import_name}')}",
+                f"python -I -c {shlex.quote(f'import {import_name}')}",
             )
         if check:
             say(c, "🔍 Checking package metadata with twine...")

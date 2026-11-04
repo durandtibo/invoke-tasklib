@@ -34,10 +34,10 @@ def _env(c: MockContext) -> dict[str, str]:
 
 _WHEEL_CHECK_CMD = (
     "uv run --isolated --no-project --with dist/mypkg-0.0.8-py3-none-any.whl -- "
-    "python -c 'import mypkg'"
+    "python -I -c 'import mypkg'"
 )
 _SDIST_CHECK_CMD = (
-    "uv run --isolated --no-project --with dist/mypkg-0.0.8.tar.gz -- python -c 'import mypkg'"
+    "uv run --isolated --no-project --with dist/mypkg-0.0.8.tar.gz -- python -I -c 'import mypkg'"
 )
 
 ###########################
@@ -63,14 +63,14 @@ def test_build_with_args() -> None:
 def test_build_imports_the_import_name() -> None:
     c = make_context({"package": {"name": "my-pkg"}})
     release.build(c)
-    assert commands(c)[1].endswith("-- python -c 'import my_pkg'")
+    assert commands(c)[1].endswith("-- python -I -c 'import my_pkg'")
 
 
 @pytest.mark.usefixtures("dist")
 def test_build_imports_the_configured_import_name() -> None:
     c = make_context({"package": {"name": "my-pkg", "import_name": "other"}})
     release.build(c)
-    assert commands(c)[2].endswith("-- python -c 'import other'")
+    assert commands(c)[2].endswith("-- python -I -c 'import other'")
 
 
 @pytest.mark.usefixtures("dist")
