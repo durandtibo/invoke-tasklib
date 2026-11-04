@@ -1025,10 +1025,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#releasepypi-fails-to-authenticate" class="md-nav__link">
+  <a href="#releasepublish-fails-to-authenticate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        release.pypi fails to authenticate
+        release.publish fails to authenticate
       
     </span>
   </a>
@@ -1717,10 +1717,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#releasepypi-fails-to-authenticate" class="md-nav__link">
+  <a href="#releasepublish-fails-to-authenticate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        release.pypi fails to authenticate
+        release.publish fails to authenticate
       
     </span>
   </a>
@@ -1836,12 +1836,13 @@ fetch the tags in CI: <code>git fetch --tags</code>), or skip the tag lookup by 
 <p>A newer version of the docs is already published, so publishing this one would move <code>latest</code>
 backwards. Pass <code>--force</code> if that is what you want.</p>
 <p>See <a href="../uguide/doc/">Doc</a>.</p>
-<h2 id="releasepypi-fails-to-authenticate"><code>release.pypi</code> fails to authenticate<a class="headerlink" href="#releasepypi-fails-to-authenticate" title="Permanent link">&para;</a></h2>
-<p><code>release.pypi</code> passes the <code>PYPI_TOKEN</code> (or <code>UV_PUBLISH_TOKEN</code>) environment variable to
-<code>uv publish</code> and stops with a clear message if neither is set. Make sure the variable is set (e.g.
-as a CI secret) before running it:</p>
+<h2 id="releasepublish-fails-to-authenticate"><code>release.publish</code> fails to authenticate<a class="headerlink" href="#releasepublish-fails-to-authenticate" title="Permanent link">&para;</a></h2>
+<p><code>release.publish</code> passes the <code>PYPI_TOKEN</code> (or <code>UV_PUBLISH_TOKEN</code>) environment variable to
+<code>uv publish</code>. Without a token it only works in GitHub Actions with the <code>id-token: write</code>
+permission (Trusted Publishing); anywhere else it stops with a clear message. Make sure the
+variable is set (e.g. as a CI secret) before running it:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PYPI_TOKEN</span><span class="o">=</span>pypi-...
-invoke<span class="w"> </span>release.pypi
+invoke<span class="w"> </span>release.publish
 </code></pre></div>
 <p>See <a href="../uguide/release/">Release</a>.</p>
 <h2 id="fix-python-fix-docstrings-fix-shell-changed-files-i-didnt-expect"><code>fix-python</code> / <code>fix-docstrings</code> / <code>fix-shell</code> changed files I didn't expect<a class="headerlink" href="#fix-python-fix-docstrings-fix-shell-changed-files-i-didnt-expect" title="Permanent link">&para;</a></h2>

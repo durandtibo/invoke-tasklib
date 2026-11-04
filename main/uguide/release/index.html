@@ -1633,6 +1633,7 @@
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page describes the <code>invoke_tasklib.release</code> module, which provides tasks to build and
 publish the package to PyPI using <a href="https://docs.astral.sh/uv/"><code>uv</code></a>.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><code>release.pypi</code> was renamed to <code>release.publish</code>; the old name is no longer available.</p>
 <table>
 <thead>
 <tr>
@@ -1646,8 +1647,8 @@ publish the package to PyPI using <a href="https://docs.astral.sh/uv/"><code>uv<
 <td>Builds the package and verifies installation (<code>--check</code> also validates metadata with twine)</td>
 </tr>
 <tr>
-<td><code>release.pypi</code></td>
-<td>Builds and publishes the package to PyPI</td>
+<td><code>release.publish</code></td>
+<td>Checks the git state, then builds and publishes the package to PyPI or TestPyPI</td>
 </tr>
 </tbody>
 </table>
@@ -1663,24 +1664,63 @@ The task fails if the build did not produce a wheel or a source distribution.</p
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.build<span class="w"> </span>--check
 </code></pre></div>
 <h2 id="publishing-to-pypi">Publishing to PyPI<a class="headerlink" href="#publishing-to-pypi" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.pypi
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.publish
 </code></pre></div>
-<p>Builds the package (via <code>release.build</code>, which clears <code>dist/</code> first so stale artifacts are never
-uploaded) and then runs <code>uv publish</code>. The token is read from the <code>PYPI_TOKEN</code> environment variable
-(or <code>UV_PUBLISH_TOKEN</code>) and handed to <code>uv publish</code> through its environment, so it never appears on
-the command line. The task fails before building if no token is set.</p>
-<p><code>release.pypi</code> is the token-based way to publish, for example from a local machine. It is not the
-only one: a CI workflow can build the package with <code>release.build</code> and publish it with
-<a href="https://docs.pypi.org/trusted-publishers/">PyPI Trusted Publishing</a> (OpenID Connect), which needs
-no token at all. This repository releases that way (see <code>.github/workflows/release-pypi.yaml</code>),
-and does not use <code>release.pypi</code>.</p>
+<p>Before anything is built, the task checks the git state: the working tree must be clean, <code>HEAD</code>
+must be tagged and the tag (without a leading <code>v</code>) must be the static <code>project.version</code> of
+<code>pyproject.toml</code> (a dynamic version is not compared). It then asks for a confirmation, unless
+<code>--yes</code> is given or the <code>CI</code> environment variable is set. Finally it builds the package (via
+<code>release.build</code>, which clears <code>dist/</code> first so stale artifacts are never uploaded) and runs
+<code>uv publish</code>.</p>
+<p>Credentials, in this order:</p>
+<ul>
+<li>a token in <code>PYPI_TOKEN</code> (or <code>UV_PUBLISH_TOKEN</code>), handed to <code>uv publish</code> through its environment
+  so it never appears on the command line;</li>
+<li><a href="https://docs.pypi.org/trusted-publishers/">PyPI Trusted Publishing</a> (OpenID Connect), used
+  automatically in GitHub Actions with the <code>id-token: write</code> permission (<code>--trusted-publishing
+  always</code>); no token is needed.</li>
+</ul>
+<p>Without either, the task fails before building.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--test-pypi</code></td>
+<td>Publishes to <a href="https://test.pypi.org/">TestPyPI</a> instead of PyPI</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Runs the checks and the build, and gives <code>--dry-run</code> to <code>uv publish</code>; no token</td>
+</tr>
+<tr>
+<td><code>--yes</code></td>
+<td>Does not ask for a confirmation</td>
+</tr>
+<tr>
+<td><code>--skip-checks</code></td>
+<td>Does not check the git state</td>
+</tr>
+<tr>
+<td><code>--args</code></td>
+<td>Extra arguments for <code>uv publish</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.publish<span class="w"> </span>--dry-run
+invoke<span class="w"> </span>release.publish<span class="w"> </span>--test-pypi<span class="w"> </span>--yes
+</code></pre></div>
 <!-- prettier-ignore -->
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This publishes a new version to PyPI, which cannot be undone. Make sure <code>PYPI_TOKEN</code> is set
-and that you are releasing the intended version before running this task.</p>
+<p>This publishes a new version to PyPI, which cannot be undone. Try <code>--dry-run</code> or <code>--test-pypi</code>
+first, and make sure you are releasing the intended version.</p>
 </div>
-<p><code>release.build</code> and <code>release.pypi</code> take <code>--args</code> for <code>uv build</code> and <code>uv publish</code>.</p>
+<p><code>release.build</code> takes <code>--args</code> for <code>uv build</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../refs/release/"><code>invoke_tasklib.release</code> reference</a></li>

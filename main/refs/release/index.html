@@ -1321,6 +1321,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.release.TEST_PYPI_CHECK_URL" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TEST_PYPI_CHECK_URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.release.TEST_PYPI_PUBLISH_URL" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TEST_PYPI_PUBLISH_URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.release.build" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1332,10 +1354,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.release.pypi" class="md-nav__link">
+  <a href="#invoke_tasklib.release.publish" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pypi
+        publish
       
     </span>
   </a>
@@ -1567,6 +1589,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.release.TEST_PYPI_CHECK_URL" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TEST_PYPI_CHECK_URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.release.TEST_PYPI_PUBLISH_URL" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TEST_PYPI_PUBLISH_URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.release.build" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1578,10 +1622,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.release.pypi" class="md-nav__link">
+  <a href="#invoke_tasklib.release.publish" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pypi
+        publish
       
     </span>
   </a>
@@ -1645,6 +1689,54 @@
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="invoke_tasklib.release.TEST_PYPI_CHECK_URL" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.release.TEST_PYPI_CHECK_URL</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.release.TEST_PYPI_CHECK_URL" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">TEST_PYPI_CHECK_URL</span> <span class="o">=</span> <span class="s1">'https://test.pypi.org/simple/'</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The index of TestPyPI, to skip the files already uploaded.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="invoke_tasklib.release.TEST_PYPI_PUBLISH_URL" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.release.TEST_PYPI_PUBLISH_URL</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.release.TEST_PYPI_PUBLISH_URL" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">TEST_PYPI_PUBLISH_URL</span> <span class="o">=</span> <span class="s1">'https://test.pypi.org/legacy/'</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The upload endpoint of TestPyPI.</p>
+
+    </div>
+
+</div>
 
 
 
@@ -1742,23 +1834,36 @@ twine. Default is False.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="invoke_tasklib.release.pypi" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">invoke_tasklib.release.pypi</span>
+<h3 id="invoke_tasklib.release.publish" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">invoke_tasklib.release.publish</span>
 
 
-<a href="#invoke_tasklib.release.pypi" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pypi</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<a href="#invoke_tasklib.release.publish" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">publish</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">test_pypi</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">dry_run</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">yes</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">skip_checks</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Build and publish the package to PyPI.</p>
-<p>The token is read from the <code>PYPI_TOKEN</code> environment variable (or
-<code>UV_PUBLISH_TOKEN</code>, which <code>uv publish</code> reads natively) and is
+<p>Before anything is built, the task checks that the working tree is
+clean, that <code>HEAD</code> is tagged and that the tag matches the
+<code>pyproject.toml</code> version (<code>--skip-checks</code> turns it off). Outside
+of CI it then asks for a confirmation (<code>--yes</code> turns it off).</p>
+<p>The credentials are either a token, read from <code>PYPI_TOKEN</code> (or
+<code>UV_PUBLISH_TOKEN</code>, which <code>uv publish</code> reads natively) and
 passed to <code>uv publish</code> through its environment, so it does not
-appear on the command line. The task fails before building if no
-token is set. <code>dist/</code> is cleared by the build, so only the freshly
-built artifacts are uploaded.</p>
+appear on the command line; or, in GitHub Actions with the
+<code>id-token: write</code> permission, PyPI Trusted Publishing. <code>dist/</code>
+is cleared by the build, so only the freshly built artifacts are
+uploaded.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1790,6 +1895,71 @@ built artifacts are uploaded.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>test_pypi</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, publish to TestPyPI.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dry_run</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, run the checks and the build, and give
+<code>--dry-run</code> to <code>uv publish</code>. No credentials are needed.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>yes</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, do not ask for a confirmation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>skip_checks</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, do not check the git state.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>args</code>
             </td>
             <td>
@@ -1797,8 +1967,7 @@ built artifacts are uploaded.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Extra arguments passed to <code>uv publish</code>, e.g.
-<code>"--index testpypi"</code>.</p>
+                <p>Extra arguments passed to <code>uv publish</code>.</p>
               </div>
             </td>
             <td>
@@ -1824,7 +1993,8 @@ built artifacts are uploaded.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If neither <code>PYPI_TOKEN</code> nor <code>UV_PUBLISH_TOKEN</code> is set.</p>
+                <p>If the git state is not releasable, if there are no
+credentials, or if the confirmation is refused.</p>
               </div>
             </td>
           </tr>
