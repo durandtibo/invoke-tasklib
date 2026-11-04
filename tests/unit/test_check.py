@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from invoke.config import Config
-from invoke.context import MockContext
 from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
@@ -18,6 +16,8 @@ from tests.helpers import commands, make_context
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+    from invoke.context import MockContext
 
     from invoke_tasklib.config import TasklibConfig
 
@@ -50,7 +50,7 @@ def _context(check_config: dict | None = None) -> MockContext:
     tasklib = {"package": {"name": "mypkg"}}
     if check_config is not None:
         tasklib["check"] = check_config
-    return MockContext(config=Config(overrides={"tasklib": tasklib}), run=True)
+    return make_context(tasklib)
 
 
 def _failing(c: MockContext, *failing: str) -> None:
