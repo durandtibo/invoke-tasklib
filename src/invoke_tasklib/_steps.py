@@ -2,14 +2,13 @@ r"""Helpers shared by ``check.all`` and ``fix.all``."""
 
 from __future__ import annotations
 
-import sys
 import textwrap
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit, UnexpectedExit
 
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import find_tool, hint
+from invoke_tasklib.runner import find_tool, not_found_message
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping
@@ -39,16 +38,9 @@ def missing_tools(programs: Collection[str], modules: Collection[str]) -> list[t
 
     ```
     """
-    missing = [
-        (name, f"'{name}' was not found on the PATH. {hint(name)}")
-        for name in programs
-        if find_tool(name) is None
-    ]
+    missing = [(name, not_found_message(name)) for name in programs if find_tool(name) is None]
     missing.extend(
-        (
-            name,
-            f"The Python module '{name}' is not installed for {sys.executable}. {hint(name)}",
-        )
+        (name, not_found_message(name, module=True))
         for name in modules
         if find_tool(name, module=True) is None
     )
