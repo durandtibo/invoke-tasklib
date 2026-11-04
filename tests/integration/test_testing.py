@@ -49,6 +49,20 @@ def test_unit_with_coverage_does_not_generate_the_other_reports(flat_project: Pa
     assert not (flat_project / "htmlcov").exists()
 
 
+def test_unit_with_coverage_moves_a_report_with_an_argument(flat_project: Path) -> None:
+    testing.unit(_context(cov_reports="xml:out/cov.xml"), cov=True, args="-p no:cacheprovider")
+    assert (flat_project / "out" / "cov.xml").is_file()
+
+
+@pytest.mark.usefixtures("flat_project")
+def test_unit_with_coverage_accepts_term_missing_skip_covered(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    reports = "term-missing:skip-covered"
+    testing.unit(_context(cov_reports=reports), cov=True, args="-p no:cacheprovider")
+    assert "✅ Unit tests complete" in capsys.readouterr().out
+
+
 def test_doctest_markdown_does_not_walk_into_the_venv(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

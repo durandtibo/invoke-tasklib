@@ -265,6 +265,32 @@ def test_unit_with_configured_coverage_reports() -> None:
     ]
 
 
+def test_unit_passes_the_argument_of_a_coverage_report() -> None:
+    reports = "term-missing:skip-covered,html:cov_html"
+    c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+    test_tasks.unit(c, cov=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report term-missing:skip-covered --cov-report html:cov_html "
+            "--cov=mypkg tests/unit"
+        )
+    ]
+
+
+def test_unit_quotes_a_coverage_report_with_a_space_or_a_dollar() -> None:
+    reports = ["html:my dir", "xml:$HOME/cov.xml"]
+    c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+    test_tasks.unit(c, cov=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report 'html:my dir' --cov-report 'xml:$HOME/cov.xml' "
+            "--cov=mypkg tests/unit"
+        )
+    ]
+
+
 def test_unit_with_no_coverage_report_has_no_report_option() -> None:
     c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": ""}})
     test_tasks.unit(c, cov=True)

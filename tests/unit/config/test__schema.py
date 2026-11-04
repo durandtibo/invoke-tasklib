@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import fields
 
 import pytest
@@ -230,3 +231,34 @@ def test_main_prints_the_usage_when_it_rejects_arguments(
 ) -> None:
     main(["--bad"])
     assert capsys.readouterr().out == "usage: python -m invoke_tasklib.config\n"
+
+
+########################################
+#     Tests for cov_reports schema     #
+########################################
+
+
+def _cov_report_pattern() -> re.Pattern[str]:
+    items = json_schema()["properties"]["tasklib"]["properties"]["test"]["properties"][
+        "cov_reports"
+    ]["anyOf"][1]["items"]
+    return re.compile(items["pattern"])
+
+
+@pytest.mark.parametrize(
+    "value", ["html", "term-missing", "term-missing:skip-covered", "xml:a.xml"]
+)
+def test_cov_reports_schema_accepts_a_valid_value(value: str) -> None:
+    assert _cov_report_pattern().match(value) is not None
+
+
+@pytest.mark.parametrize("value", ["", "nope", "html:", ":dir", "htmlx", "nope:dir"])
+def test_cov_reports_schema_rejects_an_invalid_value(value: str) -> None:
+    assert _cov_report_pattern().match(value) is None
+
+
+def test_cov_reports_schema_items_are_strings() -> None:
+    items = json_schema()["properties"]["tasklib"]["properties"]["test"]["properties"][
+        "cov_reports"
+    ]["anyOf"][1]["items"]
+    assert items["type"] == "string"

@@ -340,19 +340,49 @@ def _int_from_text(value: object) -> object:
     return value
 
 
+def _is_cov_report(name: str) -> bool:
+    r"""Check a ``--cov-report`` value of pytest-cov.
+
+    Args:
+        name: The value, e.g. ``"html"`` or ``"xml:cov.xml"``.
+
+    Returns:
+        ``True`` if the part before the first colon is one of
+        ``COV_REPORTS`` and, when there is a colon, something follows
+        it.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config._validate import _is_cov_report
+    >>> _is_cov_report("term-missing:skip-covered")
+    True
+    >>> _is_cov_report("html:")
+    False
+
+    ```
+    """
+    report, colon, argument = name.partition(":")
+    return report in COV_REPORTS and (not colon or bool(argument))
+
+
 def _validate_cov_reports(value: object) -> tuple[str, ...]:
     r"""Validate the ``test.cov_reports`` config value.
 
     Args:
         value: The raw config value: a comma-separated string or a list
-            of report formats.
+            of ``--cov-report`` values. A value is a format of
+            ``COV_REPORTS`` with an optional ``:<argument>``, as in
+            ``term-missing:skip-covered`` or ``html:cov_html``.
 
     Returns:
-        The report formats, without duplicates, in the order given.
+        The values, without duplicates, in the order given. They are
+        not changed: the argument is kept.
 
     Raises:
         ValueError: If the value is neither a string nor a list of
-            strings, or if a format is not one of ``COV_REPORTS``.
+            strings, if a format is not one of ``COV_REPORTS``, or if
+            an argument after the colon is empty.
 
     Example usage:
 
@@ -364,11 +394,13 @@ def _validate_cov_reports(value: object) -> tuple[str, ...]:
     ('html', 'term')
     >>> _validate_cov_reports(["xml"])
     ('xml',)
+    >>> _validate_cov_reports("term-missing:skip-covered")
+    ('term-missing:skip-covered',)
 
     ```
     """
     names = _as_names("tasklib.test.cov_reports", value)
-    unknown = [name for name in names if name not in COV_REPORTS]
+    unknown = [name for name in names if not _is_cov_report(name)]
     if unknown:
         msg = (
             f"Unknown coverage report {unknown} in 'tasklib.test.cov_reports'. "

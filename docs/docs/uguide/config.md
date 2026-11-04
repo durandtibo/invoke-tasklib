@@ -74,8 +74,10 @@ not have it; `test.doctest-src` ignores it and always uses the plugin), whether 
 not have it; the `unit_timeout`, `integration_timeout` and `functional_timeout` values are then
 unused), and a coverage threshold:
 with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
-`cov_reports` is a comma-separated string or a list of the `--cov-report` formats of pytest-cov
-(`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. An empty
+`cov_reports` is a comma-separated string or a list of the `--cov-report` values of pytest-cov
+(`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. A value
+can have the argument of pytest-cov after a colon, for example `term-missing:skip-covered` or
+`html:cov_html` (the directory or file of the report). The value is quoted in the command. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
 
 `check.cov` is a boolean. If true, the `unit` step of `check.all` runs with `--cov`, so
