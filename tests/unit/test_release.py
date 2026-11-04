@@ -345,6 +345,15 @@ def test_check_release_state_accepts_a_clean_tagged_matching_state() -> None:
     assert release._check_release_state(_git_context()) is None
 
 
+def test_check_release_state_rejects_an_invalid_pyproject(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project\n")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(Exit, match=r"pyproject\.toml is not valid TOML"):
+        release._check_release_state(_git_context())
+
+
 @pytest.mark.usefixtures("project_version")
 def test_check_release_state_rejects_a_dirty_tree() -> None:
     with pytest.raises(Exit, match=r"working tree is not clean"):
@@ -396,6 +405,14 @@ def test_project_version_is_none_without_project_table(tmp_path: Path) -> None:
     path = tmp_path / "pyproject.toml"
     path.write_text("[tool.x]\na = 1\n")
     assert release._project_version(path) is None
+
+
+def test_project_version_rejects_an_invalid_file(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text("[project\n")
+    with pytest.raises(Exit, match=r"pyproject\.toml is not valid TOML") as info:
+        release._project_version(path)
+    assert info.value.code == 1
 
 
 def test_project_version_is_none_for_a_missing_file(tmp_path: Path) -> None:

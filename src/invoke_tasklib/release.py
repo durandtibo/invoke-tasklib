@@ -166,6 +166,10 @@ def _project_version(pyproject: Path) -> str | None:
         The ``project.version``, or ``None`` if the file does not
         exist or the version is dynamic (not written in the file).
 
+    Raises:
+        Exit: If the file cannot be parsed as TOML (code 1). The
+            message names the file.
+
     Example usage:
 
     ```pycon
@@ -178,7 +182,12 @@ def _project_version(pyproject: Path) -> str | None:
     """
     if not pyproject.is_file():
         return None
-    version = tomllib.loads(pyproject.read_text()).get("project", {}).get("version")
+    try:
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError as exc:
+        msg = f"Cannot read the version: {pyproject} is not valid TOML ({exc})"
+        raise Exit(msg, code=1) from exc
+    version = data.get("project", {}).get("version")
     return version if isinstance(version, str) else None
 
 
@@ -218,7 +227,8 @@ def _check_release_state(c: Context) -> None:
         c: The invoke context.
 
     Raises:
-        Exit: If one of the conditions is not met.
+        Exit: If one of the conditions is not met, or if the
+            ``pyproject.toml`` is not valid TOML.
 
     Example usage:
 
