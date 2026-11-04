@@ -159,3 +159,46 @@ def test_task_from_a_subdirectory_does_not_skip_the_tests(project: Path) -> None
 def test_task_from_the_project_root_runs(project: Path) -> None:
     proc = _inv(project, "config.show")
     assert proc.returncode == 0, proc.stderr
+
+
+########################################
+#     Tests for the origin labels      #
+########################################
+
+
+def _origin(project: Path, key: str, *args: str, **env: str) -> str:
+    r"""Return the origin comment of a key of ``config.show``."""
+    proc = subprocess.run(  # noqa: S603 (fixed command)
+        [sys.executable, "-m", "invoke", *args, "config.show"],
+        cwd=project,
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "PYTHONPATH": str(SRC), **env},
+    )
+    assert proc.returncode == 0, proc.stderr
+    line = next(line for line in proc.stdout.splitlines() if line.strip().startswith(f"{key}:"))
+    return line.partition("# ")[2]
+
+
+def test_origin_of_a_value_of_the_project_file(project: Path) -> None:
+    assert _origin(project, "python_version") == "project file"
+
+
+def test_origin_of_a_value_that_nothing_sets(project: Path) -> None:
+    assert _origin(project, "tests") == "default"
+
+
+def test_origin_of_a_value_of_an_environment_variable(project: Path) -> None:
+    origin = _origin(project, "unit_timeout", INVOKE_TASKLIB_TEST_UNIT_TIMEOUT="30")
+    assert origin == "environment variable INVOKE_TASKLIB_TEST_UNIT_TIMEOUT"
+
+
+def test_origin_of_a_value_of_a_runtime_config_file(project: Path) -> None:
+    (project / "runtime.yaml").write_text("tasklib:\n  paths:\n    docs_config: mk.yml\n")
+    assert _origin(project, "docs_config", "-f", "runtime.yaml") == "runtime config file"
+
+
+def test_config_show_does_not_warn_about_the_internals_of_invoke(project: Path) -> None:
+    proc = _inv(project, "config.show")
+    assert "This version of Invoke has no" not in proc.stderr
