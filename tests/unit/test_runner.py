@@ -22,8 +22,6 @@ from invoke_tasklib.runner import (
     PROGRAM_HINTS,
     _check_module,
     _check_plugin_options,
-    _program_of,
-    _stages,
     _strip_assignments,
     build_command,
     capture,
@@ -159,7 +157,9 @@ def test_check_program_missing_program_exit_code(monkeypatch: pytest.MonkeyPatch
     assert excinfo.value.code == 127
 
 
-@pytest.mark.parametrize("command", ["find . -name x", "command -v python"])
+@pytest.mark.parametrize(
+    "command", ["command -v python", "cd docs", "export FOO=1", "test -d docs", "[ -d docs ]"]
+)
 def test_check_program_skips_unchecked_programs(
     command: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -210,34 +210,17 @@ def test_run_without_check_does_not_pass_check_to_the_context() -> None:
         "FOO=1 BAR=2 ruff check",
         "FOO= ruff check",
         "VAR=$(date) ruff check",
-        "(ruff check)",
-        "{ ruff check; }",
-        "$(echo ruff) check",
-        "cd docs && ruff check",
-        "export FOO=1 && ruff check",
-        "test -d docs && ruff check",
-        "[ -d docs ] && ruff check",
         "exec ruff check",
-        "source env.sh && ruff check",
-        ". env.sh && ruff check",
+        "source env.sh",
+        ". env.sh",
         ": && ruff check",
         "FOO=1",
-        "if true; then ruff check; fi",
-        "for f in a b; do ruff check; done",
-        "while true; do ruff check; done",
-        "! ruff check",
         "~/bin/tool --version",
-        "./run.sh && ruff check",
+        "./run.sh",
         "bin/tool --version",
-        "sudo ruff check",
-        "env FOO=1 ruff check",
-        "time ruff check",
-        "nice ruff check",
     ],
 )
-def test_check_program_accepts_valid_shell_forms(
-    monkeypatch: pytest.MonkeyPatch, command: str
-) -> None:
+def test_check_program_accepts_valid_forms(monkeypatch: pytest.MonkeyPatch, command: str) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ruff"))
     assert check_program(command) is None
 
@@ -250,29 +233,76 @@ def test_check_program_still_checks_the_program_after_an_assignment(
         check_program("FOO=1 ruff check")
 
 
-@pytest.mark.parametrize("wrapper", ["sudo", "env", "time", "nice", "env FOO=1"])
-def test_check_program_checks_the_program_run_by_a_wrapper(
-    monkeypatch: pytest.MonkeyPatch, wrapper: str
-) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only(wrapper.split(maxsplit=1)[0]))
-    with pytest.raises(Exit, match=r"^'ruff' was not found on the PATH"):
-        check_program(f"{wrapper} ruff check")
-
-
-@pytest.mark.parametrize("command", ["sudo -u root ruff check", "nice -n 5 ruff check"])
-def test_check_program_does_not_guess_after_a_wrapper_option(
+@pytest.mark.parametrize("command", ["sudo ruff check", "time ruff check", "env FOO=1 ruff check"])
+def test_check_program_checks_the_first_word_of_a_wrapper(
     monkeypatch: pytest.MonkeyPatch, command: str
 ) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("sudo", "nice"))
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=rf"^'{command.split(maxsplit=1)[0]}' was not found on the PATH"):
+        check_program(command)
+
+
+@pytest.mark.parametrize("command", ["sudo ruff check", "time ruff check", "env FOO=1 ruff check"])
+def test_check_program_does_not_look_past_a_wrapper(
+    monkeypatch: pytest.MonkeyPatch, command: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("sudo", "time", "env"))
     assert check_program(command) is None
 
 
-def test_check_program_still_checks_the_program_after_a_builtin(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    "command",
+    [
+        "ls | no-such-program",
+        "ls && no-such-program",
+        "ls ; no-such-program",
+        "ls & no-such-program",
+    ],
+)
+def test_check_program_only_checks_the_first_word(
+    monkeypatch: pytest.MonkeyPatch, command: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ls"))
+    assert check_program(command) is None
+
+
+@pytest.mark.parametrize(
+    "command", ["(ls)", "{ ls; }", "$(echo ls)", "if true; then ls; fi", "! ls"]
+)
+def test_check_program_looks_up_the_first_word_of_a_shell_form(
+    monkeypatch: pytest.MonkeyPatch, command: str
 ) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
-    with pytest.raises(Exit, match=r"^'ruff' was not found on the PATH"):
-        check_program("cd docs && ruff check")
+    with pytest.raises(Exit, match=r"was not found on the PATH"):
+        check_program(command)
+
+
+def test_check_program_does_not_take_a_quoted_separator_for_a_command(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ls"))
+    assert check_program("ls ';' foo") is None
+
+
+def test_check_program_does_not_check_the_arguments_built_by_build_command(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ls"))
+    assert check_program(build_command("ls", args="-k ';' x")) is None
+
+
+@pytest.mark.parametrize("command", ["ls 'unclosed", 'ls "unclosed'])
+def test_check_program_does_not_check_a_command_that_cannot_be_split(
+    monkeypatch: pytest.MonkeyPatch, command: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    assert check_program(command) is None
+
+
+def test_check_program_find_is_looked_up(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
+    with pytest.raises(Exit, match=r"^'find' was not found on the PATH"):
+        check_program("find . -name x")
 
 
 ###################################
@@ -424,41 +454,6 @@ def test_check_program_unknown_program_uses_the_default_hint(
         check_program("no-such-program --version")
 
 
-def test_check_program_checks_every_stage_of_a_pipeline(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("xargs"))
-    with pytest.raises(Exit, match=r"'shellcheck' was not found"):
-        check_program("find . -name '*.sh' -print0 | xargs -0 -r shellcheck --")
-
-
-def test_check_program_accepts_a_pipeline_of_available_programs(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("xargs", "shellcheck"))
-    assert check_program("find . -name '*.sh' -print0 | xargs -0 -r shellcheck --") is None
-
-
-def test_check_program_checks_the_second_command_after_and(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ruff"))
-    with pytest.raises(Exit, match=r"'mike' was not found"):
-        check_program("ruff check . && mike list")
-
-
-def test_check_program_does_not_check_a_word_inside_quotes(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("ruff"))
-    assert check_program("ruff check 'a | b'") is None
-
-
-def test_check_program_xargs_without_command_is_not_an_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("xargs", "echo"))
-    assert check_program("echo | xargs -0") is None
-
-
 def test_check_program_missing_module_exits(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
     monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
@@ -476,11 +471,13 @@ def test_check_program_missing_module_exit_code(monkeypatch: pytest.MonkeyPatch)
     assert excinfo.value.code == 127
 
 
-def test_check_program_missing_module_after_a_pipe_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_program_missing_module_after_an_assignment_exits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
     monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
     with pytest.raises(Exit, match=r"The Python module 'coverage' is not installed"):
-        check_program("echo && /venv/bin/python -m coverage report")
+        check_program("FOO=1 /venv/bin/python -m coverage report")
 
 
 ###################################
@@ -662,98 +659,6 @@ def test_check_plugin_options_looks_the_module_up_by_name(monkeypatch: pytest.Mo
     monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", find_spec)
     _check_plugin_options(["--cov-report", "html"])
     assert seen == ["pytest_cov"]
-
-
-#############################
-#     Tests for _stages     #
-#############################
-
-
-def test_stages_single_command() -> None:
-    assert _stages("ruff check .") == [["ruff", "check", "."]]
-
-
-def test_stages_pipeline() -> None:
-    assert _stages("find . -print0 | xargs -0 ls") == [
-        ["find", ".", "-print0"],
-        ["xargs", "-0", "ls"],
-    ]
-
-
-@pytest.mark.parametrize("separator", ["||", "&&", ";", "&"])
-def test_stages_separators(separator: str) -> None:
-    assert _stages(f"a x {separator} b y") == [["a", "x"], ["b", "y"]]
-
-
-def test_stages_keeps_a_separator_inside_quotes() -> None:
-    assert _stages("echo 'a | b'") == [["echo", "a | b"]]
-
-
-def test_stages_empty_command() -> None:
-    assert _stages("") == []
-
-
-def test_stages_drops_empty_commands() -> None:
-    assert _stages("; a ; ; b ;") == [["a"], ["b"]]
-
-
-#################################
-#     Tests for _program_of     #
-#################################
-
-
-def test_program_of_a_command() -> None:
-    assert _program_of(["ruff", "check"]) == "ruff"
-
-
-def test_program_of_xargs_is_the_command_it_runs() -> None:
-    assert _program_of(["xargs", "-0", "-r", "shellcheck", "--"]) == "shellcheck"
-
-
-def test_program_of_xargs_without_command_is_none() -> None:
-    assert _program_of(["xargs", "-0"]) is None
-
-
-@pytest.mark.parametrize("words", [["(", "ls", ")"], ["{", "ls"], ["}"], ["$", "(", "ls", ")"]])
-def test_program_of_a_subshell_group_or_substitution_is_none(words: list[str]) -> None:
-    assert _program_of(words) is None
-
-
-@pytest.mark.parametrize("keyword", ["!", "if", "then", "else", "fi", "for", "do", "done", "case"])
-def test_program_of_a_shell_keyword_is_none(keyword: str) -> None:
-    assert _program_of([keyword, "x"]) is None
-
-
-@pytest.mark.parametrize("program", ["~/bin/tool", "./run.sh", "bin/tool", "../tool"])
-def test_program_of_a_relative_path_is_none(program: str) -> None:
-    assert _program_of([program, "--version"]) is None
-
-
-def test_program_of_an_absolute_path_is_kept() -> None:
-    assert _program_of(["/usr/bin/python", "-m", "pytest"]) == "/usr/bin/python"
-
-
-@pytest.mark.parametrize("wrapper", ["sudo", "time", "nice", "env"])
-def test_program_of_a_wrapper_is_the_command_it_runs(wrapper: str) -> None:
-    assert _program_of([wrapper, "ruff", "check"]) == "ruff"
-
-
-def test_program_of_env_skips_the_assignments() -> None:
-    assert _program_of(["env", "A=1", "B=2", "ruff", "check"]) == "ruff"
-
-
-@pytest.mark.parametrize("wrapper", ["sudo", "time", "nice", "env"])
-def test_program_of_a_wrapper_alone_is_none(wrapper: str) -> None:
-    assert _program_of([wrapper]) is None
-
-
-@pytest.mark.parametrize("words", [["sudo", "-u", "root", "ruff"], ["nice", "-n", "5", "ruff"]])
-def test_program_of_a_wrapper_with_an_option_is_none(words: list[str]) -> None:
-    assert _program_of(words) is None
-
-
-def test_program_of_a_wrapper_of_a_path_is_none() -> None:
-    assert _program_of(["sudo", "./run.sh"]) is None
 
 
 ########################################
