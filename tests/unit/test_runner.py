@@ -15,6 +15,8 @@ from invoke.runners import Result
 from invoke_tasklib.runner import (
     build_command,
     capture,
+    in_ci,
+    in_github_actions,
     python_executable,
     run,
     split_args,
@@ -301,3 +303,60 @@ def test_capture_does_not_pass_check_to_the_context() -> None:
     c = _context()
     capture(c, "git status")
     assert "check" not in _run_mock(c).call_args.kwargs
+
+
+###########################
+#     Tests for in_ci     #
+###########################
+
+
+@pytest.mark.parametrize("value", ["1", "true", "True", "yes", "anything"])
+def test_in_ci_true(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    assert in_ci() is True
+
+
+@pytest.mark.parametrize("value", ["", "0", "false", "FALSE", "False", " false "])
+def test_in_ci_false(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    assert in_ci() is False
+
+
+def test_in_ci_false_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CI", raising=False)
+    assert in_ci() is False
+
+
+def test_in_ci_does_not_depend_on_github_actions(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    assert in_ci() is False
+
+
+#######################################
+#     Tests for in_github_actions     #
+#######################################
+
+
+def test_in_github_actions_true(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    assert in_github_actions() is True
+
+
+@pytest.mark.parametrize("value", ["", "false", "1", "True", "TRUE", "yes"])
+def test_in_github_actions_false_for_another_value(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", value)
+    assert in_github_actions() is False
+
+
+def test_in_github_actions_false_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    assert in_github_actions() is False
+
+
+def test_in_github_actions_does_not_depend_on_ci(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setenv("CI", "true")
+    assert in_github_actions() is False

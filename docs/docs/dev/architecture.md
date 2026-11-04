@@ -78,6 +78,7 @@ Six small modules support the task modules:
   the program is on the `PATH` (with `tools.check_program`), echoes the command, and
   uses a pty only on a terminal. `capture(c, command)` is `run` for a command whose output the task
   reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
+  `in_ci()` and `in_github_actions()` are the only readers of `CI` and `GITHUB_ACTIONS`.
   `build_command` builds a command line and quotes the arguments, and
   `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options.
 - `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
