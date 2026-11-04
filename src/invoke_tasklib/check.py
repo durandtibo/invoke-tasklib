@@ -66,7 +66,6 @@ name.
 ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true.
 """
 
-
 def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
     r"""List the tools of a step that are not available.
 

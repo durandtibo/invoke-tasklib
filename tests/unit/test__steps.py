@@ -39,8 +39,11 @@ def _available(*names: str) -> Callable[..., str | None]:
 
 
 def _tasks(calls: list[str], *failing: str) -> dict[str, Callable[[Context], None]]:
-    r"""A task per step that records its name in ``calls``. The tasks
-    of the steps ``failing`` then raise an ``Exit`` with their name."""
+    r"""A task per step that records its name in ``calls``.
+
+    The tasks of the steps ``failing`` then raise an ``Exit`` with their
+    name.
+    """
 
     def make(name: str) -> Callable[[Context], None]:
         def task(_c: Context) -> None:

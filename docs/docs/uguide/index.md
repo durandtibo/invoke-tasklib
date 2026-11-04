@@ -8,49 +8,49 @@ one page in this guide.
 Each task either **checks/reports** (read-only, exits non-zero on violations) or **mutates**
 (formats, builds, publishes) — the `Mutates?` column below flags which.
 
-| Namespace               | Task                          | Behavior                                            | Mutates? |
-| ----------------------- | ----------------------------- | --------------------------------------------------- | :------: |
-| [Format](format.md)     | `format.check-python`         | Check Python formatting with ruff                   |    ❌    |
-| [Format](format.md)     | `format.fix-python`           | Format Python code with ruff                        |    ✅    |
-| [Format](format.md)     | `format.check-docstrings`     | Check docstring formatting with docformatter        |    ❌    |
-| [Format](format.md)     | `format.fix-docstrings`       | Format docstrings with docformatter                 |    ✅    |
-| [Format](format.md)     | `format.check-shell`          | Check shell scripts with shellcheck                 |    ❌    |
-| [Format](format.md)     | `format.fix-shell`            | Format shell scripts with shfmt                     |    ✅    |
-| [Lint](lint.md)         | `lint.check-python`           | Check code linting with ruff                        |    ❌    |
-| [Lint](lint.md)         | `lint.fix-python`             | Fix auto-fixable linting issues with ruff           |    ✅    |
-| [Lint](lint.md)         | `lint.check-spelling`         | Check the spelling with codespell                   |    ❌    |
-| [Lint](lint.md)         | `lint.pre-commit`             | Run all the pre-commit hooks                        |    ✅    |
-| [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                |    ❌    |
-| [Imports](imports.md)   | `imports.check-isolated`      | Check that every module imports on its own          |    ❌    |
-| [Types](types.md)       | `types.check`                 | Check type hints with ty (`--complete`: + pyright)  |    ❌    |
-| [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files      |    ❌    |
-| [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                         |    ❌    |
-| [Test](test.md)         | `test.doctest-markdown`       | Run doctests on Python examples in markdown         |    ❌    |
-| [Test](test.md)         | `test.unit`                   | Run unit tests                                      |    ❌    |
-| [Test](test.md)         | `test.integration`            | Run integration tests                               |    ❌    |
-| [Test](test.md)         | `test.functional`             | Run functional tests                                |    ❌    |
-| [Test](test.md)         | `test.all`                    | Run unit, integration, and functional tests         |    ❌    |
-| [Test](test.md)         | `test.coverage-report`        | Generate an HTML/terminal report from coverage data |    ❌    |
-| [Test](test.md)         | `test.benchmark`              | Run performance benchmarks                          |    ❌    |
-| [Env](env.md)           | `env.create-venv`             | Create a virtual environment and install the project    |    ✅    |
-| [Env](env.md)           | `env.install`                 | Install project dependencies and the package        |    ✅    |
-| [Env](env.md)           | `env.check-tools`             | Check which tools are available                     |    ❌    |
-| [Env](env.md)           | `env.update`                  | Update dependencies and pre-commit hooks            |    ✅    |
-| [Env](env.md)           | `env.show-installed-packages` | Show installed packages                             |    ❌    |
-| [Env](env.md)           | `env.show-python-config`      | Show the Python configuration                       |    ❌    |
-| [Release](release.md)   | `release.build`               | Build the package and verify installation           |    ✅    |
-| [Release](release.md)   | `release.publish`             | Build and publish the package to PyPI               |    ✅    |
-| [Doc](doc.md)           | `doc.build`                   | Build the docs, failing on warnings                 |    ❌    |
-| [Doc](doc.md)           | `doc.serve`                   | Serve the docs locally                              |    ❌    |
-| [Doc](doc.md)           | `doc.publish-dev`             | Publish development (unstable) docs                 |    ✅    |
-| [Doc](doc.md)           | `doc.publish-latest`          | Publish latest (stable) docs                        |    ✅    |
-| [Security](security.md) | `security.audit`              | Audit dependencies for known vulnerabilities        |    ❌    |
-| [Check](check.md)       | `check.all` (or `check`)      | Run the main read-only checks                       |    ❌    |
-| [Fix](fix.md)           | `fix.all` (or `fix`)          | Fix the lint and format issues                      |    ✅    |
-| [Clean](clean.md)       | `clean.all` (or `clean`)      | Remove build artifacts and caches                   |    ✅    |
-| [Clean](clean.md)       | `clean.pycache`               | Remove all `__pycache__` directories                |    ✅    |
-| [Config](config.md)     | `config.show`                 | Show the resolved config and its origins            |    ❌    |
-| [Config](config.md)     | _(none — shared config)_      | Config resolution used by all tasks above           |    —     |
+| Namespace               | Task                          | Behavior                                             | Mutates? |
+| ----------------------- | ----------------------------- | ---------------------------------------------------- | :------: |
+| [Format](format.md)     | `format.check-python`         | Check Python formatting with ruff                    |    ❌    |
+| [Format](format.md)     | `format.fix-python`           | Format Python code with ruff                         |    ✅    |
+| [Format](format.md)     | `format.check-docstrings`     | Check docstring formatting with docformatter         |    ❌    |
+| [Format](format.md)     | `format.fix-docstrings`       | Format docstrings with docformatter                  |    ✅    |
+| [Format](format.md)     | `format.check-shell`          | Check shell scripts with shellcheck                  |    ❌    |
+| [Format](format.md)     | `format.fix-shell`            | Format shell scripts with shfmt                      |    ✅    |
+| [Lint](lint.md)         | `lint.check-python`           | Check code linting with ruff                         |    ❌    |
+| [Lint](lint.md)         | `lint.fix-python`             | Fix auto-fixable linting issues with ruff            |    ✅    |
+| [Lint](lint.md)         | `lint.check-spelling`         | Check the spelling with codespell                    |    ❌    |
+| [Lint](lint.md)         | `lint.pre-commit`             | Run all the pre-commit hooks                         |    ✅    |
+| [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                 |    ❌    |
+| [Imports](imports.md)   | `imports.check-isolated`      | Check that every module imports on its own           |    ❌    |
+| [Types](types.md)       | `types.check`                 | Check type hints with ty (`--complete`: + pyright)   |    ❌    |
+| [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files       |    ❌    |
+| [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                          |    ❌    |
+| [Test](test.md)         | `test.doctest-markdown`       | Run doctests on Python examples in markdown          |    ❌    |
+| [Test](test.md)         | `test.unit`                   | Run unit tests                                       |    ❌    |
+| [Test](test.md)         | `test.integration`            | Run integration tests                                |    ❌    |
+| [Test](test.md)         | `test.functional`             | Run functional tests                                 |    ❌    |
+| [Test](test.md)         | `test.all`                    | Run unit, integration, and functional tests          |    ❌    |
+| [Test](test.md)         | `test.coverage-report`        | Generate an HTML/terminal report from coverage data  |    ❌    |
+| [Test](test.md)         | `test.benchmark`              | Run performance benchmarks                           |    ❌    |
+| [Env](env.md)           | `env.create-venv`             | Create a virtual environment and install the project |    ✅    |
+| [Env](env.md)           | `env.install`                 | Install project dependencies and the package         |    ✅    |
+| [Env](env.md)           | `env.check-tools`             | Check which tools are available                      |    ❌    |
+| [Env](env.md)           | `env.update`                  | Update dependencies and pre-commit hooks             |    ✅    |
+| [Env](env.md)           | `env.show-installed-packages` | Show installed packages                              |    ❌    |
+| [Env](env.md)           | `env.show-python-config`      | Show the Python configuration                        |    ❌    |
+| [Release](release.md)   | `release.build`               | Build the package and verify installation            |    ✅    |
+| [Release](release.md)   | `release.publish`             | Build and publish the package to PyPI                |    ✅    |
+| [Doc](doc.md)           | `doc.build`                   | Build the docs, failing on warnings                  |    ❌    |
+| [Doc](doc.md)           | `doc.serve`                   | Serve the docs locally                               |    ❌    |
+| [Doc](doc.md)           | `doc.publish-dev`             | Publish development (unstable) docs                  |    ✅    |
+| [Doc](doc.md)           | `doc.publish-latest`          | Publish latest (stable) docs                         |    ✅    |
+| [Security](security.md) | `security.audit`              | Audit dependencies for known vulnerabilities         |    ❌    |
+| [Check](check.md)       | `check.all` (or `check`)      | Run the main read-only checks                        |    ❌    |
+| [Fix](fix.md)           | `fix.all` (or `fix`)          | Fix the lint and format issues                       |    ✅    |
+| [Clean](clean.md)       | `clean.all` (or `clean`)      | Remove build artifacts and caches                    |    ✅    |
+| [Clean](clean.md)       | `clean.pycache`               | Remove all `__pycache__` directories                 |    ✅    |
+| [Config](config.md)     | `config.show`                 | Show the resolved config and its origins             |    ❌    |
+| [Config](config.md)     | _(none — shared config)_      | Config resolution used by all tasks above            |    —     |
 
 ## Everyday Workflow
 

@@ -7,7 +7,7 @@ inspect a project's Python environment using [`uv`](https://docs.astral.sh/uv/).
 
 | Task                          | Behavior                                                 |
 | ----------------------------- | -------------------------------------------------------- |
-| `env.create-venv`             | Creates a virtual environment and installs the project |
+| `env.create-venv`             | Creates a virtual environment and installs the project   |
 | `env.install`                 | Installs project dependencies and the package (editable) |
 | `env.update`                  | Updates dependencies and pre-commit hooks                |
 | `env.check-tools`             | Checks which tools of the tasks are available            |

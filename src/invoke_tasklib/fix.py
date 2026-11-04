@@ -31,7 +31,6 @@ PROGRAMS: dict[str, tuple[str, ...]] = {
 }
 r"""The programs that each step of ``fix.all`` runs, by step name."""
 
-
 @task(
     name="all",
     default=True,
