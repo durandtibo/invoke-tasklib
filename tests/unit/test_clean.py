@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from invoke.config import Config
-from invoke.context import MockContext
 from invoke.runners import Result
 
 from invoke_tasklib import clean
@@ -15,15 +13,13 @@ from tests.helpers import commands, make_context, run_kwargs
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-
-def _context() -> MockContext:
-    return MockContext(config=Config(), run=True)
+    from invoke.context import MockContext
 
 
 def _git_context(stdout: str = "", exited: int = 0) -> MockContext:
     r"""A context where every command (the ``git ls-files`` calls)
     returns the given result."""
-    c = _context()
+    c = make_context()
     c.run = Mock(return_value=Result(stdout=stdout, exited=exited))
     return c
 
@@ -52,63 +48,63 @@ _CFG = {"package": {"name": "mypkg"}}
 
 def test_all_removes_the_dist_dir(project: Path) -> None:
     _mkdir("dist")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / "dist").exists()
 
 
 def test_all_removes_the_htmlcov_dir(project: Path) -> None:
     _mkdir("htmlcov")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / "htmlcov").exists()
 
 
 def test_all_removes_mypy_cache(project: Path) -> None:
     _mkdir(".mypy_cache")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / ".mypy_cache").exists()
 
 
 def test_all_removes_artifact_files(project: Path) -> None:
     (project / ".coverage").write_text("")
     (project / "coverage.xml").write_text("")
-    clean.all_(_context())
+    clean.all_(make_context())
     assert [p.name for p in project.iterdir()] == []
 
 
 def test_all_removes_egg_info(project: Path) -> None:
     _mkdir("pkg.egg-info")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / "pkg.egg-info").exists()
 
 
 def test_all_removes_src_egg_info(project: Path) -> None:
     _mkdir("src", "demo.egg-info")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / "src" / "demo.egg-info").exists()
 
 
 def test_all_keeps_the_src_directory_with_its_egg_info(project: Path) -> None:
     _mkdir("src", "demo.egg-info")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert (project / "src").is_dir()
 
 
 @pytest.mark.parametrize("name", [".tox", ".nox", ".hypothesis"])
 def test_all_removes_tool_caches(project: Path, name: str) -> None:
     _mkdir(name)(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / name).exists()
 
 
 def test_all_removes_parallel_coverage_files(project: Path) -> None:
     (project / ".coverage.host.123.456").write_text("")
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / ".coverage.host.123.456").exists()
 
 
 def test_all_keeps_site_without_mkdocs_config(project: Path) -> None:
     site = _mkdir("site")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert site.exists()
 
 
@@ -119,7 +115,7 @@ def test_all_removes_site_with_mkdocs_config(project: Path, config: str, site: s
     _mkdir(*site.split("/"))(project)
     (project / config).parent.mkdir(exist_ok=True)
     (project / config).write_text("")
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / site).exists()
 
 
@@ -147,36 +143,36 @@ def test_all_keeps_the_root_site_with_a_docs_config(project: Path) -> None:
 
 def test_all_removes_nested_pycache(project: Path) -> None:
     _mkdir("src", "pkg", "__pycache__")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert not (project / "src" / "pkg" / "__pycache__").exists()
 
 
 def test_all_keeps_other_files(project: Path) -> None:
     (project / "README.md").write_text("")
-    clean.all_(_context())
+    clean.all_(make_context())
     assert (project / "README.md").exists()
 
 
 def test_all_does_not_touch_pycache_in_venv(project: Path) -> None:
     venv_cache = _mkdir(".venv", "lib", "__pycache__")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert venv_cache.exists()
 
 
 def test_all_does_not_touch_pycache_in_node_modules(project: Path) -> None:
     cache = _mkdir("node_modules", "pkg", "__pycache__")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert cache.exists()
 
 
 def test_all_no_artifacts_keeps_empty_project_unchanged(project: Path) -> None:
-    clean.all_(_context())
+    clean.all_(make_context())
     assert list(project.iterdir()) == []
 
 
 def test_all_reports_progress(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _mkdir("dist")(project)
-    clean.all_(_context())
+    clean.all_(make_context())
     assert capsys.readouterr().out == (
         "🧹 Cleaning build artifacts and caches...\n🗑️  Removing dist\n✅ Cleanup complete\n"
     )
@@ -184,19 +180,19 @@ def test_all_reports_progress(project: Path, capsys: pytest.CaptureFixture[str])
 
 def test_all_dry_run_keeps_a_directory(project: Path) -> None:
     dist = _mkdir("dist")(project)
-    clean.all_(_context(), dry_run=True)
+    clean.all_(make_context(), dry_run=True)
     assert dist.is_dir()
 
 
 def test_all_dry_run_keeps_a_file(project: Path) -> None:
     (project / ".coverage").write_text("")
-    clean.all_(_context(), dry_run=True)
+    clean.all_(make_context(), dry_run=True)
     assert (project / ".coverage").is_file()
 
 
 def test_all_dry_run_keeps_a_nested_pycache(project: Path) -> None:
     cache = _mkdir("src", "pkg", "__pycache__")(project)
-    clean.all_(_context(), dry_run=True)
+    clean.all_(make_context(), dry_run=True)
     assert cache.is_dir()
 
 
@@ -205,7 +201,7 @@ def test_all_dry_run_reports_what_it_would_remove(
 ) -> None:
     _mkdir("dist")(project)
     (project / ".coverage").write_text("")
-    clean.all_(_context(), dry_run=True)
+    clean.all_(make_context(), dry_run=True)
     assert capsys.readouterr().out == (
         "🧹 Cleaning build artifacts and caches (dry run)...\n"
         "🗑️  Would remove dist\n"
@@ -218,7 +214,7 @@ def test_all_dry_run_reports_what_it_would_remove(
 def test_all_dry_run_on_a_clean_project_reports_nothing_to_remove(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    clean.all_(_context(), dry_run=True)
+    clean.all_(make_context(), dry_run=True)
     assert capsys.readouterr().out == (
         "🧹 Cleaning build artifacts and caches (dry run)...\n"
         "✅ Dry run complete: nothing was removed\n"
@@ -292,25 +288,25 @@ def test_all_dry_run_says_that_it_keeps_a_tracked_directory(
 def test_pycache_removes_nested_pycache_dirs(project: Path) -> None:
     _mkdir("a", "b", "__pycache__")(project)
     _mkdir("__pycache__")(project)
-    clean.pycache(_context())
+    clean.pycache(make_context())
     assert [p.name for p in project.rglob("__pycache__")] == []
 
 
 def test_pycache_keeps_other_dirs(project: Path) -> None:
     _mkdir("dist")(project)
-    clean.pycache(_context())
+    clean.pycache(make_context())
     assert (project / "dist").exists()
 
 
 def test_pycache_does_not_touch_venv(project: Path) -> None:
     venv_cache = _mkdir(".venv", "lib", "__pycache__")(project)
-    clean.pycache(_context())
+    clean.pycache(make_context())
     assert venv_cache.exists()
 
 
 def test_pycache_dry_run_keeps_the_directories(project: Path) -> None:
     cache = _mkdir("pkg", "__pycache__")(project)
-    clean.pycache(_context(), dry_run=True)
+    clean.pycache(make_context(), dry_run=True)
     assert cache.is_dir()
 
 
@@ -318,7 +314,7 @@ def test_pycache_dry_run_reports_what_it_would_remove(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     _mkdir("pkg", "__pycache__")(project)
-    clean.pycache(_context(), dry_run=True)
+    clean.pycache(make_context(), dry_run=True)
     assert capsys.readouterr().out == (
         "🧹 Cleaning __pycache__ directories (dry run)...\n"
         "🗑️  Would remove pkg/__pycache__\n"
@@ -368,18 +364,18 @@ def test_find_pycache_dirs_does_not_descend_into_pycache(tmp_path: Path) -> None
 
 @pytest.mark.usefixtures("project")
 def test_site_dirs_is_empty_without_a_config() -> None:
-    assert clean._site_dirs(_context()) == []
+    assert clean._site_dirs(make_context()) == []
 
 
 def test_site_dirs_finds_the_root_config(project: Path) -> None:
     (project / "mkdocs.yml").write_text("")
-    assert clean._site_dirs(_context()) == [Path("site")]
+    assert clean._site_dirs(make_context()) == [Path("site")]
 
 
 def test_site_dirs_finds_the_docs_config(project: Path) -> None:
     _mkdir("docs")(project)
     (project / "docs" / "mkdocs.yml").write_text("")
-    assert clean._site_dirs(_context()) == [Path("docs/site")]
+    assert clean._site_dirs(make_context()) == [Path("docs/site")]
 
 
 def test_site_dirs_uses_the_configured_docs_config(project: Path) -> None:
@@ -402,7 +398,7 @@ def test_site_dirs_reads_the_site_dir_option(project: Path) -> None:
 
 def test_site_dirs_ignores_a_directory_named_like_the_config(project: Path) -> None:
     _mkdir("mkdocs.yml")(project)
-    assert clean._site_dirs(_context()) == []
+    assert clean._site_dirs(make_context()) == []
 
 
 ####################################
@@ -444,56 +440,60 @@ def test_read_site_dir_ignores_an_indented_option(mkdocs: Path) -> None:
 #################################
 
 
+@pytest.mark.usefixtures("project")
 def test_remove_dir_removes_existing_dir(tmp_path: Path) -> None:
     target = _mkdir("cache")(tmp_path)
-    clean._remove_dir(_context(), target)
+    clean._remove_dir(make_context(), target)
     assert not target.exists()
 
 
 def test_remove_dir_ignores_missing_dir(tmp_path: Path) -> None:
-    clean._remove_dir(_context(), tmp_path / "missing")
+    clean._remove_dir(make_context(), tmp_path / "missing")
     assert tmp_path.exists()
 
 
+@pytest.mark.usefixtures("project")
 def test_remove_dir_removes_a_symlink_to_a_directory(tmp_path: Path) -> None:
     target = _mkdir("real")(tmp_path)
     link = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
-    clean._remove_dir(_context(), link)
+    clean._remove_dir(make_context(), link)
     assert not link.is_symlink()
 
 
 def test_remove_dir_keeps_the_target_of_a_symlink(tmp_path: Path) -> None:
     target = _mkdir("real")(tmp_path)
     (tmp_path / "link").symlink_to(target, target_is_directory=True)
-    clean._remove_dir(_context(), tmp_path / "link")
+    clean._remove_dir(make_context(), tmp_path / "link")
     assert target.is_dir()
 
 
+@pytest.mark.usefixtures("project")
 def test_remove_dir_reports_removal(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     target = _mkdir("cache")(tmp_path)
-    clean._remove_dir(_context(), target)
+    clean._remove_dir(make_context(), target)
     assert capsys.readouterr().out == f"🗑️  Removing {target}\n"
 
 
 def test_remove_dir_dry_run_keeps_the_directory(tmp_path: Path) -> None:
     target = _mkdir("cache")(tmp_path)
-    clean._remove_dir(_context(), target, dry_run=True)
+    clean._remove_dir(make_context(), target, dry_run=True)
     assert target.is_dir()
 
 
+@pytest.mark.usefixtures("project")
 def test_remove_dir_dry_run_reports_the_directory(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     target = _mkdir("cache")(tmp_path)
-    clean._remove_dir(_context(), target, dry_run=True)
+    clean._remove_dir(make_context(), target, dry_run=True)
     assert capsys.readouterr().out == f"🗑️  Would remove {target}\n"
 
 
 def test_remove_dir_dry_run_ignores_a_missing_directory(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    clean._remove_dir(_context(), tmp_path / "missing", dry_run=True)
+    clean._remove_dir(make_context(), tmp_path / "missing", dry_run=True)
     assert capsys.readouterr().out == ""
 
 
@@ -501,7 +501,7 @@ def test_remove_dir_dry_run_keeps_a_symlink(tmp_path: Path) -> None:
     target = _mkdir("real")(tmp_path)
     link = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
-    clean._remove_dir(_context(), link, dry_run=True)
+    clean._remove_dir(make_context(), link, dry_run=True)
     assert link.is_symlink()
 
 
@@ -511,6 +511,7 @@ def test_remove_dir_keeps_a_tracked_directory(tmp_path: Path) -> None:
     assert target.is_dir()
 
 
+@pytest.mark.usefixtures("project")
 def test_remove_dir_reports_a_tracked_directory(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -519,6 +520,7 @@ def test_remove_dir_reports_a_tracked_directory(
     assert capsys.readouterr().out == f"⏭️  Keeping {target}: it contains files tracked by git\n"
 
 
+@pytest.mark.usefixtures("project")
 def test_remove_dir_removes_a_tracked_directory_unless_asked_to_keep_it(tmp_path: Path) -> None:
     target = _mkdir("build")(tmp_path)
     clean._remove_dir(_git_context("build/a.py\n"), target)
@@ -539,12 +541,12 @@ def test_remove_dir_does_not_ask_git_about_a_missing_directory(tmp_path: Path) -
 def test_remove_file_removes_existing_file(tmp_path: Path) -> None:
     target = tmp_path / ".coverage"
     target.write_text("data")
-    clean._remove_file(_context(), target)
+    clean._remove_file(make_context(), target)
     assert not target.exists()
 
 
 def test_remove_file_ignores_missing_file(tmp_path: Path) -> None:
-    clean._remove_file(_context(), tmp_path / "missing")
+    clean._remove_file(make_context(), tmp_path / "missing")
     assert tmp_path.exists()
 
 
@@ -609,7 +611,7 @@ def test_has_tracked_files_does_not_echo_nor_fail() -> None:
 def test_remove_file_dry_run_keeps_the_file(tmp_path: Path) -> None:
     target = tmp_path / ".coverage"
     target.write_text("data")
-    clean._remove_file(_context(), target, dry_run=True)
+    clean._remove_file(make_context(), target, dry_run=True)
     assert target.is_file()
 
 
@@ -618,5 +620,203 @@ def test_remove_file_dry_run_reports_the_file(
 ) -> None:
     target = tmp_path / ".coverage"
     target.write_text("data")
-    clean._remove_file(_context(), target, dry_run=True)
+    clean._remove_file(make_context(), target, dry_run=True)
     assert capsys.readouterr().out == f"🗑️  Would remove {target}\n"
+
+
+###################################
+#     Tests for outside paths     #
+###################################
+
+
+def _outside_site(project: Path) -> Path:
+    outside = project.parent / f"{project.name}-outside"
+    outside.mkdir()
+    (project / "mkdocs.yml").write_text(f"site_dir: {outside}\n")
+    return outside
+
+
+def test_all_keeps_an_absolute_site_dir_outside_the_project(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = _outside_site(project)
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert outside.is_dir()
+
+
+def test_all_says_that_it_keeps_a_site_dir_outside_the_project(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = _outside_site(project)
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert f"⏭️  Not removing {outside}: it is outside the project\n" in capsys.readouterr().out
+
+
+def test_all_dry_run_does_not_announce_a_site_dir_outside_the_project(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = _outside_site(project)
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""), dry_run=True)
+    assert f"Would remove {outside}" not in capsys.readouterr().out
+
+
+def test_all_keeps_a_relative_site_dir_with_dotdot(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (tmp_path / "public").mkdir()
+    (project / "mkdocs.yml").write_text("site_dir: ../public\n")
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert (tmp_path / "public").is_dir()
+
+
+def test_all_keeps_the_project_root_as_site_dir(project: Path) -> None:
+    (project / "mkdocs.yml").write_text("site_dir: .\n")
+    clean.all_(_git_context(""))
+    assert (project / "mkdocs.yml").is_file()
+
+
+def test_all_removes_a_site_dir_inside_the_project(project: Path) -> None:
+    public = _mkdir("public")(project)
+    (project / "mkdocs.yml").write_text("site_dir: public\n")
+    clean.all_(_git_context(""))
+    assert not public.exists()
+
+
+def test_all_removes_a_link_inside_the_project_and_keeps_its_target(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    target = tmp_path / "target"
+    target.mkdir()
+    (project / "build").symlink_to(target, target_is_directory=True)
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert (target.is_dir(), (project / "build").exists()) == (True, False)
+
+
+def test_all_keeps_a_site_dir_below_a_link_to_the_outside(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (tmp_path / "target" / "site").mkdir(parents=True)
+    (project / "out").symlink_to(tmp_path / "target", target_is_directory=True)
+    (project / "mkdocs.yml").write_text("site_dir: out/site\n")
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert (tmp_path / "target" / "site").is_dir()
+
+
+######################################
+#     Tests for _is_inside_project   #
+######################################
+
+
+@pytest.mark.usefixtures("project")
+@pytest.mark.parametrize("path", ["build", "docs/site", "a/b/c", "./build"])
+def test_is_inside_project_accepts_a_path_below_the_cwd(path: str) -> None:
+    assert clean._is_inside_project(Path(path)) is True
+
+
+@pytest.mark.usefixtures("project")
+@pytest.mark.parametrize("path", [".", "", "..", "../build", "build/../..", "a/../../b"])
+def test_is_inside_project_rejects_the_cwd_and_the_paths_above(path: str) -> None:
+    assert clean._is_inside_project(Path(path)) is False
+
+
+def test_is_inside_project_rejects_an_absolute_path_outside(project: Path) -> None:
+    assert clean._is_inside_project(project.parent / "other") is False
+
+
+def test_is_inside_project_accepts_an_absolute_path_inside(project: Path) -> None:
+    assert clean._is_inside_project(project / "build") is True
+
+
+def test_is_inside_project_accepts_a_link_to_the_outside(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "link").symlink_to(tmp_path, target_is_directory=True)
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        assert clean._is_inside_project(Path("link")) is True
+
+
+def test_is_inside_project_rejects_a_path_below_a_link_to_the_outside(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "link").symlink_to(tmp_path, target_is_directory=True)
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        assert clean._is_inside_project(Path("link/site")) is False
+
+
+#########################################
+#     Tests for the coverage HTML dir   #
+#########################################
+
+
+def _html_dir_project(project: Path, directory: str) -> Path:
+    (project / "pyproject.toml").write_text(f'[tool.coverage.html]\ndirectory = "{directory}"\n')
+    return _mkdir(directory)(project)
+
+
+def test_all_removes_the_configured_coverage_html_dir(project: Path) -> None:
+    html = _html_dir_project(project, "reports/html")
+    clean.all_(_git_context(""))
+    assert not html.exists()
+
+
+def test_all_keeps_the_parent_of_the_configured_coverage_html_dir(project: Path) -> None:
+    _html_dir_project(project, "reports/html")
+    clean.all_(_git_context(""))
+    assert (project / "reports").is_dir()
+
+
+def test_all_removes_the_default_coverage_html_dir_without_config(project: Path) -> None:
+    html = _mkdir("htmlcov")(project)
+    clean.all_(_git_context(""))
+    assert not html.exists()
+
+
+def test_all_asks_git_once_for_the_default_coverage_html_dir(project: Path) -> None:
+    _mkdir("htmlcov")(project)
+    c = _git_context("")
+    clean.all_(c)
+    assert commands(c) == ["git ls-files -- htmlcov"]
+
+
+def test_all_keeps_a_configured_coverage_html_dir_tracked_by_git(project: Path) -> None:
+    html = _html_dir_project(project, "reports/html")
+    clean.all_(_git_context("reports/html/index.html\n"))
+    assert html.is_dir()
+
+
+def test_all_dry_run_reports_the_configured_coverage_html_dir(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _html_dir_project(project, "reports/html")
+    clean.all_(_git_context(""), dry_run=True)
+    assert "🗑️  Would remove reports/html\n" in capsys.readouterr().out
+
+
+def test_all_keeps_a_coverage_html_dir_outside_the_project(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = tmp_path / "outside-html"
+    outside.mkdir()
+    (project / "pyproject.toml").write_text(f'[tool.coverage.html]\ndirectory = "{outside}"\n')
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert outside.is_dir()

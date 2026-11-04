@@ -137,3 +137,25 @@ def test_invalid_config_exits_with_a_message(project: Path, config: str, message
 def test_invalid_config_exits_with_code_2(project: Path) -> None:
     (project / "invoke.yaml").write_text("tasklib:\n  unknown: 1\n")
     assert _inv(project, "test.unit").returncode == 2
+
+
+#######################################
+#     Tests for a subdirectory        #
+#######################################
+
+
+def test_task_from_a_subdirectory_exits_with_a_message(project: Path) -> None:
+    (project / "sub").mkdir()
+    proc = _inv(project / "sub", "test.unit")
+    assert (proc.returncode, "inv must run from the project root" in proc.stderr) == (2, True)
+
+
+def test_task_from_a_subdirectory_does_not_skip_the_tests(project: Path) -> None:
+    (project / "sub").mkdir()
+    proc = _inv(project / "sub", "test.unit")
+    assert "skipping" not in proc.stdout
+
+
+def test_task_from_the_project_root_runs(project: Path) -> None:
+    proc = _inv(project, "config.show")
+    assert proc.returncode == 0, proc.stderr

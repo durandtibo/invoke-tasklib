@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Use a fixed interpreter and ignore the installed plugins."""
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
-    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: object())
+    monkeypatch.setattr("invoke_tasklib.tools.importlib.util.find_spec", lambda _name: object())
 
 
 @pytest.fixture
@@ -191,7 +191,7 @@ def test_doctest_src_ignores_the_xdoctest_option() -> None:
 
 def test_doctest_src_names_the_missing_xdoctest_plugin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "invoke_tasklib.runner.importlib.util.find_spec",
+        "invoke_tasklib.tools.importlib.util.find_spec",
         lambda name: None if name == "xdoctest" else object(),
     )
     with pytest.raises(Exit, match=r"The option --xdoctest needs the pytest plugin 'xdoctest'"):
@@ -264,6 +264,32 @@ def test_unit_with_configured_coverage_reports() -> None:
     ]
 
 
+def test_unit_passes_the_argument_of_a_coverage_report() -> None:
+    reports = "term-missing:skip-covered,html:cov_html"
+    c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+    test_tasks.unit(c, cov=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report term-missing:skip-covered --cov-report html:cov_html "
+            "--cov=mypkg tests/unit"
+        )
+    ]
+
+
+def test_unit_quotes_a_coverage_report_with_a_space_or_a_dollar() -> None:
+    reports = ["html:my dir", "xml:$HOME/cov.xml"]
+    c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": reports}})
+    test_tasks.unit(c, cov=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 10 "
+            "--cov-report 'html:my dir' --cov-report 'xml:$HOME/cov.xml' "
+            "--cov=mypkg tests/unit"
+        )
+    ]
+
+
 def test_unit_with_no_coverage_report_has_no_report_option() -> None:
     c = make_context({"package": {"name": "mypkg"}, "test": {"cov_reports": ""}})
     test_tasks.unit(c, cov=True)
@@ -309,9 +335,28 @@ def test_integration_with_coverage() -> None:
     assert commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "--cov-report term --cov=mypkg tests/integration"
+        )
+    ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_integration_with_coverage_appends_on_request() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, cov=True, append=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/integration"
         )
     ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_integration_append_without_coverage_is_ignored() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
 @pytest.mark.usefixtures("_project_dirs")
@@ -328,9 +373,28 @@ def test_functional_with_coverage() -> None:
     assert commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "--cov-report term --cov=mypkg tests/functional"
+        )
+    ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_functional_with_coverage_appends_on_request() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, cov=True, append=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/functional"
         )
     ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_functional_append_without_coverage_is_ignored() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
 def test_all_uses_the_largest_timeout() -> None:

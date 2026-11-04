@@ -1,15 +1,15 @@
-r"""Helpers to build the commands run by the tasks."""
+r"""Helpers to build and run the commands of the tasks."""
 
 from __future__ import annotations
 
-import importlib.util
-import re
+import os
 import shlex
-import shutil
 import sys
 from typing import TYPE_CHECKING, Any
 
 from invoke.exceptions import Exit
+
+from invoke_tasklib.tools import check_program
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -45,90 +45,12 @@ def python_executable() -> str:
 ARGS_HELP = 'Extra arguments for the tool, as one string, e.g. "-k foo -x".'
 r"""Help of the ``--args`` option of the tasks."""
 
+
 PATHS_HELP = (
     "Files or directories to run on, as one string, instead of the default "
     "(globs and ~ are passed as they are)."
 )
 r"""Help of the ``--paths`` option of the tasks."""
-
-UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
-    {"command", "find", "cd", "export", "test", "[", "exec", "source", ".", ":"}
-)
-r"""First words of a command that are not looked up on the ``PATH``
-(shell builtins and tools that every system has).
-
-Some of them have an executable on some systems only (for example ``cd``
-on macOS).
-"""
-
-PROGRAM_HINTS: dict[str, str] = {
-    "uv": "Install uv, see https://docs.astral.sh/uv/getting-started/installation/.",
-    "shellcheck": (
-        "Install shellcheck with your system package manager, for example "
-        "`brew install shellcheck` or `apt install shellcheck`."
-    ),
-    "shfmt": (
-        "Install shfmt with your system package manager, for example "
-        "`brew install shfmt` or `apt install shfmt`."
-    ),
-    "uvx": "Install uv, which provides uvx, see https://docs.astral.sh/uv/getting-started/installation/.",
-    "git": (
-        "Install git with your system package manager, for example "
-        "`brew install git` or `apt install git`, or on macOS `xcode-select --install`."
-    ),
-    "codespell": "Add codespell to the dependencies of the project, e.g. `uv add --dev codespell`.",
-}
-r"""How to install the programs that ``invoke env.install`` does not
-install (or that it needs itself), by program name."""
-
-PROGRAM_GROUPS: dict[str, str] = {
-    "ruff": "dev",
-    "ty": "dev",
-    "pyright": "dev",
-    "docformatter": "dev",
-    "pre-commit": "dev",
-    "pytest": "dev",
-    "coverage": "dev",
-    "xdoctest": "dev",
-    "pytest_timeout": "dev",
-    "pytest_cov": "dev",
-    "mkdocs": "docs",
-    "mike": "docs",
-}
-r"""The dependency group that provides a tool, by program or module
-name, for the tools that are not in ``PROGRAM_HINTS``."""
-
-DEFAULT_HINT = (
-    "Install the project tools with `invoke env.install` (see the troubleshooting page of the "
-    "documentation)."
-)
-r"""The hint of the programs that are in neither ``PROGRAM_HINTS`` nor
-``PROGRAM_GROUPS``."""
-
-PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
-    "--xdoctest": ("xdoctest", "xdoctest"),
-    "--timeout": ("pytest_timeout", "pytest-timeout"),
-    "--cov": ("pytest_cov", "pytest-cov"),
-    "--cov-report": ("pytest_cov", "pytest-cov"),
-    "--cov-append": ("pytest_cov", "pytest-cov"),
-    "--cov-fail-under": ("pytest_cov", "pytest-cov"),
-    "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
-}
-r"""The pytest options that come from a plugin, as a tuple of the module
-and of the package to install, by option."""
-
-_SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
-
-_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
-
-_SHELL_KEYWORDS = frozenset(
-    {"!", "if", "then", "elif", "else", "fi", "for", "while", "until", "do", "done", "case", "esac"}
-)
-r"""The reserved words of the shell: they are not programs."""
-
-_WRAPPERS = frozenset({"env", "sudo", "time", "nice"})
-r"""The programs that run the command that follows them, like ``xargs``
-but without an option that takes a value."""
 
 
 def build_command(
@@ -218,325 +140,6 @@ def split_args(value: str | None, option: str) -> list[str]:
     except ValueError as exc:
         msg = f"Cannot parse the value of {option} ({exc}): {value!r}"
         raise Exit(msg, code=2) from exc
-
-
-def _stages(command: str) -> list[list[str]]:
-    r"""Split a command line into the commands of its pipeline.
-
-    The command line is split on ``|``, ``||``, ``&&``, ``;`` and ``&``
-    (outside quotes) and each part is split into words like a shell
-    does.
-
-    Args:
-        command: The command line.
-
-    Returns:
-        The words of each command, without the empty ones.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _stages
-    >>> _stages("find . -name '*.sh' | xargs -0 shellcheck")
-    [['find', '.', '-name', '*.sh'], ['xargs', '-0', 'shellcheck']]
-
-    ```
-    """
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-    lexer.whitespace_split = True
-    stages: list[list[str]] = [[]]
-    for token in lexer:
-        if token in _SEPARATORS:
-            stages.append([])
-        else:
-            stages[-1].append(token)
-    return [words for words in stages if words]
-
-
-def _strip_assignments(words: Sequence[str]) -> list[str]:
-    r"""Remove the leading ``NAME=value`` words of a command.
-
-    Args:
-        words: The words of a command.
-
-    Returns:
-        The words from the first one that is not an assignment of an
-        environment variable.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _strip_assignments
-    >>> _strip_assignments(["FOO=1", "BAR=", "ruff", "check"])
-    ['ruff', 'check']
-
-    ```
-    """
-    start = 0
-    while start < len(words) and _ASSIGNMENT.match(words[start]):
-        start += 1
-    return list(words[start:])
-
-
-def _program_of(words: Sequence[str]) -> str | None:
-    r"""Return the program that a command really runs.
-
-    ``xargs`` runs the command that follows its options, so that command
-    is the one that has to be installed. The same goes for ``env``,
-    ``sudo``, ``time`` and ``nice``, but only without an option, because
-    an option can take a value (``sudo -u root ruff``) and the word
-    that follows it is not known to be the program. A command that
-    starts a subshell or a group (``(``, ``{``, ``}``), a substitution
-    (``$(``) or a reserved word of the shell (``if``, ``for``, ``!``,
-    ...) has no program that can be looked up, and neither has a program
-    given by a path (``~/bin/tool``, ``./run.sh``), which the shell
-    resolves and ``shutil.which`` does not.
-
-    Args:
-        words: The words of a command, without the assignments of
-            variables, see ``_strip_assignments``.
-
-    Returns:
-        The program, or ``None`` if there is none (``xargs`` with no
-        command, a subshell, a group, a reserved word, a path).
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _program_of
-    >>> _program_of(["ruff", "check"])
-    'ruff'
-    >>> _program_of(["xargs", "-0", "-r", "shellcheck", "--"])
-    'shellcheck'
-    >>> _program_of(["sudo", "ruff", "check"])
-    'ruff'
-    >>> _program_of(["(", "ls", ")"]) is None
-    True
-    >>> _program_of(["!", "grep", "x", "f"]) is None
-    True
-
-    ```
-    """
-    first = words[0]
-    if first in {"(", "{", "}"} or first.startswith("$") or first in _SHELL_KEYWORDS:
-        return None
-    if first == "xargs":
-        program = next((w for w in words[1:] if not w.startswith("-")), None)
-    elif first in _WRAPPERS:
-        rest = _strip_assignments(words[1:]) if first == "env" else list(words[1:])
-        program = _program_of(rest) if rest and not rest[0].startswith("-") else None
-    else:
-        program = first
-    if program is not None and "/" in program and not program.startswith("/"):
-        return None
-    return program
-
-
-def hint(program: str) -> str:
-    r"""Return how to install a program.
-
-    Args:
-        program: The name of the program, or of the Python module.
-
-    Returns:
-        The entry of ``PROGRAM_HINTS`` for the program; else, if the
-        program is in ``PROGRAM_GROUPS``, the command that installs its
-        dependency group; else ``DEFAULT_HINT``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import hint
-    >>> hint("uv")
-    'Install uv, see https://docs.astral.sh/uv/getting-started/installation/.'
-    >>> hint("mike")
-    "Install it with the 'docs' group: `uv sync --group docs`."
-
-    ```
-    """
-    if program in PROGRAM_HINTS:
-        return PROGRAM_HINTS[program]
-    group = PROGRAM_GROUPS.get(program)
-    if group is None:
-        return DEFAULT_HINT
-    return f"Install it with the '{group}' group: `uv sync --group {group}`."
-
-
-def _check_plugin_options(words: Sequence[str]) -> None:
-    r"""Check the pytest plugins of the options of a pytest command.
-
-    Without this check, pytest reports a missing plugin as
-    ``unrecognized arguments: --xdoctest``, which does not say what to
-    install.
-
-    Args:
-        words: The words of the command, after ``python -m pytest``.
-
-    Raises:
-        Exit: If an option of ``PLUGIN_OPTIONS`` is used and the module
-            of its plugin is not installed.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _check_plugin_options
-    >>> _check_plugin_options(["-x", "tests"])
-
-    ```
-    """
-    for word in words:
-        if word == "--":
-            return
-        option = word.partition("=")[0]
-        if option not in PLUGIN_OPTIONS:
-            continue
-        module, package = PLUGIN_OPTIONS[option]
-        if importlib.util.find_spec(module) is None:
-            msg = (
-                f"The option {option} needs the pytest plugin '{package}', which is not "
-                f"installed for {sys.executable}. Add it to the dependencies of the project, "
-                f"e.g. `uv add --dev {package}`."
-            )
-            raise Exit(msg, code=127)
-
-
-def not_found_message(name: str, *, module: bool = False, interpreter: str | None = None) -> str:
-    r"""Build the message for a program or a module that is missing.
-
-    Args:
-        name: The name of the program, or of the Python module.
-        module: If True, ``name`` is a Python module.
-        interpreter: The interpreter the module is looked up for.
-            Default is the running one.
-
-    Returns:
-        The message, with how to install the tool, see ``hint``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import not_found_message
-    >>> not_found_message("uv")[:36]
-    "'uv' was not found on the PATH. Inst"
-
-    ```
-    """
-    if module:
-        return (
-            f"The Python module '{name}' is not installed for "
-            f"{interpreter or sys.executable}. {hint(name)}"
-        )
-    return f"'{name}' was not found on the PATH. {hint(name)}"
-
-
-def _check_module(words: Sequence[str]) -> None:
-    r"""Check the module of a ``python -m <module>`` command.
-
-    Only the running interpreter is checked, because the availability of
-    a module is looked up for this interpreter. Without this check, a
-    missing module is reported by Python as ``No module named ...``,
-    with no hint. For ``pytest``, the plugins of the options are checked
-    too, see ``PLUGIN_OPTIONS``.
-
-    Args:
-        words: The words of a command.
-
-    Raises:
-        Exit: If the command runs a module of the running interpreter
-            that is not installed, or a pytest option whose plugin
-            is not installed.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _check_module
-    >>> _check_module(["ruff", "check"])
-
-    ```
-    """
-    if len(words) < 3 or words[0] != sys.executable or words[1] != "-m":
-        return
-    module = words[2]
-    if importlib.util.find_spec(module) is None:
-        raise Exit(not_found_message(module, module=True, interpreter=words[0]), code=127)
-    if module == "pytest":
-        _check_plugin_options(words[3:])
-
-
-def find_tool(name: str, *, module: bool = False) -> str | None:
-    r"""Find a program on the ``PATH`` or a module of the interpreter.
-
-    Args:
-        name: The name of the program, or of the module.
-        module: If True, look ``name`` up as a Python module of the
-            running interpreter instead of as a program.
-
-    Returns:
-        The path of the program or of the module, or ``None`` if it is
-        not available.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import find_tool
-    >>> find_tool("no-such-program") is None
-    True
-    >>> find_tool("no_such_module", module=True) is None
-    True
-
-    ```
-    """
-    if module:
-        spec = importlib.util.find_spec(name)
-        return None if spec is None else (spec.origin or name)
-    return shutil.which(name)
-
-
-def check_program(command: str) -> None:
-    r"""Check that the programs of a command are available.
-
-    Every command of a pipeline (``a | b``, ``a && b``) is checked, and
-    the command run by ``xargs``, ``env``, ``sudo``, ``time`` or
-    ``nice`` is checked instead of the wrapper. A program is not
-    checked when it is a path (for example the running interpreter, see
-    ``python_executable``, or ``~/bin/tool``) or one of
-    ``UNCHECKED_PROGRAMS`` (the shell builtins). The ``NAME=value``
-    words before a program are ignored, and so is a command that starts
-    a subshell, a group, a substitution (``(``, ``{``, ``$(``) or a
-    reserved word of the shell (``if``, ``for``, ``!``, ...). For
-    ``python -m <module>`` with the running interpreter, the module is
-    checked, and so are the plugins of the pytest options (see
-    ``PLUGIN_OPTIONS``).
-
-    Args:
-        command: The command line.
-
-    Raises:
-        Exit: If a program (or the module) is not found. The message
-            says how to install it, see ``PROGRAM_HINTS``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import check_program
-    >>> check_program("find . -name '*.sh'")
-    >>> check_program("no-such-program --version")
-    Traceback (most recent call last):
-        ...
-    invoke.exceptions.Exit: ...
-
-    ```
-    """
-    for stage in _stages(command):
-        words = _strip_assignments(stage)
-        if not words:
-            continue
-        program = _program_of(words)
-        if program is None or program.startswith("/") or program in UNCHECKED_PROGRAMS:
-            _check_module(words)
-            continue
-        if shutil.which(program) is None:
-            raise Exit(not_found_message(program), code=127)
 
 
 def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Result:
@@ -631,3 +234,57 @@ def capture(c: Context, command: str, *, warn: bool = False, check: bool = True)
     ```
     """
     return run(c, command, check=check, hide=True, echo=False, pty=False, warn=warn)
+
+
+def in_ci() -> bool:
+    r"""Tell whether the ``CI`` environment variable turns CI mode on.
+
+    Any value is accepted except an empty string, ``0`` and ``false``
+    (case-insensitive), so ``CI=false`` does not count as CI. Most CI
+    services set ``CI=true``, GitHub Actions included.
+
+    Returns:
+        True if ``CI`` is set to a value other than ``""``, ``"0"``
+        and ``"false"``.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.runner import in_ci
+    >>> with patch.dict(os.environ, {"CI": "true"}):
+    ...     in_ci()
+    True
+    >>> with patch.dict(os.environ, {"CI": "false"}):
+    ...     in_ci()
+    False
+
+    ```
+    """
+    return os.environ.get("CI", "").strip().lower() not in {"", "0", "false"}
+
+
+def in_github_actions() -> bool:
+    r"""Tell whether the code runs in GitHub Actions.
+
+    Returns:
+        True if ``GITHUB_ACTIONS`` is exactly ``"true"``, the value
+        that GitHub Actions sets.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.runner import in_github_actions
+    >>> with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}):
+    ...     in_github_actions()
+    True
+    >>> with patch.dict(os.environ, {"GITHUB_ACTIONS": "false"}):
+    ...     in_github_actions()
+    False
+
+    ```
+    """
+    return os.environ.get("GITHUB_ACTIONS") == "true"

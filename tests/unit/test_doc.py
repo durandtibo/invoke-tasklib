@@ -400,6 +400,12 @@ def test_push_option_without_push() -> None:
         ("1.2.3.4", ("1.2", False)),
         ("1.2.0.post1", ("1.2", False)),
         (" 1.2.3 ", ("1.2", False)),
+        ("1.2.0-backport", ("1.2", False)),
+        ("1.2.0-cool", ("1.2", False)),
+        ("1.2.0-alpine", ("1.2", False)),
+        ("1.2.0-betamax", ("1.2", False)),
+        ("1.2.0-develop", ("1.2", False)),
+        ("1.2.0-prerelease", ("1.2", False)),
     ],
 )
 def test_parse_release_final(version: str, expected: tuple[str, bool]) -> None:
@@ -408,7 +414,21 @@ def test_parse_release_final(version: str, expected: tuple[str, bool]) -> None:
 
 @pytest.mark.parametrize(
     "version",
-    ["1.2.0a1", "1.2.0b1", "1.2.0rc1", "1.2.0.dev1", "1.2.0-beta.1", "1.2.0RC1", "1.2rc1"],
+    [
+        "1.2.0a1",
+        "1.2.0b1",
+        "1.2.0c1",
+        "1.2.0rc1",
+        "1.2.0.dev1",
+        "1.2.0-beta.1",
+        "1.2.0RC1",
+        "1.2rc1",
+        "1.2.0a",
+        "1.2.0-rc",
+        "1.2.0-alpha",
+        "1.2.0.preview2",
+        "1.2.0rc1+local",
+    ],
 )
 def test_parse_release_pre_release(version: str) -> None:
     assert _parse_release(version) == ("1.2", True)

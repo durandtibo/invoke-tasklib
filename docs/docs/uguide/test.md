@@ -90,27 +90,31 @@ Runs everything in `paths.tests` in a single `pytest` invocation, with the large
 
 Pass `--cov` to `test.unit`, `test.integration`, `test.functional`, or `test.all` to generate
 coverage reports. The formats are the `test.cov_reports` value of the [config](config.md)
-(`html,xml,term` by default, each one is a `--cov-report` of pytest-cov; an empty value leaves the
-choice to pytest-cov):
+(`html,xml,term` by default, each one is a `--cov-report` of pytest-cov, with an optional argument
+such as `term-missing:skip-covered` or `html:cov_html`; an empty value leaves the choice to
+pytest-cov):
 
 ```shell
 invoke test.unit --cov
 ```
 
-`test.integration --cov` and `test.functional --cov` **append** to any existing coverage data
-(`--cov-append`), so they compose with a prior `test.unit --cov` run to build up combined coverage
-across scopes:
+A run with `--cov` replaces the coverage data of the previous run. `test.integration` and
+`test.functional` have an `--append` option that adds to the existing data (`--cov-append`), so
+they compose with a prior `test.unit --cov` run to build up combined coverage across scopes:
 
 ```shell
 invoke test.unit --cov
-invoke test.integration --cov
-invoke test.functional --cov
+invoke test.integration --cov --append
+invoke test.functional --cov --append
 ```
+
+Without `--append`, `invoke test.integration --cov` reports only the integration tests, whatever
+a previous run left in `.coverage`. `--append` without `--cov` does nothing.
 
 If `tasklib.test.cov_fail_under` is set, it is passed as `--cov-fail-under` and the task fails when
-the coverage is lower. Since the integration and functional tasks append to the existing data, run
-`test.unit --cov` first (it replaces the data) or `coverage erase`, otherwise the result depends on
-what was run before.
+the coverage is lower. With `--append`, the threshold applies to the combined data: start with
+`test.unit --cov` (it replaces the data) or `coverage erase`, otherwise the result depends on what
+was run before.
 
 ```shell
 invoke test.coverage-report

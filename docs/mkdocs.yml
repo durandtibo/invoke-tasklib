@@ -60,6 +60,7 @@ nav:
       - refs/config.md
       - refs/configuration.md
       - refs/runner.md
+      - refs/tools.md
       - refs/output.md
   - GitHub: https://github.com/durandtibo/invoke-tasklib
 

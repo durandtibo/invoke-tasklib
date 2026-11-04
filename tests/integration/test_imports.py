@@ -79,8 +79,37 @@ def test_check_isolated_detects_cycle_between_sibling_modules(project: Path) -> 
             "cycpkg/b.py": "from cycpkg.a import X\nY = 2\n",
         },
     )
-    with pytest.raises(UnexpectedExit, match=r"Encountered a bad command exit code"):
+    with pytest.raises(Exit, match=r"^2 of 3 module\(s\) failed to import on their own$"):
         imports.check_isolated(_context("cycpkg"))
+
+
+def test_check_isolated_lists_the_error_of_each_failed_module(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        project,
+        {
+            "errpkg/__init__.py": "",
+            "errpkg/bad.py": "import not_installed_anywhere_xyz\n",
+            "errpkg/good.py": "X = 1\n",
+        },
+    )
+    with pytest.raises(Exit, match=r"^1 of 3 module"):
+        imports.check_isolated(_context("errpkg"))
+    err = capsys.readouterr().err
+    assert "❌ errpkg.bad: ModuleNotFoundError: No module named 'not_installed_anywhere_xyz'" in err
+
+
+def test_check_isolated_does_not_echo_one_command_per_module(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(project, {"quietpkg/__init__.py": "", "quietpkg/a.py": "", "quietpkg/b.py": ""})
+    imports.check_isolated(_context("quietpkg"))
+    assert capsys.readouterr().out == (
+        "🔍 Discovering modules of quietpkg...\n"
+        "🔍 Checking 3 module(s) one at a time...\n"
+        "✅ All 3 module(s) imported on their own\n"
+    )
 
 
 ##################################

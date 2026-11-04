@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.runner import DEFAULT_HINT, PROGRAM_HINTS, hint
+from invoke_tasklib.tools import DEFAULT_HINT, PROGRAM_HINTS, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -48,14 +48,31 @@ def test_create_venv_dry_run_runs_nothing() -> None:
     assert commands(c) == []
 
 
+def test_create_venv_dry_run_names_the_configured_python_version(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context({"package": {"name": "mypkg", "python_version": "3.11"}})
+    env.create_venv(c, dry_run=True)
+    assert capsys.readouterr().out == "🐍 Would create .venv with Python 3.11 (dry run)\n"
+
+
+def test_create_venv_says_the_configured_python_version(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    env.create_venv(make_context({"package": {"name": "mypkg", "python_version": "3.11"}}))
+    assert "🐍 Creating virtual environment with Python 3.11...\n" in capsys.readouterr().out
+
+
 def test_create_venv_dry_run_says_what_it_would_do(capsys: pytest.CaptureFixture[str]) -> None:
     env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
-    assert capsys.readouterr().out == "🐍 Would create .venv with Python 3.14 (dry run)\n"
+    assert capsys.readouterr().out == "🐍 Would create .venv (dry run)\n"
 
 
 @pytest.mark.usefixtures("_existing_venv")
 def test_create_venv_dry_run_does_not_ask() -> None:
-    env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c, dry_run=True)
+    assert commands(c) == []
 
 
 @pytest.mark.usefixtures("_existing_venv")
@@ -86,7 +103,7 @@ def test_create_venv_goes_on_after_a_confirmation(
     monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert commands(c)[0] == "uv venv --clear"
 
 
 @pytest.mark.usefixtures("_existing_venv")
@@ -94,7 +111,7 @@ def test_create_venv_yes_does_not_ask(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO(""))
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c, yes=True)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert commands(c)[0] == "uv venv --clear"
 
 
 def test_create_venv_does_not_ask_without_an_existing_venv(
@@ -103,13 +120,13 @@ def test_create_venv_does_not_ask_without_an_existing_venv(
     monkeypatch.setattr("sys.stdin", io.StringIO(""))
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert commands(c)[0] == "uv venv --clear"
 
 
-def test_create_venv_default_python_version() -> None:
+def test_create_venv_without_python_version_leaves_the_choice_to_uv() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     env.create_venv(c)
-    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+    assert "--python" not in commands(c)[0]
 
 
 def test_create_venv_installs_the_configured_groups() -> None:
@@ -129,13 +146,13 @@ def test_create_venv_does_not_sync_when_the_venv_cannot_be_created() -> None:
     c.run = Mock(side_effect=Exit("no uv", code=127))
     with pytest.raises(Exit, match=r"no uv"):
         env.create_venv(c)
-    assert commands(c) == ["uv venv --python 3.14 --clear"]
+    assert commands(c) == ["uv venv --clear"]
 
 
 def test_create_venv_says_what_it_does(capsys: pytest.CaptureFixture[str]) -> None:
     env.create_venv(make_context({"package": {"name": "mypkg"}}))
     assert capsys.readouterr().out == (
-        "🐍 Creating virtual environment with Python 3.14...\n"
+        "🐍 Creating virtual environment...\n"
         "📦 Installing project dependencies...\n"
         "✅ Installation complete\n"
         "✅ Virtual environment created successfully\n"
@@ -424,18 +441,26 @@ def test_check_tools_does_not_run_any_command(monkeypatch: pytest.MonkeyPatch) -
     assert commands(c) == []
 
 
-def test_check_tools_does_not_need_the_config(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_tools_does_not_need_the_config(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
     env.check_tools(make_context())
+    assert "✅ All the 18 tools are available\n" in capsys.readouterr().out
 
 
 def test_every_program_with_a_hint_is_checked() -> None:
     assert set(PROGRAM_HINTS) <= set(env.TOOL_PROGRAMS)
 
 
-@pytest.mark.parametrize("name", [*env.TOOL_PROGRAMS, *env.TOOL_MODULES])
-def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
+@pytest.mark.parametrize("name", env.TOOL_PROGRAMS)
+def test_every_checked_program_has_an_explicit_hint(name: str) -> None:
     assert hint(name) != DEFAULT_HINT
+
+
+@pytest.mark.parametrize("name", env.TOOL_MODULES)
+def test_every_checked_module_has_an_explicit_hint(name: str) -> None:
+    assert hint(name, module=True) != DEFAULT_HINT
 
 
 def test_install_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
@@ -460,6 +485,86 @@ def test_create_venv_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> No
     with pytest.raises(Exit, match=r"boom"):
         env.create_venv(c)
     assert "❌ Failed: Creating virtual environment" in capsys.readouterr().err
+
+
+def _fail_on_sync(command: str, **_kwargs: object) -> None:
+    if command.startswith("uv sync"):
+        msg = "boom"
+        raise Exit(msg, code=1)
+
+
+def test_create_venv_reports_a_failed_install_once(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env.create_venv(c)
+    assert capsys.readouterr().err == "❌ Failed: Creating virtual environment\n"
+
+
+def test_update_reports_a_failed_install_once(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env.update(c)
+    assert capsys.readouterr().err == "❌ Failed: Updating dependencies\n"
+
+
+def test_install_reports_a_failed_sync_once(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env.install(c)
+    assert capsys.readouterr().err == "❌ Failed: Installing project dependencies\n"
+
+
+##############################
+#     Tests for _install     #
+##############################
+
+
+def test_install_helper_runs_uv_sync_with_the_groups() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "dev,docs", optional_deps=True)
+    assert commands(c) == ["uv sync --locked --all-extras --group dev --group docs"]
+
+
+def test_install_helper_without_optional_deps() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "dev", optional_deps=False)
+    assert commands(c) == ["uv sync --locked --group dev"]
+
+
+def test_install_helper_with_no_group() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "", optional_deps=False)
+    assert commands(c) == ["uv sync --locked"]
+
+
+def test_install_helper_installs_a_repeated_group_once() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "dev, dev ,docs", optional_deps=False)
+    assert commands(c) == ["uv sync --locked --group dev --group docs"]
+
+
+def test_install_helper_quotes_a_group() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "a;b", optional_deps=False)
+    assert commands(c) == ["uv sync --locked --group 'a;b'"]
+
+
+def test_install_helper_reports_progress(capsys: pytest.CaptureFixture[str]) -> None:
+    env._install(make_context({"package": {"name": "mypkg"}}), "dev", optional_deps=True)
+    assert capsys.readouterr().out == (
+        "📦 Installing project dependencies...\n✅ Installation complete\n"
+    )
+
+
+def test_install_helper_does_not_report_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env._install(c, "dev", optional_deps=True)
+    assert "Failed" not in capsys.readouterr().err
 
 
 ####################################
