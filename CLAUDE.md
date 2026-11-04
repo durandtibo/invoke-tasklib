@@ -38,8 +38,9 @@
 
 - The source is in `src/invoke_tasklib/`: one module per task namespace (`formatting.py`,
   `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
-  `imports.py`, `clean.py`, `check.py`), plus `config.py` (config resolution), `runner.py` (the
-  command runner) and `output.py` (progress messages). The namespaces are registered in
+  `imports.py`, `clean.py`, `check.py`), plus `config/` (config resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`
+  and `__init__.py` with `get_config` and `load_config`), `runner.py` (the command runner) and
+  `output.py` (progress messages). The namespaces are registered in
   `_MODULES` of `src/invoke_tasklib/__init__.py`.
 - Match the surrounding code: comment density, naming, docstring style (Google style with
   `Args:`, `Returns:`, `Raises:` and, where useful, an `Example usage:` with a `pycon` block that
@@ -51,7 +52,7 @@
   `c.config` directly. Run external commands with `invoke_tasklib.runner.run` and build them with
   `build_command` (it quotes the arguments), and print progress with `invoke_tasklib.output.say`;
   do not call `c.run` or `print` in a task.
-- Validate the `invoke.yaml` values in `config.py`, next to the existing `_validate_*` helpers.
+- Validate the `invoke.yaml` values in `config/_validate.py`, next to the existing `_validate_*` helpers.
 - Keep new task options keyword-only where the signature allows it, and give each option a `help`
   entry in `@task`.
 - Keep the read-only/mutating naming: `check_<target>` never modifies a file and `fix_<target>`
