@@ -25,10 +25,12 @@ from invoke_tasklib.config import (
     PackageConfig,
     PathsConfig,
     _as_mapping,
+    _as_names,
     _check_keys,
     _default_python_version,
     _default_src,
     _defaults,
+    _derive_defaults,
     _int_from_text,
     _normalize_groups,
     _path,
@@ -459,6 +461,58 @@ def test_get_config_rejects_invalid_groups(value: object) -> None:
         get_config(c)
 
 
+###############################
+#     Tests for _as_names     #
+###############################
+
+
+def test_as_names_splits_a_comma_separated_string() -> None:
+    assert _as_names("tasklib.x.y", "a,b") == ["a", "b"]
+
+
+def test_as_names_converts_a_list() -> None:
+    assert _as_names("tasklib.x.y", ["a", "b"]) == ["a", "b"]
+
+
+def test_as_names_converts_a_tuple() -> None:
+    assert _as_names("tasklib.x.y", ("a", "b")) == ["a", "b"]
+
+
+def test_as_names_strips_the_names() -> None:
+    assert _as_names("tasklib.x.y", " a , b ") == ["a", "b"]
+
+
+def test_as_names_drops_the_empty_names() -> None:
+    assert _as_names("tasklib.x.y", ["a", "", "  ", "b"]) == ["a", "b"]
+
+
+def test_as_names_removes_the_duplicates_and_keeps_the_order() -> None:
+    assert _as_names("tasklib.x.y", "b,a,b,a") == ["b", "a"]
+
+
+def test_as_names_of_an_empty_string_is_empty() -> None:
+    assert _as_names("tasklib.x.y", "") == []
+
+
+def test_as_names_of_an_empty_list_is_empty() -> None:
+    assert _as_names("tasklib.x.y", []) == []
+
+
+def test_as_names_does_not_mutate_a_list() -> None:
+    names = [" a ", "a"]
+    _as_names("tasklib.x.y", names)
+    assert names == [" a ", "a"]
+
+
+@pytest.mark.parametrize("value", [3, None, True, {"a": 1}, ["a", 1]])
+def test_as_names_rejects_other_values(value: object) -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"'tasklib\.x\.y' must be a comma-separated string or a list of strings",
+    ):
+        _as_names("tasklib.x.y", value)
+
+
 #######################################
 #     Tests for _normalize_groups     #
 #######################################
@@ -490,6 +544,10 @@ def test_normalize_groups_drops_empty_names() -> None:
 
 def test_normalize_groups_of_an_empty_string_is_empty() -> None:
     assert _normalize_groups("install", "") == ()
+
+
+def test_normalize_groups_removes_the_duplicates() -> None:
+    assert _normalize_groups("install", "dev,docs,dev") == ("dev", "docs")
 
 
 def test_normalize_groups_does_not_mutate_a_list() -> None:
@@ -626,18 +684,23 @@ def test_load_config_exits_on_unknown_key() -> None:
 
 
 def test_validate_int_accepts_the_minimum() -> None:
-    assert _validate_int("unit_timeout", 1, minimum=1) == 1
+    assert _validate_int("test", "unit_timeout", 1, minimum=1) == 1
+
+
+def test_validate_int_names_the_section_in_the_error() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.paths\.depth' must be an integer >= 1"):
+        _validate_int("paths", "depth", 0, minimum=1)
 
 
 def test_validate_int_rejects_below_the_minimum() -> None:
     with pytest.raises(ValueError, match=r"must be an integer >= 1, got 0"):
-        _validate_int("unit_timeout", 0, minimum=1)
+        _validate_int("test", "unit_timeout", 0, minimum=1)
 
 
 @pytest.mark.parametrize("value", [True, 1.5, "10", None])
 def test_validate_int_rejects_non_integers(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer"):
-        _validate_int("unit_timeout", value, minimum=0)
+        _validate_int("test", "unit_timeout", value, minimum=0)
 
 
 ####################################
@@ -647,13 +710,18 @@ def test_validate_int_rejects_non_integers(value: object) -> None:
 
 @pytest.mark.parametrize("value", [True, False])
 def test_validate_bool_accepts_booleans(value: bool) -> None:
-    assert _validate_bool("xdoctest", value) is value
+    assert _validate_bool("test", "xdoctest", value) is value
+
+
+def test_validate_bool_names_the_section_in_the_error() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.check\.keep_going' must be a boolean"):
+        _validate_bool("check", "keep_going", "yes")
 
 
 @pytest.mark.parametrize("value", [1, 0, "true", None])
 def test_validate_bool_rejects_non_booleans(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
-        _validate_bool("xdoctest", value)
+        _validate_bool("test", "xdoctest", value)
 
 
 ###########################################
@@ -827,6 +895,90 @@ def test_default_python_version_falls_back_to_the_constant(tmp_path: Path) -> No
     assert _default_python_version(tmp_path) == "3.14"
 
 
+######################################
+#     Tests for _derive_defaults     #
+######################################
+
+
+def _merged(**package: object) -> dict[str, dict[str, object]]:
+    return {
+        "package": {"name": "my-pkg", "import_name": None, "python_version": "3.12", **package},
+        "paths": {
+            "src": None,
+            "tests": "tests",
+            "unit_tests": None,
+            "integration_tests": None,
+            "functional_tests": None,
+            "benchmarks": None,
+        },
+    }
+
+
+def test_derive_defaults_replaces_dashes_in_the_import_name() -> None:
+    merged = _merged()
+    _derive_defaults(merged)
+    assert merged["package"]["import_name"] == "my_pkg"
+
+
+def test_derive_defaults_keeps_the_import_name_given() -> None:
+    merged = _merged(import_name="other")
+    _derive_defaults(merged)
+    assert merged["package"]["import_name"] == "other"
+
+
+def test_derive_defaults_derives_the_source_directory() -> None:
+    merged = _merged()
+    _derive_defaults(merged)
+    assert merged["paths"]["src"] == "src/my_pkg"
+
+
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        ("unit_tests", "t/unit"),
+        ("integration_tests", "t/integration"),
+        ("functional_tests", "t/functional"),
+    ],
+)
+def test_derive_defaults_derives_the_test_paths_from_the_tests_directory(
+    key: str, expected: str
+) -> None:
+    merged = _merged()
+    merged["paths"]["tests"] = "t"
+    _derive_defaults(merged)
+    assert merged["paths"][key] == expected
+
+
+def test_derive_defaults_derives_the_benchmarks_directory() -> None:
+    merged = _merged()
+    _derive_defaults(merged)
+    assert merged["paths"]["benchmarks"] == "tests/benchmarks"
+
+
+def test_derive_defaults_keeps_a_test_path_given() -> None:
+    merged = _merged()
+    merged["paths"]["unit_tests"] = "elsewhere"
+    _derive_defaults(merged)
+    assert merged["paths"]["unit_tests"] == "elsewhere"
+
+
+def test_derive_defaults_derives_the_python_version() -> None:
+    merged = _merged(python_version=None)
+    _derive_defaults(merged)
+    assert merged["package"]["python_version"] == "3.14"
+
+
+def test_derive_defaults_keeps_the_python_version_given() -> None:
+    merged = _merged()
+    _derive_defaults(merged)
+    assert merged["package"]["python_version"] == "3.12"
+
+
+def test_derive_defaults_rejects_an_invalid_import_name() -> None:
+    with pytest.raises(ValueError, match=r"must be a Python module name"):
+        _derive_defaults(_merged(import_name="1bad"))
+
+
 ####################################
 #     Tests for default_config     #
 ####################################
@@ -906,16 +1058,16 @@ def test_validate_str_error_names_the_section_and_the_key() -> None:
 
 
 def test_validate_int_accepts_the_maximum() -> None:
-    assert _validate_int("cov_fail_under", 100, minimum=0, maximum=100) == 100
+    assert _validate_int("test", "cov_fail_under", 100, minimum=0, maximum=100) == 100
 
 
 def test_validate_int_rejects_above_the_maximum() -> None:
     with pytest.raises(ValueError, match=r"must be an integer between 0 and 100, got 101"):
-        _validate_int("cov_fail_under", 101, minimum=0, maximum=100)
+        _validate_int("test", "cov_fail_under", 101, minimum=0, maximum=100)
 
 
 def test_validate_int_without_maximum_has_no_upper_limit() -> None:
-    assert _validate_int("unit_timeout", 10**9, minimum=1) == 10**9
+    assert _validate_int("test", "unit_timeout", 10**9, minimum=1) == 10**9
 
 
 ###########################################

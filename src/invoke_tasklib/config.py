@@ -291,6 +291,44 @@ def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) 
     raise ValueError(msg)
 
 
+def _as_names(key_path: str, value: object) -> list[str]:
+    r"""Convert a list-like config value to a list of names.
+
+    Args:
+        key_path: The full name of the config key, used in the error
+            message, e.g. ``"tasklib.groups.install"``.
+        value: The raw config value: a comma-separated string or a list
+            (or tuple) of strings.
+
+    Returns:
+        The names, stripped, without the empty ones and without
+        duplicates, in the order given.
+
+    Raises:
+        ValueError: If the value is neither a string nor a list of
+            strings.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _as_names
+    >>> _as_names("tasklib.groups.install", "dev, docs,dev")
+    ['dev', 'docs']
+    >>> _as_names("tasklib.groups.install", ["dev", " "])
+    ['dev']
+
+    ```
+    """
+    if isinstance(value, str):
+        names = value.split(",")
+    elif isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value):
+        names = list(value)
+    else:
+        msg = f"'{key_path}' must be a comma-separated string or a list of strings, got {value!r}"
+        raise ValueError(msg)
+    return list(dict.fromkeys(name.strip() for name in names if name.strip()))
+
+
 def _normalize_groups(key: str, value: object) -> tuple[str, ...]:
     r"""Normalize a ``groups`` config value to a tuple of names.
 
@@ -300,7 +338,8 @@ def _normalize_groups(key: str, value: object) -> tuple[str, ...]:
             of group names.
 
     Returns:
-        The group names, stripped, without the empty ones.
+        The group names, stripped, without the empty ones and without
+        duplicates.
 
     Raises:
         ValueError: If the value is neither a string nor a list of
@@ -317,17 +356,7 @@ def _normalize_groups(key: str, value: object) -> tuple[str, ...]:
 
     ```
     """
-    if isinstance(value, str):
-        names = value.split(",")
-    elif isinstance(value, (list, tuple)) and all(isinstance(g, str) for g in value):
-        names = list(value)
-    else:
-        msg = (
-            f"'tasklib.groups.{key}' must be a comma-separated string or a list of strings, "
-            f"got {value!r}"
-        )
-        raise ValueError(msg)
-    return tuple(name.strip() for name in names if name.strip())
+    return tuple(_as_names(f"tasklib.groups.{key}", value))
 
 
 def _validate_import_name(value: object) -> str:
@@ -485,10 +514,14 @@ def _default_python_version(root: Path) -> str:
     )
 
 
-def _validate_int(key: str, value: object, *, minimum: int, maximum: int | None = None) -> int:
-    r"""Validate an integer value of the ``test`` config section.
+def _validate_int(
+    section: str, key: str, value: object, *, minimum: int, maximum: int | None = None
+) -> int:
+    r"""Validate an integer value of a config section.
 
     Args:
+        section: The name of the config section, used in the error
+            message.
         key: The name of the config key, used in the error message.
         value: The raw config value.
         minimum: The smallest valid value.
@@ -506,7 +539,7 @@ def _validate_int(key: str, value: object, *, minimum: int, maximum: int | None 
 
     ```pycon
     >>> from invoke_tasklib.config import _validate_int
-    >>> _validate_int("unit_timeout", 10, minimum=1)
+    >>> _validate_int("test", "unit_timeout", 10, minimum=1)
     10
 
     ```
@@ -518,7 +551,7 @@ def _validate_int(key: str, value: object, *, minimum: int, maximum: int | None 
         or (maximum is not None and value > maximum)
     ):
         bounds = f">= {minimum}" if maximum is None else f"between {minimum} and {maximum}"
-        msg = f"'tasklib.test.{key}' must be an integer {bounds}, got {value!r}"
+        msg = f"'tasklib.{section}.{key}' must be an integer {bounds}, got {value!r}"
         raise ValueError(msg)
     return value
 
@@ -609,17 +642,7 @@ def _validate_cov_reports(value: object) -> tuple[str, ...]:
 
     ```
     """
-    if isinstance(value, str):
-        names = [name.strip() for name in value.split(",")]
-    elif isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value):
-        names = [name.strip() for name in value]
-    else:
-        msg = (
-            "'tasklib.test.cov_reports' must be a comma-separated string or a list of "
-            f"strings, got {value!r}"
-        )
-        raise ValueError(msg)
-    names = list(dict.fromkeys(name for name in names if name))
+    names = _as_names("tasklib.test.cov_reports", value)
     unknown = [name for name in names if name not in COV_REPORTS]
     if unknown:
         msg = (
@@ -656,17 +679,7 @@ def _validate_check_tasks(value: object) -> tuple[str, ...]:
 
     ```
     """
-    if isinstance(value, str):
-        names = [name.strip() for name in value.split(",")]
-    elif isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value):
-        names = [name.strip() for name in value]
-    else:
-        msg = (
-            "'tasklib.check.tasks' must be a comma-separated string or a list of "
-            f"strings, got {value!r}"
-        )
-        raise ValueError(msg)
-    names = list(dict.fromkeys(name for name in names if name))
+    names = _as_names("tasklib.check.tasks", value)
     if not names:
         msg = "'tasklib.check.tasks' must contain at least one step"
         raise ValueError(msg)
@@ -706,13 +719,15 @@ def _validate_cov_fail_under(value: object) -> int | None:
     """
     if value is None:
         return None
-    return _validate_int("cov_fail_under", _int_from_text(value), minimum=0, maximum=100)
+    return _validate_int("test", "cov_fail_under", _int_from_text(value), minimum=0, maximum=100)
 
 
-def _validate_bool(key: str, value: object) -> bool:
-    r"""Validate a boolean value of the ``test`` config section.
+def _validate_bool(section: str, key: str, value: object) -> bool:
+    r"""Validate a boolean value of a config section.
 
     Args:
+        section: The name of the config section, used in the error
+            message.
         key: The name of the config key, used in the error message.
         value: The raw config value.
 
@@ -726,13 +741,13 @@ def _validate_bool(key: str, value: object) -> bool:
 
     ```pycon
     >>> from invoke_tasklib.config import _validate_bool
-    >>> _validate_bool("xdoctest", False)
+    >>> _validate_bool("test", "xdoctest", False)
     False
 
     ```
     """
     if value is not True and value is not False:
-        msg = f"'tasklib.test.{key}' must be a boolean (true or false), got {value!r}"
+        msg = f"'tasklib.{section}.{key}' must be a boolean (true or false), got {value!r}"
         raise ValueError(msg)
     return value
 
@@ -786,7 +801,7 @@ def _timeout(key: str, default: int, doc: str) -> Option:
     """
     return Option(
         default,
-        partial(_validate_int, key, minimum=1),
+        partial(_validate_int, "test", key, minimum=1),
         {"type": "integer", "minimum": 1},
         doc,
     )
@@ -873,7 +888,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
         ),
         "xdoctest": Option(
             True,
-            partial(_validate_bool, "xdoctest"),
+            partial(_validate_bool, "test", "xdoctest"),
             {"type": "boolean"},
             "Run pytest with --xdoctest.",
         ),
@@ -1101,21 +1116,13 @@ def get_config(c: Context) -> TasklibConfig:
         given = _as_mapping(f"tasklib.{section}", user.get(section, {}))
         _check_keys(section, given, options)
         merged[section] = {**_defaults(section), **given}
-    package, paths = merged["package"], merged["paths"]
+    package = merged["package"]
 
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
         raise ValueError(msg)
-    name = _validate_str("package", "name", package["name"])
-    if package["python_version"] is None:
-        package["python_version"] = _default_python_version(Path())
-    if package["import_name"] is None:
-        package["import_name"] = name.replace("-", "_")
-    if paths["src"] is None:
-        paths["src"] = _default_src(_validate_import_name(package["import_name"]))
-    for key, scope in _TEST_SCOPES.items():
-        if paths[key] is None:
-            paths[key] = f"{paths['tests']}/{scope}"
+    package["name"] = _validate_str("package", "name", package["name"])
+    _derive_defaults(merged)
 
     resolved = {
         section: _SECTION_CLASSES[section](
@@ -1124,6 +1131,50 @@ def get_config(c: Context) -> TasklibConfig:
         for section, options in SCHEMA.items()
     }
     return TasklibConfig(**resolved)
+
+
+def _derive_defaults(merged: dict[str, dict[str, object]]) -> None:
+    r"""Fill the values of the config that are derived from others.
+
+    Args:
+        merged: The values of each section, defaults and user values
+            merged. ``package.name`` must be a valid string. It is
+            changed in place: ``package.python_version``,
+            ``package.import_name``, ``paths.src`` and the paths of the
+            test scopes that are not set get their default.
+
+    Raises:
+        ValueError: If ``package.import_name`` is not a Python module
+            name (and ``paths.src`` has to be derived from it).
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config import _derive_defaults
+    >>> package = {"name": "my-pkg", "import_name": None}
+    >>> package["python_version"] = "3.12"
+    >>> paths = {"src": "src", "tests": "tests", "unit_tests": None}
+    >>> paths.update(integration_tests="i", functional_tests="f")
+    >>> paths["benchmarks"] = "b"
+    >>> merged = {"package": package, "paths": paths}
+    >>> _derive_defaults(merged)
+    >>> merged["package"]["import_name"]
+    'my_pkg'
+    >>> merged["paths"]["unit_tests"]
+    'tests/unit'
+
+    ```
+    """
+    package, paths = merged["package"], merged["paths"]
+    if package["python_version"] is None:
+        package["python_version"] = _default_python_version(Path())
+    if package["import_name"] is None:
+        package["import_name"] = str(package["name"]).replace("-", "_")
+    if paths["src"] is None:
+        paths["src"] = _default_src(_validate_import_name(package["import_name"]))
+    for key, scope in _TEST_SCOPES.items():
+        if paths[key] is None:
+            paths[key] = f"{paths['tests']}/{scope}"
 
 
 def load_config(c: Context) -> TasklibConfig:
