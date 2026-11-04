@@ -11,10 +11,38 @@ from invoke_tasklib.config._constants import (
     COV_REPORTS,
     FIX_STEPS,
     PYTHON_VERSION_PATTERN,
+    TYPE_CHECKERS,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+
+def _validate_checker(value: object) -> str:
+    r"""Validate the ``types.checker`` config value.
+
+    Args:
+        value: The raw config value.
+
+    Returns:
+        The validated type checker.
+
+    Raises:
+        ValueError: If the value is not one of ``TYPE_CHECKERS``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config._validate import _validate_checker
+    >>> _validate_checker("mypy")
+    'mypy'
+
+    ```
+    """
+    if value not in TYPE_CHECKERS:
+        msg = f"'tasklib.types.checker' must be one of {', '.join(TYPE_CHECKERS)}, got {value!r}"
+        raise ValueError(msg)
+    return str(value)
 
 
 def _validate_python_version(value: object) -> str | None:

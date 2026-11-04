@@ -49,12 +49,23 @@ def test_get_config_defaults() -> None:
             "cov_fail_under": None,
             "cov_reports": ("html", "xml", "term"),
         },
+        "types": {"checker": "ty"},
         "check": {
             "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit"),
             "cov": False,
         },
         "fix": {"tasks": ("lint", "format-python", "format-docstrings")},
     }
+
+
+def test_get_config_reads_the_type_checker() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "types": {"checker": "mypy"}}))
+    assert cfg.types.checker == "mypy"
+
+
+def test_get_config_rejects_an_unknown_type_checker() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.types\.checker' must be one of ty, pyright"):
+        get_config(_context({"package": {"name": "mypkg"}, "types": {"checker": "pytype"}}))
 
 
 def test_get_config_test_overrides() -> None:

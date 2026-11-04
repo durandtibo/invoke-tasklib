@@ -14,16 +14,17 @@
 invoke types.check
 ```
 
-This runs `ty check`.
+This runs `ty check`, or the checker of `types.checker` in the [config](config.md): `pyright` or `mypy`
+(`mypy` must be a dependency of the project).
 
-Pass `--complete` to also run [pyright](https://microsoft.github.io/pyright/) after `ty` (slower,
-more thorough):
+Pass `--complete` to also run [pyright](https://microsoft.github.io/pyright/) after the checker (slower,
+more thorough; nothing more if the checker is `pyright`):
 
 ```shell
 invoke types.check --complete
 ```
 
-`--args` is passed to `ty` only, and `--pyright-args` to `pyright` only (it is used with
+`--args` is passed to the checker only, and `--pyright-args` to `pyright` only (it is used with
 `--complete`); `--paths` is passed to both tools (see
 [Passing Arguments to the Tools](index.md#passing-arguments-to-the-tools)):
 

@@ -6,7 +6,8 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import _steps, env, fix
-from invoke_tasklib.config import FIX_STEPS
+from invoke_tasklib._steps import step_programs
+from invoke_tasklib.config import FIX_STEPS, get_config
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
@@ -113,4 +114,6 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
 
 
 def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:
-    assert {name for step in fix.STEPS.values() for name in step.programs} <= set(env.TOOL_PROGRAMS)
+    assert {
+        name for step in fix.STEPS.values() for name in step_programs(step, get_config(_context()))
+    } <= set(env.TOOL_PROGRAMS)

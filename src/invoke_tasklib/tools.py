@@ -40,6 +40,7 @@ PROGRAM_HINTS: dict[str, str] = {
         "Install git with your system package manager, for example "
         "`brew install git` or `apt install git`, or on macOS `xcode-select --install`."
     ),
+    "mypy": "Add mypy to the dependencies of the project, e.g. `uv add --dev mypy`.",
     "codespell": "Add codespell to the dependencies of the project, e.g. `uv add --dev codespell`.",
 }
 r"""How to install the programs that ``invoke env.install`` does not

@@ -166,6 +166,8 @@ def test_render_the_whole_config() -> None:
         "    timeout: true  # default",
         "    cov_fail_under: null  # default",
         "    cov_reports: [html, xml, term]  # default",
+        "  types:",
+        "    checker: ty  # default",
         "  check:",
         "    tasks: [format-python, format-docstrings, lint, types, imports, unit]  # default",
         "    cov: false  # default",

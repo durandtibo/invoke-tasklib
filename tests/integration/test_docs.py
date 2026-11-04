@@ -113,7 +113,7 @@ def test_reference_directive_is_found_in_a_page() -> None:
 #     Tests for the config page and the JSON schema   #
 #######################################################
 
-CONFIG_KEY = re.compile(r"^\| `((?:package|paths|groups|test|check|fix)\.\w+)`", flags=re.MULTILINE)
+CONFIG_KEY = re.compile(r"^\| `((?:package|paths|groups|test|types|check|fix)\.\w+)`", flags=re.MULTILINE)
 
 
 def test_config_page_documents_every_key_of_the_schema() -> None:

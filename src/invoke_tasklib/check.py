@@ -14,6 +14,7 @@ from invoke_tasklib._steps import (
     run_steps,
     select_steps,
     step_modules,
+    step_programs,
     tasks_of,
 )
 from invoke_tasklib.config import CHECK_STEPS, load_config
@@ -71,7 +72,7 @@ STEPS: dict[str, Step] = {
     "format-python": Step(formatting.check_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.check_docstrings, programs=("docformatter",)),
     "lint": Step(lint.check_python, programs=("ruff",)),
-    "types": Step(typecheck.check, programs=("ty",)),
+    "types": Step(typecheck.check, programs=lambda cfg: (cfg.types.checker,)),
     "imports": Step(imports.check_cycles),
     "unit": Step(_unit, modules=_unit_modules),
     "doctest": Step(testing.doctest, modules=("pytest", "xdoctest")),
@@ -118,7 +119,7 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
 
     ```
     """
-    return missing_tools(STEPS[step].programs, step_modules(STEPS[step], cfg))
+    return missing_tools(step_programs(STEPS[step], cfg), step_modules(STEPS[step], cfg))
 
 
 @task(

@@ -204,6 +204,8 @@ tasklib:
     timeout: true # pytest --timeout (needs pytest-timeout)
     cov_fail_under: 90 # threshold of --cov (default: not set)
     cov_reports: html,xml,term
+  types:
+    checker: ty # type checker of types.check: ty, pyright or mypy
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit # steps of check.all
     cov: false # run the unit step of check.all with --cov

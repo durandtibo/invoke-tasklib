@@ -211,6 +211,7 @@ TOOL_PROGRAMS: tuple[str, ...] = (
     "ruff",
     "ty",
     "pyright",
+    "mypy",
     "docformatter",
     "codespell",
     "pre-commit",

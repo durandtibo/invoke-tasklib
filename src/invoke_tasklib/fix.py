@@ -13,6 +13,7 @@ from invoke_tasklib._steps import (
     parse_steps,
     run_steps,
     select_steps,
+    step_programs,
     tasks_of,
 )
 from invoke_tasklib.config import FIX_STEPS, load_config
@@ -86,7 +87,9 @@ def all_(
         parse_steps("--skip", skip, FIX_STEPS),
     )
     blocked = {
-        step: missing for step in steps if (missing := missing_tools(STEPS[step].programs, ()))
+        step: missing
+        for step in steps
+        if (missing := missing_tools(step_programs(STEPS[step], cfg), ()))
     }
     run_steps(
         c,

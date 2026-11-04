@@ -446,7 +446,7 @@ def test_check_tools_does_not_need_the_config(
 ) -> None:
     monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
     env.check_tools(make_context())
-    assert "✅ All the 18 tools are available\n" in capsys.readouterr().out
+    assert "✅ All the 19 tools are available\n" in capsys.readouterr().out
 
 
 def test_every_program_with_a_hint_is_checked() -> None:
