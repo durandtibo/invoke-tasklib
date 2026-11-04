@@ -15,13 +15,13 @@ def _fresh_module(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_running_the_module_exits_with_code_0() -> None:
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(SystemExit, match=r"^0$") as exc_info:
         runpy.run_module("invoke_tasklib.config", run_name="__main__")
     assert exc_info.value.code == 0
 
 
 def test_running_the_module_prints_the_schema(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit, match=r"0"):
+    with pytest.raises(SystemExit, match=r"^0$"):
         runpy.run_module("invoke_tasklib.config", run_name="__main__")
     assert json.loads(capsys.readouterr().out)["title"] == "invoke.yaml of invoke-tasklib"
 

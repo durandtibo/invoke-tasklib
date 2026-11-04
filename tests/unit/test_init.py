@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-import warnings
 
 import pytest
 from invoke.collection import Collection
@@ -347,12 +346,11 @@ def test_warn_if_unsupported_platform_warns_on_windows(
 
 @pytest.mark.parametrize("platform", ["linux", "darwin"])
 def test_warn_if_unsupported_platform_is_silent_on_posix(
-    monkeypatch: pytest.MonkeyPatch, platform: str
+    monkeypatch: pytest.MonkeyPatch, recwarn: pytest.WarningsRecorder, platform: str
 ) -> None:
     monkeypatch.setattr("sys.platform", platform)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        _warn_if_unsupported_platform()
+    _warn_if_unsupported_platform()
+    assert len(recwarn) == 0
 
 
 def test_make_ns_warns_on_windows(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -363,6 +361,6 @@ def test_make_ns_warns_on_windows(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_make_ns_blames_the_caller_on_windows(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.platform", "win32")
-    with pytest.warns(RuntimeWarning) as record:
+    with pytest.warns(RuntimeWarning, match=r"does not support Windows") as record:
         make_ns()
     assert record[0].filename == __file__
