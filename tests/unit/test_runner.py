@@ -145,7 +145,7 @@ def test_check_program_names_the_group_of_a_tool(
 
 def test_check_program_missing_program_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", lambda _program: None)
-    with pytest.raises(Exit) as excinfo:
+    with pytest.raises(Exit, match=r"'no-such-program' was not found") as excinfo:
         check_program("no-such-program --version")
     assert excinfo.value.code == 127
 
@@ -316,7 +316,7 @@ def test_split_keeps_quoted_words_together() -> None:
 
 
 def test_split_unclosed_quote_exit_code() -> None:
-    with pytest.raises(Exit) as excinfo:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --args") as excinfo:
         _split("'a", "--args")
     assert excinfo.value.code == 2
 
@@ -402,7 +402,7 @@ def test_check_program_missing_module_exits(monkeypatch: pytest.MonkeyPatch) -> 
 def test_check_program_missing_module_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
     monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: None)
-    with pytest.raises(Exit) as excinfo:
+    with pytest.raises(Exit, match=r"module 'pytest' is not installed") as excinfo:
         check_program("/venv/bin/python -m pytest tests")
     assert excinfo.value.code == 127
 
@@ -512,7 +512,7 @@ def test_check_module_missing_pytest_plugin_names_the_package(
 @pytest.mark.usefixtures("_venv_python")
 def test_check_module_missing_pytest_plugin_message(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest"))
-    with pytest.raises(Exit) as info:
+    with pytest.raises(Exit, match=r"The option --xdoctest needs the pytest plugin") as info:
         _check_module(["/venv/bin/python", "-m", "pytest", "--xdoctest", "src"])
     assert str(info.value) == (
         "The option --xdoctest needs the pytest plugin 'xdoctest', which is not installed "

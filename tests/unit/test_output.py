@@ -204,7 +204,7 @@ def test_step_writes_no_done_message_when_the_block_fails() -> None:
 def test_step_raises_the_same_exception() -> None:
     _, c = _context()
     error = UnexpectedExit(Result(exited=2, command="ruff"))
-    with pytest.raises(UnexpectedExit) as info:
+    with pytest.raises(UnexpectedExit, match=r"Encountered a bad command exit code") as info:
         _fail_in_step(c, "start", error)
     assert info.value is error
 
@@ -228,7 +228,7 @@ def test_task_failure_is_visible_after_the_start_message(
 ) -> None:
     c = MockContext(config=Config(), run=True)
     c.run = Mock(side_effect=UnexpectedExit(Result(exited=1)))
-    with pytest.raises(UnexpectedExit):
+    with pytest.raises(UnexpectedExit, match=r"Encountered a bad command exit code"):
         lint.check_python(c)
     captured = capsys.readouterr()
     assert (captured.out, captured.err) == (

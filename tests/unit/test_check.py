@@ -184,7 +184,7 @@ def test_all_keep_going_lists_all_the_failed_steps() -> None:
 def test_all_keep_going_exits_with_code_1() -> None:
     c = _context({"tasks": "lint"})
     _failing(c, "ruff")
-    with pytest.raises(Exit) as info:
+    with pytest.raises(Exit, match=r"1 of 1 check\(s\) failed: lint") as info:
         check.all_(c, keep_going=True)
     assert info.value.code == 1
 
@@ -258,7 +258,7 @@ def test_all_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -
 def test_all_missing_tools_are_all_listed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
     c = _context({"tasks": "format-python,format-docstrings,types,spelling"})
-    with pytest.raises(Exit) as info:
+    with pytest.raises(Exit, match=r"3 tool\(s\) missing") as info:
         check.all_(c)
     assert str(info.value) == (
         "3 tool(s) missing for the selected steps:\n"
