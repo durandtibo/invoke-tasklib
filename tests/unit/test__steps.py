@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 from invoke.context import MockContext
-from invoke.exceptions import Exit, UnexpectedExit
+from invoke.exceptions import Exit, Failure, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import _steps
@@ -213,6 +213,34 @@ def test_run_step_names_the_exception_when_the_message_is_empty() -> None:
     assert run_step(MockContext(), {"lint": task}, "lint") == "Exit"
 
 
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (OSError("disk full"), "OSError: disk full"),
+        (ValueError("bad value"), "ValueError: bad value"),
+        (KeyError("key"), "KeyError: 'key'"),
+        (AttributeError("no attr"), "AttributeError: no attr"),
+        (ZeroDivisionError("division by zero"), "ZeroDivisionError: division by zero"),
+        (ModuleNotFoundError("No module named 'x'"), "ModuleNotFoundError: No module named 'x'"),
+        (TypeError("bad type"), "TypeError: bad type"),
+        (RuntimeError("broken"), "RuntimeError: broken"),
+    ],
+)
+def test_run_step_returns_the_type_and_message_of_an_error(error: Exception, reason: str) -> None:
+    task = Mock(side_effect=error)
+    assert run_step(MockContext(), {"lint": task}, "lint") == reason
+
+
+def test_run_step_returns_the_type_of_an_invoke_failure() -> None:
+    task = Mock(side_effect=Failure(Result(command="ruff")))
+    assert (run_step(MockContext(), {"lint": task}, "lint") or "").startswith("Failure: ")
+
+
+def test_run_step_returns_only_the_type_of_an_error_without_message() -> None:
+    task = Mock(side_effect=RuntimeError())
+    assert run_step(MockContext(), {"lint": task}, "lint") == "RuntimeError"
+
+
 def test_run_step_does_not_catch_other_exceptions() -> None:
     task = Mock(side_effect=KeyboardInterrupt("interrupted"))
     with pytest.raises(KeyboardInterrupt, match=r"interrupted"):
@@ -280,6 +308,47 @@ def test_run_steps_keep_going_runs_every_step() -> None:
             messages=_MESSAGES,
         )
     assert calls == ["lint", "unit"]
+
+
+def test_run_steps_keep_going_continues_after_an_error_of_a_step() -> None:
+    calls: list[str] = []
+
+    def broken(_c: Context) -> None:
+        msg = "disk full"
+        raise OSError(msg)
+
+    tasks = {"lint": broken, "unit": lambda _c: calls.append("unit")}
+    with pytest.raises(Exit, match=r"1 of 2 check\(s\) failed: lint"):
+        run_steps(
+            MockContext(run=True),
+            ["lint", "unit"],
+            tasks,
+            {},
+            keep_going=True,
+            label="check(s)",
+            messages=("start", "done"),
+        )
+    assert calls == ["unit"]
+
+
+def test_run_steps_keep_going_prints_the_error_of_a_step(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def broken(_c: Context) -> None:
+        msg = "disk full"
+        raise OSError(msg)
+
+    with pytest.raises(Exit, match=r"failed: lint"):
+        run_steps(
+            MockContext(run=True),
+            ["lint"],
+            {"lint": broken},
+            {},
+            keep_going=True,
+            label="check(s)",
+            messages=("start", "done"),
+        )
+    assert "   OSError: disk full\n" in capsys.readouterr().err
 
 
 def test_run_steps_keep_going_exits_with_code_1() -> None:
