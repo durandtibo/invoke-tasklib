@@ -227,6 +227,7 @@ TOOL_MODULES: tuple[str, ...] = (
     "xdoctest",
     "pytest_timeout",
     "pytest_cov",
+    "pytest_benchmark",
 )
 r"""The Python modules and pytest plugins that the tasks need."""
 

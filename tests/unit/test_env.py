@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.tools import DEFAULT_HINT, PROGRAM_HINTS, hint
+from invoke_tasklib.tools import DEFAULT_HINT, PLUGIN_OPTIONS, PROGRAM_HINTS, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -446,7 +446,15 @@ def test_check_tools_does_not_need_the_config(
 ) -> None:
     monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
     env.check_tools(make_context())
-    assert "✅ All the 18 tools are available\n" in capsys.readouterr().out
+    assert "✅ All the 19 tools are available\n" in capsys.readouterr().out
+
+
+def test_every_plugin_module_is_checked() -> None:
+    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= set(env.TOOL_MODULES)
+
+
+def test_check_tools_checks_pytest_benchmark() -> None:
+    assert "pytest_benchmark" in env.TOOL_MODULES
 
 
 def test_every_program_with_a_hint_is_checked() -> None:
