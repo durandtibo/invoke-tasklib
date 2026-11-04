@@ -238,7 +238,7 @@ def _run_pytest(
         if options.timeout:
             cmd.append(f"--timeout {timeout}")
         if cov:
-            cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
+            cmd.extend(f"--cov-report {shlex.quote(report)}" for report in options.cov_reports)
             if append:
                 cmd.append("--cov-append")
             cmd.append(f"--cov={cfg.package.import_name}")

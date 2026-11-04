@@ -67,6 +67,7 @@ def test_last_version_tag_without_tag_is_none() -> None:
         (("v1.2.0", "v1.10.0", "v1.9.5", "not-a-version"), "v1.10.0"),
         (("v1.2.0", "v1.2.0rc1", "v1.1.0"), "v1.2.0"),
         (("v1.3.0rc1", "v1.2.0"), "v1.2.0"),
+        (("v1.2.0", "v1.3.0-backport"), "v1.3.0-backport"),
     ],
 )
 def test_last_version_tag_returns_the_highest_release(tags: tuple[str, ...], expected: str) -> None:

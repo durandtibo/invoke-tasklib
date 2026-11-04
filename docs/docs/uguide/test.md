@@ -86,8 +86,9 @@ Runs everything in `paths.tests` in a single `pytest` invocation, with the large
 
 Pass `--cov` to `test.unit`, `test.integration`, `test.functional`, or `test.all` to generate
 coverage reports. The formats are the `test.cov_reports` value of the [config](config.md)
-(`html,xml,term` by default, each one is a `--cov-report` of pytest-cov; an empty value leaves the
-choice to pytest-cov):
+(`html,xml,term` by default, each one is a `--cov-report` of pytest-cov, with an optional argument
+such as `term-missing:skip-covered` or `html:cov_html`; an empty value leaves the choice to
+pytest-cov):
 
 ```shell
 invoke test.unit --cov

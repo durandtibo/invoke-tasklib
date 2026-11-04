@@ -25,7 +25,8 @@ PIP_AUDIT_REQUIREMENT = "pip-audit>=2.10,<3"
 def audit(c: Context, *, args: str | None = None) -> None:
     r"""Audit the locked dependencies for known vulnerabilities.
 
-    The dependencies of ``uv.lock`` are exported to a temporary
+    The dependencies of ``uv.lock``, with all the optional dependencies
+    (extras) and all the dependency groups, are exported to a temporary
     requirements file, which is audited with ``pip-audit`` (run with
     ``uvx``, so it does not have to be a dependency of the project, in
     the range ``PIP_AUDIT_REQUIREMENT``).
@@ -53,7 +54,7 @@ def audit(c: Context, *, args: str | None = None) -> None:
         requirements = shlex.quote(str(Path(tmp) / "requirements.txt"))
         run(
             c,
-            "uv export --locked --no-emit-project --no-hashes --all-groups "
+            "uv export --locked --no-emit-project --no-hashes --all-extras --all-groups "
             f"--quiet -o {requirements}",
         )
         tool = shlex.quote(PIP_AUDIT_REQUIREMENT)
