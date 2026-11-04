@@ -162,6 +162,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `check`    | `check.all` (or `check`)      | Run the main read-only checks                                                            |    ❌    |
 | `clean`    | `clean.all` (or `clean`)      | Remove build artifacts and caches                                                        |    ✅    |
 | `clean`    | `clean.pycache`               | Remove all `__pycache__` directories                                                     |    ✅    |
+| `config`   | `config.show`                 | Show the resolved config and where each value comes from                                 |    ❌    |
 
 `format.*` and `lint.*` follow a naming convention: read-only checks are
 named `check_<target>`, and the matching in-place fixer is named

@@ -100,6 +100,36 @@ When the key is not set, the version is read from the project, in this order:
 2. the lower bound of `project.requires-python` in `pyproject.toml` (`">=3.11"` gives `3.11`);
 3. `3.14`.
 
+## Showing the Resolved Config
+
+```shell
+invoke config.show
+```
+
+Prints the `tasklib` section as the tasks see it, with every key and a comment with its origin. It
+answers "which value is used, and why" without reading the code:
+
+```yaml
+tasklib:
+  package:
+    name: demo # project file
+    import_name: demo # derived
+  paths:
+    src: lib # project file
+    tests: zz # environment variable INVOKE_TASKLIB_PATHS_TESTS
+    unit_tests: zz/unit # derived
+    docs_config: docs/mkdocs.yml # default
+```
+
+The origin is the source with the highest priority that sets the key: `default` (the default of
+the library, or no value for an optional key), `project file` (`invoke.yaml`),
+`environment variable INVOKE_TASKLIB_...`, `system config file`, `user config file`,
+`runtime config file` or `override` (set from the command line or by code). `derived` is a value
+that no source sets, computed from other values or from the project (`import_name`, `src`, the test
+paths and the Python version). The config is validated first, so an invalid one stops the task with
+the usual one-line message. The task reads nothing but the config and the two project files of
+[`package.python_version`](#defaults), and changes nothing.
+
 ## Editor Completion (JSON Schema)
 
 The keys, the defaults and the descriptions are declared once, in `invoke_tasklib.config.SCHEMA`
@@ -111,8 +141,18 @@ schema of the `tasklib` section of `invoke.yaml` with:
 python -m invoke_tasklib.config > invoke-tasklib.schema.json
 ```
 
-and point your editor to it (for example with a `# yaml-language-server: $schema=...` comment at
-the top of `invoke.yaml`) to get completion and validation of the keys.
+The same file is published with the documentation. Point your editor to it with a comment at the
+top of `invoke.yaml` to get completion and validation of the keys:
+
+```yaml
+# yaml-language-server: $schema=https://durandtibo.github.io/invoke-tasklib/schema.json
+tasklib:
+  package:
+    name: my_package
+```
+
+A test checks that the published `docs/docs/schema.json` equals the schema printed by the command
+(regenerate it with `python -m invoke_tasklib.config > docs/docs/schema.json`).
 
 ## Environment Variables
 

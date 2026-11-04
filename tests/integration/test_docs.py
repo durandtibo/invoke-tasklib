@@ -88,9 +88,11 @@ def _documented_modules() -> set[str]:
 
 
 def _public_modules() -> set[str]:
-    return {"invoke_tasklib"} | {
+    modules = {
         f"invoke_tasklib.{path.stem}" for path in SRC.glob("*.py") if not path.stem.startswith("_")
     }
+    packages = {f"invoke_tasklib.{path.parent.name}" for path in SRC.glob("*/__init__.py")}
+    return {"invoke_tasklib"} | modules | packages
 
 
 @pytest.mark.parametrize("module", sorted(_public_modules()))
@@ -141,3 +143,7 @@ def test_config_module_fails_with_an_argument() -> None:
 
 def test_config_key_pattern_matches_a_table_row() -> None:
     assert CONFIG_KEY.findall("| `test.xdoctest`  | `true` |\n") == ["test.xdoctest"]
+
+
+def test_published_json_schema_is_up_to_date() -> None:
+    assert json.loads((DOCS / "schema.json").read_text()) == json_schema()
