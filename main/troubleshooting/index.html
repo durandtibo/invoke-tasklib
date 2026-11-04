@@ -1908,9 +1908,11 @@ least:</p>
 the <code>PATH</code> and exit with code 127 if it is not. Install the project tools with
 <code>invoke env.install</code> (the <code>dev</code> group has the linters and test tools, the <code>docs</code> group has <code>mike</code>)
 or activate the virtual environment that has them.</p>
-<p>The hint depends on the program: <code>uv</code> points to its installation page (<code>env.install</code> itself needs
-it), <code>shellcheck</code> and <code>shfmt</code> to the system package manager, and <code>codespell</code> to the project
-dependencies. Every command of a pipeline is checked, and so is the module of
+<p>The hint depends on the program: <code>uv</code> and <code>uvx</code> point to the installation page of <code>uv</code>
+(<code>env.install</code> itself needs it), <code>git</code>, <code>shellcheck</code> and <code>shfmt</code> to the system package manager, and
+<code>codespell</code> to the project dependencies. The tools of the <code>dev</code> group (<code>ruff</code>, <code>ty</code>, <code>pyright</code>,
+<code>docformatter</code>, <code>pre-commit</code>, <code>pytest</code> and its plugins) and of the <code>docs</code> group (<code>mkdocs</code>, <code>mike</code>)
+name their group, for example <code>uv sync --group docs</code>. Every command of a pipeline is checked, and so is the module of
 <code>python -m &lt;module&gt;</code> (for example <code>pytest</code>), which is reported as
 <code>The Python module 'pytest' is not installed for ...</code> instead of Python's own <code>No module named</code>.</p>
 <h2 id="invoke-command-not-found-after-installing"><code>invoke: command not found</code> after installing<a class="headerlink" href="#invoke-command-not-found-after-installing" title="Permanent link">&para;</a></h2>
