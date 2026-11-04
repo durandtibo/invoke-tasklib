@@ -1792,6 +1792,8 @@ Pass <code>--open-browser</code> to also open <code>htmlcov/index.html</code> in
 <p>Runs <code>pytest --benchmark-only</code> against <code>paths.benchmarks</code>. This requires
 <a href="https://pytest-benchmark.readthedocs.io/"><code>pytest-benchmark</code></a> to be installed. The task is skipped
 with a message if <code>paths.benchmarks</code> does not exist.</p>
+<p><code>test.benchmark</code>, <code>test.doctest-src</code> and <code>test.doctest-markdown</code> take <code>--args</code> and <code>--paths</code>, and
+<code>test.coverage-report</code> takes <code>--args</code> (for example <code>--fail-under=90</code>).</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../config/">Config</a>: the <code>paths.*_tests</code> and <code>paths.benchmarks</code> config used by these tasks.</li>

@@ -1904,18 +1904,105 @@ invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
 <p>Since Invoke lets you chain multiple task names in one command, all of the above run as a single
 <code>invoke</code> call each.</p>
 <h2 id="passing-arguments-to-the-tools">Passing Arguments to the Tools<a class="headerlink" href="#passing-arguments-to-the-tools" title="Permanent link">&para;</a></h2>
-<p>The tasks that run <code>pytest</code> (<code>test.all</code>, <code>test.unit</code>, <code>test.integration</code>, <code>test.functional</code>),
-<code>ruff</code> (<code>format.check-python</code>, <code>format.fix-python</code>, <code>lint.check-python</code>, <code>lint.fix-python</code>),
-<code>docformatter</code> (<code>format.check-docstrings</code>, <code>format.fix-docstrings</code>) and <code>ty</code> (<code>types.check</code>) have
-two options:</p>
+<p>Every task that runs an external tool takes <code>--args</code>, and the tasks that run on files also take
+<code>--paths</code>:</p>
 <ul>
 <li><code>--args</code> adds arguments to the command. The value is one string, split like a shell does.</li>
 <li><code>--paths</code> runs the tool on these files or directories instead of the default ones (the
-  project for <code>ruff</code>, <code>paths.src</code> for <code>docformatter</code>, the scope directory for <code>pytest</code>).</li>
+  project for <code>ruff</code>, <code>paths.src</code> for <code>docformatter</code> and the source doctests, the scope directory
+  for <code>pytest</code>, every <code>*.sh</code> file for <code>shellcheck</code> and <code>shfmt</code>, every markdown file for the
+  markdown doctests).</li>
 </ul>
+<table>
+<thead>
+<tr>
+<th>Tasks</th>
+<th><code>--args</code> goes to</th>
+<th style="text-align: center;"><code>--paths</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test.all</code>, <code>test.unit</code>, <code>test.integration</code>, <code>test.functional</code>, <code>test.benchmark</code></td>
+<td><code>pytest</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>test.doctest-src</code></td>
+<td><code>pytest</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>test.doctest-markdown</code></td>
+<td><code>python -m doctest</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>test.coverage-report</code></td>
+<td><code>coverage report</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>format.*-python</code>, <code>lint.check-python</code>, <code>lint.fix-python</code></td>
+<td><code>ruff</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>format.*-docstrings</code></td>
+<td><code>docformatter</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>format.check-shell</code>, <code>format.fix-shell</code></td>
+<td><code>shellcheck</code>, <code>shfmt</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>lint.check-spelling</code></td>
+<td><code>codespell</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>lint.pre-commit</code></td>
+<td><code>pre-commit</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>types.check</code></td>
+<td><code>ty</code> (only)</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>security.audit</code></td>
+<td><code>pip-audit</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>doc.build</code>, <code>doc.serve</code></td>
+<td><code>mkdocs</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>release.build</code></td>
+<td><code>uv build</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>release.pypi</code></td>
+<td><code>uv publish</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+</tbody>
+</table>
+<p>The tasks that have no option are the composite tasks (<code>check.all</code>, <code>test.doctest</code>), the tasks
+that run no external tool (<code>clean.*</code>, <code>imports.check-cycles</code>) and the tasks with their own options
+(<code>env.*</code>, <code>doc.publish-*</code>).</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit<span class="w"> </span>--args<span class="w"> </span><span class="s2">"-k foo -x"</span><span class="w"> </span>--paths<span class="w"> </span>tests/unit/test_foo.py
 invoke<span class="w"> </span>lint.check-python<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--select E"</span><span class="w"> </span>--paths<span class="w"> </span><span class="s2">"src/a.py src/b.py"</span>
 invoke<span class="w"> </span>format.check-python<span class="w"> </span>--paths<span class="w"> </span>src/a.py
+invoke<span class="w"> </span>security.audit<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--ignore-vuln PYSEC-2024-1"</span>
+invoke<span class="w"> </span>doc.serve<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--dev-addr 127.0.0.1:8001"</span>
+invoke<span class="w"> </span>test.coverage-report<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--fail-under=90"</span>
 </code></pre></div>
 <p>For <code>types.check</code>, <code>--args</code> goes to <code>ty</code> only and <code>--paths</code> goes to <code>ty</code> and <code>pyright</code>. The
 arguments and the paths are quoted, so they are never interpreted by the shell.</p>

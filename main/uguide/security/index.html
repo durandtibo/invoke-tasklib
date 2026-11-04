@@ -1633,6 +1633,9 @@
 file is out of date or if a vulnerability is found.</p>
 <p>The task does not sync or modify the environment, and the result depends on the lock file, not on
 what was installed last. <code>pip-audit</code> does not have to be a dependency of the project.</p>
+<p>Use <code>--args</code> to pass options to <code>pip-audit</code>, for example to accept an advisory:</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>security.audit<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--ignore-vuln PYSEC-2024-1"</span>
+</code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../env/">Env</a>: <code>env.update</code> to update the lock file this task audits.</li>

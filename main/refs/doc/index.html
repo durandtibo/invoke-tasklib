@@ -1701,7 +1701,7 @@
 
 
 <a href="#invoke_tasklib.doc.build" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">build</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">build</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1710,6 +1710,53 @@
 <p>The documentation is built with <code>mkdocs build --strict</code> from
 <code>paths.docs_config</code>, so a broken link or a missing reference fails
 the task. It does not publish anything.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>args</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra arguments passed to mkdocs.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -1955,13 +2002,61 @@ already published and <code>force</code> is False.</p>
 
 
 <a href="#invoke_tasklib.doc.serve" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">serve</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">serve</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Serve the documentation locally with live reload.</p>
 <p>The server runs until it is interrupted (<code>Ctrl+C</code>).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>args</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra arguments passed to mkdocs, e.g.
+<code>"--dev-addr 127.0.0.1:8001"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>

@@ -1715,6 +1715,8 @@ invoke<span class="w"> </span>doc.serve
 <p><code>doc.build</code> runs <code>mkdocs build --strict</code>, so a broken link or a missing reference fails the task
 (unlike a <code>mike deploy</code> into a throw-away branch, which does not). <code>doc.serve</code> runs <code>mkdocs serve</code>
 with live reload. Both use <code>paths.docs_config</code> and need the <code>docs</code> dependency group.</p>
+<p><code>doc.build</code> and <code>doc.serve</code> take <code>--args</code> for <code>mkdocs</code>, for example
+<code>invoke doc.serve --args "--dev-addr 127.0.0.1:8001"</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../config/">Config</a>: where <code>paths.docs_config</code> comes from.</li>
