@@ -72,7 +72,7 @@ same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, excep
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
-Six small modules support the task modules:
+Seven small modules support the task modules:
 
 - `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
   the program is on the `PATH` (with `tools.check_program`), echoes the command, and
@@ -92,6 +92,9 @@ Six small modules support the task modules:
 - `_steps.py`: the step runner shared by `check.all` and `fix.all`: the selection of the steps
   (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
   `--keep-going` mode and the final summary of the failures.
+- `_files.py`: `find_files(root, suffix, excluded)` finds the files with a suffix by a walk in
+  Python, without `find` or `xargs`, and skips the `EXCLUDED_DIRS` at any depth. It is used by the
+  format and test tasks that work on shell scripts and markdown files.
 - `_graph.py`: the static import graph of a package (built with `ast`, without importing
   anything) and its cycles. It is used by `imports.check-cycles`.
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
