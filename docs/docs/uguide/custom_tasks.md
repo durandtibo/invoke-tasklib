@@ -52,8 +52,9 @@ ns.add_task(check_complexity)
   never splits or injects a command. For the same reason a glob (`*.py`), `~` or `$HOME` reaches
   the tool as it is: the shell does not expand it.
 - **Run it with `run`**: it echoes the command, uses a pty only on a terminal, and first checks that
-  the program is on the `PATH` (with an installation hint if it is not). Do not call `c.run`
-  directly. For `python -m <module>`, the module is checked only when the command uses the running
+  the program is on the `PATH` (with an installation hint if it is not). Only the first word of
+  the command is checked, so a command that is a pipeline or a list (`a | b`, `a && b`) needs
+  `run(c, command, check=False)`. Do not call `c.run` directly. For `python -m <module>`, the module is checked only when the command uses the running
   interpreter (`python_executable()`, the one that runs `invoke`): for another interpreter or a
   `python` found on the `PATH`, a missing module is reported by Python itself
   (`No module named ...`), without a hint. Use `python_executable()` in your commands.

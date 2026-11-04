@@ -52,10 +52,10 @@ PATHS_HELP = (
 r"""Help of the ``--paths`` option of the tasks."""
 
 UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
-    {"command", "find", "cd", "export", "test", "[", "exec", "source", ".", ":"}
+    {"command", "cd", "export", "test", "[", "exec", "source", ".", ":"}
 )
 r"""First words of a command that are not looked up on the ``PATH``
-(shell builtins and tools that every system has).
+(shell builtins).
 
 Some of them have an executable on some systems only (for example ``cd``
 on macOS).
@@ -117,18 +117,7 @@ PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
 r"""The pytest options that come from a plugin, as a tuple of the module
 and of the package to install, by option."""
 
-_SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
-
 _ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
-
-_SHELL_KEYWORDS = frozenset(
-    {"!", "if", "then", "elif", "else", "fi", "for", "while", "until", "do", "done", "case", "esac"}
-)
-r"""The reserved words of the shell: they are not programs."""
-
-_WRAPPERS = frozenset({"env", "sudo", "time", "nice"})
-r"""The programs that run the command that follows them, like ``xargs``
-but without an option that takes a value."""
 
 
 def build_command(
@@ -220,39 +209,6 @@ def split_args(value: str | None, option: str) -> list[str]:
         raise Exit(msg, code=2) from exc
 
 
-def _stages(command: str) -> list[list[str]]:
-    r"""Split a command line into the commands of its pipeline.
-
-    The command line is split on ``|``, ``||``, ``&&``, ``;`` and ``&``
-    (outside quotes) and each part is split into words like a shell
-    does.
-
-    Args:
-        command: The command line.
-
-    Returns:
-        The words of each command, without the empty ones.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _stages
-    >>> _stages("find . -name '*.sh' | xargs -0 shellcheck")
-    [['find', '.', '-name', '*.sh'], ['xargs', '-0', 'shellcheck']]
-
-    ```
-    """
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-    lexer.whitespace_split = True
-    stages: list[list[str]] = [[]]
-    for token in lexer:
-        if token in _SEPARATORS:
-            stages.append([])
-        else:
-            stages[-1].append(token)
-    return [words for words in stages if words]
-
-
 def _strip_assignments(words: Sequence[str]) -> list[str]:
     r"""Remove the leading ``NAME=value`` words of a command.
 
@@ -276,60 +232,6 @@ def _strip_assignments(words: Sequence[str]) -> list[str]:
     while start < len(words) and _ASSIGNMENT.match(words[start]):
         start += 1
     return list(words[start:])
-
-
-def _program_of(words: Sequence[str]) -> str | None:
-    r"""Return the program that a command really runs.
-
-    ``xargs`` runs the command that follows its options, so that command
-    is the one that has to be installed. The same goes for ``env``,
-    ``sudo``, ``time`` and ``nice``, but only without an option, because
-    an option can take a value (``sudo -u root ruff``) and the word
-    that follows it is not known to be the program. A command that
-    starts a subshell or a group (``(``, ``{``, ``}``), a substitution
-    (``$(``) or a reserved word of the shell (``if``, ``for``, ``!``,
-    ...) has no program that can be looked up, and neither has a program
-    given by a path (``~/bin/tool``, ``./run.sh``), which the shell
-    resolves and ``shutil.which`` does not.
-
-    Args:
-        words: The words of a command, without the assignments of
-            variables, see ``_strip_assignments``.
-
-    Returns:
-        The program, or ``None`` if there is none (``xargs`` with no
-        command, a subshell, a group, a reserved word, a path).
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.runner import _program_of
-    >>> _program_of(["ruff", "check"])
-    'ruff'
-    >>> _program_of(["xargs", "-0", "-r", "shellcheck", "--"])
-    'shellcheck'
-    >>> _program_of(["sudo", "ruff", "check"])
-    'ruff'
-    >>> _program_of(["(", "ls", ")"]) is None
-    True
-    >>> _program_of(["!", "grep", "x", "f"]) is None
-    True
-
-    ```
-    """
-    first = words[0]
-    if first in {"(", "{", "}"} or first.startswith("$") or first in _SHELL_KEYWORDS:
-        return None
-    if first == "xargs":
-        program = next((w for w in words[1:] if not w.startswith("-")), None)
-    elif first in _WRAPPERS:
-        rest = _strip_assignments(words[1:]) if first == "env" else list(words[1:])
-        program = _program_of(rest) if rest and not rest[0].startswith("-") else None
-    else:
-        program = first
-    if program is not None and "/" in program and not program.startswith("/"):
-        return None
-    return program
 
 
 def hint(program: str) -> str:
@@ -493,33 +395,36 @@ def find_tool(name: str, *, module: bool = False) -> str | None:
 
 
 def check_program(command: str) -> None:
-    r"""Check that the programs of a command are available.
+    r"""Check that the program of a command is available.
 
-    Every command of a pipeline (``a | b``, ``a && b``) is checked, and
-    the command run by ``xargs``, ``env``, ``sudo``, ``time`` or
-    ``nice`` is checked instead of the wrapper. A program is not
+    Only the first word of the command is checked, after the
+    ``NAME=value`` words that set environment variables. It is not
     checked when it is a path (for example the running interpreter, see
     ``python_executable``, or ``~/bin/tool``) or one of
-    ``UNCHECKED_PROGRAMS`` (the shell builtins). The ``NAME=value``
-    words before a program are ignored, and so is a command that starts
-    a subshell, a group, a substitution (``(``, ``{``, ``$(``) or a
-    reserved word of the shell (``if``, ``for``, ``!``, ...). For
+    ``UNCHECKED_PROGRAMS`` (the shell builtins). For
     ``python -m <module>`` with the running interpreter, the module is
     checked, and so are the plugins of the pytest options (see
     ``PLUGIN_OPTIONS``).
+
+    The tasks run one program, so the rest of the command line is not
+    parsed: a pipeline (``a | b``), a list (``a && b``), a subshell or
+    a reserved word of the shell is not understood, and only its first
+    word is looked up. To run such a command, pass ``check=False`` to
+    ``run``. A command that cannot be split like a shell does (an
+    unclosed quote) is not checked: the shell reports it.
 
     Args:
         command: The command line.
 
     Raises:
-        Exit: If a program (or the module) is not found. The message
+        Exit: If the program (or the module) is not found. The message
             says how to install it, see ``PROGRAM_HINTS``.
 
     Example usage:
 
     ```pycon
     >>> from invoke_tasklib.runner import check_program
-    >>> check_program("find . -name '*.sh'")
+    >>> check_program("cd docs")
     >>> check_program("no-such-program --version")
     Traceback (most recent call last):
         ...
@@ -527,16 +432,17 @@ def check_program(command: str) -> None:
 
     ```
     """
-    for stage in _stages(command):
-        words = _strip_assignments(stage)
-        if not words:
-            continue
-        program = _program_of(words)
-        if program is None or program.startswith("/") or program in UNCHECKED_PROGRAMS:
-            _check_module(words)
-            continue
-        if shutil.which(program) is None:
-            raise Exit(not_found_message(program), code=127)
+    try:
+        words = _strip_assignments(shlex.split(command))
+    except ValueError:
+        return
+    if not words:
+        return
+    program = words[0]
+    if "/" in program or program in UNCHECKED_PROGRAMS:
+        _check_module(words)
+    elif shutil.which(program) is None:
+        raise Exit(not_found_message(program), code=127)
 
 
 def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Result:

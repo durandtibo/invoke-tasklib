@@ -12,7 +12,6 @@ from invoke_tasklib.runner import (
     PROGRAM_GROUPS,
     PROGRAM_HINTS,
     UNCHECKED_PROGRAMS,
-    _program_of,
     _strip_assignments,
 )
 from tests.helpers import commands, make_context
@@ -56,8 +55,9 @@ def _programs_of(task: Task) -> set[str]:
     c = make_context({"package": {"name": "mypkg"}})
     with contextlib.suppress(Exit):
         task(c)
-    programs = {_program_of(_strip_assignments(shlex.split(command))) for command in commands(c)}
-    return {p for p in programs if p is not None and not p.startswith("/")}
+    words = (_strip_assignments(shlex.split(command)) for command in commands(c))
+    programs = {w[0] for w in words if w}
+    return {p for p in programs if "/" not in p}
 
 
 ###############################################
