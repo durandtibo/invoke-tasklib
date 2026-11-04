@@ -64,8 +64,8 @@ defaults are derived from `package.name` or from `paths.tests`.
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
 with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
-not have it), and a coverage threshold: with `--cov`, `cov_fail_under` is forwarded as
-`--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
+not have it; `test.doctest-src` ignores it and always uses the plugin), and a coverage threshold:
+with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
 `cov_reports` is a comma-separated string or a list of the `--cov-report` formats of pytest-cov
 (`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.

@@ -80,6 +80,11 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
 def doctest_src(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on source code.
 
+    The command always has ``--xdoctest``, whatever the value of
+    ``tasklib.test.xdoctest``, which only applies to the test scopes.
+    If the ``xdoctest`` package is missing, the task stops with a
+    message that names it.
+
     Args:
         c: The invoke context.
         args: Extra arguments passed to pytest.
