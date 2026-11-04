@@ -1912,8 +1912,11 @@ or activate the virtual environment that has them.</p>
 (<code>env.install</code> itself needs it), <code>git</code>, <code>shellcheck</code> and <code>shfmt</code> to the system package manager, and
 <code>codespell</code> to the project dependencies. The tools of the <code>dev</code> group (<code>ruff</code>, <code>ty</code>, <code>pyright</code>,
 <code>docformatter</code>, <code>pre-commit</code>, <code>pytest</code> and its plugins) and of the <code>docs</code> group (<code>mkdocs</code>, <code>mike</code>)
-name their group, for example <code>uv sync --group docs</code>. Every command of a pipeline is checked, and so is the module of
-<code>python -m &lt;module&gt;</code> (for example <code>pytest</code>), which is reported as
+name their group, for example <code>uv sync --group docs</code>.</p>
+<p>Every command of a pipeline is checked. The <code>NAME=value</code> words before a program, the shell builtins
+(<code>cd</code>, <code>export</code>, <code>test</code>, <code>[</code>, <code>exec</code>, <code>source</code>, <code>.</code>, <code>:</code>) and the subshells and groups (<code>(...)</code>,
+<code>{ ...; }</code>, <code>$(...)</code>) are not looked up. Pass <code>check=False</code> to <code>run</code> to skip the check of a command.
+The module of <code>python -m &lt;module&gt;</code> is checked too (for example <code>pytest</code>), and is reported as
 <code>The Python module 'pytest' is not installed for ...</code> instead of Python's own <code>No module named</code>.</p>
 <h2 id="invoke-command-not-found-after-installing"><code>invoke: command not found</code> after installing<a class="headerlink" href="#invoke-command-not-found-after-installing" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> depends on <code>invoke</code>, but installing a library into a virtual environment does not

@@ -2113,14 +2113,26 @@ install (or that it needs itself), by program name.</p>
 
 <a href="#invoke_tasklib.runner.UNCHECKED_PROGRAMS" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">UNCHECKED_PROGRAMS</span><span class="p">:</span> <span class="n"><span title="frozenset">frozenset</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="frozenset">frozenset</span></span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">"command"</span><span class="p">,</span> <span class="s2">"find"</span><span class="p">}</span>
+    <span class="p">{</span>
+        <span class="s2">"command"</span><span class="p">,</span>
+        <span class="s2">"find"</span><span class="p">,</span>
+        <span class="s2">"cd"</span><span class="p">,</span>
+        <span class="s2">"export"</span><span class="p">,</span>
+        <span class="s2">"test"</span><span class="p">,</span>
+        <span class="s2">"["</span><span class="p">,</span>
+        <span class="s2">"exec"</span><span class="p">,</span>
+        <span class="s2">"source"</span><span class="p">,</span>
+        <span class="s2">"."</span><span class="p">,</span>
+        <span class="s2">":"</span><span class="p">,</span>
+    <span class="p">}</span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>First words of a command that are not looked up on the <code>PATH</code>
-(shell builtins and tools that every system has).</p>
+(shell builtins and tools that every system has). Some of them have an
+executable on some systems only (for example <code>cd</code> on macOS).</p>
 
     </div>
 
@@ -2320,8 +2332,11 @@ unclosed quote).</p>
 the command run by <code>xargs</code> is checked instead of <code>xargs</code>. A
 program is not checked when it is an absolute path (for example the
 running interpreter, see <code>python_executable</code>) or one of
-<code>UNCHECKED_PROGRAMS</code>. For <code>python -m &lt;module&gt;</code> with the running
-interpreter, the module is checked.</p>
+<code>UNCHECKED_PROGRAMS</code> (the shell builtins). The <code>NAME=value</code>
+words before a program are ignored, and so is a command that starts
+a subshell, a group or a substitution (<code>(</code>, <code>{</code>, <code>$(</code>). For
+<code>python -m &lt;module&gt;</code> with the running interpreter, the module is
+checked.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2553,14 +2568,22 @@ works outside an activated virtual environment.</p>
 
 
 <a href="#invoke_tasklib.runner.run" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="invoke.runners.Result">Result</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
+    <span class="n">command</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">check</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="invoke.runners.Result">Result</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Run a command, echoing it and using a pty only on a terminal.</p>
 <p>The program of the command must be on the <code>PATH</code>, see
-<code>check_program</code>.</p>
+<code>check_program</code>. Pass <code>check=False</code> to skip that check when the
+caller knows better, for example for a command that is defined by a
+shell function or alias.</p>
 <p>All the tasks run their commands through this helper so that they
 behave alike:</p>
 <ul>
@@ -2614,6 +2637,22 @@ behave alike:</p>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>check</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If False, do not check that the program is available.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2675,7 +2714,8 @@ take precedence over the defaults of this helper.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If the program of the command is not found.</p>
+                <p>If <code>check</code> is True and the program of the command is not
+found.</p>
               </div>
             </td>
           </tr>
