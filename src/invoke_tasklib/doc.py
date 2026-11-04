@@ -19,7 +19,9 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 _VERSION_PATTERN = re.compile(r"v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.\d+)*(?P<rest>.*)")
-_PRERELEASE_PATTERN = re.compile(r"[-._]?(a|b|c|rc|alpha|beta|pre|preview|dev)\d*", re.IGNORECASE)
+_PRERELEASE_PATTERN = re.compile(
+    r"[-._]?(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?![a-z])", re.IGNORECASE
+)
 
 
 def _parse_release(version: str) -> tuple[str, bool]:
@@ -32,7 +34,9 @@ def _parse_release(version: str) -> tuple[str, bool]:
     Returns:
         A tuple ``(tag, is_prerelease)`` where ``tag`` is
         ``<major>.<minor>`` and ``is_prerelease`` is ``True`` for alpha,
-        beta, release candidate and development versions.
+        beta, release candidate and development versions. A suffix
+        that only starts like a pre-release keyword (``-backport``,
+        ``-cool``, ``-alpine``) is not a pre-release.
 
     Raises:
         ValueError: If the version does not start with
@@ -46,6 +50,8 @@ def _parse_release(version: str) -> tuple[str, bool]:
     ('1.2', False)
     >>> _parse_release("1.2.0rc1")
     ('1.2', True)
+    >>> _parse_release("1.2.0-backport")
+    ('1.2', False)
 
     ```
     """
