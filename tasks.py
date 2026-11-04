@@ -9,4 +9,7 @@ __all__ = ["ns"]
 
 
 ns = make_ns()
+# `inv build-package` is the name that the composite action
+# durandtibo/build-pypi-package-action runs (see release-pypi.yaml), so
+# it is not a leftover: keep it as long as the action uses it.
 ns.add_task(release_build, name="build-package")

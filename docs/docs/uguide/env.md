@@ -7,7 +7,7 @@ inspect a project's Python environment using [`uv`](https://docs.astral.sh/uv/).
 
 | Task                          | Behavior                                                 |
 | ----------------------------- | -------------------------------------------------------- |
-| `env.create-venv`             | Creates a virtual environment and installs invoke        |
+| `env.create-venv`             | Creates a virtual environment and installs the project |
 | `env.install`                 | Installs project dependencies and the package (editable) |
 | `env.update`                  | Updates dependencies and pre-commit hooks                |
 | `env.check-tools`             | Checks which tools of the tasks are available            |
@@ -22,8 +22,11 @@ invoke env.create-venv
 
 Creates (or recreates) a `.venv` using the `package.python_version` from the
 [resolved config](config.md) (by default the version of `.python-version` or the lower bound of
-`requires-python`), and installs `invoke` into it with `uv pip install invoke`. The task is run with `invoke`, so
-`invoke` must already be available (for example through `uv tool install invoke`) to run it.
+`requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync --locked`), so
+the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
+imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
+available (for example through `uv tool install invoke`) to run it. It accepts no option: use
+`env.install` to choose the dependency groups.
 
 <!-- prettier-ignore -->
 !!! warning

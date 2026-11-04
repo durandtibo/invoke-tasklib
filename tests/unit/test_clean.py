@@ -1,20 +1,31 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
 from invoke.context import MockContext
+from invoke.runners import Result
 
 from invoke_tasklib import clean
+from tests.helpers import commands, run_kwargs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
 
 def _context() -> MockContext:
     return MockContext(config=Config(), run=True)
+
+
+def _git_context(stdout: str = "", exited: int = 0) -> MockContext:
+    r"""A context where every command (the ``git ls-files`` calls)
+    returns the given result."""
+    c = _context()
+    c.run = Mock(return_value=Result(stdout=stdout, exited=exited))
+    return c
 
 
 @pytest.fixture
@@ -145,6 +156,108 @@ def test_all_reports_progress(project: Path, capsys: pytest.CaptureFixture[str])
     )
 
 
+def test_all_dry_run_keeps_a_directory(project: Path) -> None:
+    dist = _mkdir("dist")(project)
+    clean.all_(_context(), dry_run=True)
+    assert dist.is_dir()
+
+
+def test_all_dry_run_keeps_a_file(project: Path) -> None:
+    (project / ".coverage").write_text("")
+    clean.all_(_context(), dry_run=True)
+    assert (project / ".coverage").is_file()
+
+
+def test_all_dry_run_keeps_a_nested_pycache(project: Path) -> None:
+    cache = _mkdir("src", "pkg", "__pycache__")(project)
+    clean.all_(_context(), dry_run=True)
+    assert cache.is_dir()
+
+
+def test_all_dry_run_reports_what_it_would_remove(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mkdir("dist")(project)
+    (project / ".coverage").write_text("")
+    clean.all_(_context(), dry_run=True)
+    assert capsys.readouterr().out == (
+        "🧹 Cleaning build artifacts and caches (dry run)...\n"
+        "🗑️  Would remove dist\n"
+        "🗑️  Would remove .coverage\n"
+        "✅ Dry run complete: nothing was removed\n"
+    )
+
+
+@pytest.mark.usefixtures("project")
+def test_all_dry_run_on_a_clean_project_reports_nothing_to_remove(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    clean.all_(_context(), dry_run=True)
+    assert capsys.readouterr().out == (
+        "🧹 Cleaning build artifacts and caches (dry run)...\n"
+        "✅ Dry run complete: nothing was removed\n"
+    )
+
+
+def test_all_keeps_a_directory_with_tracked_files(project: Path) -> None:
+    build = _mkdir("build")(project)
+    clean.all_(_git_context("build/script.sh\n"))
+    assert build.is_dir()
+
+
+def test_all_says_why_it_keeps_a_directory(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mkdir("build")(project)
+    clean.all_(_git_context("build/script.sh\n"))
+    assert capsys.readouterr().out == (
+        "🧹 Cleaning build artifacts and caches...\n"
+        "⏭️  Keeping build: it contains files tracked by git\n"
+        "✅ Cleanup complete\n"
+    )
+
+
+def test_all_removes_a_directory_without_tracked_files(project: Path) -> None:
+    build = _mkdir("build")(project)
+    clean.all_(_git_context(""))
+    assert not build.exists()
+
+
+def test_all_removes_a_directory_when_git_fails(project: Path) -> None:
+    build = _mkdir("build")(project)
+    clean.all_(_git_context("build/script.sh\n", exited=128))
+    assert not build.exists()
+
+
+def test_all_asks_git_only_about_the_directories_that_exist(project: Path) -> None:
+    _mkdir("dist")(project)
+    c = _git_context("")
+    clean.all_(c)
+    assert commands(c) == ["git ls-files -- dist"]
+
+
+def test_all_does_not_ask_git_about_pycache_directories(project: Path) -> None:
+    _mkdir("src", "__pycache__")(project)
+    c = _git_context("")
+    clean.all_(c)
+    assert commands(c) == []
+
+
+def test_all_keeps_the_tracked_site_directory(project: Path) -> None:
+    (project / "mkdocs.yml").write_text("")
+    site = _mkdir("site")(project)
+    clean.all_(_git_context("site/index.html\n"))
+    assert site.is_dir()
+
+
+def test_all_dry_run_says_that_it_keeps_a_tracked_directory(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mkdir("build")(project)
+    clean.all_(_git_context("build/script.sh\n"), dry_run=True)
+    assert "⏭️  Keeping build: it contains files tracked by git\n" in capsys.readouterr().out
+
+
 #############################
 #     Tests for pycache     #
 #############################
@@ -167,6 +280,24 @@ def test_pycache_does_not_touch_venv(project: Path) -> None:
     venv_cache = _mkdir(".venv", "lib", "__pycache__")(project)
     clean.pycache(_context())
     assert venv_cache.exists()
+
+
+def test_pycache_dry_run_keeps_the_directories(project: Path) -> None:
+    cache = _mkdir("pkg", "__pycache__")(project)
+    clean.pycache(_context(), dry_run=True)
+    assert cache.is_dir()
+
+
+def test_pycache_dry_run_reports_what_it_would_remove(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mkdir("pkg", "__pycache__")(project)
+    clean.pycache(_context(), dry_run=True)
+    assert capsys.readouterr().out == (
+        "🧹 Cleaning __pycache__ directories (dry run)...\n"
+        "🗑️  Would remove pkg/__pycache__\n"
+        "✅ Dry run complete: nothing was removed\n"
+    )
 
 
 ########################################
@@ -267,6 +398,61 @@ def test_remove_dir_reports_removal(tmp_path: Path, capsys: pytest.CaptureFixtur
     assert capsys.readouterr().out == f"🗑️  Removing {target}\n"
 
 
+def test_remove_dir_dry_run_keeps_the_directory(tmp_path: Path) -> None:
+    target = _mkdir("cache")(tmp_path)
+    clean._remove_dir(_context(), target, dry_run=True)
+    assert target.is_dir()
+
+
+def test_remove_dir_dry_run_reports_the_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = _mkdir("cache")(tmp_path)
+    clean._remove_dir(_context(), target, dry_run=True)
+    assert capsys.readouterr().out == f"🗑️  Would remove {target}\n"
+
+
+def test_remove_dir_dry_run_ignores_a_missing_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    clean._remove_dir(_context(), tmp_path / "missing", dry_run=True)
+    assert capsys.readouterr().out == ""
+
+
+def test_remove_dir_dry_run_keeps_a_symlink(tmp_path: Path) -> None:
+    target = _mkdir("real")(tmp_path)
+    link = tmp_path / "link"
+    link.symlink_to(target, target_is_directory=True)
+    clean._remove_dir(_context(), link, dry_run=True)
+    assert link.is_symlink()
+
+
+def test_remove_dir_keeps_a_tracked_directory(tmp_path: Path) -> None:
+    target = _mkdir("build")(tmp_path)
+    clean._remove_dir(_git_context("build/a.py\n"), target, keep_tracked=True)
+    assert target.is_dir()
+
+
+def test_remove_dir_reports_a_tracked_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = _mkdir("build")(tmp_path)
+    clean._remove_dir(_git_context("build/a.py\n"), target, keep_tracked=True)
+    assert capsys.readouterr().out == f"⏭️  Keeping {target}: it contains files tracked by git\n"
+
+
+def test_remove_dir_removes_a_tracked_directory_unless_asked_to_keep_it(tmp_path: Path) -> None:
+    target = _mkdir("build")(tmp_path)
+    clean._remove_dir(_git_context("build/a.py\n"), target)
+    assert not target.exists()
+
+
+def test_remove_dir_does_not_ask_git_about_a_missing_directory(tmp_path: Path) -> None:
+    c = _git_context("a.py\n")
+    clean._remove_dir(c, tmp_path / "missing", keep_tracked=True)
+    assert commands(c) == []
+
+
 ##################################
 #     Tests for _remove_file     #
 ##################################
@@ -282,3 +468,72 @@ def test_remove_file_removes_existing_file(tmp_path: Path) -> None:
 def test_remove_file_ignores_missing_file(tmp_path: Path) -> None:
     clean._remove_file(_context(), tmp_path / "missing")
     assert tmp_path.exists()
+
+
+###################################
+#     Tests for _done_message     #
+###################################
+
+
+def test_done_message() -> None:
+    assert clean._done_message(dry_run=False) == "✅ Cleanup complete"
+
+
+def test_done_message_of_a_dry_run() -> None:
+    assert clean._done_message(dry_run=True) == "✅ Dry run complete: nothing was removed"
+
+
+########################################
+#     Tests for _has_tracked_files     #
+########################################
+
+
+def test_has_tracked_files_when_git_lists_a_file() -> None:
+    assert clean._has_tracked_files(_git_context("build/a.py\n"), Path("build")) is True
+
+
+def test_has_tracked_files_is_false_when_git_lists_nothing() -> None:
+    assert clean._has_tracked_files(_git_context(""), Path("build")) is False
+
+
+def test_has_tracked_files_is_false_when_git_lists_only_whitespace() -> None:
+    assert clean._has_tracked_files(_git_context("\n"), Path("build")) is False
+
+
+def test_has_tracked_files_is_false_when_git_fails() -> None:
+    assert clean._has_tracked_files(_git_context("a.py\n", exited=128), Path("build")) is False
+
+
+def test_has_tracked_files_runs_git_ls_files_on_the_path() -> None:
+    c = _git_context()
+    clean._has_tracked_files(c, Path("build"))
+    assert commands(c) == ["git ls-files -- build"]
+
+
+def test_has_tracked_files_quotes_the_path() -> None:
+    c = _git_context()
+    clean._has_tracked_files(c, Path("my build"))
+    assert commands(c) == ["git ls-files -- 'my build'"]
+
+
+def test_has_tracked_files_does_not_echo_nor_fail() -> None:
+    c = _git_context()
+    clean._has_tracked_files(c, Path("build"))
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["warn"], kwargs["echo"]) == (True, True, False)
+
+
+def test_remove_file_dry_run_keeps_the_file(tmp_path: Path) -> None:
+    target = tmp_path / ".coverage"
+    target.write_text("data")
+    clean._remove_file(_context(), target, dry_run=True)
+    assert target.is_file()
+
+
+def test_remove_file_dry_run_reports_the_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / ".coverage"
+    target.write_text("data")
+    clean._remove_file(_context(), target, dry_run=True)
+    assert capsys.readouterr().out == f"🗑️  Would remove {target}\n"

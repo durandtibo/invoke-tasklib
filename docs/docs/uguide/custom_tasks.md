@@ -56,7 +56,8 @@ ns.add_task(check_complexity)
   `❌ Failed: <what was being done>` on the error stream (stderr, like the message of an `Exit`) if
   the block raises (the exception is raised again, so the exit code is unchanged). Use `say` for any
   other message (`say(c, msg, err=True)` writes to stderr); neither fails on a terminal that cannot
-  encode an emoji.
+  encode an emoji: `✅`, `❌` and `⏭️` become `[ok]`, `[fail]` and `[skip]`, and the other emojis are
+  removed. Set `INVOKE_TASKLIB_ASCII=1` to get this output on any terminal.
 
 Follow the naming convention of the shared tasks: `check_<target>` never modifies a file and
 `fix_<target>` does. Add the task to a `make_ns()` result, as above, so it does not leak into other
@@ -68,6 +69,28 @@ importers.
 "radon cc -s a.py 'my dir'"
 
 ```
+
+## Adding a Shortcut for an Existing Task
+
+`add_task` with a `name` registers a task of the library under one more name, at the top level of
+the collection. The task keeps its own name in its namespace:
+
+```pycon
+>>> from invoke_tasklib import make_ns
+>>> from invoke_tasklib.release import build
+>>> ns = make_ns()
+>>> ns.add_task(build, name="build-package")
+>>> "build-package" in ns.task_names
+True
+>>> "release.build" in ns.task_names
+True
+
+```
+
+The `tasks.py` of this repository does it for `release.build`: `inv build-package` is the command
+that the composite action `durandtibo/build-pypi-package-action` runs, as the release workflow
+shows. Such a shortcut shows up in `invoke --list` of the project, so add one only for a name that
+something else (a CI action, a script) depends on.
 
 ## Testing a Custom Task
 

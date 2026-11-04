@@ -54,11 +54,21 @@ class _ImportCollector(ast.NodeVisitor):
         lazy: If True, also collect the imports inside functions.
         type_checking: If True, also collect the imports under
             ``if TYPE_CHECKING:``.
+        filename: The name of the module, used in the error of a
+            relative import that goes above the top-level package.
+
+    Raises:
+        SyntaxError: If a relative import goes above the top-level
+            package, like Python does (``attempted relative import
+            beyond top-level package``).
     """
 
-    def __init__(self, package: str, *, lazy: bool, type_checking: bool) -> None:
+    def __init__(
+        self, package: str, *, lazy: bool, type_checking: bool, filename: str = "<unknown>"
+    ) -> None:
         r"""Initialize the collector with the options."""
         self.package = package
+        self.filename = filename
         self.lazy = lazy
         self.type_checking = type_checking
         self.found: list[tuple[str, tuple[str, ...]]] = []
@@ -72,6 +82,9 @@ class _ImportCollector(ast.NodeVisitor):
         base: list[str] = []
         if node.level:
             package = self.package.split(".") if self.package else []
+            if node.level > len(package):
+                msg = "attempted relative import beyond top-level package"
+                raise SyntaxError(msg, (self.filename, node.lineno, node.col_offset + 1, None))
             base = package[: len(package) - (node.level - 1)]
         parts = [*base, *(node.module.split(".") if node.module else [])]
         self.found.append((".".join(parts), tuple(alias.name for alias in node.names)))
@@ -128,7 +141,8 @@ def parse_imports(
         the imported names for ``from a.b import c, d``.
 
     Raises:
-        SyntaxError: If ``source`` is not valid Python. Its
+        SyntaxError: If ``source`` is not valid Python, or if a
+            relative import goes above the top-level package. Its
             ``filename`` is the name of the module.
 
     Example usage:
@@ -141,7 +155,7 @@ def parse_imports(
     ```
     """
     package = module if is_package else module.rpartition(".")[0]
-    collector = _ImportCollector(package, lazy=lazy, type_checking=type_checking)
+    collector = _ImportCollector(package, lazy=lazy, type_checking=type_checking, filename=module)
     collector.visit(ast.parse(source, filename=module))
     return collector.found
 
@@ -246,26 +260,29 @@ class _Tarjan:
         self.index: dict[str, int] = {}
         self.low: dict[str, int] = {}
         self.stack: list[str] = []
+        self.on_stack: set[str] = set()
         self.found: list[list[str]] = []
 
     def _push(self, node: str) -> tuple[str, Iterator[str]]:
         r"""Visit a node for the first time."""
         self.index[node] = self.low[node] = len(self.index)
         self.stack.append(node)
+        self.on_stack.add(node)
         return node, iter(sorted(self.graph[node]))
 
     def _pop_component(self, root: str) -> None:
         r"""Close the component of a root (kept if it is a cycle)."""
-        position = self.stack.index(root)
-        component = self.stack[position:]
-        del self.stack[position:]
+        component: list[str] = []
+        while not component or component[-1] != root:
+            component.append(self.stack.pop())
+        self.on_stack.difference_update(component)
         if len(component) > 1:
             self.found.append(sorted(component))
 
     def _advance(self, work: list[tuple[str, Iterator[str]]]) -> None:
         r"""Do one step of the search on the top of ``work``."""
         node, children = work[-1]
-        child = next((c for c in children if c not in self.index or c in self.stack), None)
+        child = next((c for c in children if c not in self.index or c in self.on_stack), None)
         if child is None:
             work.pop()
             if work:

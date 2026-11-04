@@ -10,7 +10,14 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say, step
-from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, python_executable, run
+from invoke_tasklib.runner import (
+    ARGS_HELP,
+    PATHS_HELP,
+    _split,
+    build_command,
+    python_executable,
+    run,
+)
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -73,6 +80,11 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
 def doctest_src(c: Context, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on source code.
 
+    The command always has ``--xdoctest``, whatever the value of
+    ``tasklib.test.xdoctest``, which only applies to the test scopes.
+    If the ``xdoctest`` package is missing, the task stops with a
+    message that names it.
+
     Args:
         c: The invoke context.
         args: Extra arguments passed to pytest.
@@ -134,12 +146,12 @@ def doctest_markdown(c: Context, args: str | None = None, paths: str | None = No
         paths: The markdown files to check instead of every markdown
             file of the project.
     """
-    md_files = [str(f) for f in _find_markdown_files(Path())]
-    say(c, f"📚 Found {len(md_files)} markdown files")
-    if md_files:
+    files = _split(paths, "--paths") or [str(f) for f in _find_markdown_files(Path())]
+    say(c, f"📚 Found {len(files)} markdown files")
+    if files:
         cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
-        run(c, build_command(cmd, args=args, paths=paths, default_paths=md_files))
-    say(c, f"✅ All {len(md_files)} markdown files have been checked")
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=files))
+    say(c, f"✅ All {len(files)} markdown files have been checked")
 
 
 @task

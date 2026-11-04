@@ -35,8 +35,9 @@ imports under `if TYPE_CHECKING:` and the imports inside functions are ignored:
 | `--lazy`          | Also follows the imports inside functions          |
 | `--type-checking` | Also follows the imports under `if TYPE_CHECKING:` |
 
-A syntax error is reported as such (with the module), and a missing optional dependency is not
-reported at all, because neither is a cycle.
+A syntax error is reported as such (with the module). So is a relative import that goes above the
+top-level package (`from .. import x` in `pkg/a.py`), which Python rejects too. A missing optional
+dependency is not reported at all, because neither is a cycle.
 
 ## Checking that every module imports on its own
 

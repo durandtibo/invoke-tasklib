@@ -193,9 +193,15 @@ def _confirm(target: str) -> None:
         target: What is published to, e.g. ``"PyPI"``.
 
     Raises:
-        Exit: If the answer is not ``y`` or ``yes``.
+        Exit: If the answer is not ``y`` or ``yes``, if there is no
+            terminal to read the answer from (end of input), or if the
+            user interrupts the question.
     """
-    answer = input(f"Publish the package to {target}? This cannot be undone. [y/N] ")
+    try:
+        answer = input(f"Publish the package to {target}? This cannot be undone. [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        msg = "Publication not confirmed: pass --yes to publish without a terminal"
+        raise Exit(msg, code=1) from None
     if answer.strip().lower() not in {"y", "yes"}:
         msg = "Publication cancelled"
         raise Exit(msg, code=1)
@@ -226,10 +232,12 @@ def publish(
     ``pyproject.toml`` version (``--skip-checks`` turns it off). Outside
     of CI it then asks for a confirmation (``--yes`` turns it off).
 
-    The credentials are either a token, read from ``PYPI_TOKEN`` (or
-    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively) and
-    passed to ``uv publish`` through its environment, so it does not
-    appear on the command line; or, in GitHub Actions with the
+    The credentials are either a token, read from ``PYPI_TOKEN`` (from
+    ``TEST_PYPI_TOKEN`` with ``--test-pypi``, so a PyPI token is never
+    sent to TestPyPI) or from ``UV_PUBLISH_TOKEN``, which ``uv publish``
+    reads natively, and passed to ``uv publish`` through its
+    environment, so it does not appear on the command line; or, in
+    GitHub Actions with the
     ``id-token: write`` permission, PyPI Trusted Publishing. ``dist/``
     is cleared by the build, so only the freshly built artifacts are
     uploaded.
@@ -247,20 +255,22 @@ def publish(
         Exit: If the git state is not releasable, if there are no
             credentials, or if the confirmation is refused.
     """
-    token = os.environ.get("PYPI_TOKEN") or os.environ.get("UV_PUBLISH_TOKEN")
+    target = "TestPyPI" if test_pypi else "PyPI"
+    token_name = "TEST_PYPI_TOKEN" if test_pypi else "PYPI_TOKEN"
+    token = os.environ.get(token_name) or os.environ.get("UV_PUBLISH_TOKEN")
     trusted = os.environ.get("GITHUB_ACTIONS") == "true" and bool(
         os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
     )
     if not (token or trusted or dry_run):
         msg = (
-            "Set the PYPI_TOKEN (or UV_PUBLISH_TOKEN) environment variable, or run in GitHub "
-            "Actions with the id-token permission, to publish to PyPI"
+            f"Set the {token_name} (or UV_PUBLISH_TOKEN) environment variable, or run in "
+            f"GitHub Actions with the id-token permission, to publish to {target}"
         )
         raise Exit(msg, code=1)
     if not skip_checks:
         _check_release_state(c)
     if not (yes or dry_run or os.environ.get("CI")):
-        _confirm("TestPyPI" if test_pypi else "PyPI")
+        _confirm(target)
     build(c)
     cmd = ["uv publish"]
     if test_pypi:
