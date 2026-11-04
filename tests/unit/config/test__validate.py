@@ -211,7 +211,16 @@ def test_validate_int_rejects_below_the_minimum() -> None:
         _validate_int("test", "unit_timeout", 0, minimum=1)
 
 
-@pytest.mark.parametrize("value", [True, 1.5, "10", None])
+def test_validate_int_converts_a_string_of_digits() -> None:
+    assert _validate_int("test", "unit_timeout", "30", minimum=1) == 30
+
+
+def test_validate_int_rejects_a_string_below_the_minimum() -> None:
+    with pytest.raises(ValueError, match=r"must be an integer >= 1, got '0'"):
+        _validate_int("test", "unit_timeout", "0", minimum=1)
+
+
+@pytest.mark.parametrize("value", [True, 1.5, "ten", "1.5", "", None])
 def test_validate_int_rejects_non_integers(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer"):
         _validate_int("test", "unit_timeout", value, minimum=0)
@@ -227,12 +236,22 @@ def test_validate_bool_accepts_booleans(value: bool) -> None:
     assert _validate_bool("test", "xdoctest", value) is value
 
 
+@pytest.mark.parametrize("value", ["true", "TRUE", "True", "1", "yes", "Yes", "on", "ON"])
+def test_validate_bool_accepts_the_true_spellings(value: str) -> None:
+    assert _validate_bool("test", "xdoctest", value) is True
+
+
+@pytest.mark.parametrize("value", ["false", "FALSE", "False", "0", "no", "No", "off", "OFF"])
+def test_validate_bool_accepts_the_false_spellings(value: str) -> None:
+    assert _validate_bool("test", "xdoctest", value) is False
+
+
 def test_validate_bool_names_the_section_in_the_error() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.check\.keep_going' must be a boolean"):
-        _validate_bool("check", "keep_going", "yes")
+        _validate_bool("check", "keep_going", "maybe")
 
 
-@pytest.mark.parametrize("value", [1, 0, "true", None])
+@pytest.mark.parametrize("value", [1, 0, "maybe", "", None])
 def test_validate_bool_rejects_non_booleans(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
         _validate_bool("test", "xdoctest", value)
