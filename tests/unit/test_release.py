@@ -474,3 +474,20 @@ def test_publish_to_test_pypi_dry_run_needs_no_token() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
     assert run_kwargs(c)[-1]["env"] == {}
+
+
+def test_build_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        release.build(c)
+    assert "❌ Failed: Building package" in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_publish_reports_a_failure_of_the_upload(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context(_CFG)
+    c.run = Mock(side_effect=[Result(), Result(), Result(), Exit("boom", code=1)])
+    with pytest.raises(Exit, match=r"boom"):
+        release.publish(c, yes=True, skip_checks=True)
+    assert "❌ Failed: Publishing" in capsys.readouterr().err

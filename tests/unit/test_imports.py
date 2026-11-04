@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.exceptions import Exit
@@ -250,3 +251,11 @@ def test_check_cycles_uses_the_configured_import_name(
     make_package("cyc_named", {"__init__.py": ""})
     imports.check_cycles(make_context({"package": {"name": "my-dist", "import_name": "cyc_named"}}))
     assert "✅ No import cycle in 1 module(s)" in capsys.readouterr().out
+
+
+def test_check_isolated_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        imports.check_isolated(c)
+    assert "❌ Failed: Checking that each module imports on its own" in capsys.readouterr().err

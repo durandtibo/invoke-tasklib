@@ -366,3 +366,27 @@ def test_every_program_with_a_hint_is_checked() -> None:
 @pytest.mark.parametrize("name", [*env.TOOL_PROGRAMS, *env.TOOL_MODULES])
 def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
     assert hint(name) != DEFAULT_HINT
+
+
+def test_install_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        env.install(c)
+    assert "❌ Failed: Installing project dependencies" in capsys.readouterr().err
+
+
+def test_update_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        env.update(c)
+    assert "❌ Failed: Updating dependencies" in capsys.readouterr().err
+
+
+def test_create_venv_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        env.create_venv(c)
+    assert "❌ Failed: Creating virtual environment" in capsys.readouterr().err

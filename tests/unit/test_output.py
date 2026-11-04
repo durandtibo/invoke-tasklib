@@ -17,6 +17,7 @@ from invoke_tasklib.output import (
     _failure_title,
     _keep_if_encodable,
     _to_encoding,
+    report_failure,
     say,
     step,
 )
@@ -307,3 +308,27 @@ def test_keep_if_encodable_keeps_a_supported_character_and_its_spaces() -> None:
 
 def test_keep_if_encodable_drops_an_unsupported_character_and_its_spaces() -> None:
     assert _keep_if_encodable(_match("é  x"), "ascii") == ""
+
+
+####################################
+#     Tests for report_failure     #
+####################################
+
+
+def _fail_inside_report_failure(c: Context) -> None:
+    with report_failure(c, "🎨 Checking..."):
+        c.run("x")
+
+
+def test_report_failure_says_nothing_on_success(capsys: pytest.CaptureFixture[str]) -> None:
+    with report_failure(Context(config=Config()), "🎨 Checking..."):
+        pass
+    assert capsys.readouterr().err == ""
+
+
+def test_report_failure_writes_the_title_on_error(capsys: pytest.CaptureFixture[str]) -> None:
+    c = Context(config=Config())
+    c.run = Mock(side_effect=ValueError("boom"))
+    with pytest.raises(ValueError, match=r"boom"):
+        _fail_inside_report_failure(c)
+    assert capsys.readouterr().err == "❌ Failed: Checking\n"

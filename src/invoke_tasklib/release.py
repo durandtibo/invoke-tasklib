@@ -12,7 +12,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import say
+from invoke_tasklib.output import report_failure, say
 from invoke_tasklib.runner import ARGS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -70,20 +70,21 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     """
     cfg = load_config(c)
     import_name = cfg.package.import_name
-    say(c, "📦 Building package...")
-    run(c, build_command("uv build --clear", args=args))
-    say(c, "🔍 Verifying package installation...")
-    for pattern in ("*.whl", "*.tar.gz"):
-        artifact = _latest_artifact(Path("dist"), pattern)
-        say(c, f"🔍 Verifying {artifact}...")
-        run(
-            c,
-            f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
-            f"python -c {shlex.quote(f'import {import_name}')}",
-        )
-    if check:
-        say(c, "🔍 Checking package metadata with twine...")
-        run(c, "uvx twine check dist/*")
+    with report_failure(c, "📦 Building package..."):
+        say(c, "📦 Building package...")
+        run(c, build_command("uv build --clear", args=args))
+        say(c, "🔍 Verifying package installation...")
+        for pattern in ("*.whl", "*.tar.gz"):
+            artifact = _latest_artifact(Path("dist"), pattern)
+            say(c, f"🔍 Verifying {artifact}...")
+            run(
+                c,
+                f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
+                f"python -c {shlex.quote(f'import {import_name}')}",
+            )
+        if check:
+            say(c, "🔍 Checking package metadata with twine...")
+            run(c, "uvx twine check dist/*")
 
 
 TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
@@ -282,10 +283,11 @@ def publish(
         cmd.append("--dry-run")
     if not token and trusted:
         cmd.append("--trusted-publishing always")
-    say(c, "🚀 Publishing" + (" (dry run)" if dry_run else "") + "...")
-    run(
-        c,
-        build_command(" ".join(cmd), args=args),
-        env={"UV_PUBLISH_TOKEN": token} if token else {},
-    )
+    with report_failure(c, "🚀 Publishing..."):
+        say(c, "🚀 Publishing" + (" (dry run)" if dry_run else "") + "...")
+        run(
+            c,
+            build_command(" ".join(cmd), args=args),
+            env={"UV_PUBLISH_TOKEN": token} if token else {},
+        )
     say(c, "✅ Package published successfully" if not dry_run else "✅ Dry run complete")

@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
@@ -692,3 +693,21 @@ def test_run_pytest_loads_the_config_without_a_given_one() -> None:
     c = make_context({"package": {"name": "mypkg"}, "test": {"xdoctest": False}})
     test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=5)
     assert commands(c) == ["/venv/bin/python -m pytest --timeout 5 tests/x"]
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        test_tasks.benchmark(c, paths="b")
+    assert "❌ Failed: Running benchmarks" in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_doctest_markdown_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context()
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        test_tasks.doctest_markdown(c, paths="a.md")
+    assert "❌ Failed: Running doctests on markdown files" in capsys.readouterr().err
