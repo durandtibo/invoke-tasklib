@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from invoke.config import Config
 from invoke.context import MockContext
+from invoke.exceptions import Exit
 
 from invoke_tasklib import testing as test_tasks
 from invoke_tasklib.config import get_config
@@ -145,6 +146,22 @@ def test_doctest_src() -> None:
     c = make_context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest_src(c)
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest src/mypkg"]
+
+
+def test_doctest_src_ignores_the_xdoctest_option() -> None:
+    cfg = {"package": {"name": "mypkg"}, "test": {"xdoctest": False}}
+    c = make_context(cfg)
+    test_tasks.doctest_src(c)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest src/mypkg"]
+
+
+def test_doctest_src_names_the_missing_xdoctest_plugin(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "invoke_tasklib.runner.importlib.util.find_spec",
+        lambda name: None if name == "xdoctest" else object(),
+    )
+    with pytest.raises(Exit, match=r"The option --xdoctest needs the pytest plugin 'xdoctest'"):
+        test_tasks.doctest_src(make_context({"package": {"name": "mypkg"}}))
 
 
 def test_doctest(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:

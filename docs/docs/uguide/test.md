@@ -33,7 +33,10 @@ Runs both `test.doctest-src` and `test.doctest-markdown`.
 invoke test.doctest-src
 ```
 
-Runs doctests against `paths.src` from the [resolved config](config.md).
+Runs doctests against `paths.src` from the [resolved config](config.md). It always runs
+`pytest --xdoctest`: `tasklib.test.xdoctest` only applies to the test scopes, since the task has no
+purpose without the plugin. If the `xdoctest` package is missing, the task stops with a message that
+names it; use `test.doctest-markdown` alone in a project that does not have the package.
 
 ```shell
 invoke test.doctest-markdown
