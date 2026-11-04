@@ -44,7 +44,8 @@ invoke release.publish
 
 Before anything is built, the task checks the git state: the working tree must be clean, `HEAD`
 must be tagged and the tag (without a leading `v`) must be the static `project.version` of
-`pyproject.toml` (a dynamic version is not compared). It then asks for a confirmation, unless
+`pyproject.toml` (a dynamic version is not compared; an invalid `pyproject.toml` stops the task with a message that
+names the file). It then asks for a confirmation, unless
 `--yes` is given or the `CI` environment variable is set to something other than `0` and
 `false`. Finally it builds the package (via
 `release.build`, which clears `dist/` first so stale artifacts are never uploaded) and runs
