@@ -110,6 +110,7 @@ _BUILD = ["uv build --clear", _WHEEL_CHECK_CMD, _SDIST_CHECK_CMD]
 def _clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in (
         "PYPI_TOKEN",
+        "TEST_PYPI_TOKEN",
         "UV_PUBLISH_TOKEN",
         "GITHUB_ACTIONS",
         "ACTIONS_ID_TOKEN_REQUEST_URL",
@@ -143,7 +144,7 @@ def test_publish_args_go_to_publish_not_to_build() -> None:
     assert commands(c) == [*_BUILD, "uv publish --index testpypi"]
 
 
-@pytest.mark.usefixtures("dist", "token")
+@pytest.mark.usefixtures("dist", "testpypi_token")
 def test_publish_to_test_pypi() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
@@ -217,6 +218,11 @@ def test_publish_requires_the_id_token_url_for_trusted_publishing(
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
     with pytest.raises(Exit, match=r"PYPI_TOKEN"):
         release.publish(make_context(_CFG), yes=True, skip_checks=True)
+
+
+@pytest.fixture
+def testpypi_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TEST_PYPI_TOKEN", "testpypi-secret")
 
 
 def test_publish_fails_without_credentials() -> None:
@@ -429,3 +435,42 @@ def test_latest_artifact_ignores_other_patterns(tmp_path: Path) -> None:
 def test_latest_artifact_raises_when_missing(tmp_path: Path) -> None:
     with pytest.raises(Exit, match=r"No file matching '\*\.tar\.gz'"):
         release._latest_artifact(tmp_path, "*.tar.gz")
+
+
+#####################################
+#     Tests for the token names     #
+#####################################
+
+
+@pytest.mark.usefixtures("dist", "testpypi_token")
+def test_publish_to_test_pypi_reads_test_pypi_token() -> None:
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, yes=True, skip_checks=True)
+    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_publish_to_test_pypi_ignores_pypi_token() -> None:
+    with pytest.raises(Exit, match=r"Set the TEST_PYPI_TOKEN .* to publish to TestPyPI"):
+        release.publish(make_context(_CFG), test_pypi=True, yes=True, skip_checks=True)
+
+
+@pytest.mark.usefixtures("dist", "testpypi_token")
+def test_publish_to_pypi_ignores_test_pypi_token() -> None:
+    with pytest.raises(Exit, match=r"Set the PYPI_TOKEN .* to publish to PyPI"):
+        release.publish(make_context(_CFG), yes=True, skip_checks=True)
+
+
+@pytest.mark.usefixtures("dist")
+def test_publish_to_test_pypi_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, yes=True, skip_checks=True)
+    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+
+
+@pytest.mark.usefixtures("dist")
+def test_publish_to_test_pypi_dry_run_needs_no_token() -> None:
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
+    assert run_kwargs(c)[-1]["env"] == {}
