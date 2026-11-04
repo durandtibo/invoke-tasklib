@@ -47,7 +47,7 @@ def test_find_tool_does_not_find_a_missing_module() -> None:
 
 def test_check_tools_reports_the_missing_tools_without_a_config(tmp_path: Path) -> None:
     proc = _check_tools(tmp_path, "/nonexistent")
-    assert "❌ ruff: program not found." in proc.stdout
+    assert "❌ 'ruff' was not found on the PATH." in proc.stdout
 
 
 def test_check_tools_exits_with_code_127_when_a_tool_is_missing(tmp_path: Path) -> None:
