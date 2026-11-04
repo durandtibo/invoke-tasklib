@@ -2,12 +2,12 @@ r"""Test and benchmark tasks."""
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
+from invoke_tasklib._files import find_files
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import (
@@ -129,11 +129,7 @@ def _find_markdown_files(root: Path) -> list[Path]:
 
     ```
     """
-    found: list[Path] = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in MARKDOWN_EXCLUDED_DIRS]
-        found.extend(Path(dirpath) / name for name in filenames if name.endswith(".md"))
-    return sorted(found)
+    return find_files(root, ".md", MARKDOWN_EXCLUDED_DIRS)
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})

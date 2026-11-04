@@ -6,13 +6,14 @@ without modifying files); ``fix_<target>`` tasks modify files in place.
 
 from __future__ import annotations
 
-import shlex
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
+from invoke_tasklib._files import find_files
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
-from invoke_tasklib.output import step
+from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
@@ -20,12 +21,6 @@ if TYPE_CHECKING:
 
 SHELL_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {"build", "dist", "site"}
 r"""Directories whose shell scripts are never checked or formatted."""
-
-_FIND_SH = (
-    "find . \\( "
-    + " -o ".join(f"-name {shlex.quote(d)}" for d in sorted(SHELL_EXCLUDED_DIRS))
-    + " \\) -type d -prune -o -name '*.sh' -type f -print0"
-)
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -100,7 +95,7 @@ def fix_docstrings(c: Context, *, args: str | None = None, paths: str | None = N
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-def _shell_command(tool: str, args: str | None, paths: str | None) -> str:
+def _shell_command(tool: str, args: str | None, paths: str | None) -> str | None:
     r"""Build the command of a shell script tool.
 
     Args:
@@ -111,7 +106,8 @@ def _shell_command(tool: str, args: str | None, paths: str | None) -> str:
             ``SHELL_EXCLUDED_DIRS``) are used.
 
     Returns:
-        The command line.
+        The command line, or ``None`` if there is no script to run the
+        tool on.
 
     Example usage:
 
@@ -125,7 +121,30 @@ def _shell_command(tool: str, args: str | None, paths: str | None) -> str:
     base = build_command(tool, args=args)
     if paths:
         return build_command(f"{base} --", paths=paths)
-    return f"{_FIND_SH} | xargs -0 -r {base} --"
+    scripts = [path.as_posix() for path in find_files(Path(), ".sh", SHELL_EXCLUDED_DIRS)]
+    if not scripts:
+        return None
+    return build_command(f"{base} --", default_paths=scripts)
+
+
+def _run_shell_tool(
+    c: Context, tool: str, args: str | None, paths: str | None, messages: tuple[str, str]
+) -> None:
+    r"""Run a shell script tool, or say that there is no script.
+
+    Args:
+        c: The invoke context.
+        tool: The program and its fixed options.
+        args: Extra arguments of the user.
+        paths: Scripts of the user.
+        messages: The start and done messages of the step.
+    """
+    with step(c, *messages):
+        command = _shell_command(tool, args, paths)
+        if command is None:
+            say(c, "⏭️  No shell script found: skipping")
+        else:
+            run(c, command)
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -138,8 +157,8 @@ def check_shell(c: Context, *, args: str | None = None, paths: str | None = None
         paths: The scripts to check instead of every ``*.sh`` file of
             the project.
     """
-    with step(c, "🐚 Running shellcheck on shell scripts...", "✅ Shellcheck passed"):
-        run(c, _shell_command("shellcheck", args, paths))
+    messages = ("🐚 Running shellcheck on shell scripts...", "✅ Shellcheck passed")
+    _run_shell_tool(c, "shellcheck", args, paths, messages)
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -156,5 +175,5 @@ def fix_shell(c: Context, *, args: str | None = None, paths: str | None = None) 
         This modifies files in place. Ensure your work is committed
         before running this task.
     """
-    with step(c, "🔧 Running shfmt to format shell scripts...", "✅ Shell formatting complete"):
-        run(c, _shell_command("shfmt -l -w", args, paths))
+    messages = ("🔧 Running shfmt to format shell scripts...", "✅ Shell formatting complete")
+    _run_shell_tool(c, "shfmt -l -w", args, paths, messages)
