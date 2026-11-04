@@ -40,11 +40,11 @@ tasklib:
 
 None of them modifies a file.
 
-| Option         | Effect                                                                 |
-| -------------- | ---------------------------------------------------------------------- |
+| Option         | Effect                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------- |
 | `--keep-going` | Runs every step, prints the failed ones with the reason and exits with 1 if any failed |
-| `--only`       | Comma-separated steps to run instead of `tasklib.check.tasks`          |
-| `--skip`       | Comma-separated steps to leave out                                     |
+| `--only`       | Comma-separated steps to run instead of `tasklib.check.tasks`                          |
+| `--skip`       | Comma-separated steps to leave out                                                     |
 
 ```shell
 invoke check --keep-going

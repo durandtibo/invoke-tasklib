@@ -37,7 +37,6 @@ STEPS: dict[str, Callable[[Context], None]] = {
 }
 r"""The task of each step of ``check.all``, by step name."""
 
-
 PROGRAMS: dict[str, tuple[str, ...]] = {
     "format-python": ("ruff",),
     "format-docstrings": ("docformatter",),
@@ -67,8 +66,10 @@ MODULES: dict[str, tuple[str, ...]] = {
     "audit": (),
 }
 r"""The Python modules that each step of ``check.all`` runs, by step
-name. ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is
-true."""
+name.
+
+``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true.
+"""
 
 
 def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
