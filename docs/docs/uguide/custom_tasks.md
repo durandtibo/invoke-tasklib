@@ -56,8 +56,9 @@ ns.add_task(check_complexity)
   `❌ Failed: <what was being done>` on the error stream (stderr, like the message of an `Exit`) if
   the block raises (the exception is raised again, so the exit code is unchanged). Use `say` for any
   other message (`say(c, msg, err=True)` writes to stderr); neither fails on a terminal that cannot
-  encode an emoji: `✅`, `❌` and `⏭️` become `[ok]`, `[fail]` and `[skip]`, and the other emojis are
-  removed. Set `INVOKE_TASKLIB_ASCII=1` to get this output on any terminal.
+  encode an emoji: `✅`, `❌` and `⏭️` become `[ok]`, `[fail]` and `[skip]`, the other emojis are
+  removed and any other character the stream cannot encode (an accent) becomes `?`. Set
+  `INVOKE_TASKLIB_ASCII=1` to get this output on any terminal.
 
 Follow the naming convention of the shared tasks: `check_<target>` never modifies a file and
 `fix_<target>` does. Add the task to a `make_ns()` result, as above, so it does not leak into other
