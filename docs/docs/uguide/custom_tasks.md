@@ -48,7 +48,10 @@ ns.add_task(check_complexity)
   never splits or injects a command.
 - **Run it with `run`**: it echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the `PATH` (with an installation hint if it is not). Do not call `c.run`
-  directly.
+  directly. For `python -m <module>`, the module is checked only when the command uses the running
+  interpreter (`python_executable()`, the one that runs `invoke`): for another interpreter or a
+  `python` found on the `PATH`, a missing module is reported by Python itself
+  (`No module named ...`), without a hint. Use `python_executable()` in your commands.
 - **Report the step with `step`**: it prints the start message, then the done message, or
   `❌ Failed: <what was being done>` if the block raises (the exception is raised again, so the exit
   code is unchanged). Use `say` for any other message; neither fails on a terminal that cannot encode
