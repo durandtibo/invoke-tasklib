@@ -1816,9 +1816,10 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
   <code>python</code> found on the <code>PATH</code>, a missing module is reported by Python itself
   (<code>No module named ...</code>), without a hint. Use <code>python_executable()</code> in your commands.</li>
 <li><strong>Report the step with <code>step</code></strong>: it prints the start message, then the done message, or
-  <code>❌ Failed: &lt;what was being done&gt;</code> if the block raises (the exception is raised again, so the exit
-  code is unchanged). Use <code>say</code> for any other message; neither fails on a terminal that cannot encode
-  an emoji.</li>
+  <code>❌ Failed: &lt;what was being done&gt;</code> on the error stream (stderr, like the message of an <code>Exit</code>) if
+  the block raises (the exception is raised again, so the exit code is unchanged). Use <code>say</code> for any
+  other message (<code>say(c, msg, err=True)</code> writes to stderr); neither fails on a terminal that cannot
+  encode an emoji.</li>
 </ul>
 <p>Follow the naming convention of the shared tasks: <code>check_&lt;target&gt;</code> never modifies a file and
 <code>fix_&lt;target&gt;</code> does. Add the task to a <code>make_ns()</code> result, as above, so it does not leak into other

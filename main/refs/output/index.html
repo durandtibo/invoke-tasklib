@@ -1767,7 +1767,7 @@
 
 
 <a href="#invoke_tasklib.output.say" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">say</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">say</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1775,7 +1775,10 @@
         <p>Write a progress message followed by a newline.</p>
 <p>The message goes to the output stream configured in the invoke
 context (<code>run.out_stream</code>), or to <code>sys.stdout</code> if none is
-configured. Unlike <code>logging</code>, it needs no logging setup to be
+configured. With <code>err</code>, it goes to <code>run.err_stream</code> or to
+<code>sys.stderr</code> instead, like the message of an <code>Exit</code> that invoke
+prints, so that a failure and its reason are on the same stream.
+Unlike <code>logging</code>, it needs no logging setup to be
 visible.</p>
 <p>A message never fails a task: if the stream cannot encode a
 character (for example an emoji on an ASCII terminal), the
@@ -1825,6 +1828,23 @@ character is replaced by <code>?</code>.</p>
                 <em>required</em>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>err</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, write to the error stream instead of the output
+stream.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
         <p>Example usage:</p>
@@ -1857,8 +1877,9 @@ character is replaced by <code>?</code>.</p>
 <p>The start message is written when the block is entered and the done
 message when it exits normally. If the block raises, a failure
 message (<code>❌ Failed: &lt;start message without symbol and dots&gt;</code>) is
-written instead and the exception is raised again, so that a failed
-step is visible and not only the output of the tool.</p>
+written to the error stream instead and the exception is raised
+again, so that a failed step is visible and not only the output of
+the tool.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
