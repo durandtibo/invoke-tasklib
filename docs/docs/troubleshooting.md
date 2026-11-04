@@ -34,6 +34,11 @@ Every command of a pipeline is checked. The `NAME=value` words before a program,
 The module of `python -m <module>` is checked too (for example `pytest`), and is reported as
 `The Python module 'pytest' is not installed for ...` instead of Python's own `No module named`.
 
+The pytest plugins of the options are checked as well: `--xdoctest` needs `xdoctest`, `--timeout`
+needs `pytest-timeout`, `--cov*` needs `pytest-cov` and `--benchmark-only` needs `pytest-benchmark`.
+A missing plugin is reported as `The option --xdoctest needs the pytest plugin 'xdoctest'` with the
+command that adds it, instead of pytest's `unrecognized arguments`.
+
 ## `invoke: command not found` after installing
 
 `invoke-tasklib` depends on `invoke`, but installing a library into a virtual environment does not

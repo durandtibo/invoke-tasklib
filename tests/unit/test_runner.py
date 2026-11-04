@@ -15,6 +15,7 @@ from invoke_tasklib.runner import (
     PROGRAM_GROUPS,
     PROGRAM_HINTS,
     _check_module,
+    _check_plugin_options,
     _program_of,
     _split,
     _stages,
@@ -470,6 +471,119 @@ def test_hint_explicit_entry_wins_over_the_group(monkeypatch: pytest.MonkeyPatch
 @pytest.mark.parametrize("program", ["uvx", "git", "pre-commit"])
 def test_hint_is_not_the_default_for_a_program_env_install_cannot_provide(program: str) -> None:
     assert hint(program) != DEFAULT_HINT
+
+
+def _missing(*modules: str) -> Callable[[str], object | None]:
+    return lambda name: None if name in modules else object()
+
+
+@pytest.fixture
+def _venv_python(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.sys.executable", "/venv/bin/python")
+
+
+@pytest.mark.usefixtures("_venv_python")
+@pytest.mark.parametrize(
+    ("word", "option", "module", "package"),
+    [
+        ("--xdoctest", "--xdoctest", "xdoctest", "xdoctest"),
+        ("--timeout=10", "--timeout", "pytest_timeout", "pytest-timeout"),
+        ("--cov=mypkg", "--cov", "pytest_cov", "pytest-cov"),
+        ("--benchmark-only", "--benchmark-only", "pytest_benchmark", "pytest-benchmark"),
+    ],
+)
+def test_check_module_missing_pytest_plugin_names_the_package(
+    monkeypatch: pytest.MonkeyPatch, word: str, option: str, module: str, package: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing(module))
+    with pytest.raises(Exit, match=rf"^The option {option} needs .*'{package}'"):
+        _check_module(["/venv/bin/python", "-m", "pytest", word, "tests"])
+
+
+@pytest.mark.usefixtures("_venv_python")
+def test_check_module_missing_pytest_plugin_message(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest"))
+    with pytest.raises(Exit) as info:
+        _check_module(["/venv/bin/python", "-m", "pytest", "--xdoctest", "src"])
+    assert str(info.value) == (
+        "The option --xdoctest needs the pytest plugin 'xdoctest', which is not installed "
+        "for /venv/bin/python. Add it to the dependencies of the project, "
+        "e.g. `uv add --dev xdoctest`."
+    )
+
+
+@pytest.mark.usefixtures("_venv_python")
+def test_check_module_missing_pytest_plugin_exits_with_code_127(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest"))
+    with pytest.raises(Exit, match=r"xdoctest") as info:
+        _check_module(["/venv/bin/python", "-m", "pytest", "--xdoctest"])
+    assert info.value.code == 127
+
+
+@pytest.mark.usefixtures("_venv_python")
+def test_check_module_accepts_an_installed_pytest_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: object())
+    assert _check_module(["/venv/bin/python", "-m", "pytest", "--xdoctest"]) is None
+
+
+@pytest.mark.usefixtures("_venv_python")
+def test_check_module_missing_pytest_reports_pytest_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "invoke_tasklib.runner.importlib.util.find_spec", _missing("pytest", "xdoctest")
+    )
+    with pytest.raises(Exit, match=r"^The Python module 'pytest' is not installed"):
+        _check_module(["/venv/bin/python", "-m", "pytest", "--xdoctest"])
+
+
+@pytest.mark.usefixtures("_venv_python")
+def test_check_module_does_not_check_plugin_options_of_another_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest"))
+    assert _check_module(["/venv/bin/python", "-m", "coverage", "--xdoctest"]) is None
+
+
+###########################################
+#     Tests for _check_plugin_options     #
+###########################################
+
+
+def test_check_plugin_options_ignores_other_options(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest"))
+    assert _check_plugin_options(["-x", "-k", "foo", "tests"]) is None
+
+
+def test_check_plugin_options_no_words_is_ok() -> None:
+    assert _check_plugin_options([]) is None
+
+
+def test_check_plugin_options_stops_at_double_dash(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest"))
+    assert _check_plugin_options(["--", "--xdoctest"]) is None
+
+
+def test_check_plugin_options_reports_the_first_missing_plugin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "invoke_tasklib.runner.importlib.util.find_spec", _missing("xdoctest", "pytest_timeout")
+    )
+    with pytest.raises(Exit, match=r"^The option --timeout needs .*'pytest-timeout'"):
+        _check_plugin_options(["--timeout", "5", "--xdoctest"])
+
+
+def test_check_plugin_options_looks_the_module_up_by_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[str] = []
+
+    def find_spec(name: str) -> object:
+        seen.append(name)
+        return object()
+
+    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", find_spec)
+    _check_plugin_options(["--cov-report", "html"])
+    assert seen == ["pytest_cov"]
 
 
 #############################
