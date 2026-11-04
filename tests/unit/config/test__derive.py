@@ -5,11 +5,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from invoke_tasklib.config._derive import (
-    _default_python_version,
     _default_src,
     _derive_defaults,
-    _python_version_file,
-    _requires_python_lower_bound,
 )
 
 if TYPE_CHECKING:
@@ -43,134 +40,6 @@ def test_default_src_falls_back_to_the_src_layout(
     assert _default_src("mypkg") == "src/mypkg"
 
 
-##########################################
-#     Tests for _python_version_file     #
-##########################################
-
-
-def test_python_version_file_reads_the_version(tmp_path: Path) -> None:
-    (tmp_path / ".python-version").write_text("3.12\n")
-    assert _python_version_file(tmp_path) == "3.12"
-
-
-def test_python_version_file_reads_a_patch_version(tmp_path: Path) -> None:
-    (tmp_path / ".python-version").write_text("3.12.1\n")
-    assert _python_version_file(tmp_path) == "3.12.1"
-
-
-def test_python_version_file_skips_comments_and_blank_lines(tmp_path: Path) -> None:
-    (tmp_path / ".python-version").write_text("# the version\n\n  3.13  \n3.9\n")
-    assert _python_version_file(tmp_path) == "3.13"
-
-
-def test_python_version_file_is_none_without_the_file(tmp_path: Path) -> None:
-    assert _python_version_file(tmp_path) is None
-
-
-def test_python_version_file_is_none_for_an_empty_file(tmp_path: Path) -> None:
-    (tmp_path / ".python-version").write_text("\n# only a comment\n")
-    assert _python_version_file(tmp_path) is None
-
-
-@pytest.mark.parametrize(
-    "content", ["cpython-3.12.1-linux-x86_64\n", "pypy3.10\n", "3.12t\n", "3\n"]
-)
-def test_python_version_file_ignores_other_content(tmp_path: Path, content: str) -> None:
-    (tmp_path / ".python-version").write_text(content)
-    assert _python_version_file(tmp_path) is None
-
-
-def test_python_version_file_ignores_a_directory(tmp_path: Path) -> None:
-    (tmp_path / ".python-version").mkdir()
-    assert _python_version_file(tmp_path) is None
-
-
-##################################################
-#     Tests for _requires_python_lower_bound     #
-##################################################
-
-
-def _pyproject(root: Path, content: str) -> None:
-    (root / "pyproject.toml").write_text(content)
-
-
-@pytest.mark.parametrize(
-    ("requires", "expected"),
-    [
-        (">=3.11", "3.11"),
-        (">= 3.9", "3.9"),
-        (">=3.10,<4", "3.10"),
-        (">=3.11.2", "3.11"),
-        ("~=3.12", "3.12"),
-        ("==3.13.*", "3.13"),
-        ("<4,>=3.8", "3.8"),
-    ],
-)
-def test_requires_python_lower_bound(tmp_path: Path, requires: str, expected: str) -> None:
-    _pyproject(tmp_path, f'[project]\nrequires-python = "{requires}"\n')
-    assert _requires_python_lower_bound(tmp_path) == expected
-
-
-@pytest.mark.parametrize("requires", [">3.10", "<4", ">=3", ""])
-def test_requires_python_lower_bound_is_none_without_a_lower_bound(
-    tmp_path: Path, requires: str
-) -> None:
-    _pyproject(tmp_path, f'[project]\nrequires-python = "{requires}"\n')
-    assert _requires_python_lower_bound(tmp_path) is None
-
-
-def test_requires_python_lower_bound_is_none_without_the_file(tmp_path: Path) -> None:
-    assert _requires_python_lower_bound(tmp_path) is None
-
-
-def test_requires_python_lower_bound_is_none_without_the_key(tmp_path: Path) -> None:
-    _pyproject(tmp_path, '[project]\nname = "demo"\n')
-    assert _requires_python_lower_bound(tmp_path) is None
-
-
-def test_requires_python_lower_bound_is_none_without_a_project_table(tmp_path: Path) -> None:
-    _pyproject(tmp_path, "[tool.ruff]\nline-length = 100\n")
-    assert _requires_python_lower_bound(tmp_path) is None
-
-
-def test_requires_python_lower_bound_ignores_a_value_that_is_not_a_string(tmp_path: Path) -> None:
-    _pyproject(tmp_path, "[project]\nrequires-python = 3.11\n")
-    assert _requires_python_lower_bound(tmp_path) is None
-
-
-def test_requires_python_lower_bound_ignores_invalid_toml(tmp_path: Path) -> None:
-    _pyproject(tmp_path, "[project\n")
-    assert _requires_python_lower_bound(tmp_path) is None
-
-
-#############################################
-#     Tests for _default_python_version     #
-#############################################
-
-
-def test_default_python_version_prefers_the_python_version_file(tmp_path: Path) -> None:
-    (tmp_path / ".python-version").write_text("3.12\n")
-    _pyproject(tmp_path, '[project]\nrequires-python = ">=3.10"\n')
-    assert _default_python_version(tmp_path) == "3.12"
-
-
-def test_default_python_version_uses_requires_python(tmp_path: Path) -> None:
-    _pyproject(tmp_path, '[project]\nrequires-python = ">=3.10"\n')
-    assert _default_python_version(tmp_path) == "3.10"
-
-
-def test_default_python_version_uses_requires_python_when_the_file_is_unusable(
-    tmp_path: Path,
-) -> None:
-    (tmp_path / ".python-version").write_text("pypy3.10\n")
-    _pyproject(tmp_path, '[project]\nrequires-python = ">=3.10"\n')
-    assert _default_python_version(tmp_path) == "3.10"
-
-
-def test_default_python_version_falls_back_to_the_constant(tmp_path: Path) -> None:
-    assert _default_python_version(tmp_path) == "3.14"
-
-
 ######################################
 #     Tests for _derive_defaults     #
 ######################################
@@ -178,7 +47,7 @@ def test_default_python_version_falls_back_to_the_constant(tmp_path: Path) -> No
 
 def _merged(**package: object) -> dict[str, dict[str, object]]:
     return {
-        "package": {"name": "my-pkg", "import_name": None, "python_version": "3.12", **package},
+        "package": {"name": "my-pkg", "import_name": None, **package},
         "paths": {
             "src": None,
             "tests": "tests",
@@ -238,16 +107,26 @@ def test_derive_defaults_keeps_a_test_path_given() -> None:
     assert merged["paths"]["unit_tests"] == "elsewhere"
 
 
-def test_derive_defaults_derives_the_python_version() -> None:
+def test_derive_defaults_leaves_the_python_version_to_uv() -> None:
     merged = _merged(python_version=None)
     _derive_defaults(merged)
-    assert merged["package"]["python_version"] == "3.14"
+    assert merged["package"]["python_version"] is None
 
 
 def test_derive_defaults_keeps_the_python_version_given() -> None:
-    merged = _merged()
+    merged = _merged(python_version="3.12")
     _derive_defaults(merged)
     assert merged["package"]["python_version"] == "3.12"
+
+
+def test_derive_defaults_does_not_read_the_python_version_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".python-version").write_text("3.12\n")
+    monkeypatch.chdir(tmp_path)
+    merged = _merged(python_version=None)
+    _derive_defaults(merged)
+    assert merged["package"]["python_version"] is None
 
 
 def test_derive_defaults_rejects_an_invalid_import_name() -> None:

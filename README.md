@@ -186,7 +186,7 @@ tasklib:
   package:
     name: my_package # required
     import_name: my_package # default: <package.name> with - replaced by _
-    python_version: "3.14" # used by env.create-venv (default: .python-version, then requires-python)
+    python_version: "3.14" # used by env.create-venv (default: the version that uv chooses)
   paths:
     src: src/my_package # default: src/<package.import_name>
     tests: tests

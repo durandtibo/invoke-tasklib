@@ -55,6 +55,10 @@ def test_validate_python_version_returns_valid_string() -> None:
     assert _validate_python_version("3.10") == "3.10"
 
 
+def test_validate_python_version_accepts_none() -> None:
+    assert _validate_python_version(None) is None
+
+
 def test_validate_python_version_rejects_float() -> None:
     with pytest.raises(ValueError, match=r"got 3\.1\."):
         _validate_python_version(3.1)

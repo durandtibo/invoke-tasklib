@@ -73,14 +73,16 @@ def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None
     """
     cfg = load_config(c)
     python_version = cfg.package.python_version
+    with_version = f" with Python {python_version}" if python_version else ""
     if dry_run:
-        say(c, f"🐍 Would create .venv with Python {python_version} (dry run)")
+        say(c, f"🐍 Would create .venv{with_version} (dry run)")
         return
     if not yes and Path(VENV_DIR).exists():
         _confirm_clear(VENV_DIR)
     with report_failure(c, "🐍 Creating virtual environment..."):
-        say(c, f"🐍 Creating virtual environment with Python {python_version}...")
-        run(c, f"uv venv --python {python_version} --clear")
+        say(c, f"🐍 Creating virtual environment{with_version}...")
+        option = f" --python {python_version}" if python_version else ""
+        run(c, f"uv venv{option} --clear")
         _install(c, ",".join(cfg.groups.install), optional_deps=True)
     say(c, "✅ Virtual environment created successfully")
 

@@ -12,13 +12,6 @@ PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
 r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 ``3.10.4``)."""
 
-DEFAULT_PYTHON_VERSION = "3.14"
-r"""The Python version used when neither ``.python-version`` nor the
-``requires-python`` of ``pyproject.toml`` gives one."""
-
-REQUIRES_PYTHON_LOWER_BOUND = re.compile(r"(?:>=|~=|==)\s*(\d+\.\d+)")
-
-
 COV_REPORTS: frozenset[str] = frozenset(
     {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
 )

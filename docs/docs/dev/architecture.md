@@ -162,7 +162,7 @@ guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.
 
 **Trade-off**: Every task pays the (cheap) cost of re-resolving config on each call, rather than
 resolving it once. This is negligible since `load_config` does no I/O beyond reading `c.config` and, for the defaults
-that come from the project, two small files (`.python-version` and `pyproject.toml`).
+that come from the project, whether the source directory exists.
 
 ### Why `check_<target>`/`fix_<target>` Naming?
 
