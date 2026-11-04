@@ -538,6 +538,45 @@ def test_remove_dir_does_not_ask_git_about_a_missing_directory(tmp_path: Path) -
 ##################################
 
 
+def test_remove_file_keeps_a_tracked_file(tmp_path: Path) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target, keep_tracked=True)
+    assert target.is_file()
+
+
+def test_remove_file_says_it_keeps_a_tracked_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target, keep_tracked=True)
+    assert capsys.readouterr().out == f"⏭️  Keeping {target}: it is tracked by git\n"
+
+
+def test_remove_file_removes_an_untracked_file_when_keeping_tracked(tmp_path: Path) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context(""), target, keep_tracked=True)
+    assert not target.exists()
+
+
+def test_remove_file_removes_a_tracked_file_by_default(tmp_path: Path) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target)
+    assert not target.exists()
+
+
+def test_remove_file_dry_run_reports_a_tracked_file_as_kept(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / "coverage.xml"
+    target.write_text("data")
+    clean._remove_file(_git_context("coverage.xml\n"), target, dry_run=True, keep_tracked=True)
+    assert capsys.readouterr().out == f"⏭️  Keeping {target}: it is tracked by git\n"
+
+
 def test_remove_file_removes_existing_file(tmp_path: Path) -> None:
     target = tmp_path / ".coverage"
     target.write_text("data")
@@ -873,6 +912,13 @@ def test_all_removes_the_default_xml_file_when_the_config_is_invalid(project: Pa
     path.write_text("")
     clean.all_(make_context())
     assert not path.exists()
+
+
+def test_all_keeps_a_coverage_file_tracked_by_git(project: Path) -> None:
+    path = project / "coverage.xml"
+    path.write_text("")
+    clean.all_(_git_context("coverage.xml\n"))
+    assert path.is_file()
 
 
 def test_all_removes_a_file_listed_twice_once(

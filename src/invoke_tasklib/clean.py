@@ -64,7 +64,9 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     ``site_dir``, is never removed.
 
     A top-level directory (``build``, ``dist``, ``site``, ...) that
-    contains files tracked by git is kept, and the task says so.
+    contains files tracked by git is kept, and the task says so. So is
+    a coverage file (``.coverage``, ``coverage.xml``, ...) that git
+    tracks.
 
     Args:
         c: The invoke context.
@@ -86,7 +88,7 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     for p in _find_pycache_dirs(Path()):
         _remove_dir(c, p, dry_run=dry_run)
     for f in dict.fromkeys((*FILES, *outputs.files)):
-        _remove_file(c, Path(f), dry_run=dry_run)
+        _remove_file(c, Path(f), dry_run=dry_run, keep_tracked=True)
     for pattern in FILE_GLOBS:
         for p in sorted(Path().glob(pattern)):
             _remove_file(c, p, dry_run=dry_run)
@@ -357,7 +359,9 @@ def _remove_dir(
         shutil.rmtree(path)
 
 
-def _remove_file(c: Context, path: Path, *, dry_run: bool = False) -> None:
+def _remove_file(
+    c: Context, path: Path, *, dry_run: bool = False, keep_tracked: bool = False
+) -> None:
     r"""Remove a file, if it exists.
 
     Args:
@@ -365,10 +369,14 @@ def _remove_file(c: Context, path: Path, *, dry_run: bool = False) -> None:
         path: The file to remove.
         dry_run: If True, say that the file would be removed and leave
             it.
+        keep_tracked: If True, leave a file that is tracked by git, and
+            say so.
     """
     if not path.is_file():
         return
-    if dry_run:
+    if keep_tracked and _has_tracked_files(c, path):
+        say(c, f"⏭️  Keeping {path}: it is tracked by git")
+    elif dry_run:
         say(c, f"🗑️  Would remove {path}")
     else:
         say(c, f"🗑️  Removing {path}")

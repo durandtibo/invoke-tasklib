@@ -33,8 +33,9 @@ Removes, if present, at the repository root:
 
 A top-level directory that contains files tracked by git (for example a `build/` directory with
 scripts that are committed) is kept, and the task says so (`⏭️  Keeping build: it contains files
-tracked by git`). Outside a git repository, or without `git`, nothing counts as tracked. The caches
-(`__pycache__`, `*.egg-info`) and the files are not looked up.
+tracked by git`). A coverage file that git tracks (`.coverage`, `coverage.xml`, ...) is kept too (`⏭️  Keeping
+coverage.xml: it is tracked by git`). Outside a git repository, or without `git`, nothing counts as tracked. The caches
+(`__pycache__`, `*.egg-info`) and the glob-matched files are not looked up.
 
 A directory outside the project is never removed: if the `site_dir` of the MkDocs config is an
 absolute path, contains `..` or points to the project root, the task says `⏭️  Not removing ...: it is
