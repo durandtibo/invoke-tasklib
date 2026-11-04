@@ -471,11 +471,20 @@ def test_publish_to_pypi_ignores_test_pypi_token() -> None:
 
 
 @pytest.mark.usefixtures("dist")
-def test_publish_to_test_pypi_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_publish_to_test_pypi_ignores_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    with pytest.raises(Exit, match=r"Set the TEST_PYPI_TOKEN environment variable, or run in"):
+        release.publish(make_context(_CFG), test_pypi=True, yes=True, skip_checks=True)
+
+
+@pytest.mark.usefixtures("dist", "testpypi_token")
+def test_publish_to_test_pypi_prefers_test_pypi_token_over_uv_publish_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
 
 
 @pytest.mark.usefixtures("dist")

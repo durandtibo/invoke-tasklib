@@ -263,8 +263,9 @@ def publish(
 
     The credentials are either a token, read from ``PYPI_TOKEN`` (from
     ``TEST_PYPI_TOKEN`` with ``--test-pypi``, so a PyPI token is never
-    sent to TestPyPI) or from ``UV_PUBLISH_TOKEN``, which ``uv publish``
-    reads natively, and passed to ``uv publish`` through its
+    sent to TestPyPI) or, without ``--test-pypi`` only, from
+    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively. The token
+    is passed to ``uv publish`` through its
     environment, so it does not appear on the command line; or, in
     GitHub Actions with the
     ``id-token: write`` permission, PyPI Trusted Publishing. ``dist/``
@@ -286,13 +287,16 @@ def publish(
     """
     target = "TestPyPI" if test_pypi else "PyPI"
     token_name = "TEST_PYPI_TOKEN" if test_pypi else "PYPI_TOKEN"
-    token = os.environ.get(token_name) or os.environ.get("UV_PUBLISH_TOKEN")
+    token = os.environ.get(token_name)
+    if not test_pypi:
+        token = token or os.environ.get("UV_PUBLISH_TOKEN")
     trusted = os.environ.get("GITHUB_ACTIONS") == "true" and bool(
         os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
     )
     if not (token or trusted or dry_run):
+        alternative = "" if test_pypi else " (or UV_PUBLISH_TOKEN)"
         msg = (
-            f"Set the {token_name} (or UV_PUBLISH_TOKEN) environment variable, or run in "
+            f"Set the {token_name}{alternative} environment variable, or run in "
             f"GitHub Actions with the id-token permission, to publish to {target}"
         )
         raise Exit(msg, code=1)
