@@ -63,6 +63,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `test.cov_fail_under`      | not set                                                                               |
 | `test.cov_reports`         | `html,xml,term`                                                                       |
 | `check.tasks`              | `format-python,format-docstrings,lint,types,imports,unit`                             |
+| `check.cov`                | `false`                                                                               |
 | `fix.tasks`                | `lint,format-python,format-docstrings`                                                |
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
@@ -72,6 +73,9 @@ with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and 
 `cov_reports` is a comma-separated string or a list of the `--cov-report` formats of pytest-cov
 (`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
+
+`check.cov` is a boolean. If true, the `unit` step of `check.all` runs with `--cov`, so
+`test.cov_fail_under` is enforced there too (the coverage reports are generated).
 
 `check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order:
 `format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,

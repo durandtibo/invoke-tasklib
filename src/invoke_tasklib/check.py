@@ -17,13 +17,26 @@ if TYPE_CHECKING:
 
     from invoke_tasklib.config import TasklibConfig
 
+
+def _unit(c: Context) -> None:
+    r"""Run the unit tests, with coverage if ``tasklib.check.cov``.
+
+    With coverage, ``tasklib.test.cov_fail_under`` is enforced, as it is
+    by ``test.unit --cov``.
+
+    Args:
+        c: The invoke context.
+    """
+    testing.unit(c, cov=load_config(c).check.cov)
+
+
 STEPS: dict[str, Callable[[Context], None]] = {
     "format-python": formatting.check_python,
     "format-docstrings": formatting.check_docstrings,
     "lint": lint.check_python,
     "types": typecheck.check,
     "imports": imports.check_cycles,
-    "unit": testing.unit,
+    "unit": _unit,
     "doctest": testing.doctest,
     "shell": formatting.check_shell,
     "spelling": lint.check_spelling,
@@ -118,9 +131,11 @@ def all_(
     ``format-python``, ``format-docstrings``, ``lint``, ``types``,
     ``imports`` and ``unit``), run in that order. The other steps are
     ``doctest``, ``shell``, ``spelling``, ``docs`` and ``audit``. None
-    of them modifies a file. By default the first failure stops the
-    task; with ``keep_going`` every step is run and the failed ones are
-    listed at the end.
+    of them modifies a file (except the coverage reports of ``unit``
+    with ``tasklib.check.cov``, which also enforces
+    ``tasklib.test.cov_fail_under``). By default the first failure
+    stops the task; with ``keep_going`` every step is run and the
+    failed ones are listed at the end.
 
     Before any step is run, the tools that the selected steps need
     (``PROGRAMS`` and ``MODULES``) are looked up and all the missing

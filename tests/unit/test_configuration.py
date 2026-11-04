@@ -151,6 +151,7 @@ def test_render_the_whole_config() -> None:
         "    cov_reports: [html, xml, term]  # default",
         "  check:",
         "    tasks: [format-python, format-docstrings, lint, types, imports, unit]  # default",
+        "    cov: false  # default",
         "  fix:",
         "    tasks: [lint, format-python, format-docstrings]  # default",
     ]
