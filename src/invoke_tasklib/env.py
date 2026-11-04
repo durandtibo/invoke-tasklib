@@ -23,7 +23,11 @@ PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
 
 @task
 def create_venv(c: Context) -> None:
-    r"""Create a virtual environment and install invoke in it.
+    r"""Create a virtual environment and install the project in it.
+
+    The project is installed with ``env.install`` (``uv sync``), so the
+    environment gets ``invoke`` within the bounds of the project, and
+    the packages that ``tasks.py`` imports, such as ``invoke-tasklib``.
 
     Note:
         The virtual environment will be created in the .venv directory
@@ -35,8 +39,7 @@ def create_venv(c: Context) -> None:
     python_version = cfg.package.python_version
     say(c, f"🐍 Creating virtual environment with Python {python_version}...")
     run(c, f"uv venv --python {python_version} --clear")
-    say(c, "📦 Installing invoke...")
-    run(c, "uv pip install invoke")
+    install(c)
     say(c, "✅ Virtual environment created successfully")
 
 
