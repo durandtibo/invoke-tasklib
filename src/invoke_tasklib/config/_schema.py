@@ -369,12 +369,17 @@ def default_config() -> dict[str, dict[str, object]]:
     the keys can also be set with the ``INVOKE_TASKLIB_<SECTION>_<KEY>``
     environment variables, for example ``INVOKE_TASKLIB_PATHS_SRC``.
     Invoke only reads an environment variable for a key that exists in
-    the defaults.
+    the defaults. Invoke casts the variable to the type of the default,
+    and it reads any text but ``0`` as true for a boolean, so the
+    booleans and the integers are registered with ``None``: the text is
+    kept and parsed by the validation. The real defaults stay in
+    ``SCHEMA``.
 
     Returns:
         A new dict with the ``package``, ``paths``, ``groups``,
         ``test``, ``check`` and ``fix`` sections, each a copy of its
-        ``DEFAULT_*`` dict.
+        ``DEFAULT_*`` dict, except that a boolean or an integer is
+        ``None``.
 
     Example usage:
 
@@ -384,17 +389,48 @@ def default_config() -> dict[str, dict[str, object]]:
     ['check', 'fix', 'groups', 'package', 'paths', 'test']
     >>> default_config()["groups"]
     {'install': 'dev', 'update': 'dev,docs'}
+    >>> default_config()["test"]["xdoctest"] is None
+    True
 
     ```
     """
-    return {
-        "package": dict(DEFAULT_PACKAGE),
-        "paths": dict(DEFAULT_PATHS),
-        "groups": dict(DEFAULT_GROUPS),
-        "test": dict(DEFAULT_TEST),
-        "check": dict(DEFAULT_CHECK),
-        "fix": dict(DEFAULT_FIX),
+    sections = {
+        "package": DEFAULT_PACKAGE,
+        "paths": DEFAULT_PATHS,
+        "groups": DEFAULT_GROUPS,
+        "test": DEFAULT_TEST,
+        "check": DEFAULT_CHECK,
+        "fix": DEFAULT_FIX,
     }
+    return {
+        section: {key: _untyped(value) for key, value in defaults.items()}
+        for section, defaults in sections.items()
+    }
+
+
+def _untyped(default: object) -> object:
+    r"""Hide the type of a default from Invoke.
+
+    Args:
+        default: The default value of a key.
+
+    Returns:
+        ``None`` if the default is a boolean or an integer, so that
+        Invoke does not cast an environment variable to that type,
+        else ``default`` unchanged.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config._schema import _untyped
+    >>> _untyped(True) is None
+    True
+    >>> _untyped("tests")
+    'tests'
+
+    ```
+    """
+    return None if isinstance(default, int) else default
 
 
 def json_schema() -> dict[str, Any]:
