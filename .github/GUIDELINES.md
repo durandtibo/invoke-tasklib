@@ -98,6 +98,7 @@ what CI runs. Key mappings:
 | --------------------------- | ------------------------------------------------------------ |
 | `ci-format.yaml` / `format` | `format.check-python`, `lint.check-python`                   |
 | `ci-format.yaml` / `shell`  | `make check-format-shell`, `make lint-shell` (no task)       |
+| `ci-check.yaml`             | `check.all --keep-going`                                     |
 | `ci-lint.yaml`              | `lint.check-python`                                          |
 | `ci-type-checking.yaml`     | `types.check`                                                |
 | `ci-doctest.yaml`           | `test.doctest`                                               |
