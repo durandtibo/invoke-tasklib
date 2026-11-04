@@ -53,9 +53,10 @@ ns.add_task(check_complexity)
   `python` found on the `PATH`, a missing module is reported by Python itself
   (`No module named ...`), without a hint. Use `python_executable()` in your commands.
 - **Report the step with `step`**: it prints the start message, then the done message, or
-  `❌ Failed: <what was being done>` if the block raises (the exception is raised again, so the exit
-  code is unchanged). Use `say` for any other message; neither fails on a terminal that cannot encode
-  an emoji.
+  `❌ Failed: <what was being done>` on the error stream (stderr, like the message of an `Exit`) if
+  the block raises (the exception is raised again, so the exit code is unchanged). Use `say` for any
+  other message (`say(c, msg, err=True)` writes to stderr); neither fails on a terminal that cannot
+  encode an emoji.
 
 Follow the naming convention of the shared tasks: `check_<target>` never modifies a file and
 `fix_<target>` does. Add the task to a `make_ns()` result, as above, so it does not leak into other

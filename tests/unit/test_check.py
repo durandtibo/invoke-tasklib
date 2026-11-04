@@ -207,7 +207,7 @@ def test_all_keep_going_names_the_failed_step(capsys: pytest.CaptureFixture[str]
     _failing(c, "ruff")
     with pytest.raises(Exit, match=r"failed"):
         check.all_(c, keep_going=True)
-    assert "❌ Step failed: lint" in capsys.readouterr().out
+    assert "❌ Step failed: lint" in capsys.readouterr().err
 
 
 def test_all_keep_going_prints_the_reason_of_the_failure(
@@ -217,7 +217,7 @@ def test_all_keep_going_prints_the_reason_of_the_failure(
     c.run = Mock(side_effect=Exit("'ruff' was not found on the PATH."))
     with pytest.raises(Exit, match=r"failed"):
         check.all_(c, keep_going=True)
-    assert "   'ruff' was not found on the PATH.\n" in capsys.readouterr().out
+    assert "   'ruff' was not found on the PATH.\n" in capsys.readouterr().err
 
 
 def test_all_keep_going_prints_the_reason_after_the_step_name(
@@ -227,7 +227,7 @@ def test_all_keep_going_prints_the_reason_after_the_step_name(
     c.run = Mock(side_effect=Exit("boom"))
     with pytest.raises(Exit, match=r"failed"):
         check.all_(c, keep_going=True)
-    assert "❌ Step failed: lint\n   boom\n" in capsys.readouterr().out
+    assert "❌ Step failed: lint\n   boom\n" in capsys.readouterr().err
 
 
 def test_all_keep_going_prints_the_exit_code_of_a_failed_command(
@@ -237,7 +237,7 @@ def test_all_keep_going_prints_the_exit_code_of_a_failed_command(
     _failing(c, "ty")
     with pytest.raises(Exit, match=r"failed"):
         check.all_(c, keep_going=True)
-    assert "   The command 'ty check' exited with code 1\n" in capsys.readouterr().out
+    assert "   The command 'ty check' exited with code 1\n" in capsys.readouterr().err
 
 
 def test_all_missing_tool_stops_before_any_step(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -310,8 +310,7 @@ def test_all_keep_going_prints_the_missing_tool_of_a_step(
     monkeypatch.setattr(check, "find_tool", _available())
     with pytest.raises(Exit, match=r"failed"):
         check.all_(_context({"tasks": "types"}), keep_going=True)
-    assert capsys.readouterr().out == (
-        "🔎 Running all the checks...\n"
+    assert capsys.readouterr().err == (
         "❌ Step failed: types\n"
         "   'ty' was not found on the PATH. Install it with the 'dev' group: "
         "`uv sync --group dev`.\n"
@@ -324,7 +323,7 @@ def test_all_keep_going_lists_every_missing_tool_of_a_step(
     monkeypatch.setattr(check, "find_tool", _available())
     with pytest.raises(Exit, match=r"failed"):
         check.all_(_context({"tasks": "audit"}), keep_going=True)
-    assert capsys.readouterr().out.count("was not found on the PATH") == 2
+    assert capsys.readouterr().err.count("was not found on the PATH") == 2
 
 
 ##################################
