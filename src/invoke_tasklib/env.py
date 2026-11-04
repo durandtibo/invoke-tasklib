@@ -47,7 +47,7 @@ def create_venv(c: Context) -> None:
         "groups": "Comma-separated dependency groups to install (default: tasklib.groups.install).",
     }
 )
-def install(c: Context, optional_deps: bool = True, groups: str | None = None) -> None:
+def install(c: Context, *, optional_deps: bool = True, groups: str | None = None) -> None:
     r"""Install the dependencies and the package (editable).
 
     ``uv sync`` installs the project itself in editable mode, so no
@@ -80,7 +80,7 @@ def install(c: Context, optional_deps: bool = True, groups: str | None = None) -
         "groups": "Comma-separated dependency groups to reinstall (default: tasklib.groups.update)."
     }
 )
-def update(c: Context, groups: str | None = None) -> None:
+def update(c: Context, *, groups: str | None = None) -> None:
     r"""Update dependencies and pre-commit hooks.
 
     The dependencies and the hooks are updated to their latest versions.

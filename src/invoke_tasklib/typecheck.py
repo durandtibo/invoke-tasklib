@@ -23,10 +23,10 @@ if TYPE_CHECKING:
 )
 def check(
     c: Context,
+    *,
     complete: bool = False,
     args: str | None = None,
     paths: str | None = None,
-    *,
     pyright_args: str | None = None,
 ) -> None:
     r"""Check type hints.

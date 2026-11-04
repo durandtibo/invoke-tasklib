@@ -54,7 +54,7 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
 
 
 @task(help={"check": "Also check the package metadata with twine.", "args": ARGS_HELP})
-def build(c: Context, check: bool = False, args: str | None = None) -> None:
+def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     r"""Build the package and verify the built artifacts.
 
     The artifacts are checked to be installable. The newest wheel and

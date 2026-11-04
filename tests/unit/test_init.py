@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from invoke.collection import Collection
 from invoke.tasks import Task
@@ -197,6 +199,12 @@ def test_make_ns_unknown_name_in_include() -> None:
 )
 def test_matches(name: str, patterns: list[str], expected: bool) -> None:
     assert _matches(name, patterns) is expected
+
+
+@pytest.mark.parametrize("name", sorted(ns.task_names))
+def test_task_options_are_keyword_only(name: str) -> None:
+    parameters = list(inspect.signature(ns[name].body).parameters.values())[1:]
+    assert [p.name for p in parameters if p.kind is not inspect.Parameter.KEYWORD_ONLY] == []
 
 
 ####################################
