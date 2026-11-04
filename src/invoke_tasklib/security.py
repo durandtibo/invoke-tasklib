@@ -15,6 +15,12 @@ from invoke_tasklib.runner import ARGS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
+PIP_AUDIT_REQUIREMENT = "pip-audit>=2.10,<3"
+r"""The version range of ``pip-audit`` that ``security.audit`` runs.
+
+``uvx`` installs the latest release in this range, so a new major
+version is never run without a change of this constant."""
+
 
 @task(help={"args": ARGS_HELP})
 def audit(c: Context, args: str | None = None) -> None:
@@ -22,7 +28,8 @@ def audit(c: Context, args: str | None = None) -> None:
 
     The dependencies of ``uv.lock`` are exported to a temporary
     requirements file, which is audited with ``pip-audit`` (run with
-    ``uvx``, so it does not have to be a dependency of the project).
+    ``uvx``, so it does not have to be a dependency of the project, in
+    the range ``PIP_AUDIT_REQUIREMENT``).
     Unlike ``uv run pip-audit``, this does not sync or modify the
     environment, and the result does not depend on what was installed
     last.
@@ -50,5 +57,6 @@ def audit(c: Context, args: str | None = None) -> None:
             "uv export --locked --no-emit-project --no-hashes --all-groups "
             f"--quiet -o {requirements}",
         )
-        cmd = f"uvx pip-audit -r {requirements} --no-deps --disable-pip"
+        tool = shlex.quote(PIP_AUDIT_REQUIREMENT)
+        cmd = f"uvx --from {tool} pip-audit -r {requirements} --no-deps --disable-pip"
         run(c, build_command(cmd, args=args))

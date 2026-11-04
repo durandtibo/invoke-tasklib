@@ -33,9 +33,9 @@ existing `main` version, so it is not deleted first), then pushes to the configu
 invoke doc.publish-latest
 ```
 
-Determines the version to publish from the most recent git version tag (a tag like `v1.2.3`, read
-with `git tag --list 'v[0-9]*' --sort=-v:refname`), truncated to `<major>.<minor>` (e.g. `1.2`). It
-then deploys the current docs under that tag with the `latest` alias, and sets `latest` as the
+Determines the version to publish from the highest git release tag (a tag like `v1.2.3`, read
+with `git tag --list 'v[0-9]*'`; pre-release tags such as `v1.2.0rc1` are ignored), truncated to
+`<major>.<minor>` (e.g. `1.2`). It then deploys the current docs under that tag with the `latest` alias, and sets `latest` as the
 default version shown to visitors. Pass `--no-push` to only commit the docs branch locally.
 
 To publish a specific version without looking at the git tags, pass it explicitly:

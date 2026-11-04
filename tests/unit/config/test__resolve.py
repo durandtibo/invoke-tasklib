@@ -44,11 +44,13 @@ def test_get_config_defaults() -> None:
             "integration_timeout": 60,
             "functional_timeout": 60,
             "xdoctest": True,
+            "timeout": True,
             "cov_fail_under": None,
             "cov_reports": ("html", "xml", "term"),
         },
         "check": {
-            "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit")
+            "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit"),
+            "cov": False,
         },
         "fix": {"tasks": ("lint", "format-python", "format-docstrings")},
     }
@@ -64,6 +66,7 @@ def test_get_config_test_overrides() -> None:
                     "integration_timeout": 120,
                     "functional_timeout": 300,
                     "xdoctest": False,
+                    "timeout": False,
                     "cov_fail_under": 90,
                     "cov_reports": ["xml"],
                 },
@@ -75,9 +78,16 @@ def test_get_config_test_overrides() -> None:
         "integration_timeout": 120,
         "functional_timeout": 300,
         "xdoctest": False,
+        "timeout": False,
         "cov_fail_under": 90,
         "cov_reports": ("xml",),
     }
+
+
+def test_get_config_test_timeout_must_be_a_boolean() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"timeout": "no"}})
+    with pytest.raises(ValueError, match=r"'tasklib\.test\.timeout' must be a boolean"):
+        get_config(c)
 
 
 def test_get_config_test_partial_override_keeps_other_defaults() -> None:
@@ -211,6 +221,17 @@ def test_get_config_overrides_the_python_version() -> None:
 
 def test_get_config_overrides_the_src_path() -> None:
     assert get_config(_context(_OVERRIDES)).paths.src == "mypkg"
+
+
+def test_get_config_check_cov_override() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "check": {"cov": True}}))
+    assert cfg.check.cov is True
+
+
+def test_get_config_check_cov_must_be_a_boolean() -> None:
+    c = _context({"package": {"name": "mypkg"}, "check": {"cov": "yes"}})
+    with pytest.raises(ValueError, match=r"'tasklib\.check\.cov' must be a boolean"):
+        get_config(c)
 
 
 def test_get_config_overrides_the_docs_config_path() -> None:

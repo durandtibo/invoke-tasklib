@@ -29,9 +29,9 @@ It:
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
   `invoke.yaml`.
 - Merges it on top of the defaults declared in `SCHEMA` (also exposed as `DEFAULT_PACKAGE`,
-  `DEFAULT_PATHS`, `DEFAULT_GROUPS`, `DEFAULT_TEST` and `DEFAULT_CHECK`).
+  `DEFAULT_PATHS`, `DEFAULT_GROUPS`, `DEFAULT_TEST`, `DEFAULT_CHECK` and `DEFAULT_FIX`).
 - Rejects unknown keys and validates the values (`package.python_version`, `package.import_name`,
-  `groups.*`, `test.*`, `check.tasks`).
+  `groups.*`, `test.*`, `check.tasks`, `fix.tasks`).
 - Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
   `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
 - Raises `ValueError` if `package.name` is missing, since nearly every task needs it, or if a
@@ -50,6 +50,7 @@ class TasklibConfig:
     groups: GroupsConfig
     test: TestConfig
     check: CheckConfig
+    fix: FixConfig
 ```
 
 Returning frozen dataclasses rather than a raw dict gives task authors static typing on
@@ -58,16 +59,20 @@ Returning frozen dataclasses rather than a raw dict gives task authors static ty
 ### 2. Task Modules
 
 Each task module (`formatting.py`, `lint.py`, `imports.py`, `typecheck.py`, `testing.py`, `env.py`,
-`release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`) is a collection of `@task`-decorated
-functions. `clean.py` and `check.py` also have a default task (`clean.all`, `check.all`) that is
-run by `invoke clean` and `invoke check`. A module groups tasks that operate on the
+`release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`, `fix.py`, `configuration.py`) is a
+collection of `@task`-decorated functions. `clean.py`, `check.py` and `fix.py` also have a default
+task (`clean.all`, `check.all`, `fix.all`) that is run by `invoke clean`, `invoke check` and
+`invoke fix`. `check.all` and `fix.all` are the composite tasks: each runs the steps of its config
+key (`tasklib.check.tasks`, `tasklib.fix.tasks`) with the step runner of `_steps.py`.
+`configuration.py` holds `config.show`, which prints the resolved config and where each value
+comes from. A module groups tasks that operate on the
 same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, except
 `test.doctest-markdown`, which wraps the standard library's `doctest` module directly).
 
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
-Three small modules support the task modules:
+Five small modules support the task modules:
 
 - `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
   the program is on the `PATH` (with a hint per program when it is not), echoes the command, and
@@ -76,6 +81,11 @@ Three small modules support the task modules:
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.
+- `_steps.py`: the step runner shared by `check.all` and `fix.all`: the selection of the steps
+  (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
+  `--keep-going` mode and the final summary of the failures.
+- `_graph.py`: the static import graph of a package (built with `ast`, without importing
+  anything) and its cycles. It is used by `imports.check-cycles`.
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
   subprocess by `imports.check-isolated`.
 
@@ -108,9 +118,9 @@ namespace names come from `_MODULES`, not from the module names.
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via
 `ns = make_ns()` in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns
-a new collection, so a project can add its own tasks without affecting other importers.
-`invoke_tasklib.ns`, a collection built once and shared by every importer, is deprecated: accessing
-it emits a `DeprecationWarning`.
+a new collection, so a project can add its own tasks without affecting other importers. (The
+module-level `invoke_tasklib.ns`, one collection shared by every importer, was removed: use
+`ns = make_ns()`.)
 
 ## Data Flow
 

@@ -87,6 +87,30 @@ def test_all_ends_with_the_unit_tests() -> None:
     assert commands(c)[-1] == "/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"
 
 
+def test_all_unit_step_runs_with_coverage_when_check_cov_is_set() -> None:
+    c = _context({"tasks": "unit", "cov": True})
+    check.all_(c)
+    expected = (
+        "/venv/bin/python -m pytest --xdoctest --timeout 10 --cov-report html "
+        "--cov-report xml --cov-report term --cov=mypkg tests/unit"
+    )
+    assert commands(c) == [expected]
+
+
+def test_all_unit_step_enforces_cov_fail_under_when_check_cov_is_set() -> None:
+    c = _context({"tasks": "unit", "cov": True})
+    c.config.tasklib["test"] = {"cov_fail_under": 90}
+    check.all_(c)
+    assert "--cov-fail-under=90" in commands(c)[-1]
+
+
+def test_all_unit_step_does_not_use_coverage_by_default() -> None:
+    c = _context({"tasks": "unit"})
+    c.config.tasklib["test"] = {"cov_fail_under": 90}
+    check.all_(c)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"]
+
+
 def test_all_does_not_modify_files() -> None:
     c = _context()
     check.all_(c)
@@ -332,8 +356,21 @@ def test_all_keep_going_lists_every_missing_tool_of_a_step(
 ###################################
 
 
-def _cfg(xdoctest: bool = True) -> TasklibConfig:
-    return load_config(make_context({"package": {"name": "mypkg"}, "test": {"xdoctest": xdoctest}}))
+def _cfg(xdoctest: bool = True, timeout: bool = True) -> TasklibConfig:
+    test = {"xdoctest": xdoctest, "timeout": timeout}
+    return load_config(make_context({"package": {"name": "mypkg"}, "test": test}))
+
+
+def test_missing_tools_unit_needs_pytest_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "xdoctest"))
+    assert [name for name, _ in check._missing_tools("unit", _cfg())] == ["pytest_timeout"]
+
+
+def test_missing_tools_unit_does_not_need_pytest_timeout_when_it_is_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "xdoctest"))
+    assert check._missing_tools("unit", _cfg(timeout=False)) == []
 
 
 def test_missing_tools_none_missing() -> None:
@@ -400,8 +437,29 @@ def test_missing_tools_looks_modules_up_as_modules(monkeypatch: pytest.MonkeyPat
 
 
 ###########################
+#     Tests for _unit     #
+###########################
+
+
+def test_unit_without_cov() -> None:
+    c = _context()
+    check._unit(c)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 tests/unit"]
+
+
+def test_unit_with_cov() -> None:
+    c = _context({"cov": True})
+    check._unit(c)
+    assert "--cov=mypkg" in commands(c)[0]
+
+
+###########################
 #     Tests for STEPS     #
 ###########################
+
+
+def test_unit_step_is_the_unit_wrapper() -> None:
+    assert check.STEPS["unit"].task is check._unit
 
 
 def test_steps_are_the_valid_steps_of_the_config() -> None:
