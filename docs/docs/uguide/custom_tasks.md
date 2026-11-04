@@ -13,6 +13,8 @@ documented in the reference pages ([`runner`](../refs/runner.md), [`output`](../
 | `invoke_tasklib.runner.build_command` | Build a command line with quoted arguments and paths                 |
 | `invoke_tasklib.runner.run`           | Run a command: echo, pty only on a terminal, program check           |
 | `invoke_tasklib.runner.check_program` | Check that the programs of a command are installed                   |
+| `invoke_tasklib.runner.find_tool`     | Find a program on the `PATH`, or a Python module of the interpreter  |
+| `invoke_tasklib.runner.split_args`    | Split the value of an option like a shell does                       |
 | `invoke_tasklib.output.say`           | Print a progress message                                             |
 | `invoke_tasklib.output.step`          | Print the start and the end of a step, and `❌ Failed: ...` on error |
 
