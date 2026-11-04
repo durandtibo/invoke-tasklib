@@ -1811,7 +1811,10 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
   never splits or injects a command.</li>
 <li><strong>Run it with <code>run</code></strong>: it echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the <code>PATH</code> (with an installation hint if it is not). Do not call <code>c.run</code>
-  directly.</li>
+  directly. For <code>python -m &lt;module&gt;</code>, the module is checked only when the command uses the running
+  interpreter (<code>python_executable()</code>, the one that runs <code>invoke</code>): for another interpreter or a
+  <code>python</code> found on the <code>PATH</code>, a missing module is reported by Python itself
+  (<code>No module named ...</code>), without a hint. Use <code>python_executable()</code> in your commands.</li>
 <li><strong>Report the step with <code>step</code></strong>: it prints the start message, then the done message, or
   <code>❌ Failed: &lt;what was being done&gt;</code> if the block raises (the exception is raised again, so the exit
   code is unchanged). Use <code>say</code> for any other message; neither fails on a terminal that cannot encode
