@@ -106,8 +106,7 @@ def test_check_isolated_does_not_echo_one_command_per_module(
     _write(project, {"quietpkg/__init__.py": "", "quietpkg/a.py": "", "quietpkg/b.py": ""})
     imports.check_isolated(_context("quietpkg"))
     assert capsys.readouterr().out == (
-        "🔍 Discovering modules of quietpkg...\n"
-        "🔍 Checking 3 module(s) one at a time...\n"
+        "🔍 Importing each module of quietpkg in its own interpreter...\n"
         "✅ All 3 module(s) imported on their own\n"
     )
 
@@ -158,3 +157,27 @@ def test_check_cycles_reports_the_cycle_that_import_order_hides(
     imports.check_isolated(_context("hidpkg"))
     with pytest.raises(Exit, match=r"Found 1 import cycle"):
         imports.check_cycles(_context("hidpkg"))
+
+
+def test_check_isolated_checks_many_modules(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    files = {f"bigpkg/m{i}.py": "X = 1\n" for i in range(40)}
+    _write(project, {"bigpkg/__init__.py": "", **files})
+    imports.check_isolated(_context("bigpkg"))
+    assert "✅ All 41 module(s) imported on their own" in capsys.readouterr().out
+
+
+def test_check_isolated_lists_the_failures_in_the_order_of_the_modules(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    files = {f"orderpkg/m{i}.py": "raise RuntimeError('boom')\n" for i in (3, 1, 2)}
+    _write(project, {"orderpkg/__init__.py": "", **files})
+    with pytest.raises(Exit, match=r"^3 of 4 module"):
+        imports.check_isolated(_context("orderpkg"))
+    assert capsys.readouterr().err == (
+        "❌ orderpkg.m1: RuntimeError: boom\n"
+        "❌ orderpkg.m2: RuntimeError: boom\n"
+        "❌ orderpkg.m3: RuntimeError: boom\n"
+        "❌ Failed: Checking that each module imports on its own\n"
+    )

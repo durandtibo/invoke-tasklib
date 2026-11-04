@@ -47,15 +47,17 @@ invoke imports.check-isolated
 
 This is the former behavior of `imports.check-cycles`. It discovers every module of the package
 (`__main__` modules are skipped) without importing anything, then imports each one in its own
-`python -c` process with the interpreter that runs Invoke. A module that fails to import on its own
+interpreter (the one that runs Invoke). A module that fails to import on its own
 depends on something that is only initialized as a side effect of importing another module first,
-which is often the symptom of a cycle. It also fails on a missing dependency or a syntax error, and
-it starts one interpreter per module, so it is slow for a package with heavy imports.
+which is often the symptom of a cycle. It also fails on a missing dependency or a syntax error.
+It starts one interpreter per module, so it is slower than `imports.check-cycles` for a package
+with heavy imports; up to 8 interpreters run at the same time.
 
-The commands are not echoed and their output is hidden. The task prints one line for the discovery,
-one for the check, and then either one `✅` summary or one `❌ <module>: <last line of the traceback>`
-line for each module that failed and the exit code 1. Every module is tried, so one run lists all
-the failures.
+One worker command (`python -m invoke_tasklib._discover --import-each <package>`) does the discovery
+and starts the interpreters, so the task runs a single command whatever the size of the package. It is
+not echoed and its output is hidden. The task prints one line, and then either one `✅` summary or one
+`❌ <module>: <last line of the traceback>` line for each module that failed (in the order of the
+modules) and the exit code 1. Every module is tried, so one run lists all the failures.
 
 ## See Also
 

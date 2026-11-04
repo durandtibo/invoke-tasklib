@@ -4,11 +4,18 @@ It is run in a subprocess by ``imports.check-isolated``::
 
     python -m invoke_tasklib._discover <package>
 
-and prints one module name per line.
+and prints one module name per line, or::
+
+    python -m invoke_tasklib._discover --import-each <package>
+
+which imports every module in its own interpreter (the worker of
+``imports.check-isolated``) and prints the number of modules, then one
+line ``<module>\t<reason>`` for each module that fails to import.
 """
 
 from __future__ import annotations
 
+import asyncio
 import importlib.util
 import pkgutil
 import sys
@@ -94,12 +101,149 @@ def _walk(prefix: str, locations: list[str]) -> list[str]:
     return sorted(found)
 
 
+MAX_WORKERS = 8
+r"""The most interpreters that ``import_each`` runs at the same time."""
+
+
+def _failure_reason(stderr: str, returncode: int) -> str:
+    r"""Say why an import failed, in one line.
+
+    Args:
+        stderr: The standard error of the interpreter.
+        returncode: Its exit code.
+
+    Returns:
+        The last line of the standard error (the exception of a
+        traceback), or the exit code if there is none.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._discover import _failure_reason
+    >>> _failure_reason("Traceback ...\nImportError: x\n", 1)
+    'ImportError: x'
+    >>> _failure_reason("", 3)
+    'exit code 3'
+
+    ```
+    """
+    lines = [line.strip() for line in stderr.splitlines() if line.strip()]
+    return lines[-1] if lines else f"exit code {returncode}"
+
+
+_IMPORT_CODE = "import importlib, sys; importlib.import_module(sys.argv[1])"
+r"""The code of the interpreter that imports a module: the name of the
+module is an argument, so it is never part of the code."""
+
+
+async def _try_import(module: str, slots: asyncio.Semaphore) -> str | None:
+    r"""Import a module in a new interpreter.
+
+    Args:
+        module: The dotted name of the module.
+        slots: Limits the number of interpreters that run at once.
+
+    Returns:
+        ``None`` if the import succeeds, else the reason of the failure,
+        see ``_failure_reason``.
+
+    Example usage:
+
+    ```pycon
+    >>> import asyncio
+    >>> from invoke_tasklib._discover import _try_import
+    >>> async def main():
+    ...     return await _try_import("json", asyncio.Semaphore(1))
+    >>> asyncio.run(main()) is None
+    True
+
+    ```
+    """
+    async with slots:
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-c",
+            _IMPORT_CODE,
+            module,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await proc.communicate()
+    code = proc.returncode or 0
+    return None if code == 0 else _failure_reason(stderr.decode(errors="replace"), code)
+
+
+async def _try_import_all(modules: list[str], workers: int) -> list[str | None]:
+    r"""Import every module in its own interpreter, a few at a time.
+
+    Args:
+        modules: The dotted names of the modules.
+        workers: The most interpreters to run at the same time.
+
+    Returns:
+        The result of ``_try_import`` for each module, in order.
+
+    Example usage:
+
+    ```pycon
+    >>> import asyncio
+    >>> from invoke_tasklib._discover import _try_import_all
+    >>> asyncio.run(_try_import_all(["json", "re"], 2))
+    [None, None]
+
+    ```
+    """
+    slots = asyncio.Semaphore(max(1, workers))
+    return list(await asyncio.gather(*(_try_import(module, slots) for module in modules)))
+
+
+def import_each(name: str, workers: int = MAX_WORKERS) -> tuple[int, list[tuple[str, str]]]:
+    r"""Import every module of a package in its own interpreter.
+
+    The modules are discovered without importing them, see
+    ``discover_modules``. Each one is imported in a fresh interpreter,
+    so a module that only works after another one was imported fails.
+    Up to ``workers`` interpreters run at the same time, which is what
+    makes the check fast for a large package.
+
+    Args:
+        name: The name of the package (or module).
+        workers: The most interpreters to run at the same time.
+
+    Returns:
+        The number of modules, and a ``(module, reason)`` pair for each
+        module that failed, in the order of the modules.
+
+    Raises:
+        ModuleNotFoundError: If ``name`` cannot be found.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._discover import import_each
+    >>> import_each("invoke_tasklib._discover")
+    (1, [])
+
+    ```
+    """
+    modules = discover_modules(name)
+    reasons = asyncio.run(_try_import_all(modules, workers))
+    return len(modules), [(m, r) for m, r in zip(modules, reasons, strict=True) if r is not None]
+
+
 def main(argv: list[str]) -> int:
     r"""Print the modules of the package given on the command line.
 
+    With ``--import-each`` before the name, every module is imported in
+    its own interpreter instead (see ``import_each``): the output is the
+    number of modules, then ``<module>\t<reason>`` for each failure.
+    The exit code is 0 even if modules failed: the caller reads the
+    output.
+
     Args:
         argv: The command line arguments, without the program name:
-            the name of the package.
+            the name of the package, with ``--import-each`` before it
+            to import the modules.
 
     Returns:
         The exit code: 0 on success, 2 if the arguments are invalid,
@@ -115,15 +259,21 @@ def main(argv: list[str]) -> int:
 
     ```
     """
-    if len(argv) != 1:
-        sys.stderr.write("usage: python -m invoke_tasklib._discover <package>\n")
+    each = argv[:1] == ["--import-each"]
+    names = argv[1:] if each else argv
+    if len(names) != 1:
+        sys.stderr.write("usage: python -m invoke_tasklib._discover [--import-each] <package>\n")
         return 2
     try:
-        modules = discover_modules(argv[0])
+        if each:
+            total, failures = import_each(names[0])
+            lines = [str(total), *(f"{module}\t{reason}" for module, reason in failures)]
+        else:
+            lines = discover_modules(names[0])
     except ModuleNotFoundError as exc:
         sys.stderr.write(f"{exc}\n")
         return 1
-    sys.stdout.write("\n".join(modules) + "\n")
+    sys.stdout.write("\n".join(lines) + "\n")
     return 0
 
 
