@@ -2,8 +2,8 @@
 
 :book: This page shows how to write a task of your own that behaves like the tasks of
 `invoke-tasklib`. The helpers below are the supported public API for that: their signatures are
-documented in the reference pages ([`runner`](../refs/runner.md), [`output`](../refs/output.md) and
-[`config`](../refs/config.md)).
+documented in the reference pages ([`runner`](../refs/runner.md), [`tools`](../refs/tools.md),
+[`output`](../refs/output.md) and [`config`](../refs/config.md)).
 
 ## Overview
 
@@ -35,7 +35,7 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def check_complexity(c, args=None, paths=None):
+def check_complexity(c, *, args=None, paths=None):
     r"""Check the complexity of the code with radon."""
     cfg = load_config(c)
     with step(c, "🔍 Checking the complexity...", "✅ Complexity check passed"):
@@ -48,7 +48,7 @@ ns.add_task(check_complexity)
 
 - **Read the config with `load_config(c)`**, not from `c.config`: it merges the defaults, validates
   the values and exits with a one-line message on an invalid config. The `tasklib` section is
-  available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test` and `cfg.check`.
+  available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`, `cfg.check` and `cfg.fix`.
 - **Build the command with `build_command`**: the program is used as it is, and the user's `args`
   and `paths` (and the default paths) are split like a shell does and quoted, so a space or a `;`
   never splits or injects a command. For the same reason a glob (`*.py`), `~` or `$HOME` reaches
@@ -120,4 +120,5 @@ something else (a CI action, a script) depends on.
 
 - [Config](config.md): the `tasklib` section that `load_config` resolves.
 - [`invoke_tasklib.runner` reference](../refs/runner.md)
+- [`invoke_tasklib.tools` reference](../refs/tools.md)
 - [`invoke_tasklib.output` reference](../refs/output.md)

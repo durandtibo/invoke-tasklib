@@ -86,7 +86,7 @@ step name.
 The modules of ``unit`` depend on the config, see ``_unit_modules``.
 To add a step, add its name to ``CHECK_STEPS`` in
 ``config/_constants.py`` (a test checks that the names agree), and its
-install hints to ``runner.py`` and its tools to ``env.py``.
+install hints to ``tools.py`` and its tools to ``env.py``.
 """
 
 

@@ -19,7 +19,9 @@ doctests, unit/integration/functional tests, and benchmarks with `pytest`.
 
 All test tasks (except `test.benchmark`, `test.doctest`, and `test.doctest-markdown`) run `pytest`
 with `--xdoctest` enabled, so doctests embedded in the code under test are also collected. Set
-`tasklib.test.xdoctest: false` if the project does not have the `xdoctest` package.
+`tasklib.test.xdoctest: false` if the project does not have the `xdoctest` package. The test scopes
+also run with `--timeout` (the timeout of the scope, see below); set `tasklib.test.timeout: false`
+if the project does not have the `pytest-timeout` package.
 
 ## Running Doctests
 
@@ -42,8 +44,8 @@ names it; use `test.doctest-markdown` alone in a project that does not have the 
 invoke test.doctest-markdown
 ```
 
-Recursively finds every `*.md` file in the project (skipping `.venv`, `.pytest_cache`, `.git`,
-and `node_modules`) and runs, for each one:
+Finds every `*.md` file in the project (see below for the files that are left out) and runs, for
+each one:
 
 ```shell
 python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF <file>.md

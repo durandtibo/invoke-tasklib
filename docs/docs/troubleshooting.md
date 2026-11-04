@@ -74,8 +74,8 @@ ns = make_ns()
 ```
 
 Invoke discovers tasks from a module-level `ns` (or `namespace`) variable in `tasks.py`; if you
-renamed the variable or wrapped it, Invoke won't find it. (`from invoke_tasklib import ns` still
-works but is deprecated and warns.)
+renamed the variable or wrapped it, Invoke won't find it. (The pre-built `invoke_tasklib.ns` was
+removed: `from invoke_tasklib import ns` raises an `ImportError`, use `make_ns()`.)
 
 ## A task fails with "command not found" (`ruff`, `ty`, `shellcheck`, ...)
 

@@ -245,8 +245,9 @@ relative one (`from . import my_custom_task`), which fails with an `ImportError`
 
 or keep only some of them with `include`, e.g. `make_ns(include=["lint", "test.unit"])`. The names
 are namespaces (`"doc"`) or tasks (`"release.publish"`); an unknown name raises a `ValueError`. The
-`make_ns()` with no argument has all the tasks (the former pre-built `invoke_tasklib.ns` is
-deprecated: it was one collection shared by every importer). Individual task modules can also be composed by hand:
+`make_ns()` with no argument has all the tasks (the former pre-built `invoke_tasklib.ns`, one
+collection shared by every importer, was removed). Individual task modules can also be composed by
+hand:
 
 ```python
 # tasks.py

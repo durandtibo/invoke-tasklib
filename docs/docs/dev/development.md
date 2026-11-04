@@ -105,9 +105,13 @@ invoke-tasklib/
 ├── src/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `make_ns` and individual task modules
-│       ├── config.py         # Shared config resolution (`get_config`, `load_config`)
-│       ├── runner.py         # Shared command runner (`run`, `build_command`)
+│       ├── config/           # Config resolution (`get_config`, `load_config`, JSON schema)
+│       ├── runner.py         # Command runner (`run`, `capture`, `build_command`)
+│       ├── tools.py          # Tool lookup and install hints (`find_tool`, `check_program`)
 │       ├── output.py         # Progress messages (`say`, `step`)
+│       ├── _steps.py         # Step runner shared by `check.all` and `fix.all`
+│       ├── _files.py         # File lookup of the format and test tasks
+│       ├── _graph.py         # Static import graph of `imports.check-cycles`
 │       ├── _discover.py      # Module discovery run by `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
@@ -119,8 +123,11 @@ invoke-tasklib/
 │       ├── doc.py            # doc.* tasks
 │       ├── security.py       # security.* tasks
 │       ├── clean.py          # clean.* tasks
-│       └── check.py          # check.* tasks
+│       ├── check.py          # check.* tasks
+│       ├── fix.py            # fix.* tasks
+│       └── configuration.py  # config.* tasks
 ├── tests/
+│   ├── helpers.py            # `make_context` and `commands`, shared by the tests
 │   ├── unit/                 # Unit tests, one module per source module
 │   └── integration/          # Tests that run the real tools
 ├── review/                   # Review notes of the repository
@@ -133,7 +140,8 @@ invoke-tasklib/
 ## Adding a New Task
 
 1. Pick the right module (`formatting.py`, `lint.py`, `imports.py`, `typecheck.py`, `testing.py`,
-   `env.py`, `release.py`, `doc.py`, `security.py`, `clean.py` or `check.py`), or create a new one
+   `env.py`, `release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`, `fix.py` or
+   `configuration.py`), or create a new one
    if the task doesn't fit an existing namespace.
 2. Follow the `check_<target>`/`fix_<target>` naming convention when applicable (see
    [Format](../uguide/format.md)).
@@ -145,11 +153,13 @@ invoke-tasklib/
    summary shown by `invoke --list`. Give each option a `help` entry in `@task`, and add
    `--args` (`ARGS_HELP`) and `--paths` (`PATHS_HELP`) when the tool accepts extra arguments or
    paths. The docstring is also used by the [reference docs](../refs/format.md).
-5. Add unit tests using `invoke.context.MockContext` (see existing tests for the pattern).
+5. Add unit tests using `invoke.context.MockContext` (see existing tests for the pattern), and an
+   integration test in `tests/integration/` for what the unit tests patch.
 6. If the module is new, register it in `src/invoke_tasklib/__init__.py` (`_MODULES` and
    `__all__`).
 7. Update the [README](https://github.com/durandtibo/invoke-tasklib/blob/main/README.md) task
-   table and the corresponding [user guide](../uguide/format.md) page.
+   table, `uguide/index.md`, `docs/index.md` and the corresponding
+   [user guide](../uguide/format.md) page.
 
 ## Testing Guidelines
 

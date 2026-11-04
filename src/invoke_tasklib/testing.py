@@ -190,9 +190,8 @@ def _run_pytest(
     the coverage options and the path. ``--xdoctest`` is used unless
     ``tasklib.test.xdoctest`` is false, ``--timeout`` is used unless
     ``tasklib.test.timeout`` is false (the project does not have
-    ``pytest-timeout``), and
-    ``--cov-fail-under`` is used with ``cov`` if
-    ``tasklib.test.cov_fail_under`` is set.
+    ``pytest-timeout``), and ``--cov-fail-under`` is used with ``cov``
+    if ``tasklib.test.cov_fail_under`` is set.
 
     Args:
         c: The invoke context.
@@ -201,8 +200,9 @@ def _run_pytest(
             ``"unit tests"``.
         timeout: The timeout in seconds of each test. It is not used if
             ``tasklib.test.timeout`` is false.
-        cov: If True, generate coverage reports in HTML, XML and
-            terminal formats.
+        cov: If True, generate the coverage reports of
+            ``tasklib.test.cov_reports`` (``html,xml,term`` by
+            default).
         append: If True and ``cov`` is True, append to the coverage data
             of the previous runs instead of replacing it.
         skip_missing: If True, a message is written and nothing is run
@@ -268,8 +268,9 @@ def all_(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports in HTML, XML, and
-            terminal formats. Default is False.
+        cov: If True, generate the coverage reports of
+            ``tasklib.test.cov_reports`` (``html,xml,term`` by
+            default). Default is False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests
             directory.
@@ -303,7 +304,8 @@ def unit(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports. Default is False.
+        cov: If True, generate the coverage reports of
+            ``tasklib.test.cov_reports``. Default is False.
         args: Extra arguments passed to pytest, e.g. ``"-k foo -x"``.
         paths: The files or directories to run instead of the tests of
             this scope.
@@ -342,7 +344,8 @@ def integration(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports. Default is False.
+        cov: If True, generate the coverage reports of
+            ``tasklib.test.cov_reports``. Default is False.
         append: If True and ``cov`` is True, add to the coverage data
             of the previous runs (``--cov-append``) instead of
             replacing it, e.g. after ``test.unit --cov``. Default is
@@ -382,7 +385,8 @@ def functional(
 
     Args:
         c: The invoke context.
-        cov: If True, generate coverage reports. Default is False.
+        cov: If True, generate the coverage reports of
+            ``tasklib.test.cov_reports``. Default is False.
         append: If True and ``cov`` is True, add to the coverage data
             of the previous runs (``--cov-append``) instead of
             replacing it, e.g. after ``test.unit --cov``. Default is

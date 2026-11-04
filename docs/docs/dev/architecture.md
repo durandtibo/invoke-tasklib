@@ -92,9 +92,10 @@ Seven small modules support the task modules:
 - `_steps.py`: the step runner shared by `check.all` and `fix.all`: the selection of the steps
   (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
   `--keep-going` mode and the final summary of the failures.
-- `_files.py`: `find_files(root, suffix, excluded)` finds the files with a suffix by a walk in
-  Python, without `find` or `xargs`, and skips the `EXCLUDED_DIRS` at any depth. It is used by the
-  format and test tasks that work on shell scripts and markdown files.
+- `_files.py`: `project_files(c, root, suffix, excluded)` finds the files with a suffix, with
+  `git ls-files` in a git work tree and with `find_files`, a walk in Python (no `find` or `xargs`)
+  that skips the `EXCLUDED_DIRS` at any depth, otherwise. It is used by the format and test tasks
+  that work on shell scripts and markdown files.
 - `_graph.py`: the static import graph of a package (built with `ast`, without importing
   anything) and its cycles. It is used by `imports.check-cycles`.
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
@@ -196,7 +197,8 @@ Tests use `invoke.context.MockContext`, which records every `c.run(...)` call (m
 `runner.run`) without executing it. This lets tests assert on the exact shell command a task would run, without depending on
 `ruff`, `pytest`, `uv`, etc. being installed or configured in the test environment. The unit
 tests also patch `shutil.which` (an autouse fixture in `tests/unit/conftest.py`) so that the check
-of the `PATH` done by `invoke_tasklib.runner.run` passes on any machine.
+of the `PATH` done by `invoke_tasklib.tools.check_program` (called by `runner.run`) passes on any
+machine.
 
 ## Future Directions
 
