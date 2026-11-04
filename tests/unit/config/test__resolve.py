@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 from invoke.config import Config
 from invoke.context import Context
 from invoke.exceptions import Exit
 
-from invoke_tasklib.config import SCHEMA, Unset, get_config, load_config
+from invoke_tasklib.config import (
+    PROJECT_PREFIX_ATTRIBUTE,
+    SCHEMA,
+    Unset,
+    get_config,
+    load_config,
+)
 from invoke_tasklib.config._resolve import _check_project_root
 from invoke_tasklib.config._schema import _defaults
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def _context(tasklib_config: object = None) -> Context:
@@ -561,6 +564,43 @@ def test_check_project_root_accepts_the_directory_of_tasks_py(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert _check_project_root(_located_context(tmp_path)) is None
+
+
+def _context_without_the_attribute(tmp_path: Path) -> Context:
+    r"""A context whose config lacks ``_project_prefix``, as if Invoke
+    had renamed it."""
+    context = _located_context(tmp_path)
+    object.__delattr__(context.config, PROJECT_PREFIX_ATTRIBUTE)
+    return context
+
+
+def test_check_project_root_warns_when_invoke_has_no_project_prefix(tmp_path: Path) -> None:
+    with pytest.warns(RuntimeWarning, match=r"this version of Invoke has no '_project_prefix'"):
+        _check_project_root(_context_without_the_attribute(tmp_path))
+
+
+def test_check_project_root_is_off_when_invoke_has_no_project_prefix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path.parent)
+    with pytest.warns(RuntimeWarning, match=r"Cannot check that inv runs from the project root"):
+        assert _check_project_root(_context_without_the_attribute(tmp_path)) is None
+
+
+def test_check_project_root_does_not_warn_without_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, recwarn: pytest.WarningsRecorder
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _check_project_root(_located_context(None))
+    assert len(recwarn) == 0
+
+
+def test_project_prefix_attribute_exists_on_an_invoke_config() -> None:
+    assert hasattr(Config(), PROJECT_PREFIX_ATTRIBUTE)
+
+
+def test_project_prefix_attribute_holds_the_project_location(tmp_path: Path) -> None:
+    assert Path(getattr(Config(project_location=tmp_path), PROJECT_PREFIX_ATTRIBUTE)) == tmp_path
 
 
 def test_check_project_root_accepts_a_context_without_location(

@@ -2,6 +2,7 @@ r"""Resolution of the tasklib config from the Invoke config."""
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -19,6 +20,10 @@ from invoke_tasklib.config._validate import _as_mapping, _check_keys, _validate_
 
 if TYPE_CHECKING:
     from invoke.context import Context
+
+PROJECT_PREFIX_ATTRIBUTE = "_project_prefix"
+r"""The private attribute of the Invoke config that holds the directory
+of the loaded ``tasks.py`` (there is no public API for it)."""
 
 
 def get_config(c: Context) -> TasklibConfig:
@@ -107,6 +112,11 @@ def _check_project_root(c: Context) -> None:
         ValueError: If the current directory is not the directory of
             the loaded ``tasks.py``. The message tells how to fix it.
 
+    Warns:
+        RuntimeWarning: If the config has no ``_project_prefix``
+            attribute (a release of Invoke renamed it): the check is
+            off, and the warning says so instead of passing silently.
+
     Example usage:
 
     ```pycon
@@ -117,7 +127,15 @@ def _check_project_root(c: Context) -> None:
 
     ```
     """
-    prefix = getattr(c.config, "_project_prefix", None)
+    if not hasattr(c.config, PROJECT_PREFIX_ATTRIBUTE):
+        warnings.warn(
+            f"Cannot check that inv runs from the project root: this version of Invoke has "
+            f"no {PROJECT_PREFIX_ATTRIBUTE!r} (please report it)",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return
+    prefix = getattr(c.config, PROJECT_PREFIX_ATTRIBUTE)
     if prefix is None:
         return
     root = Path(prefix).resolve()

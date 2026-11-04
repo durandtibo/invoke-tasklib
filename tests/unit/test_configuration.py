@@ -76,6 +76,43 @@ def test_levels_of_an_invoke_config_are_dicts(attribute: str) -> None:
     assert isinstance(getattr(Config(), attribute), dict)
 
 
+def test_unknown_internals_of_an_invoke_config_is_empty() -> None:
+    assert configuration._unknown_internals(Config()) == []
+
+
+@pytest.mark.parametrize("attribute", [*_LEVEL_ATTRIBUTES, "_project_prefix"])
+def test_unknown_internals_names_a_missing_attribute(attribute: str) -> None:
+    config = Config()
+    object.__delattr__(config, attribute)
+    assert configuration._unknown_internals(config) == [attribute]
+
+
+def test_unknown_internals_lists_the_missing_attributes_in_order() -> None:
+    config = Config()
+    object.__delattr__(config, "_project_prefix")
+    object.__delattr__(config, "_env")
+    assert configuration._unknown_internals(config) == ["_env", "_project_prefix"]
+
+
+def test_show_warns_when_invoke_has_no_origin_attribute(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = _context(_MINIMAL)
+    object.__delattr__(c.config, "_env")
+    configuration.show(c)
+    assert capsys.readouterr().err == (
+        "⚠️  This version of Invoke has no _env: the origin comments may be wrong, "
+        "and the check of the current directory is off\n"
+    )
+
+
+def test_show_does_not_warn_with_a_complete_invoke_config(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    configuration.show(_context(_MINIMAL))
+    assert capsys.readouterr().err == ""
+
+
 def test_origin_of_a_default_value() -> None:
     config = Config(defaults=_BASE_DEFAULTS)
     assert configuration._origin(config, "paths", "tests", "tests") == "default"
