@@ -379,7 +379,8 @@ def test_check_tools_missing_program_says_how_to_install_it(
         env.check_tools(make_context())
     assert capsys.readouterr().out == (
         "🧰 Checking the tools of the tasks...\n"
-        "❌ 'ruff' was not found on the PATH. Install it with the 'dev' group: "
+        "❌ 'ruff' was not found on the PATH or next to the "
+        "Python interpreter. Install it with the 'dev' group: "
         "`uv sync --group dev`.\n"
         "✅ pytest: /found/pytest\n"
     )
@@ -418,7 +419,10 @@ def test_check_tools_uses_the_hint_of_the_program(
     monkeypatch.setattr(env, "find_tool", _available())
     with pytest.raises(Exit, match=r"tool\(s\) missing"):
         env.check_tools(make_context())
-    assert f"❌ 'uv' was not found on the PATH. {PROGRAM_HINTS['uv']}" in capsys.readouterr().out
+    assert (
+        f"❌ 'uv' was not found on the PATH or next to the Python interpreter. "
+        f"{PROGRAM_HINTS['uv']}" in capsys.readouterr().out
+    )
 
 
 @pytest.mark.usefixtures("_two_tools")

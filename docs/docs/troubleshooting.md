@@ -24,12 +24,13 @@ place, and a task like `test.unit` would skip the missing `tests/unit` directory
 that reads the config now exits with code 2 and this message instead. Run `inv` from the directory
 of `tasks.py`, as in `cd <project root> && inv check.all`, or use the `make` targets.
 
-## `'ruff' was not found on the PATH`
+## `'ruff' was not found on the PATH or next to the Python interpreter`
 
 Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on
-the `PATH` and exit with code 127 if it is not. Install the project tools with
-`invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`)
-or activate the virtual environment that has them. Run `invoke env.check-tools` to list every missing
+the `PATH` or in the directory of the Python interpreter that runs `invoke` (so `.venv/bin/inv` finds
+the programs of `.venv/bin` without an activation), and exit with code 127 if it is not. The commands
+run with that directory first on their `PATH`. Install the project tools with
+`invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`). Run `invoke env.check-tools` to list every missing
 tool at once; `invoke check` does the same for the steps it is going to run.
 
 The hint depends on the program: `uv` and `uvx` point to the installation page of `uv`
