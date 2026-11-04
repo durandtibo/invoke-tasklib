@@ -543,6 +543,17 @@ def test_publish_reports_a_failure_of_the_upload(capsys: pytest.CaptureFixture[s
     assert "❌ Failed: Publishing" in capsys.readouterr().err
 
 
+@pytest.mark.usefixtures("dist")
+def test_publish_dry_run_reports_a_failure_of_the_upload(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context(_CFG)
+    c.run = Mock(side_effect=[Result(), Result(), Result(), Exit("boom", code=1)])
+    with pytest.raises(Exit, match=r"boom"):
+        release.publish(c, dry_run=True, skip_checks=True)
+    assert "❌ Failed: Publishing (dry run)" in capsys.readouterr().err
+
+
 ####################################
 #     Tests for _build_targets     #
 ####################################

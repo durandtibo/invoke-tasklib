@@ -10,7 +10,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import report_failure, say
+from invoke_tasklib.output import report_failure, say, step
 from invoke_tasklib.runner import run
 from invoke_tasklib.tools import find_tool, not_found_message
 
@@ -79,12 +79,11 @@ def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None
         return
     if not yes and Path(VENV_DIR).exists():
         _confirm_clear(VENV_DIR)
-    with report_failure(c, "🐍 Creating virtual environment..."):
-        say(c, f"🐍 Creating virtual environment{with_version}...")
+    start = f"🐍 Creating virtual environment{with_version}..."
+    with step(c, start, "✅ Virtual environment created successfully"):
         option = f" --python {python_version}" if python_version else ""
         run(c, f"uv venv{option} --clear")
         _install(c, ",".join(cfg.groups.install), optional_deps=True)
-    say(c, "✅ Virtual environment created successfully")
 
 
 @task(
@@ -171,8 +170,7 @@ def update(c: Context, *, groups: str | None = None) -> None:
     """
     if groups is None:
         groups = ",".join(load_config(c).groups.update)
-    with report_failure(c, "🔄 Updating dependencies..."):
-        say(c, "🔄 Updating dependencies...")
+    with step(c, "🔄 Updating dependencies...", "✅ Update complete"):
         run(c, "uv lock --upgrade")
         if Path(PRE_COMMIT_CONFIG).is_file():
             say(c, "🪝 Updating pre-commit hooks...")
@@ -181,7 +179,6 @@ def update(c: Context, *, groups: str | None = None) -> None:
             say(c, f"⏭️  No {PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
         say(c, f"📦 Reinstalling with dependency groups: {groups}...")
         _install(c, groups, optional_deps=True)
-    say(c, "✅ Update complete")
 
 
 @task

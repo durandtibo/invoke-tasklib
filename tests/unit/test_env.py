@@ -487,6 +487,16 @@ def test_create_venv_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> No
     assert "❌ Failed: Creating virtual environment" in capsys.readouterr().err
 
 
+def test_create_venv_failure_names_the_python_version(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context({"package": {"name": "mypkg", "python_version": "3.11"}})
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        env.create_venv(c)
+    assert capsys.readouterr().err == "❌ Failed: Creating virtual environment with Python 3.11\n"
+
+
 def _fail_on_sync(command: str, **_kwargs: object) -> None:
     if command.startswith("uv sync"):
         msg = "boom"

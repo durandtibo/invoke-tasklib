@@ -481,8 +481,6 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
     benchmarks = cfg.paths.benchmarks
     if not paths and not _directory_exists(c, benchmarks, "benchmarks"):
         return
-    with report_failure(c, "⏱️  Running benchmarks..."):
-        say(c, "⏱️  Running benchmarks...")
+    with step(c, "⏱️  Running benchmarks...", "✅ Benchmarks complete"):
         cmd = f"{python_executable()} -m pytest --benchmark-only"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
-    say(c, "✅ Benchmarks complete")
