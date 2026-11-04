@@ -121,13 +121,13 @@ def test_say_forced_ascii_replaces_accented_letters(monkeypatch: pytest.MonkeyPa
     monkeypatch.setenv(ASCII_ENV_VAR, "1")
     out = StringIO()
     say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Removing café/é.py")
-    assert out.getvalue() == "[ok] Removing caf?/?.py\n"
+    assert out.getvalue() == "[ok] Removing caf?/?.py\n"  # codespell:ignore caf
 
 
 def test_say_replaces_accented_letters_the_stream_cannot_encode() -> None:
     raw, stream = _ascii_stream()
     say(Context(config=Config(overrides={"run": {"out_stream": stream}})), "✅ café/é.py")
-    assert raw.getvalue() == b"[ok] caf?/?.py\n"
+    assert raw.getvalue() == b"[ok] caf?/?.py\n"  # codespell:ignore caf
 
 
 def test_say_keeps_accented_letters_on_a_utf8_stream() -> None:
