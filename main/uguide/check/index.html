@@ -1810,6 +1810,10 @@ set because they need more tools (<code>shellcheck</code>, <code>codespell</code
 invoke<span class="w"> </span>check<span class="w"> </span>--only<span class="w"> </span>lint,types
 invoke<span class="w"> </span>check<span class="w"> </span>--skip<span class="w"> </span>unit
 </code></pre></div>
+<p>Before running anything, the task looks up the tools that the selected steps need and reports all the
+missing ones at once (exit code 127), so a missing <code>ty</code> is not discovered after the formatting has
+run. With <code>--keep-going</code>, only the steps that miss a tool are not run: they are reported as failed,
+with the missing tool as the reason. Run <a href="../env/"><code>env.check-tools</code></a> to see every tool of the tasks.</p>
 <p>By default the task stops at the first failure, as the CI jobs do; use <code>--keep-going</code> locally to
 learn about all the problems in one run. Use the tasks directly (with <code>--args</code> and <code>--paths</code>) to run only one
 of them, or <a href="../lint/"><code>lint.pre-commit</code></a> to run the hooks of the project. To leave <code>check</code> out of a

@@ -1907,7 +1907,8 @@ least:</p>
 <p>Before running a command, the tasks check that its program (<code>ruff</code>, <code>ty</code>, <code>uv</code>, <code>mike</code>, ...) is on
 the <code>PATH</code> and exit with code 127 if it is not. Install the project tools with
 <code>invoke env.install</code> (the <code>dev</code> group has the linters and test tools, the <code>docs</code> group has <code>mike</code>)
-or activate the virtual environment that has them.</p>
+or activate the virtual environment that has them. Run <code>invoke env.check-tools</code> to list every missing
+tool at once; <code>invoke check</code> does the same for the steps it is going to run.</p>
 <p>The hint depends on the program: <code>uv</code> and <code>uvx</code> point to the installation page of <code>uv</code>
 (<code>env.install</code> itself needs it), <code>git</code>, <code>shellcheck</code> and <code>shfmt</code> to the system package manager, and
 <code>codespell</code> to the project dependencies. The tools of the <code>dev</code> group (<code>ruff</code>, <code>ty</code>, <code>pyright</code>,
@@ -1918,6 +1919,10 @@ name their group, for example <code>uv sync --group docs</code>.</p>
 <code>{ ...; }</code>, <code>$(...)</code>) are not looked up. Pass <code>check=False</code> to <code>run</code> to skip the check of a command.
 The module of <code>python -m &lt;module&gt;</code> is checked too (for example <code>pytest</code>), and is reported as
 <code>The Python module 'pytest' is not installed for ...</code> instead of Python's own <code>No module named</code>.</p>
+<p>The pytest plugins of the options are checked as well: <code>--xdoctest</code> needs <code>xdoctest</code>, <code>--timeout</code>
+needs <code>pytest-timeout</code>, <code>--cov*</code> needs <code>pytest-cov</code> and <code>--benchmark-only</code> needs <code>pytest-benchmark</code>.
+A missing plugin is reported as <code>The option --xdoctest needs the pytest plugin 'xdoctest'</code> with the
+command that adds it, instead of pytest's <code>unrecognized arguments</code>.</p>
 <h2 id="invoke-command-not-found-after-installing"><code>invoke: command not found</code> after installing<a class="headerlink" href="#invoke-command-not-found-after-installing" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> depends on <code>invoke</code>, but installing a library into a virtual environment does not
 always put its console scripts on <code>PATH</code> the way you expect. Make sure:</p>

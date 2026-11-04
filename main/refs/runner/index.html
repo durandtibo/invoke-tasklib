@@ -1578,6 +1578,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.runner.PLUGIN_OPTIONS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PLUGIN_OPTIONS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.runner.PROGRAM_GROUPS" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1811,6 +1822,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.runner.PLUGIN_OPTIONS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PLUGIN_OPTIONS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.runner.PROGRAM_GROUPS" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2024,6 +2046,42 @@
     <div class="doc doc-contents ">
 
         <p>Help of the <code>--paths</code> option of the tasks.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="invoke_tasklib.runner.PLUGIN_OPTIONS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.runner.PLUGIN_OPTIONS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.runner.PLUGIN_OPTIONS" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">PLUGIN_OPTIONS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"--xdoctest"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"xdoctest"</span><span class="p">,</span> <span class="s2">"xdoctest"</span><span class="p">),</span>
+    <span class="s2">"--timeout"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_timeout"</span><span class="p">,</span> <span class="s2">"pytest-timeout"</span><span class="p">),</span>
+    <span class="s2">"--cov"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--cov-report"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--cov-append"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--cov-fail-under"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--benchmark-only"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"pytest_benchmark"</span><span class="p">,</span>
+        <span class="s2">"pytest-benchmark"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The pytest options that come from a plugin, as a tuple of the
+module and of the package to install, by option.</p>
 
     </div>
 
@@ -2336,7 +2394,8 @@ running interpreter, see <code>python_executable</code>) or one of
 words before a program are ignored, and so is a command that starts
 a subshell, a group or a substitution (<code>(</code>, <code>{</code>, <code>$(</code>). For
 <code>python -m &lt;module&gt;</code> with the running interpreter, the module is
-checked.</p>
+checked, and so are the plugins of the pytest options (see
+<code>PLUGIN_OPTIONS</code>).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
