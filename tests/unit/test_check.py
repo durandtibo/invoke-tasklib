@@ -11,6 +11,7 @@ from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import _steps, check, env
+from invoke_tasklib._steps import step_modules
 from invoke_tasklib.config import CHECK_STEPS, load_config
 from invoke_tasklib.runner import PROGRAM_GROUPS, PROGRAM_HINTS
 from tests.helpers import commands, make_context
@@ -481,9 +482,48 @@ def test_programs_are_checked_by_env_check_tools() -> None:
 
 
 def test_modules_are_checked_by_env_check_tools() -> None:
-    assert {name for step in check.STEPS.values() for name in step.modules} <= set(env.TOOL_MODULES)
+    cfg = _cfg()
+    modules = {name for step in check.STEPS.values() for name in step_modules(step, cfg)}
+    assert modules <= set(env.TOOL_MODULES)
 
 
 def test_programs_of_the_steps_have_an_install_hint() -> None:
     programs = {name for step in check.STEPS.values() for name in step.programs}
     assert {p for p in programs if p not in PROGRAM_HINTS and p not in PROGRAM_GROUPS} == set()
+
+
+###################################
+#     Tests for _unit_modules     #
+###################################
+
+
+def test_unit_modules_with_everything_on() -> None:
+    assert check._unit_modules(_cfg()) == ("pytest", "pytest_timeout", "xdoctest")
+
+
+def test_unit_modules_without_timeout() -> None:
+    assert check._unit_modules(_cfg(timeout=False)) == ("pytest", "xdoctest")
+
+
+def test_unit_modules_without_xdoctest() -> None:
+    assert check._unit_modules(_cfg(xdoctest=False)) == ("pytest", "pytest_timeout")
+
+
+def test_unit_modules_with_everything_off() -> None:
+    assert check._unit_modules(_cfg(xdoctest=False, timeout=False)) == ("pytest",)
+
+
+def test_unit_step_modules_are_the_unit_modules() -> None:
+    assert step_modules(check.STEPS["unit"], _cfg(timeout=False)) == ("pytest", "xdoctest")
+
+
+def test_missing_tools_unit_needs_xdoctest(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
+    assert [name for name, _ in check._missing_tools("unit", _cfg())] == ["xdoctest"]
+
+
+def test_missing_tools_unit_does_not_need_xdoctest_when_it_is_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
+    assert check._missing_tools("unit", _cfg(xdoctest=False)) == []

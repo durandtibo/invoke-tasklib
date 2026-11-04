@@ -95,7 +95,8 @@ Five small modules support the task modules:
 ### Adding a step to `check.all` or `fix.all`
 
 A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the programs it looks up on the
-`PATH`, the Python modules it imports). To add one:
+`PATH`, the Python modules it imports). `modules` is a tuple, or a function of the config that
+returns one, for a step whose modules depend on an option (`check._unit_modules`). To add one:
 
 1. Write the task in its module, and add `"name": Step(task, programs=..., modules=...)` to
    `check.STEPS` (or `fix.STEPS`).
@@ -104,8 +105,9 @@ A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the progra
 3. Add the programs and modules to `TOOL_PROGRAMS` and `TOOL_MODULES` of `env.py` (a test checks
    that every tool of `STEPS` is listed), and their install hints to `PROGRAM_HINTS` or
    `PROGRAM_GROUPS` of `runner.py` (a test checks that too).
-4. To run the step by default, add it to the default of `check.tasks` (or `fix.tasks`) in
-   `config/_schema.py`; update the tables of the user guide (`uguide/check.md`, `uguide/fix.md`).
+4. To run the step by default, put it among the first steps of `CHECK_STEPS` (or `FIX_STEPS`) and
+   extend `DEFAULT_CHECK_STEPS` (or `DEFAULT_FIX_STEPS`) in `config/_constants.py`, which derive the
+   default of `check.tasks` (or `fix.tasks`) in `config/_schema.py`; update the tables of the user guide (`uguide/check.md`, `uguide/fix.md`).
 
 ### 3. The Namespace
 

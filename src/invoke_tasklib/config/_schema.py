@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any
 from invoke_tasklib.config._constants import (
     CHECK_STEPS,
     COV_REPORTS,
+    DEFAULT_CHECK_STEPS,
+    DEFAULT_FIX_STEPS,
     FIX_STEPS,
     PYTHON_VERSION_PATTERN,
 )
@@ -272,7 +274,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "check": {
         "tasks": Option(
-            "format-python,format-docstrings,lint,types,imports,unit",
+            ",".join(DEFAULT_CHECK_STEPS),
             _validate_check_tasks,
             {
                 "anyOf": [
@@ -291,7 +293,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "fix": {
         "tasks": Option(
-            "lint,format-python,format-docstrings",
+            ",".join(DEFAULT_FIX_STEPS),
             _validate_fix_tasks,
             {
                 "anyOf": [
