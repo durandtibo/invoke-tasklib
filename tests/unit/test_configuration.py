@@ -217,3 +217,7 @@ def test_show_exits_on_an_invalid_config() -> None:
 
 def test_show_is_the_one_task_of_the_module() -> None:
     assert configuration.show.__name__ == "show"
+
+
+def test_origin_of_a_default_boolean_registered_as_none() -> None:
+    assert configuration._origin(Config(), "test", "xdoctest", True) == "default"
