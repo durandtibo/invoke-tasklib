@@ -8,7 +8,7 @@ from invoke.config import Config
 from invoke.context import Context
 from invoke.exceptions import Exit
 
-from invoke_tasklib.config import SCHEMA, get_config, load_config
+from invoke_tasklib.config import SCHEMA, Unset, get_config, load_config
 from invoke_tasklib.config._resolve import _check_project_root
 from invoke_tasklib.config._schema import _defaults
 
@@ -619,14 +619,34 @@ def test_load_config_exit_code_is_2_from_a_subdirectory(
     assert info.value.code == 2
 
 
-def test_get_config_ignores_the_none_registered_for_a_boolean() -> None:
-    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"xdoctest": None}}))
+def test_get_config_ignores_the_placeholder_registered_for_a_boolean() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"xdoctest": Unset()}}))
     assert cfg.test.xdoctest is True
 
 
-def test_get_config_ignores_the_none_registered_for_an_integer() -> None:
-    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": None}}))
+def test_get_config_ignores_the_placeholder_registered_for_an_integer() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": Unset()}}))
     assert cfg.test.unit_timeout == 10
+
+
+def test_get_config_rejects_a_null_boolean() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.test\.xdoctest' must be a boolean"):
+        get_config(_context({"package": {"name": "mypkg"}, "test": {"xdoctest": None}}))
+
+
+def test_get_config_rejects_a_null_integer() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.test\.unit_timeout' must be an integer"):
+        get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": None}}))
+
+
+def test_get_config_rejects_a_null_boolean_of_the_check_section() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.check\.cov' must be a boolean"):
+        get_config(_context({"package": {"name": "mypkg"}, "check": {"cov": None}}))
+
+
+def test_get_config_accepts_a_null_for_an_optional_value() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"cov_fail_under": None}}))
+    assert cfg.test.cov_fail_under is None
 
 
 def test_get_config_parses_a_boolean_given_as_text() -> None:
