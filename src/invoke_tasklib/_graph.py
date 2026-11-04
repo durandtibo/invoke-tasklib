@@ -246,26 +246,29 @@ class _Tarjan:
         self.index: dict[str, int] = {}
         self.low: dict[str, int] = {}
         self.stack: list[str] = []
+        self.on_stack: set[str] = set()
         self.found: list[list[str]] = []
 
     def _push(self, node: str) -> tuple[str, Iterator[str]]:
         r"""Visit a node for the first time."""
         self.index[node] = self.low[node] = len(self.index)
         self.stack.append(node)
+        self.on_stack.add(node)
         return node, iter(sorted(self.graph[node]))
 
     def _pop_component(self, root: str) -> None:
         r"""Close the component of a root (kept if it is a cycle)."""
-        position = self.stack.index(root)
-        component = self.stack[position:]
-        del self.stack[position:]
+        component: list[str] = []
+        while not component or component[-1] != root:
+            component.append(self.stack.pop())
+        self.on_stack.difference_update(component)
         if len(component) > 1:
             self.found.append(sorted(component))
 
     def _advance(self, work: list[tuple[str, Iterator[str]]]) -> None:
         r"""Do one step of the search on the top of ``work``."""
         node, children = work[-1]
-        child = next((c for c in children if c not in self.index or c in self.stack), None)
+        child = next((c for c in children if c not in self.index or c in self.on_stack), None)
         if child is None:
             work.pop()
             if work:
