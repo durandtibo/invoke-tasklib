@@ -169,6 +169,13 @@ tasklib:
 A test checks that the published `docs/docs/schema.json` equals the schema printed by the command
 (regenerate it with `python -m invoke_tasklib.config > docs/docs/schema.json`).
 
+## Working Directory
+
+Run `inv` from the directory of `tasks.py` (the project root). Invoke finds `tasks.py` and
+`invoke.yaml` in the parents of the current directory, but the tasks use paths relative to the
+current directory, so any task that reads the config exits with code 2 and a message when the
+current directory is another one (see [Troubleshooting](../troubleshooting.md)).
+
 ## Environment Variables
 
 Every key can also be set with an `INVOKE_TASKLIB_<SECTION>_<KEY>` environment variable, for example
