@@ -26,11 +26,14 @@ from invoke_tasklib.config import (
     PathsConfig,
     _as_mapping,
     _check_keys,
+    _default_python_version,
     _default_src,
     _defaults,
     _int_from_text,
     _normalize_groups,
     _path,
+    _python_version_file,
+    _requires_python_lower_bound,
     _timeout,
     _validate_bool,
     _validate_check_tasks,
@@ -49,6 +52,13 @@ from invoke_tasklib.config import (
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+@pytest.fixture(autouse=True)
+def _empty_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Resolve the config in an empty project, so the defaults read
+    from the files (the Python version) do not depend on this repo."""
+    monkeypatch.chdir(tmp_path)
 
 
 def _context(tasklib_config: object = None) -> Context:
@@ -361,11 +371,27 @@ def test_as_mapping_rejects_other_types(value: object) -> None:
 ###############################################
 
 
-@pytest.mark.parametrize("version", [3.1, 3.14, 3, True, None, ["3.10"]])
+@pytest.mark.parametrize("version", [3.1, 3.14, 3, True, ["3.10"]])
 def test_get_config_rejects_non_string_python_version(version: object) -> None:
     c = _context({"package": {"name": "mypkg", "python_version": version}})
     with pytest.raises(ValueError, match=r"must be a string like"):
         get_config(c)
+
+
+def test_get_config_python_version_comes_from_the_python_version_file(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("3.12\n")
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version == "3.12"
+
+
+def test_get_config_python_version_comes_from_requires_python(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.11"\n')
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version == "3.11"
+
+
+def test_get_config_python_version_of_the_config_wins(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("3.12\n")
+    cfg = get_config(_context({"package": {"name": "mypkg", "python_version": "3.10"}}))
+    assert cfg.package.python_version == "3.10"
 
 
 def test_get_config_python_version_error_mentions_quoting() -> None:
@@ -671,6 +697,134 @@ def test_default_src_falls_back_to_the_src_layout(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert _default_src("mypkg") == "src/mypkg"
+
+
+##########################################
+#     Tests for _python_version_file     #
+##########################################
+
+
+def test_python_version_file_reads_the_version(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("3.12\n")
+    assert _python_version_file(tmp_path) == "3.12"
+
+
+def test_python_version_file_reads_a_patch_version(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("3.12.1\n")
+    assert _python_version_file(tmp_path) == "3.12.1"
+
+
+def test_python_version_file_skips_comments_and_blank_lines(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("# the version\n\n  3.13  \n3.9\n")
+    assert _python_version_file(tmp_path) == "3.13"
+
+
+def test_python_version_file_is_none_without_the_file(tmp_path: Path) -> None:
+    assert _python_version_file(tmp_path) is None
+
+
+def test_python_version_file_is_none_for_an_empty_file(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("\n# only a comment\n")
+    assert _python_version_file(tmp_path) is None
+
+
+@pytest.mark.parametrize(
+    "content", ["cpython-3.12.1-linux-x86_64\n", "pypy3.10\n", "3.12t\n", "3\n"]
+)
+def test_python_version_file_ignores_other_content(tmp_path: Path, content: str) -> None:
+    (tmp_path / ".python-version").write_text(content)
+    assert _python_version_file(tmp_path) is None
+
+
+def test_python_version_file_ignores_a_directory(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").mkdir()
+    assert _python_version_file(tmp_path) is None
+
+
+##################################################
+#     Tests for _requires_python_lower_bound     #
+##################################################
+
+
+def _pyproject(root: Path, content: str) -> None:
+    (root / "pyproject.toml").write_text(content)
+
+
+@pytest.mark.parametrize(
+    ("requires", "expected"),
+    [
+        (">=3.11", "3.11"),
+        (">= 3.9", "3.9"),
+        (">=3.10,<4", "3.10"),
+        (">=3.11.2", "3.11"),
+        ("~=3.12", "3.12"),
+        ("==3.13.*", "3.13"),
+        ("<4,>=3.8", "3.8"),
+    ],
+)
+def test_requires_python_lower_bound(tmp_path: Path, requires: str, expected: str) -> None:
+    _pyproject(tmp_path, f'[project]\nrequires-python = "{requires}"\n')
+    assert _requires_python_lower_bound(tmp_path) == expected
+
+
+@pytest.mark.parametrize("requires", [">3.10", "<4", ">=3", ""])
+def test_requires_python_lower_bound_is_none_without_a_lower_bound(
+    tmp_path: Path, requires: str
+) -> None:
+    _pyproject(tmp_path, f'[project]\nrequires-python = "{requires}"\n')
+    assert _requires_python_lower_bound(tmp_path) is None
+
+
+def test_requires_python_lower_bound_is_none_without_the_file(tmp_path: Path) -> None:
+    assert _requires_python_lower_bound(tmp_path) is None
+
+
+def test_requires_python_lower_bound_is_none_without_the_key(tmp_path: Path) -> None:
+    _pyproject(tmp_path, '[project]\nname = "demo"\n')
+    assert _requires_python_lower_bound(tmp_path) is None
+
+
+def test_requires_python_lower_bound_is_none_without_a_project_table(tmp_path: Path) -> None:
+    _pyproject(tmp_path, "[tool.ruff]\nline-length = 100\n")
+    assert _requires_python_lower_bound(tmp_path) is None
+
+
+def test_requires_python_lower_bound_ignores_a_value_that_is_not_a_string(tmp_path: Path) -> None:
+    _pyproject(tmp_path, "[project]\nrequires-python = 3.11\n")
+    assert _requires_python_lower_bound(tmp_path) is None
+
+
+def test_requires_python_lower_bound_ignores_invalid_toml(tmp_path: Path) -> None:
+    _pyproject(tmp_path, "[project\n")
+    assert _requires_python_lower_bound(tmp_path) is None
+
+
+#############################################
+#     Tests for _default_python_version     #
+#############################################
+
+
+def test_default_python_version_prefers_the_python_version_file(tmp_path: Path) -> None:
+    (tmp_path / ".python-version").write_text("3.12\n")
+    _pyproject(tmp_path, '[project]\nrequires-python = ">=3.10"\n')
+    assert _default_python_version(tmp_path) == "3.12"
+
+
+def test_default_python_version_uses_requires_python(tmp_path: Path) -> None:
+    _pyproject(tmp_path, '[project]\nrequires-python = ">=3.10"\n')
+    assert _default_python_version(tmp_path) == "3.10"
+
+
+def test_default_python_version_uses_requires_python_when_the_file_is_unusable(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".python-version").write_text("pypy3.10\n")
+    _pyproject(tmp_path, '[project]\nrequires-python = ">=3.10"\n')
+    assert _default_python_version(tmp_path) == "3.10"
+
+
+def test_default_python_version_falls_back_to_the_constant(tmp_path: Path) -> None:
+    assert _default_python_version(tmp_path) == "3.14"
 
 
 ####################################

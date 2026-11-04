@@ -44,7 +44,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | -------------------------- | ------------------------------------------------------------------------------------- |
 | `package.name`             | required                                                                              |
 | `package.import_name`      | `<package.name>` with `-` replaced by `_`                                             |
-| `package.python_version`   | `"3.14"`                                                                              |
+| `package.python_version`   | the `.python-version` file, else the `requires-python` lower bound, else `"3.14"`     |
 | `paths.src`                | `src/<package.import_name>`, or `<package.import_name>` if only that directory exists |
 | `paths.tests`              | `tests`                                                                               |
 | `paths.unit_tests`         | `<paths.tests>/unit`                                                                  |
@@ -92,6 +92,13 @@ non-empty string, and `test.cov_fail_under` must be between 0 and 100.
 `package.python_version` must be a quoted string such as `"3.10"` or `"3.10.4"`. YAML reads an
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.
+
+When the key is not set, the version is read from the project, in this order:
+
+1. the first line of the `.python-version` file, if it is a version such as `3.12` or `3.12.1`
+   (an implementation name such as `pypy3.10` is ignored);
+2. the lower bound of `project.requires-python` in `pyproject.toml` (`">=3.11"` gives `3.11`);
+3. `3.14`.
 
 ## Editor Completion (JSON Schema)
 

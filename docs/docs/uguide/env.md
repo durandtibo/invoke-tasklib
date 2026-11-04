@@ -21,11 +21,12 @@ invoke env.create-venv
 ```
 
 Creates (or recreates) a `.venv` using the `package.python_version` from the
-[resolved config](config.md), and then runs [`env.install`](#installing-dependencies) (`uv sync --locked`), so the environment has
-`invoke` within the bounds of the project and the packages that `tasks.py` imports, such as
-`invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be available (for example
-through `uv tool install invoke`) to run it. It accepts no option: use `env.install` to choose the
-dependency groups.
+[resolved config](config.md) (by default the version of `.python-version` or the lower bound of
+`requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync --locked`), so
+the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
+imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
+available (for example through `uv tool install invoke`) to run it. It accepts no option: use
+`env.install` to choose the dependency groups.
 
 <!-- prettier-ignore -->
 !!! warning

@@ -20,6 +20,7 @@ import difflib
 import json
 import re
 import sys
+import tomllib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from functools import partial
@@ -101,6 +102,12 @@ project)."""
 PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
 r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 ``3.10.4``)."""
+
+DEFAULT_PYTHON_VERSION = "3.14"
+r"""The Python version used when neither ``.python-version`` nor the
+``requires-python`` of ``pyproject.toml`` gives one."""
+
+_REQUIRES_PYTHON_LOWER_BOUND = re.compile(r"(?:>=|~=|==)\s*(\d+\.\d+)")
 
 COV_REPORTS: frozenset[str] = frozenset(
     {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
@@ -381,6 +388,101 @@ def _default_src(import_name: str) -> str:
     if not Path(src_layout).is_dir() and Path(import_name).is_dir():
         return import_name
     return src_layout
+
+
+def _python_version_file(root: Path) -> str | None:
+    r"""Read the Python version of a ``.python-version`` file.
+
+    Args:
+        root: The project directory.
+
+    Returns:
+        The first line of the file that is not empty nor a comment, if
+        it is a version like ``"3.12"`` or ``"3.12.1"``. ``None`` if
+        the file does not exist or has any other content (an
+        implementation name, a path, ...).
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.config import _python_version_file
+    >>> _python_version_file(Path("no/such/dir")) is None
+    True
+
+    ```
+    """
+    path = root / ".python-version"
+    if not path.is_file():
+        return None
+    for line in path.read_text().splitlines():
+        version = line.strip()
+        if version and not version.startswith("#"):
+            return version if PYTHON_VERSION_PATTERN.fullmatch(version) else None
+    return None
+
+
+def _requires_python_lower_bound(root: Path) -> str | None:
+    r"""Read the lower bound of ``requires-python``.
+
+    The file read is the ``pyproject.toml`` of the project.
+
+    Args:
+        root: The project directory.
+
+    Returns:
+        The ``major.minor`` version of the first ``>=``, ``~=`` or
+        ``==`` specifier of ``project.requires-python`` (``">=3.11"``
+        gives ``"3.11"``). ``None`` if there is no such file, no such
+        key or no such specifier, or if the file is not valid TOML.
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.config import _requires_python_lower_bound
+    >>> _requires_python_lower_bound(Path("no/such/dir")) is None
+    True
+
+    ```
+    """
+    path = root / "pyproject.toml"
+    if not path.is_file():
+        return None
+    try:
+        requires = tomllib.loads(path.read_text()).get("project", {}).get("requires-python")
+    except tomllib.TOMLDecodeError:
+        return None
+    match = _REQUIRES_PYTHON_LOWER_BOUND.search(requires) if isinstance(requires, str) else None
+    return match.group(1) if match else None
+
+
+def _default_python_version(root: Path) -> str:
+    r"""Return the default ``package.python_version`` of a project.
+
+    The first available source wins: the ``.python-version`` file, the
+    lower bound of ``requires-python`` in ``pyproject.toml``, and then
+    ``DEFAULT_PYTHON_VERSION``.
+
+    Args:
+        root: The project directory.
+
+    Returns:
+        The version, like ``"3.12"``.
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.config import _default_python_version
+    >>> _default_python_version(Path("no/such/dir"))
+    '3.14'
+
+    ```
+    """
+    return (
+        _python_version_file(root) or _requires_python_lower_bound(root) or DEFAULT_PYTHON_VERSION
+    )
 
 
 def _validate_int(key: str, value: object, *, minimum: int, maximum: int | None = None) -> int:
@@ -728,10 +830,10 @@ SCHEMA: dict[str, dict[str, Option]] = {
             "Name used to import the package (default: name with - replaced by _).",
         ),
         "python_version": Option(
-            "3.14",
+            None,
             _validate_python_version,
             {"type": "string", "pattern": PYTHON_VERSION_PATTERN.pattern},
-            "Python version of the virtual environment (quote it in YAML).",
+            "Python version of the virtual environment (default: from .python-version or requires-python).",
         ),
     },
     "paths": {
@@ -1005,6 +1107,8 @@ def get_config(c: Context) -> TasklibConfig:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
         raise ValueError(msg)
     name = _validate_str("package", "name", package["name"])
+    if package["python_version"] is None:
+        package["python_version"] = _default_python_version(Path())
     if package["import_name"] is None:
         package["import_name"] = name.replace("-", "_")
     if paths["src"] is None:
