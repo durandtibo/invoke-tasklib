@@ -5,8 +5,9 @@ from __future__ import annotations
 import shlex
 import tomllib
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
+from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib._files import project_files
@@ -22,6 +23,8 @@ from invoke_tasklib.runner import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from invoke.context import Context
 
     from invoke_tasklib.config import TasklibConfig
@@ -38,7 +41,12 @@ MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
     ".mypy_cache",
     ".ruff_cache",
 }
-r"""Directories whose markdown files are never checked."""
+r"""Directories that the walk skips when looking for markdown files
+outside a git work tree.
+
+In a git work tree git decides which files are checked (a tracked
+``site/index.md`` is checked), see ``project_files``.
+"""
 
 APPEND_HELP = (
     "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
@@ -410,6 +418,84 @@ def functional(
     )
 
 
+class CoverageOutputs(NamedTuple):
+    r"""Where the coverage reports are written."""
+
+    html_dir: str
+    r"""The directory of the HTML report."""
+
+    files: tuple[str, ...]
+    r"""The files of the XML, JSON and LCOV reports requested."""
+
+
+COVERAGE_FILE_REPORTS: dict[str, str] = {
+    "xml": "coverage.xml",
+    "json": "coverage.json",
+    "lcov": "coverage.lcov",
+}
+r"""The default file of the reports that write a file, by format."""
+
+
+def _coverage_option(section: str, key: str, pyproject: Path) -> str | None:
+    r"""Read a string option of ``[tool.coverage.<section>]``.
+
+    Args:
+        section: The coverage.py section, e.g. ``"html"``.
+        key: The option, e.g. ``"directory"``.
+        pyproject: The path of the ``pyproject.toml`` file.
+
+    Returns:
+        The option, or ``None`` if the file does not exist, cannot be
+        parsed, does not set the option, or sets it to something that
+        is not a non-empty string.
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.testing import _coverage_option
+    >>> _coverage_option("html", "directory", Path("no/such.toml"))
+
+    ```
+    """
+    try:
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    value = data.get("tool", {}).get("coverage", {}).get(section, {}).get(key)
+    return value if isinstance(value, str) and value else None
+
+
+def _report_argument(reports: Sequence[str], name: str) -> str | None:
+    r"""Return the argument of a ``--cov-report`` value.
+
+    Args:
+        reports: The values of ``test.cov_reports``, e.g.
+            ``("html:cov_html", "term")``.
+        name: The format, e.g. ``"html"``.
+
+    Returns:
+        The argument after the colon of the first value of that
+        format, or ``None`` if there is no such value or it has no
+        argument.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.testing import _report_argument
+    >>> _report_argument(["html:cov_html", "term"], "html")
+    'cov_html'
+    >>> _report_argument(["html", "term"], "html")
+
+    ```
+    """
+    for report in reports:
+        report_name, _, argument = report.partition(":")
+        if report_name == name and argument:
+            return argument
+    return None
+
+
 def _coverage_html_dir(pyproject: Path = Path("pyproject.toml")) -> str:
     r"""Return the directory of the HTML coverage report.
 
@@ -431,12 +517,52 @@ def _coverage_html_dir(pyproject: Path = Path("pyproject.toml")) -> str:
 
     ```
     """
-    try:
-        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError):
-        return "htmlcov"
-    directory = data.get("tool", {}).get("coverage", {}).get("html", {}).get("directory")
-    return directory if isinstance(directory, str) and directory else "htmlcov"
+    return _coverage_option("html", "directory", pyproject) or "htmlcov"
+
+
+def coverage_outputs(
+    reports: Sequence[str], pyproject: Path = Path("pyproject.toml")
+) -> CoverageOutputs:
+    r"""Return where the coverage reports are written.
+
+    The place of a report comes from, in this order, the argument of
+    its ``--cov-report`` value (``html:cov_html``, ``xml:cov.xml``),
+    the option of ``pyproject.toml`` (``directory`` of
+    ``[tool.coverage.html]``, ``output`` of ``[tool.coverage.xml]``,
+    ``json`` or ``lcov``), then the default of coverage.py.
+
+    Args:
+        reports: The values of ``test.cov_reports``.
+        pyproject: The path of the ``pyproject.toml`` file.
+
+    Returns:
+        The directory of the HTML report (always set, even if ``html``
+        is not in ``reports``, because ``coverage-report`` writes it)
+        and the files of the XML, JSON and LCOV reports that are in
+        ``reports``, in the order of ``reports``, without duplicates.
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.testing import coverage_outputs
+    >>> reports = ["html:cov_html", "xml", "term"]
+    >>> coverage_outputs(reports, Path("no/such.toml"))
+    CoverageOutputs(html_dir='cov_html', files=('coverage.xml',))
+
+    ```
+    """
+    html_dir = _report_argument(reports, "html") or _coverage_html_dir(pyproject)
+    files: dict[str, None] = {}
+    for report in reports:
+        name = report.partition(":")[0]
+        if name in COVERAGE_FILE_REPORTS:
+            files[
+                _report_argument([report], name)
+                or _coverage_option(name, "output", pyproject)
+                or COVERAGE_FILE_REPORTS[name]
+            ] = None
+    return CoverageOutputs(html_dir, tuple(files))
 
 
 @task(help={"open_browser": "Open the HTML report in the default web browser.", "args": ARGS_HELP})
@@ -445,6 +571,8 @@ def coverage_report(c: Context, *, open_browser: bool = False, args: str | None 
 
     The report is built from the last recorded coverage data, and the
     terminal summary is printed. The report is written to the
+    directory of the ``html:<dir>`` value of
+    ``tasklib.test.cov_reports`` if there is one, else to the
     ``directory`` of ``[tool.coverage.html]`` in ``pyproject.toml``
     (``htmlcov`` by default).
 
@@ -455,11 +583,11 @@ def coverage_report(c: Context, *, open_browser: bool = False, args: str | None 
         args: Extra arguments passed to ``coverage report``, e.g.
             ``"--fail-under=90"``.
     """
-    directory = _coverage_html_dir()
+    directory = coverage_outputs(load_config(c).test.cov_reports).html_dir
     with step(
         c, "📊 Generating coverage report...", f"✅ Coverage report generated in {directory}/"
     ):
-        run(c, f"{python_executable()} -m coverage html")
+        run(c, f"{python_executable()} -m coverage html -d {shlex.quote(directory)}")
         run(c, build_command(f"{python_executable()} -m coverage report", args=args))
         if open_browser:
             say(c, "🌐 Opening coverage report in the browser...")
@@ -471,18 +599,29 @@ def coverage_report(c: Context, *, open_browser: bool = False, args: str | None 
 def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run performance benchmarks.
 
+    The command is ``pytest --benchmark-only --benchmark-enable``:
+    ``--benchmark-enable`` turns the benchmarks on even if the pytest
+    config disables them (``--benchmark-disable`` in ``addopts``, to
+    run each benchmark once in the normal test runs).
+
     Args:
         c: The invoke context.
         args: Extra arguments passed to pytest.
         paths: The files or directories to run on instead of
             ``paths.benchmarks``.
+
+    Raises:
+        Exit: With the code 1 if ``paths.benchmarks`` does not exist
+            and ``paths`` is not given. The task is run on purpose, so
+            a nightly job does not pass without measuring anything.
     """
     cfg = load_config(c)
     benchmarks = cfg.paths.benchmarks
-    if not paths and not _directory_exists(c, benchmarks, "benchmarks"):
-        return
+    if not paths and not Path(benchmarks).is_dir():
+        msg = f"No '{benchmarks}' directory: there is no benchmark to run"
+        raise Exit(msg, code=1)
     with report_failure(c, "⏱️  Running benchmarks..."):
         say(c, "⏱️  Running benchmarks...")
-        cmd = f"{python_executable()} -m pytest --benchmark-only"
+        cmd = f"{python_executable()} -m pytest --benchmark-only --benchmark-enable"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
     say(c, "✅ Benchmarks complete")

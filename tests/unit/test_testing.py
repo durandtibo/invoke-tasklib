@@ -518,6 +518,9 @@ def test_functional_args() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 -x tests/functional"]
 
 
+_PKG = {"package": {"name": "mypkg"}}
+
+
 @pytest.fixture
 def html_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "pyproject.toml").write_text('[tool.coverage.html]\ndirectory = "cov out"\n')
@@ -526,30 +529,30 @@ def html_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.usefixtures("empty_project")
 def test_coverage_report() -> None:
-    c = make_context()
+    c = make_context(_PKG)
     test_tasks.coverage_report(c)
     assert commands(c) == [
-        "/venv/bin/python -m coverage html",
+        "/venv/bin/python -m coverage html -d htmlcov",
         "/venv/bin/python -m coverage report",
     ]
 
 
 @pytest.mark.usefixtures("empty_project")
 def test_coverage_report_with_args() -> None:
-    c = make_context()
+    c = make_context(_PKG)
     test_tasks.coverage_report(c, args="--fail-under=90")
     assert commands(c) == [
-        "/venv/bin/python -m coverage html",
+        "/venv/bin/python -m coverage html -d htmlcov",
         "/venv/bin/python -m coverage report --fail-under=90",
     ]
 
 
 @pytest.mark.usefixtures("empty_project")
 def test_coverage_report_open_browser() -> None:
-    c = make_context()
+    c = make_context(_PKG)
     test_tasks.coverage_report(c, open_browser=True)
     assert commands(c) == [
-        "/venv/bin/python -m coverage html",
+        "/venv/bin/python -m coverage html -d htmlcov",
         "/venv/bin/python -m coverage report",
         "/venv/bin/python -m webbrowser -t htmlcov/index.html",
     ]
@@ -557,21 +560,39 @@ def test_coverage_report_open_browser() -> None:
 
 @pytest.mark.usefixtures("html_directory")
 def test_coverage_report_opens_the_configured_directory() -> None:
-    c = make_context()
+    c = make_context(_PKG)
     test_tasks.coverage_report(c, open_browser=True)
     assert commands(c)[-1] == "/venv/bin/python -m webbrowser -t 'cov out/index.html'"
 
 
 @pytest.mark.usefixtures("html_directory")
 def test_coverage_report_says_the_configured_directory(capsys: pytest.CaptureFixture[str]) -> None:
-    test_tasks.coverage_report(make_context())
+    test_tasks.coverage_report(make_context(_PKG))
     assert "✅ Coverage report generated in cov out/" in capsys.readouterr().out
 
 
 @pytest.mark.usefixtures("empty_project")
 def test_coverage_report_says_the_default_directory(capsys: pytest.CaptureFixture[str]) -> None:
-    test_tasks.coverage_report(make_context())
+    test_tasks.coverage_report(make_context(_PKG))
     assert "✅ Coverage report generated in htmlcov/" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("html_directory")
+def test_coverage_report_writes_to_the_configured_directory() -> None:
+    c = make_context(_PKG)
+    test_tasks.coverage_report(c)
+    assert commands(c)[0] == "/venv/bin/python -m coverage html -d 'cov out'"
+
+
+@pytest.mark.usefixtures("html_directory")
+def test_coverage_report_prefers_the_directory_of_cov_reports_to_pyproject() -> None:
+    c = make_context({**_PKG, "test": {"cov_reports": "html:from_reports,term"}})
+    test_tasks.coverage_report(c, open_browser=True)
+    assert commands(c) == [
+        "/venv/bin/python -m coverage html -d from_reports",
+        "/venv/bin/python -m coverage report",
+        "/venv/bin/python -m webbrowser -t from_reports/index.html",
+    ]
 
 
 @pytest.mark.usefixtures("empty_project")
@@ -579,7 +600,9 @@ def test_benchmark_quotes_the_benchmarks_path(tmp_path: Path) -> None:
     (tmp_path / "my bench").mkdir()
     c = make_context({"package": {"name": "mypkg"}, "paths": {"benchmarks": "my bench"}})
     test_tasks.benchmark(c)
-    assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only 'my bench/'"]
+    assert commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-enable 'my bench/'"
+    ]
 
 
 @pytest.mark.usefixtures("_project_dirs")
@@ -587,7 +610,10 @@ def test_benchmark_with_args() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c, args="--benchmark-save=x")
     assert commands(c) == [
-        "/venv/bin/python -m pytest --benchmark-only --benchmark-save=x tests/benchmarks/"
+        (
+            "/venv/bin/python -m pytest --benchmark-only --benchmark-enable "
+            "--benchmark-save=x tests/benchmarks/"
+        )
     ]
 
 
@@ -595,14 +621,18 @@ def test_benchmark_with_args() -> None:
 def test_benchmark_with_paths_runs_without_the_default_directory() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c, paths="bench/test_a.py")
-    assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only bench/test_a.py"]
+    assert commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-enable bench/test_a.py"
+    ]
 
 
 @pytest.mark.usefixtures("_project_dirs")
 def test_benchmark() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.benchmark(c)
-    assert commands(c) == ["/venv/bin/python -m pytest --benchmark-only tests/benchmarks/"]
+    assert commands(c) == [
+        "/venv/bin/python -m pytest --benchmark-only --benchmark-enable tests/benchmarks/"
+    ]
 
 
 ##############################################
@@ -624,10 +654,24 @@ def test_scope_without_directory_runs_nothing(task: Callable[..., None]) -> None
 
 
 @pytest.mark.usefixtures("empty_project")
-def test_benchmark_without_directory_runs_nothing() -> None:
+def test_benchmark_without_directory_fails() -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks.benchmark(c)
-    assert commands(c) == []
+    with pytest.raises(Exit, match=r"No 'tests/benchmarks' directory"):
+        test_tasks.benchmark(c)
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_without_directory_fails_with_the_code_1() -> None:
+    with pytest.raises(Exit, match=r"there is no benchmark to run") as info:
+        test_tasks.benchmark(make_context({"package": {"name": "mypkg"}}))
+    assert info.value.code == 1
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_benchmark_without_the_configured_directory_names_it() -> None:
+    c = make_context({"package": {"name": "mypkg"}, "paths": {"benchmarks": "bench"}})
+    with pytest.raises(Exit, match=r"No 'bench' directory"):
+        test_tasks.benchmark(c)
 
 
 @pytest.mark.usefixtures("empty_project")
@@ -879,3 +923,130 @@ def test_coverage_html_dir_with_an_invalid_file(tmp_path: Path) -> None:
     path = tmp_path / "pyproject.toml"
     path.write_text("[tool.coverage\n")
     assert test_tasks._coverage_html_dir(path) == "htmlcov"
+
+
+######################################
+#     Tests for coverage_outputs     #
+######################################
+
+
+def _pyproject(tmp_path: Path, text: str) -> Path:
+    path = tmp_path / "pyproject.toml"
+    path.write_text(text)
+    return path
+
+
+def test_coverage_outputs_defaults(tmp_path: Path) -> None:
+    assert test_tasks.coverage_outputs(["html", "xml", "term"], tmp_path / "none.toml") == (
+        "htmlcov",
+        ("coverage.xml",),
+    )
+
+
+def test_coverage_outputs_without_reports_has_the_default_html_dir(tmp_path: Path) -> None:
+    assert test_tasks.coverage_outputs([], tmp_path / "none.toml") == ("htmlcov", ())
+
+
+def test_coverage_outputs_reads_pyproject(tmp_path: Path) -> None:
+    path = _pyproject(
+        tmp_path,
+        '[tool.coverage.html]\ndirectory = "h"\n[tool.coverage.xml]\noutput = "x.xml"\n'
+        '[tool.coverage.json]\noutput = "j.json"\n[tool.coverage.lcov]\noutput = "l.info"\n',
+    )
+    assert test_tasks.coverage_outputs(["html", "xml", "json", "lcov"], path) == (
+        "h",
+        ("x.xml", "j.json", "l.info"),
+    )
+
+
+def test_coverage_outputs_reports_win_over_pyproject(tmp_path: Path) -> None:
+    path = _pyproject(
+        tmp_path,
+        '[tool.coverage.html]\ndirectory = "h"\n[tool.coverage.xml]\noutput = "x.xml"\n',
+    )
+    assert test_tasks.coverage_outputs(["html:cov_html", "xml:cov.xml"], path) == (
+        "cov_html",
+        ("cov.xml",),
+    )
+
+
+def test_coverage_outputs_ignores_the_options_of_a_format_not_requested(tmp_path: Path) -> None:
+    path = _pyproject(tmp_path, '[tool.coverage.xml]\noutput = "x.xml"\n')
+    assert test_tasks.coverage_outputs(["term"], path).files == ()
+
+
+def test_coverage_outputs_json_and_lcov_defaults(tmp_path: Path) -> None:
+    assert test_tasks.coverage_outputs(["json", "lcov"], tmp_path / "none.toml").files == (
+        "coverage.json",
+        "coverage.lcov",
+    )
+
+
+def test_coverage_outputs_keeps_the_order_of_the_reports(tmp_path: Path) -> None:
+    assert test_tasks.coverage_outputs(["lcov", "xml"], tmp_path / "none.toml").files == (
+        "coverage.lcov",
+        "coverage.xml",
+    )
+
+
+def test_coverage_outputs_lists_a_file_once(tmp_path: Path) -> None:
+    assert test_tasks.coverage_outputs(
+        ["xml", "xml:coverage.xml"], tmp_path / "none.toml"
+    ).files == ("coverage.xml",)
+
+
+def test_coverage_outputs_html_with_an_empty_argument_uses_pyproject(tmp_path: Path) -> None:
+    path = _pyproject(tmp_path, '[tool.coverage.html]\ndirectory = "h"\n')
+    assert test_tasks.coverage_outputs(["html:"], path).html_dir == "h"
+
+
+def test_coverage_outputs_with_an_invalid_pyproject_uses_the_defaults(tmp_path: Path) -> None:
+    path = _pyproject(tmp_path, "[tool.coverage\n")
+    assert test_tasks.coverage_outputs(["html", "xml"], path) == ("htmlcov", ("coverage.xml",))
+
+
+def test_coverage_outputs_does_not_modify_the_reports(tmp_path: Path) -> None:
+    reports = ["html:cov_html", "xml"]
+    test_tasks.coverage_outputs(reports, tmp_path / "none.toml")
+    assert reports == ["html:cov_html", "xml"]
+
+
+######################################
+#     Tests for _report_argument     #
+######################################
+
+
+@pytest.mark.parametrize(
+    ("reports", "expected"),
+    [
+        (["html:cov"], "cov"),
+        (["term", "html:cov"], "cov"),
+        (["html"], None),
+        (["html:"], None),
+        (["xml:cov.xml"], None),
+        ([], None),
+        (["html:a", "html:b"], "a"),
+        (["html:a:b"], "a:b"),
+    ],
+)
+def test_report_argument(reports: list[str], expected: str | None) -> None:
+    assert test_tasks._report_argument(reports, "html") == expected
+
+
+######################################
+#     Tests for _coverage_option     #
+######################################
+
+
+def test_coverage_option_reads_the_value(tmp_path: Path) -> None:
+    path = _pyproject(tmp_path, '[tool.coverage.xml]\noutput = "x.xml"\n')
+    assert test_tasks._coverage_option("xml", "output", path) == "x.xml"
+
+
+def test_coverage_option_missing_file_is_none(tmp_path: Path) -> None:
+    assert test_tasks._coverage_option("xml", "output", tmp_path / "none.toml") is None
+
+
+def test_coverage_option_not_a_string_is_none(tmp_path: Path) -> None:
+    path = _pyproject(tmp_path, "[tool.coverage.xml]\noutput = 3\n")
+    assert test_tasks._coverage_option("xml", "output", path) is None

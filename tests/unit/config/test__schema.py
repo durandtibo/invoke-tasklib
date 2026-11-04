@@ -19,7 +19,7 @@ from invoke_tasklib.config import (
     json_schema,
     main,
 )
-from invoke_tasklib.config._schema import _defaults, _path, _timeout, _untyped
+from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _untyped
 
 ####################################
 #     Tests for default_config     #
@@ -52,21 +52,29 @@ def test_default_config_is_the_defaults() -> None:
         },
         "groups": {"install": "dev", "update": "dev,docs"},
         "test": {
-            "unit_timeout": None,
-            "integration_timeout": None,
-            "functional_timeout": None,
-            "xdoctest": None,
-            "timeout": None,
+            "unit_timeout": "",
+            "integration_timeout": "",
+            "functional_timeout": "",
+            "xdoctest": "",
+            "timeout": "",
             "cov_fail_under": None,
             "cov_reports": "html,xml,term",
         },
         "types": {"checker": "ty"},
         "check": {
             "tasks": "format-python,format-docstrings,lint,types,imports,unit",
-            "cov": None,
+            "cov": "",
         },
         "fix": {"tasks": "lint,format-python,format-docstrings"},
     }
+
+
+def test_default_config_registers_a_placeholder_for_a_boolean() -> None:
+    assert isinstance(default_config()["test"]["xdoctest"], Unset)
+
+
+def test_default_config_registers_a_placeholder_for_an_integer() -> None:
+    assert isinstance(default_config()["test"]["unit_timeout"], Unset)
 
 
 def test_default_config_does_not_change_the_schema_defaults() -> None:
@@ -300,7 +308,15 @@ def test_cov_reports_schema_items_are_strings() -> None:
 
 @pytest.mark.parametrize("value", [True, False, 0, 10])
 def test_untyped_hides_booleans_and_integers(value: object) -> None:
-    assert _untyped(value) is None
+    assert isinstance(_untyped(value), Unset)
+
+
+def test_unset_is_not_none() -> None:
+    assert _untyped(True) is not None
+
+
+def test_unset_is_a_string_so_that_invoke_keeps_the_text_of_a_variable() -> None:
+    assert isinstance(Unset(), str)
 
 
 @pytest.mark.parametrize("value", ["tests", "", None])

@@ -100,6 +100,9 @@ addopts = [
   "-rf",
   "--strict-markers",
   "--strict-config",
+  # The benchmarks run once, to check that they work. `inv test.benchmark`
+  # enables them (`--benchmark-enable`) to measure.
+  "--benchmark-disable",
 ]
 xfail_strict = true
 timeout = 300

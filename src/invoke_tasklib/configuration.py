@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import SCHEMA, load_config
+from invoke_tasklib.config import PROJECT_PREFIX_ATTRIBUTE, SCHEMA, Unset, load_config
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
@@ -52,8 +52,48 @@ def show(c: Context) -> None:
     Args:
         c: The invoke context.
     """
+    unknown = _unknown_internals(c.config)
+    if unknown:
+        say(
+            c,
+            f"⚠️  This version of Invoke has no {', '.join(unknown)}: the origin comments "
+            "may be wrong, and the check of the current directory is off",
+            err=True,
+        )
     for line in _render(load_config(c), c.config):
         say(c, line)
+
+
+def _unknown_internals(config: Config) -> list[str]:
+    r"""List the private attributes of Invoke that this module reads and
+    that the config does not have.
+
+    ``_origin`` and ``_check_project_root`` read them with
+    ``getattr(..., None)`` because Invoke has no public API for them. If
+    a release of Invoke renames one, they would go on without an error:
+    this tells it.
+
+    Args:
+        config: The invoke config.
+
+    Returns:
+        The names of the missing attributes, in the order of ``LEVELS``,
+        then ``_project_prefix``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke_tasklib.configuration import _unknown_internals
+    >>> _unknown_internals(Config())
+    []
+    >>> _unknown_internals(object())[-1]
+    '_project_prefix'
+
+    ```
+    """
+    names = [attribute for attribute, _ in LEVELS] + [PROJECT_PREFIX_ATTRIBUTE]
+    return [name for name in names if not hasattr(config, name)]
 
 
 def _format_value(value: object) -> str:
@@ -130,7 +170,7 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
     for attribute, label in reversed(LEVELS):
         level = getattr(config, attribute, None)
         given = level.get("tasklib", {}).get(section, {}).get(key) if level else None
-        if given is not None:
+        if given is not None and not isinstance(given, Unset):
             if attribute == "_env":
                 return f"{label} INVOKE_TASKLIB_{section.upper()}_{key.upper()}"
             return label

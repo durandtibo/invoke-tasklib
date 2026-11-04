@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from invoke.exceptions import Exit
 
-from invoke_tasklib.tools import check_program
+from invoke_tasklib.tools import check_program, tool_path
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -144,10 +144,13 @@ def split_args(value: str | None, option: str) -> list[str]:
 def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Result:
     r"""Run a command, echoing it and using a pty only on a terminal.
 
-    The program of the command must be on the ``PATH``, see
-    ``check_program``. Pass ``check=False`` to skip that check when the
-    caller knows better, for example for a command that is defined by a
-    shell function or alias.
+    The program of the command must be on the ``PATH`` or in the
+    directory of the running interpreter, see ``check_program``. The
+    command runs with ``tool_path()`` as its ``PATH``, so it finds the
+    programs of the virtual environment without an activation. Pass
+    ``check=False`` to skip that check when the caller knows better,
+    for example for a command that is defined by a shell function or
+    alias.
 
     All the tasks run their commands through this helper so that they
     behave alike:
@@ -157,7 +160,10 @@ def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Resul
     - a pseudo-terminal is used (``pty=True``) only if ``sys.stdout`` is
       a terminal or ``run.pty`` is set in the Invoke config. A pty keeps
       the colors of the tools but merges stderr into stdout and is not
-      available everywhere (for example Windows or some CI sandboxes).
+      available everywhere (for example Windows or some CI sandboxes);
+    - the ``PATH`` starts with the directory of the running interpreter
+      (see ``tool_path``). An ``env`` passed by the caller is added to
+      it, and can set ``PATH`` itself.
 
     Args:
         c: The invoke context.
@@ -190,6 +196,7 @@ def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Resul
         check_program(command)
     kwargs.setdefault("echo", True)
     kwargs.setdefault("pty", bool(c.config.run.pty) or sys.stdout.isatty())
+    kwargs["env"] = {"PATH": tool_path(), **kwargs.get("env", {})}
     return c.run(command, **kwargs)
 
 

@@ -23,7 +23,7 @@ from invoke_tasklib.config._constants import (
     FIX_STEPS,
     PYTHON_VERSION_PATTERN,
 )
-from invoke_tasklib.config._resolve import get_config, load_config
+from invoke_tasklib.config._resolve import PROJECT_PREFIX_ATTRIBUTE, get_config, load_config
 from invoke_tasklib.config._schema import (
     DEFAULT_CHECK,
     DEFAULT_FIX,
@@ -42,6 +42,7 @@ from invoke_tasklib.config._schema import (
     TasklibConfig,
     TestConfig,
     TypesConfig,
+    Unset,
     default_config,
     json_schema,
     main,
@@ -59,6 +60,7 @@ __all__ = [
     "DEFAULT_TYPES",
     "EXCLUDED_DIRS",
     "FIX_STEPS",
+    "PROJECT_PREFIX_ATTRIBUTE",
     "PYTHON_VERSION_PATTERN",
     "SCHEMA",
     "CheckConfig",
@@ -70,6 +72,7 @@ __all__ = [
     "TasklibConfig",
     "TestConfig",
     "TypesConfig",
+    "Unset",
     "default_config",
     "get_config",
     "json_schema",

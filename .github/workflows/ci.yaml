@@ -45,6 +45,10 @@ jobs:
   format:
     uses: ./.github/workflows/ci-format.yaml
 
+  # Run the composite check.all task with its default steps
+  check:
+    uses: ./.github/workflows/ci-check.yaml
+
   # Check code linting with ruff
   lint:
     uses: ./.github/workflows/ci-lint.yaml
