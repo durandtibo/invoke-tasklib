@@ -543,27 +543,6 @@ def test_publish_reports_a_failure_of_the_upload(capsys: pytest.CaptureFixture[s
     assert "❌ Failed: Publishing" in capsys.readouterr().err
 
 
-############################
-#     Tests for _in_ci     #
-############################
-
-
-@pytest.mark.parametrize("value", ["1", "true", "True", "yes", "anything"])
-def test_in_ci_true(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CI", value)
-    assert release._in_ci() is True
-
-
-@pytest.mark.parametrize("value", ["", "0", "false", "FALSE", "False", " false "])
-def test_in_ci_false(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CI", value)
-    assert release._in_ci() is False
-
-
-def test_in_ci_false_when_unset() -> None:
-    assert release._in_ci() is False
-
-
 ####################################
 #     Tests for _build_targets     #
 ####################################

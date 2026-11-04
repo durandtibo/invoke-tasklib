@@ -2,6 +2,7 @@ r"""Helpers to build and run the commands of the tasks."""
 
 from __future__ import annotations
 
+import os
 import shlex
 import sys
 from typing import TYPE_CHECKING, Any
@@ -233,3 +234,57 @@ def capture(c: Context, command: str, *, warn: bool = False, check: bool = True)
     ```
     """
     return run(c, command, check=check, hide=True, echo=False, pty=False, warn=warn)
+
+
+def in_ci() -> bool:
+    r"""Tell whether the ``CI`` environment variable turns CI mode on.
+
+    Any value is accepted except an empty string, ``0`` and ``false``
+    (case-insensitive), so ``CI=false`` does not count as CI. Most CI
+    services set ``CI=true``, GitHub Actions included.
+
+    Returns:
+        True if ``CI`` is set to a value other than ``""``, ``"0"``
+        and ``"false"``.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.runner import in_ci
+    >>> with patch.dict(os.environ, {"CI": "true"}):
+    ...     in_ci()
+    True
+    >>> with patch.dict(os.environ, {"CI": "false"}):
+    ...     in_ci()
+    False
+
+    ```
+    """
+    return os.environ.get("CI", "").strip().lower() not in {"", "0", "false"}
+
+
+def in_github_actions() -> bool:
+    r"""Tell whether the code runs in GitHub Actions.
+
+    Returns:
+        True if ``GITHUB_ACTIONS`` is exactly ``"true"``, the value
+        that GitHub Actions sets.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.runner import in_github_actions
+    >>> with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}):
+    ...     in_github_actions()
+    True
+    >>> with patch.dict(os.environ, {"GITHUB_ACTIONS": "false"}):
+    ...     in_github_actions()
+    False
+
+    ```
+    """
+    return os.environ.get("GITHUB_ACTIONS") == "true"
