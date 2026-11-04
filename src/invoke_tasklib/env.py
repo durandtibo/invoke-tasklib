@@ -115,10 +115,10 @@ def install(c: Context, *, optional_deps: bool = True, groups: str | None = None
 def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
     r"""Install the dependencies and the package, without a report.
 
-    It is the body of ``install``, without its failure line. A task that installs as one step of
-    a longer job (``create_venv``, ``update``) calls it inside its own
-    ``report_failure`` block, so a failure is reported once, with the
-    title of the outer job.
+    It is the body of ``install``, without its failure line. A task
+    that installs as one step of a longer job (``create_venv``,
+    ``update``) calls it inside its own ``report_failure`` block, so a
+    failure is reported once, with the title of the outer job.
 
     Args:
         c: The invoke context.
