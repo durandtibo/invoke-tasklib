@@ -10,7 +10,7 @@ from invoke.context import MockContext
 from invoke.runners import Result
 
 from invoke_tasklib import clean
-from tests.helpers import commands, run_kwargs
+from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -46,6 +46,8 @@ def _mkdir(*parts: str) -> Callable[[Path], Path]:
 #########################
 #     Tests for all     #
 #########################
+
+_CFG = {"package": {"name": "mypkg"}}
 
 
 def test_all_removes_the_dist_dir(project: Path) -> None:
@@ -110,13 +112,37 @@ def test_all_keeps_site_without_mkdocs_config(project: Path) -> None:
     assert site.exists()
 
 
-@pytest.mark.parametrize("config", ["mkdocs.yml", "docs/mkdocs.yml"])
-def test_all_removes_site_with_mkdocs_config(project: Path, config: str) -> None:
-    _mkdir("site")(project)
+@pytest.mark.parametrize(
+    ("config", "site"), [("mkdocs.yml", "site"), ("docs/mkdocs.yml", "docs/site")]
+)
+def test_all_removes_site_with_mkdocs_config(project: Path, config: str, site: str) -> None:
+    _mkdir(*site.split("/"))(project)
     (project / config).parent.mkdir(exist_ok=True)
     (project / config).write_text("")
     clean.all_(_context())
-    assert not (project / "site").exists()
+    assert not (project / site).exists()
+
+
+def test_all_removes_the_site_of_the_docs_config(project: Path) -> None:
+    _mkdir("docs", "site")(project)
+    (project / "docs" / "mkdocs.yml").write_text("")
+    clean.all_(make_context(_CFG))
+    assert not (project / "docs" / "site").exists()
+
+
+def test_all_removes_the_configured_site_dir(project: Path) -> None:
+    _mkdir("docs", "public")(project)
+    (project / "docs" / "mkdocs.yml").write_text("site_dir: public\n")
+    clean.all_(make_context(_CFG))
+    assert not (project / "docs" / "public").exists()
+
+
+def test_all_keeps_the_root_site_with_a_docs_config(project: Path) -> None:
+    site = _mkdir("site")(project)
+    _mkdir("docs")(project)
+    (project / "docs" / "mkdocs.yml").write_text("")
+    clean.all_(make_context(_CFG))
+    assert site.exists()
 
 
 def test_all_removes_nested_pycache(project: Path) -> None:
@@ -335,30 +361,82 @@ def test_find_pycache_dirs_does_not_descend_into_pycache(tmp_path: Path) -> None
     assert clean._find_pycache_dirs(tmp_path) == [tmp_path / "__pycache__"]
 
 
-########################################
-#     Tests for _has_mkdocs_config     #
-########################################
+################################
+#     Tests for _site_dirs     #
+################################
 
 
 @pytest.mark.usefixtures("project")
-def test_has_mkdocs_config_is_false_without_a_config() -> None:
-    assert not clean._has_mkdocs_config()
+def test_site_dirs_is_empty_without_a_config() -> None:
+    assert clean._site_dirs(_context()) == []
 
 
-def test_has_mkdocs_config_finds_the_root_config(project: Path) -> None:
+def test_site_dirs_finds_the_root_config(project: Path) -> None:
     (project / "mkdocs.yml").write_text("")
-    assert clean._has_mkdocs_config()
+    assert clean._site_dirs(_context()) == [Path("site")]
 
 
-def test_has_mkdocs_config_finds_the_docs_config(project: Path) -> None:
+def test_site_dirs_finds_the_docs_config(project: Path) -> None:
     _mkdir("docs")(project)
     (project / "docs" / "mkdocs.yml").write_text("")
-    assert clean._has_mkdocs_config()
+    assert clean._site_dirs(_context()) == [Path("docs/site")]
 
 
-def test_has_mkdocs_config_ignores_a_directory_named_like_the_config(project: Path) -> None:
+def test_site_dirs_uses_the_configured_docs_config(project: Path) -> None:
+    _mkdir("d")(project)
+    (project / "d" / "mkdocs.yml").write_text("")
+    c = make_context({**_CFG, "paths": {"docs_config": "d/mkdocs.yml"}})
+    assert clean._site_dirs(c) == [Path("d/site")]
+
+
+def test_site_dirs_ignores_the_fallback_files_with_a_valid_config(project: Path) -> None:
+    (project / "mkdocs.yml").write_text("")
+    assert clean._site_dirs(make_context(_CFG)) == []
+
+
+def test_site_dirs_reads_the_site_dir_option(project: Path) -> None:
+    _mkdir("docs")(project)
+    (project / "docs" / "mkdocs.yml").write_text("site_dir: out\n")
+    assert clean._site_dirs(make_context(_CFG)) == [Path("docs/out")]
+
+
+def test_site_dirs_ignores_a_directory_named_like_the_config(project: Path) -> None:
     _mkdir("mkdocs.yml")(project)
-    assert not clean._has_mkdocs_config()
+    assert clean._site_dirs(_context()) == []
+
+
+####################################
+#     Tests for _read_site_dir     #
+####################################
+
+
+@pytest.fixture
+def mkdocs(project: Path) -> Path:
+    return project / "mkdocs.yml"
+
+
+def test_read_site_dir_defaults_to_site(mkdocs: Path) -> None:
+    mkdocs.write_text("site_name: demo\n")
+    assert clean._read_site_dir(mkdocs) == "site"
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["site_dir: public", "site_dir: 'public'", 'site_dir: "public"', "site_dir: public  # out"],
+)
+def test_read_site_dir_reads_the_value(mkdocs: Path, line: str) -> None:
+    mkdocs.write_text(f"site_name: demo\n{line}\n")
+    assert clean._read_site_dir(mkdocs) == "public"
+
+
+def test_read_site_dir_with_an_empty_value_defaults_to_site(mkdocs: Path) -> None:
+    mkdocs.write_text("site_dir:\n")
+    assert clean._read_site_dir(mkdocs) == "site"
+
+
+def test_read_site_dir_ignores_an_indented_option(mkdocs: Path) -> None:
+    mkdocs.write_text("extra:\n  site_dir: other\n")
+    assert clean._read_site_dir(mkdocs) == "site"
 
 
 #################################
