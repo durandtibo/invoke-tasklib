@@ -20,17 +20,17 @@ from invoke_tasklib.config import FIX_STEPS, load_config
 if TYPE_CHECKING:
     from invoke.context import Context
 
+# The steps of ``fix.all`` (task and programs), by step name.
+#
+# To add a step, add its name to ``FIX_STEPS`` in
+# ``config/_constants.py`` (a test checks that the names agree).
 STEPS: dict[str, Step] = {
     "lint": Step(lint.fix_python, programs=("ruff",)),
     "format-python": Step(formatting.fix_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.fix_docstrings, programs=("docformatter",)),
     "shell": Step(formatting.fix_shell, programs=("shfmt",)),
 }
-r"""The steps of ``fix.all`` (task and programs), by step name.
 
-To add a step, add its name to ``FIX_STEPS`` in ``config/_constants.py``
-(a test checks that the names agree).
-"""
 
 @task(
     name="all",

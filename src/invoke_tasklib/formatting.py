@@ -19,8 +19,8 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
+# Directories whose shell scripts are never checked or formatted.
 SHELL_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {"build", "dist", "site"}
-r"""Directories whose shell scripts are never checked or formatted."""
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
