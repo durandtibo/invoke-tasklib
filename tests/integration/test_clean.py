@@ -53,3 +53,18 @@ def test_all_outside_a_git_repository_removes_the_directories(
     monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
     clean.all_(_context())
     assert not (tmp_path / "build").exists()
+
+
+def test_all_keeps_a_site_dir_outside_the_repository(repo: Path) -> None:
+    outside = repo.parent / "shared-site"
+    outside.mkdir()
+    (repo / "mkdocs.yml").write_text(f"site_dir: {outside}\n")
+    clean.all_(_context())
+    assert outside.is_dir()
+
+
+def test_all_removes_an_untracked_configured_coverage_html_dir(repo: Path) -> None:
+    (repo / "pyproject.toml").write_text('[tool.coverage.html]\ndirectory = "reports/html"\n')
+    (repo / "reports" / "html").mkdir(parents=True)
+    clean.all_(_context())
+    assert not (repo / "reports" / "html").exists()
