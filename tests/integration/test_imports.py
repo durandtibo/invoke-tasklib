@@ -104,6 +104,16 @@ def test_check_cycles_reports_a_cycle_without_importing_anything(
         imports.check_cycles(_context("stcpkg"))
 
 
+def test_check_cycles_reports_a_relative_import_above_the_top_level_package(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write(project, {"relpkg/__init__.py": "", "relpkg/a.py": "from .. import x\n"})
+    monkeypatch.syspath_prepend(str(project))
+    msg = r"Cannot parse module relpkg\.a: attempted relative import beyond top-level package"
+    with pytest.raises(Exit, match=msg):
+        imports.check_cycles(_context("relpkg"))
+
+
 def test_check_cycles_reports_the_cycle_that_import_order_hides(
     project: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

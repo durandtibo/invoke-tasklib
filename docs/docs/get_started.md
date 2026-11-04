@@ -75,6 +75,8 @@ Available tasks:
   check.all (check)             Run the main checks of the project.
   clean.all (clean)             Remove build artifacts and caches.
   clean.pycache                 Remove all __pycache__ directories.
+  config.show                   Show the resolved config and where each value
+                                comes from.
   doc.build                     Build the documentation and fail on any
                                 warning.
   doc.publish-dev               Publish development (e.g. unstable) docs.
@@ -82,13 +84,14 @@ Available tasks:
   doc.serve                     Serve the documentation locally with live
                                 reload.
   env.check-tools               Check which tools of the tasks are available.
-  env.create-venv               Create a virtual environment and install invoke
-                                in it.
+  env.create-venv               Create a virtual environment and install the
+                                project in it.
   env.install                   Install the dependencies and the package
                                 (editable).
   env.show-installed-packages   Show the installed packages.
   env.show-python-config        Show the python configuration.
   env.update                    Update dependencies and pre-commit hooks.
+  fix.all (fix)                 Fix the lint and format issues of the project.
   format.check-docstrings       Check docstring format with docformatter.
   format.check-python           Check code format with ruff without modifying
                                 files.

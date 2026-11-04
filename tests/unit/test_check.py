@@ -10,7 +10,7 @@ from invoke.context import MockContext
 from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
-from invoke_tasklib import check, env
+from invoke_tasklib import _steps, check, env
 from invoke_tasklib.config import CHECK_STEPS, load_config
 from tests.helpers import commands, make_context
 
@@ -29,7 +29,7 @@ def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def _tools_found(monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Make every tool available, whatever is installed."""
-    monkeypatch.setattr(check, "find_tool", lambda name, **_kwargs: f"/found/{name}")
+    monkeypatch.setattr(_steps, "find_tool", lambda name, **_kwargs: f"/found/{name}")
 
 
 def _available(*names: str) -> Callable[..., str | None]:
@@ -241,7 +241,7 @@ def test_all_keep_going_prints_the_exit_code_of_a_failed_command(
 
 
 def test_all_missing_tool_stops_before_any_step(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
     c = _context({"tasks": "format-python,lint,types"})
     with pytest.raises(Exit, match=r"1 tool\(s\) missing for the selected steps"):
         check.all_(c)
@@ -249,14 +249,14 @@ def test_all_missing_tool_stops_before_any_step(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_all_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     with pytest.raises(Exit, match=r"missing") as info:
         check.all_(_context({"tasks": "lint"}))
     assert info.value.code == 127
 
 
 def test_all_missing_tools_are_all_listed(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
     c = _context({"tasks": "format-python,format-docstrings,types,spelling"})
     with pytest.raises(Exit, match=r"3 tool\(s\) missing") as info:
         check.all_(c)
@@ -272,7 +272,7 @@ def test_all_missing_tools_are_all_listed(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_all_missing_tool_shared_by_steps_is_listed_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     with pytest.raises(
         Exit, match=r"1 tool\(s\) missing .*\n  'ruff' .*\(needed by: format-python, lint\)"
     ):
@@ -280,14 +280,14 @@ def test_all_missing_tool_shared_by_steps_is_listed_once(monkeypatch: pytest.Mon
 
 
 def test_all_does_not_look_up_the_tools_of_skipped_steps(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
     c = _context({"tasks": "lint,types"})
     check.all_(c, skip="types")
     assert commands(c) == ["ruff check ."]
 
 
 def test_all_missing_module_names_the_interpreter(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     with pytest.raises(
         Exit, match=r"The Python module 'pytest' is not installed .*\(needed by: unit\)"
     ):
@@ -297,7 +297,7 @@ def test_all_missing_module_names_the_interpreter(monkeypatch: pytest.MonkeyPatc
 def test_all_keep_going_does_not_run_a_step_with_a_missing_tool(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("ruff"))
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
     c = _context({"tasks": "lint,types"})
     with pytest.raises(Exit, match=r"1 of 2 check\(s\) failed: types"):
         check.all_(c, keep_going=True)
@@ -307,7 +307,7 @@ def test_all_keep_going_does_not_run_a_step_with_a_missing_tool(
 def test_all_keep_going_prints_the_missing_tool_of_a_step(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     with pytest.raises(Exit, match=r"failed"):
         check.all_(_context({"tasks": "types"}), keep_going=True)
     assert capsys.readouterr().err == (
@@ -320,86 +320,10 @@ def test_all_keep_going_prints_the_missing_tool_of_a_step(
 def test_all_keep_going_lists_every_missing_tool_of_a_step(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     with pytest.raises(Exit, match=r"failed"):
         check.all_(_context({"tasks": "audit"}), keep_going=True)
     assert capsys.readouterr().err.count("was not found on the PATH") == 2
-
-
-##################################
-#     Tests for _parse_steps     #
-##################################
-
-
-def test_parse_steps_none_is_empty() -> None:
-    assert check._parse_steps("--only", None) == []
-
-
-def test_parse_steps_strips_and_removes_duplicates() -> None:
-    assert check._parse_steps("--only", " lint , unit,lint") == ["lint", "unit"]
-
-
-def test_parse_steps_rejects_an_unknown_step() -> None:
-    with pytest.raises(Exit, match=r"Unknown step \['x'\] in --skip") as info:
-        check._parse_steps("--skip", "lint,x")
-    assert info.value.code == 2
-
-
-###################################
-#     Tests for _select_steps     #
-###################################
-
-
-def test_select_steps_uses_the_configured_steps() -> None:
-    assert check._select_steps(("lint", "unit"), [], []) == ["lint", "unit"]
-
-
-def test_select_steps_only_wins_over_the_configured_steps() -> None:
-    assert check._select_steps(("lint", "unit"), ["docs"], []) == ["docs"]
-
-
-def test_select_steps_skip_removes_a_step() -> None:
-    assert check._select_steps(("lint", "unit"), [], ["lint"]) == ["unit"]
-
-
-def test_select_steps_does_not_mutate_its_inputs() -> None:
-    only = ["lint", "unit"]
-    check._select_steps((), only, ["lint"])
-    assert only == ["lint", "unit"]
-
-
-###############################
-#     Tests for _run_step     #
-###############################
-
-
-def test_run_step_passes() -> None:
-    assert check._run_step(_context(), "types") is None
-
-
-def test_run_step_returns_the_failure_message() -> None:
-    c = _context()
-    c.run = Mock(side_effect=Exit("boom"))
-    assert check._run_step(c, "types") == "boom"
-
-
-def test_run_step_returns_the_command_and_code_of_a_failed_command() -> None:
-    c = _context()
-    _failing(c, "ty")
-    assert check._run_step(c, "types") == "The command 'ty check' exited with code 1"
-
-
-def test_run_step_names_the_exception_when_the_message_is_empty() -> None:
-    c = _context()
-    c.run = Mock(side_effect=Exit())
-    assert check._run_step(c, "types") == "Exit"
-
-
-def test_run_step_does_not_catch_other_exceptions() -> None:
-    c = _context()
-    c.run = Mock(side_effect=KeyboardInterrupt("interrupted"))
-    with pytest.raises(KeyboardInterrupt, match=r"interrupted"):
-        check._run_step(c, "types")
 
 
 ###################################
@@ -420,7 +344,7 @@ def test_missing_tools_step_without_tools() -> None:
 
 
 def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     assert check._missing_tools("types", _cfg()) == [
         (
             "ty",
@@ -430,7 +354,7 @@ def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_missing_tools_module(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("pytest_timeout", "xdoctest"))
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest_timeout", "xdoctest"))
     assert check._missing_tools("unit", _cfg()) == [
         (
             "pytest",
@@ -443,7 +367,7 @@ def test_missing_tools_module(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_missing_tools_programs_come_before_modules(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(check, "find_tool", _available())
+    monkeypatch.setattr(_steps, "find_tool", _available())
     names = [name for name, _ in check._missing_tools("audit", _cfg())]
     assert names == ["uv", "uvx"]
 
@@ -451,14 +375,14 @@ def test_missing_tools_programs_come_before_modules(monkeypatch: pytest.MonkeyPa
 def test_missing_tools_unit_needs_xdoctest_when_configured(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("pytest", "pytest_timeout"))
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
     assert [name for name, _ in check._missing_tools("unit", _cfg(xdoctest=True))] == ["xdoctest"]
 
 
 def test_missing_tools_unit_does_not_need_xdoctest_when_disabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(check, "find_tool", _available("pytest", "pytest_timeout"))
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
     assert check._missing_tools("unit", _cfg(xdoctest=False)) == []
 
 
@@ -469,33 +393,9 @@ def test_missing_tools_looks_modules_up_as_modules(monkeypatch: pytest.MonkeyPat
         calls.append((name, module))
         return name
 
-    monkeypatch.setattr(check, "find_tool", find)
+    monkeypatch.setattr(_steps, "find_tool", find)
     check._missing_tools("doctest", _cfg())
     assert calls == [("pytest", True), ("xdoctest", True)]
-
-
-########################################
-#     Tests for _preflight_message     #
-########################################
-
-
-def test_preflight_message_one_tool() -> None:
-    assert check._preflight_message({"lint": [("ruff", "Install it.")]}) == (
-        "1 tool(s) missing for the selected steps:\n  Install it. (needed by: lint)"
-    )
-
-
-def test_preflight_message_merges_a_tool_of_several_steps() -> None:
-    blocked = {"lint": [("ruff", "Install it.")], "format-python": [("ruff", "Install it.")]}
-    assert check._preflight_message(blocked) == (
-        "1 tool(s) missing for the selected steps:\n  Install it. (needed by: lint, format-python)"
-    )
-
-
-def test_preflight_message_does_not_mutate_its_input() -> None:
-    blocked = {"lint": [("ruff", "Install it.")]}
-    check._preflight_message(blocked)
-    assert blocked == {"lint": [("ruff", "Install it.")]}
 
 
 ###########################

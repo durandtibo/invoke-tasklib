@@ -289,6 +289,15 @@ def test_build_command_unclosed_quote_in_paths_exits() -> None:
         build_command("pytest", paths="'a")
 
 
+def test_build_command_names_the_option_of_the_args_in_the_error() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --other-args"):
+        build_command("pytest", args="-k 'a", args_option="--other-args")
+
+
+def test_build_command_args_option_does_not_change_the_command() -> None:
+    assert build_command("pytest", args="-x", args_option="--other-args") == "pytest -x"
+
+
 ############################
 #     Tests for _split     #
 ############################

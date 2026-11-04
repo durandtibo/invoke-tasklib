@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "invoke.yaml of invoke-tasklib",
+  "type": "object",
+  "properties": {
+    "tasklib": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package"
+      ],
+      "properties": {
+        "package": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Distribution name, as on PyPI (required)."
+            },
+            "import_name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name used to import the package (default: name with - replaced by _)."
+            },
+            "python_version": {
+              "type": "string",
+              "pattern": "\\d+\\.\\d+(\\.\\d+)?",
+              "description": "Python version of the virtual environment (default: from .python-version or requires-python)."
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "src": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Source directory (default: src/<import_name>)."
+            },
+            "tests": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tests directory.",
+              "default": "tests"
+            },
+            "unit_tests": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Unit tests (default: <tests>/unit)."
+            },
+            "integration_tests": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Integration tests (default: <tests>/integration)."
+            },
+            "functional_tests": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Functional tests (default: <tests>/functional)."
+            },
+            "benchmarks": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Benchmarks (default: <tests>/benchmarks)."
+            },
+            "docs_config": {
+              "type": "string",
+              "minLength": 1,
+              "description": "MkDocs configuration file.",
+              "default": "docs/mkdocs.yml"
+            }
+          }
+        },
+        "groups": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "install": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Dependency groups of env.install (comma-separated string or list).",
+              "default": "dev"
+            },
+            "update": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Dependency groups of env.update (comma-separated string or list).",
+              "default": "dev,docs"
+            }
+          }
+        },
+        "test": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "unit_timeout": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Timeout in seconds of each unit test.",
+              "default": 10
+            },
+            "integration_timeout": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Timeout in seconds of each integration test.",
+              "default": 60
+            },
+            "functional_timeout": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Timeout in seconds of each functional test.",
+              "default": 60
+            },
+            "xdoctest": {
+              "type": "boolean",
+              "description": "Run pytest with --xdoctest.",
+              "default": true
+            },
+            "cov_fail_under": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Coverage threshold passed to --cov-fail-under."
+            },
+            "cov_reports": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "annotate",
+                      "html",
+                      "json",
+                      "lcov",
+                      "term",
+                      "term-missing",
+                      "xml"
+                    ]
+                  }
+                }
+              ],
+              "description": "Coverage report formats generated by --cov.",
+              "default": "html,xml,term"
+            }
+          }
+        },
+        "check": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tasks": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "format-python",
+                      "format-docstrings",
+                      "lint",
+                      "types",
+                      "imports",
+                      "unit",
+                      "doctest",
+                      "shell",
+                      "spelling",
+                      "docs",
+                      "audit"
+                    ]
+                  }
+                }
+              ],
+              "description": "Steps of check.all (comma-separated string or list).",
+              "default": "format-python,format-docstrings,lint,types,imports,unit"
+            }
+          }
+        },
+        "fix": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tasks": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "lint",
+                      "format-python",
+                      "format-docstrings",
+                      "shell"
+                    ]
+                  }
+                }
+              ],
+              "description": "Steps of fix.all (comma-separated string or list).",
+              "default": "lint,format-python,format-docstrings"
+            }
+          }
+        }
+      }
+    }
+  }
+}

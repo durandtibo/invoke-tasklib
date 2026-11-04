@@ -222,6 +222,15 @@ def test_check_cycles_does_not_report_a_syntax_error_as_a_cycle(make_package: _M
         imports.check_cycles(make_context({"package": {"name": "cyc_syntax"}}))
 
 
+def test_check_cycles_reports_a_relative_import_above_the_top_level_package(
+    make_package: _Maker,
+) -> None:
+    make_package("cyc_rel", {"__init__.py": "", "a.py": "from .. import x\n"})
+    msg = r"Cannot parse module cyc_rel\.a: attempted relative import beyond top-level package"
+    with pytest.raises(Exit, match=msg):
+        imports.check_cycles(make_context({"package": {"name": "cyc_rel"}}))
+
+
 def test_check_cycles_does_not_report_a_missing_dependency_as_a_cycle(
     make_package: _Maker, capsys: pytest.CaptureFixture[str]
 ) -> None:

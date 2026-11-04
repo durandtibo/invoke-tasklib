@@ -33,6 +33,8 @@ tasklib:
     cov_reports: html,xml,term
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit
+  fix:
+    tasks: lint,format-python,format-docstrings
 ```
 
 Only `tasklib.package.name` (the distribution name, as on PyPI) is required. Everything else has a default, and most of the `paths`
@@ -44,7 +46,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | -------------------------- | ------------------------------------------------------------------------------------- |
 | `package.name`             | required                                                                              |
 | `package.import_name`      | `<package.name>` with `-` replaced by `_`                                             |
-| `package.python_version`   | `"3.14"`                                                                              |
+| `package.python_version`   | the `.python-version` file, else the `requires-python` lower bound, else `"3.14"`     |
 | `paths.src`                | `src/<package.import_name>`, or `<package.import_name>` if only that directory exists |
 | `paths.tests`              | `tests`                                                                               |
 | `paths.unit_tests`         | `<paths.tests>/unit`                                                                  |
@@ -61,11 +63,12 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `test.cov_fail_under`      | not set                                                                               |
 | `test.cov_reports`         | `html,xml,term`                                                                       |
 | `check.tasks`              | `format-python,format-docstrings,lint,types,imports,unit`                             |
+| `fix.tasks`                | `lint,format-python,format-docstrings`                                                |
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
 with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
-not have it), and a coverage threshold: with `--cov`, `cov_fail_under` is forwarded as
-`--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
+not have it; `test.doctest-src` ignores it and always uses the plugin), and a coverage threshold:
+with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
 `cov_reports` is a comma-separated string or a list of the `--cov-report` formats of pytest-cov
 (`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
@@ -73,6 +76,10 @@ value passes no `--cov-report`, so pytest-cov uses its default.
 `check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order:
 `format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,
 `spelling`, `docs` and `audit`. It must have at least one step and no unknown step.
+
+`fix.tasks` is the same for the steps of `fix.all`: `lint`, `format-python`, `format-docstrings` and
+`shell`, run in that order (the lint fixes first, so that the formatting has the last word on the
+layout).
 
 `package.import_name` is the name used to import the package. It is used by `imports.check-cycles`, `imports.check-isolated`,
 `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
@@ -93,6 +100,43 @@ non-empty string, and `test.cov_fail_under` must be between 0 and 100.
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.
 
+When the key is not set, the version is read from the project, in this order:
+
+1. the first line of the `.python-version` file, if it is a version such as `3.12` or `3.12.1`
+   (an implementation name such as `pypy3.10` is ignored);
+2. the lower bound of `project.requires-python` in `pyproject.toml` (`">=3.11"` gives `3.11`);
+3. `3.14`.
+
+## Showing the Resolved Config
+
+```shell
+invoke config.show
+```
+
+Prints the `tasklib` section as the tasks see it, with every key and a comment with its origin. It
+answers "which value is used, and why" without reading the code:
+
+```yaml
+tasklib:
+  package:
+    name: demo # project file
+    import_name: demo # derived
+  paths:
+    src: lib # project file
+    tests: zz # environment variable INVOKE_TASKLIB_PATHS_TESTS
+    unit_tests: zz/unit # derived
+    docs_config: docs/mkdocs.yml # default
+```
+
+The origin is the source with the highest priority that sets the key: `default` (the default of
+the library, or no value for an optional key), `project file` (`invoke.yaml`),
+`environment variable INVOKE_TASKLIB_...`, `system config file`, `user config file`,
+`runtime config file` or `override` (set from the command line or by code). `derived` is a value
+that no source sets, computed from other values or from the project (`import_name`, `src`, the test
+paths and the Python version). The config is validated first, so an invalid one stops the task with
+the usual one-line message. The task reads nothing but the config and the two project files of
+[`package.python_version`](#defaults), and changes nothing.
+
 ## Editor Completion (JSON Schema)
 
 The keys, the defaults and the descriptions are declared once, in `invoke_tasklib.config.SCHEMA`
@@ -104,8 +148,18 @@ schema of the `tasklib` section of `invoke.yaml` with:
 python -m invoke_tasklib.config > invoke-tasklib.schema.json
 ```
 
-and point your editor to it (for example with a `# yaml-language-server: $schema=...` comment at
-the top of `invoke.yaml`) to get completion and validation of the keys.
+The same file is published with the documentation. Point your editor to it with a comment at the
+top of `invoke.yaml` to get completion and validation of the keys:
+
+```yaml
+# yaml-language-server: $schema=https://durandtibo.github.io/invoke-tasklib/schema.json
+tasklib:
+  package:
+    name: my_package
+```
+
+A test checks that the published `docs/docs/schema.json` equals the schema printed by the command
+(regenerate it with `python -m invoke_tasklib.config > docs/docs/schema.json`).
 
 ## Environment Variables
 

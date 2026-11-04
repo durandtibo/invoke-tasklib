@@ -4,6 +4,7 @@ import importlib.util
 import shutil
 from importlib.machinery import ModuleSpec
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.exceptions import Exit
@@ -32,7 +33,46 @@ def _pre_commit_config(_project: Path) -> None:
 def test_create_venv_uses_configured_python_version() -> None:
     c = make_context({"package": {"name": "mypkg", "python_version": "3.11"}})
     env.create_venv(c)
-    assert commands(c) == ["uv venv --python 3.11 --clear", "uv pip install invoke"]
+    assert commands(c) == [
+        "uv venv --python 3.11 --clear",
+        "uv sync --locked --all-extras --group dev",
+    ]
+
+
+def test_create_venv_default_python_version() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c)
+    assert commands(c)[0] == "uv venv --python 3.14 --clear"
+
+
+def test_create_venv_installs_the_configured_groups() -> None:
+    c = make_context({"package": {"name": "mypkg"}, "groups": {"install": ["dev", "docs"]}})
+    env.create_venv(c)
+    assert commands(c)[-1] == "uv sync --locked --all-extras --group dev --group docs"
+
+
+def test_create_venv_does_not_install_invoke_alone() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c)
+    assert "uv pip install invoke" not in commands(c)
+
+
+def test_create_venv_does_not_sync_when_the_venv_cannot_be_created() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=Exit("no uv", code=127))
+    with pytest.raises(Exit, match=r"no uv"):
+        env.create_venv(c)
+    assert commands(c) == ["uv venv --python 3.14 --clear"]
+
+
+def test_create_venv_says_what_it_does(capsys: pytest.CaptureFixture[str]) -> None:
+    env.create_venv(make_context({"package": {"name": "mypkg"}}))
+    assert capsys.readouterr().out == (
+        "🐍 Creating virtual environment with Python 3.14...\n"
+        "📦 Installing project dependencies...\n"
+        "✅ Installation complete\n"
+        "✅ Virtual environment created successfully\n"
+    )
 
 
 def test_install_default_options() -> None:

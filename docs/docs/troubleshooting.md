@@ -48,7 +48,8 @@ always put its console scripts on `PATH` the way you expect. Make sure:
 - Your virtual environment is activated (`source .venv/bin/activate`), or
 - You run it via `uv run invoke ...`, or
 - `invoke` itself is installed as a tool (`uv tool install invoke`). Note that
-  [`env.create-venv`](uguide/env.md) installs `invoke` into the new `.venv`, not as a tool.
+  [`env.create-venv`](uguide/env.md) installs the project, with `invoke`, into the new `.venv`, not
+  as a tool.
 
 ## `invoke --list` shows no tasks / `ns` is empty
 
@@ -97,16 +98,28 @@ backwards. Pass `--force` if that is what you want.
 
 See [Doc](uguide/doc.md).
 
+## The output has `[ok]` and `[fail]` instead of emojis
+
+On a terminal that cannot encode them (an ASCII locale, `PYTHONIOENCODING=ascii`), the progress
+messages use the tags `[ok]`, `[fail]` and `[skip]` and leave the other emojis out. Use a UTF-8
+locale (for example `LANG=C.UTF-8`) to get the emojis. Set `INVOKE_TASKLIB_ASCII=1` to get the
+tags on any terminal, for example in a log that is read by a tool.
+
+See [Custom tasks](uguide/custom_tasks.md).
+
 ## `release.publish` fails to authenticate
 
-`release.publish` passes the `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`) environment variable to
-`uv publish`. Without a token it only works in GitHub Actions with the `id-token: write`
+`release.publish` passes the `PYPI_TOKEN` (`TEST_PYPI_TOKEN` with `--test-pypi`, or
+`UV_PUBLISH_TOKEN`) environment variable to `uv publish`. Without a token it only works in GitHub Actions with the `id-token: write`
 permission (Trusted Publishing); anywhere else it stops with a clear message. Make sure the
 variable is set (e.g. as a CI secret) before running it:
 
 ```shell
 export PYPI_TOKEN=pypi-...
 invoke release.publish
+
+export TEST_PYPI_TOKEN=pypi-...
+invoke release.publish --test-pypi
 ```
 
 See [Release](uguide/release.md).

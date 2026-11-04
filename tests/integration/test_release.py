@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -60,3 +61,14 @@ def test_check_release_state_rejects_a_wrong_tag() -> None:
     _git("tag", "v9.9.9")
     with pytest.raises(Exit, match=r"tag v9\.9\.9 does not match the version 1\.2\.3"):
         release._check_release_state(_context())
+
+
+def test_confirm_without_a_terminal_asks_for_yes() -> None:
+    result = subprocess.run(
+        [sys.executable, "-c", "from invoke_tasklib.release import _confirm; _confirm('PyPI')"],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert "Publication not confirmed: pass --yes" in result.stderr

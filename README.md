@@ -146,7 +146,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `test`     | `test.all`                    | Run unit, integration, and functional tests                                              |    ❌    |
 | `test`     | `test.coverage-report`        | Generate an HTML/terminal report from existing coverage data                             |    ❌    |
 | `test`     | `test.benchmark`              | Run performance benchmarks                                                               |    ❌    |
-| `env`      | `env.create-venv`             | Create a virtual environment and install invoke                                          |    ✅    |
+| `env`      | `env.create-venv`             | Create a virtual environment and install the project                                     |    ✅    |
 | `env`      | `env.install`                 | Install project dependencies and the package (editable)                                  |    ✅    |
 | `env`      | `env.check-tools`             | Check which tools (ruff, pyright, ...) are available                                     |    ❌    |
 | `env`      | `env.update`                  | Update dependencies and pre-commit hooks                                                 |    ✅    |
@@ -160,8 +160,10 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `doc`      | `doc.serve`                   | Serve the docs locally                                                                   |    ❌    |
 | `security` | `security.audit`              | Audit the locked dependencies for known vulnerabilities with pip-audit                   |    ❌    |
 | `check`    | `check.all` (or `check`)      | Run the main read-only checks                                                            |    ❌    |
+| `fix`      | `fix.all` (or `fix`)          | Fix the lint and format issues                                                           |    ✅    |
 | `clean`    | `clean.all` (or `clean`)      | Remove build artifacts and caches                                                        |    ✅    |
 | `clean`    | `clean.pycache`               | Remove all `__pycache__` directories                                                     |    ✅    |
+| `config`   | `config.show`                 | Show the resolved config and where each value comes from                                 |    ❌    |
 
 `format.*` and `lint.*` follow a naming convention: read-only checks are
 named `check_<target>`, and the matching in-place fixer is named
@@ -183,7 +185,7 @@ tasklib:
   package:
     name: my_package # required
     import_name: my_package # default: <package.name> with - replaced by _
-    python_version: "3.14" # used by env.create-venv
+    python_version: "3.14" # used by env.create-venv (default: .python-version, then requires-python)
   paths:
     src: src/my_package # default: src/<package.import_name>
     tests: tests
@@ -201,6 +203,8 @@ tasklib:
     cov_reports: html,xml,term
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit # steps of check.all
+  fix:
+    tasks: lint,format-python,format-docstrings # steps of fix.all
 ```
 
 See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)

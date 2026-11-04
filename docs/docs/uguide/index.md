@@ -32,7 +32,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Test](test.md)         | `test.all`                    | Run unit, integration, and functional tests         |    ❌    |
 | [Test](test.md)         | `test.coverage-report`        | Generate an HTML/terminal report from coverage data |    ❌    |
 | [Test](test.md)         | `test.benchmark`              | Run performance benchmarks                          |    ❌    |
-| [Env](env.md)           | `env.create-venv`             | Create a virtual environment and install invoke     |    ✅    |
+| [Env](env.md)           | `env.create-venv`             | Create a virtual environment and install the project    |    ✅    |
 | [Env](env.md)           | `env.install`                 | Install project dependencies and the package        |    ✅    |
 | [Env](env.md)           | `env.check-tools`             | Check which tools are available                     |    ❌    |
 | [Env](env.md)           | `env.update`                  | Update dependencies and pre-commit hooks            |    ✅    |
@@ -46,8 +46,10 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Doc](doc.md)           | `doc.publish-latest`          | Publish latest (stable) docs                        |    ✅    |
 | [Security](security.md) | `security.audit`              | Audit dependencies for known vulnerabilities        |    ❌    |
 | [Check](check.md)       | `check.all` (or `check`)      | Run the main read-only checks                       |    ❌    |
+| [Fix](fix.md)           | `fix.all` (or `fix`)          | Fix the lint and format issues                      |    ✅    |
 | [Clean](clean.md)       | `clean.all` (or `clean`)      | Remove build artifacts and caches                   |    ✅    |
 | [Clean](clean.md)       | `clean.pycache`               | Remove all `__pycache__` directories                |    ✅    |
+| [Config](config.md)     | `config.show`                 | Show the resolved config and its origins            |    ❌    |
 | [Config](config.md)     | _(none — shared config)_      | Config resolution used by all tasks above           |    —     |
 
 ## Everyday Workflow

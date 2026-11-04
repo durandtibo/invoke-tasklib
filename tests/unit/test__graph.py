@@ -13,6 +13,7 @@ from invoke_tasklib._graph import (
     _is_type_checking,
     _resolve,
     _source_path,
+    _Tarjan,
     find_cycles,
     import_graph,
     parse_imports,
@@ -77,8 +78,35 @@ def test_parse_imports_relative_with_a_module() -> None:
     assert parse_imports("from .b import y", "pkg.m") == [("pkg.b", ("y",))]
 
 
-def test_parse_imports_in_a_top_level_module() -> None:
-    assert parse_imports("from . import b", "m") == [("", ("b",))]
+def test_parse_imports_relative_import_in_a_top_level_module_is_rejected() -> None:
+    with pytest.raises(SyntaxError, match=r"attempted relative import beyond top-level package"):
+        parse_imports("from . import b", "m")
+
+
+def test_parse_imports_relative_import_above_the_top_level_package_is_rejected() -> None:
+    with pytest.raises(SyntaxError, match=r"attempted relative import beyond top-level package"):
+        parse_imports("from ... import x", "pkg.a")
+
+
+def test_parse_imports_relative_import_to_the_top_level_package_is_accepted() -> None:
+    assert parse_imports("from .. import x", "pkg.sub.a") == [("pkg", ("x",))]
+
+
+def test_parse_imports_relative_import_above_a_package_is_rejected() -> None:
+    with pytest.raises(SyntaxError, match=r"attempted relative import beyond top-level package"):
+        parse_imports("from .. import x", "pkg", is_package=True)
+
+
+def test_parse_imports_relative_error_names_the_module() -> None:
+    with pytest.raises(SyntaxError, match=r"beyond top-level") as info:
+        parse_imports("from ... import x", "pkg.a")
+    assert info.value.filename == "pkg.a"
+
+
+def test_parse_imports_relative_error_has_the_line_of_the_import() -> None:
+    with pytest.raises(SyntaxError, match=r"beyond top-level") as info:
+        parse_imports("import os\nfrom ... import x", "pkg.a")
+    assert info.value.lineno == 2
 
 
 def test_parse_imports_ignores_type_checking_by_default() -> None:
@@ -248,6 +276,81 @@ def test_import_graph_of_nothing_is_empty() -> None:
 def test_import_graph_rejects_invalid_source() -> None:
     with pytest.raises(SyntaxError, match=r"invalid syntax"):
         import_graph({"p.a": "def (:\n"})
+
+
+#############################
+#     Tests for _Tarjan     #
+#############################
+
+
+def _tarjan_with_stack(stack: list[str]) -> _Tarjan:
+    tarjan = _Tarjan({})
+    tarjan.stack = list(stack)
+    tarjan.on_stack = set(stack)
+    return tarjan
+
+
+def test_tarjan_push_puts_the_node_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": []})
+    tarjan._push("a")
+    assert tarjan.stack == ["a"]
+
+
+def test_tarjan_push_marks_the_node_as_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": []})
+    tarjan._push("a")
+    assert tarjan.on_stack == {"a"}
+
+
+def test_tarjan_push_returns_the_sorted_children() -> None:
+    node, children = _Tarjan({"a": ["c", "b"], "b": [], "c": []})._push("a")
+    assert (node, list(children)) == ("a", ["b", "c"])
+
+
+def test_tarjan_pop_component_removes_only_the_nodes_above_the_root() -> None:
+    tarjan = _tarjan_with_stack(["a", "b", "c"])
+    tarjan._pop_component("b")
+    assert tarjan.stack == ["a"]
+
+
+def test_tarjan_pop_component_unmarks_the_popped_nodes() -> None:
+    tarjan = _tarjan_with_stack(["a", "b", "c"])
+    tarjan._pop_component("b")
+    assert tarjan.on_stack == {"a"}
+
+
+def test_tarjan_pop_component_keeps_a_cycle() -> None:
+    tarjan = _tarjan_with_stack(["a", "b", "c"])
+    tarjan._pop_component("b")
+    assert tarjan.found == [["b", "c"]]
+
+
+def test_tarjan_pop_component_drops_a_single_node() -> None:
+    tarjan = _tarjan_with_stack(["a", "b"])
+    tarjan._pop_component("b")
+    assert tarjan.found == []
+
+
+def test_tarjan_pop_component_of_the_only_node_empties_the_stack() -> None:
+    tarjan = _tarjan_with_stack(["a"])
+    tarjan._pop_component("a")
+    assert (tarjan.stack, tarjan.on_stack) == ([], set())
+
+
+def test_tarjan_run_leaves_nothing_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["a", "c"], "c": []})
+    tarjan.run()
+    assert (tarjan.stack, tarjan.on_stack) == ([], set())
+
+
+def test_tarjan_run_ignores_an_edge_to_a_finished_component() -> None:
+    graph = {"a": ["b"], "b": ["a"], "c": ["a"], "d": ["c"]}
+    assert _Tarjan(graph).run() == [["a", "b"]]
+
+
+def test_tarjan_run_is_deterministic() -> None:
+    graph = {"a": ["b"], "b": ["c"], "c": ["a"], "d": ["a"]}
+    assert _Tarjan(graph).run() == _Tarjan(graph).run()
 
 
 #################################

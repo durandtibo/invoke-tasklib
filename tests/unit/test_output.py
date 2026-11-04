@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO, StringIO, TextIOWrapper
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 from unittest.mock import Mock
 
 import pytest
@@ -11,7 +11,18 @@ from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import lint
-from invoke_tasklib.output import _failure_title, say, step
+from invoke_tasklib.output import (
+    _NON_ASCII,
+    ASCII_ENV_VAR,
+    _failure_title,
+    _keep_if_encodable,
+    _to_encoding,
+    say,
+    step,
+)
+
+if TYPE_CHECKING:
+    import re
 
 #######################
 #     Tests for say     #
@@ -72,13 +83,37 @@ def test_say_does_not_write_to_the_err_stream() -> None:
 def test_say_err_replaces_characters_the_stream_cannot_encode() -> None:
     raw, stream = _ascii_stream()
     say(Context(config=Config(overrides={"run": {"err_stream": stream}})), "❌ bad", err=True)
-    assert raw.getvalue() == b"? bad\n"
+    assert raw.getvalue() == b"[fail] bad\n"
 
 
 def test_say_replaces_characters_the_stream_cannot_encode() -> None:
     raw, stream = _ascii_stream()
     say(Context(config=Config(overrides={"run": {"out_stream": stream}})), "🧹 clean")
-    assert raw.getvalue() == b"? clean\n"
+    assert raw.getvalue() == b"clean\n"
+
+
+def test_say_forced_ascii_tags_the_status_symbols(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(ASCII_ENV_VAR, "1")
+    out = StringIO()
+    say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
+    assert out.getvalue() == "[ok] Done\n"
+
+
+@pytest.mark.parametrize("value", ["", "0"])
+def test_say_keeps_the_symbols_when_ascii_is_off(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv(ASCII_ENV_VAR, value)
+    out = StringIO()
+    say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
+    assert out.getvalue() == "✅ Done\n"
+
+
+def test_say_keeps_the_symbols_when_ascii_is_not_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(ASCII_ENV_VAR, raising=False)
+    out = StringIO()
+    say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
+    assert out.getvalue() == "✅ Done\n"
 
 
 def test_say_keeps_encodable_characters_on_ascii_stream() -> None:
@@ -105,7 +140,7 @@ class _AsciiOnlyStream:
 def test_say_replaces_characters_on_stream_without_encoding() -> None:
     _AsciiOnlyStream.written.clear()
     say(Context(config=Config(overrides={"run": {"out_stream": _AsciiOnlyStream()}})), "🧹 clean")
-    assert _AsciiOnlyStream.written == ["? clean\n"]
+    assert _AsciiOnlyStream.written == ["clean\n"]
 
 
 def test_task_progress_messages_are_visible_without_logging_setup(
@@ -220,3 +255,55 @@ def test_task_failure_is_visible_after_the_start_message(
 )
 def test_failure_title(start: str, expected: str) -> None:
     assert _failure_title(start) == expected
+
+
+##################################
+#     Tests for _to_encoding     #
+##################################
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("✅ Done", "[ok] Done"),
+        ("❌ Failed: x", "[fail] Failed: x"),
+        ("⏭️  No tests: skipping", "[skip] No tests: skipping"),
+        ("🧹 Cleaning...", "Cleaning..."),
+        ("🗑️  Removing build", "Removing build"),
+        ("Plain text", "Plain text"),
+        ("", ""),
+    ],
+)
+def test_to_encoding_ascii(text: str, expected: str) -> None:
+    assert _to_encoding(text, "ascii") == expected
+
+
+def test_to_encoding_keeps_the_characters_the_encoding_supports() -> None:
+    assert _to_encoding("🧹 é ✅ ok", "latin-1") == "é [ok] ok"
+
+
+def test_to_encoding_handles_several_symbols() -> None:
+    assert _to_encoding("✅ a ❌ b", "ascii") == "[ok] a [fail] b"
+
+
+def test_to_encoding_is_deterministic() -> None:
+    assert _to_encoding("✅ a", "ascii") == _to_encoding("✅ a", "ascii")
+
+
+########################################
+#     Tests for _keep_if_encodable     #
+########################################
+
+
+def _match(text: str) -> re.Match[str]:
+    match = _NON_ASCII.search(text)
+    assert match is not None
+    return match
+
+
+def test_keep_if_encodable_keeps_a_supported_character_and_its_spaces() -> None:
+    assert _keep_if_encodable(_match("é  x"), "latin-1") == "é  "
+
+
+def test_keep_if_encodable_drops_an_unsupported_character_and_its_spaces() -> None:
+    assert _keep_if_encodable(_match("é  x"), "ascii") == ""
