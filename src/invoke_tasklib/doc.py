@@ -99,7 +99,7 @@ def _docs_config(c: Context) -> str:
 
 
 @task(help={"args": ARGS_HELP})
-def build(c: Context, args: str | None = None) -> None:
+def build(c: Context, *, args: str | None = None) -> None:
     r"""Build the documentation and fail on any warning.
 
     The documentation is built with ``mkdocs build --strict`` from
@@ -120,7 +120,7 @@ def build(c: Context, args: str | None = None) -> None:
 
 
 @task(help={"args": ARGS_HELP})
-def serve(c: Context, args: str | None = None) -> None:
+def serve(c: Context, *, args: str | None = None) -> None:
     r"""Serve the documentation locally with live reload.
 
     The server runs until it is interrupted (``Ctrl+C``).
@@ -305,7 +305,7 @@ def _push_option(push: bool) -> str:
 
 
 @task(help={"push": "Push the docs branch (default). Use --no-push to only commit it locally."})
-def publish_dev(c: Context, push: bool = True) -> None:
+def publish_dev(c: Context, *, push: bool = True) -> None:
     r"""Publish development (e.g. unstable) docs.
 
     The ``main`` version is deployed with the ``dev`` alias. An existing
@@ -339,6 +339,7 @@ def publish_dev(c: Context, push: bool = True) -> None:
 )
 def publish_latest(
     c: Context,
+    *,
     version: str | None = None,
     force: bool = False,
     push: bool = True,

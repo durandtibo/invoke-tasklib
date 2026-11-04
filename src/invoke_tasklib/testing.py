@@ -79,7 +79,7 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def doctest_src(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on source code.
 
     The command always has ``--xdoctest``, whatever the value of
@@ -139,7 +139,7 @@ def _find_markdown_files(root: Path) -> list[Path]:
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def doctest_markdown(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on the Python examples of the markdown files.
 
     Args:
@@ -248,7 +248,9 @@ def _run_pytest(
 
 
 @task(name="all", help=PYTEST_HELP)
-def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | None = None) -> None:
+def all_(
+    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
+) -> None:
     r"""Run all tests (unit, integration, and functional).
 
     The whole tests directory is run in one pytest call, so the timeout
@@ -282,7 +284,9 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
 
 
 @task(help=PYTEST_HELP)
-def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | None = None) -> None:
+def unit(
+    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
+) -> None:
     r"""Run unit tests.
 
     The timeout of each test is ``tasklib.test.unit_timeout`` (10
@@ -317,7 +321,7 @@ def unit(c: Context, cov: bool = False, args: str | None = None, paths: str | No
 
 @task(help=PYTEST_HELP)
 def integration(
-    c: Context, cov: bool = False, args: str | None = None, paths: str | None = None
+    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
 ) -> None:
     r"""Run integration tests.
 
@@ -349,7 +353,7 @@ def integration(
 
 @task(help=PYTEST_HELP)
 def functional(
-    c: Context, cov: bool = False, args: str | None = None, paths: str | None = None
+    c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
 ) -> None:
     r"""Run functional tests.
 
@@ -409,7 +413,7 @@ def _coverage_html_dir(pyproject: Path = Path("pyproject.toml")) -> str:
 
 
 @task(help={"open_browser": "Open the HTML report in the default web browser.", "args": ARGS_HELP})
-def coverage_report(c: Context, open_browser: bool = False, args: str | None = None) -> None:
+def coverage_report(c: Context, *, open_browser: bool = False, args: str | None = None) -> None:
     r"""Generate an HTML coverage report.
 
     The report is built from the last recorded coverage data, and the
@@ -437,7 +441,7 @@ def coverage_report(c: Context, open_browser: bool = False, args: str | None = N
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def benchmark(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run performance benchmarks.
 
     Args:
