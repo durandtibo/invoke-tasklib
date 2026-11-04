@@ -336,9 +336,28 @@ def test_integration_with_coverage() -> None:
     assert commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "--cov-report term --cov=mypkg tests/integration"
+        )
+    ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_integration_with_coverage_appends_on_request() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, cov=True, append=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/integration"
         )
     ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_integration_append_without_coverage_is_ignored() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.integration(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/integration"]
 
 
 @pytest.mark.usefixtures("_project_dirs")
@@ -355,9 +374,28 @@ def test_functional_with_coverage() -> None:
     assert commands(c) == [
         (
             "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
+            "--cov-report term --cov=mypkg tests/functional"
+        )
+    ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_functional_with_coverage_appends_on_request() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, cov=True, append=True)
+    assert commands(c) == [
+        (
+            "/venv/bin/python -m pytest --xdoctest --timeout 60 --cov-report html --cov-report xml "
             "--cov-report term --cov-append --cov=mypkg tests/functional"
         )
     ]
+
+
+@pytest.mark.usefixtures("_project_dirs")
+def test_functional_append_without_coverage_is_ignored() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.functional(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests/functional"]
 
 
 def test_all_uses_the_largest_timeout() -> None:
