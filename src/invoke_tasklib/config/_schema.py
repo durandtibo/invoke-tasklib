@@ -374,15 +374,15 @@ def default_config() -> dict[str, dict[str, object]]:
     Invoke only reads an environment variable for a key that exists in
     the defaults. Invoke casts the variable to the type of the default,
     and it reads any text but ``0`` as true for a boolean, so the
-    booleans and the integers are registered with ``None``: the text is
-    kept and parsed by the validation. The real defaults stay in
+    booleans and the integers are registered with an ``Unset``: the text
+    is kept and parsed by the validation. The real defaults stay in
     ``SCHEMA``.
 
     Returns:
         A new dict with the ``package``, ``paths``, ``groups``,
         ``test``, ``check`` and ``fix`` sections, each a copy of its
         ``DEFAULT_*`` dict, except that a boolean or an integer is
-        ``None``.
+        an ``Unset``.
 
     Example usage:
 
@@ -392,7 +392,7 @@ def default_config() -> dict[str, dict[str, object]]:
     ['check', 'fix', 'groups', 'package', 'paths', 'test']
     >>> default_config()["groups"]
     {'install': 'dev', 'update': 'dev,docs'}
-    >>> default_config()["test"]["xdoctest"] is None
+    >>> default_config()["test"]["xdoctest"] == ""
     True
 
     ```
@@ -411,6 +411,28 @@ def default_config() -> dict[str, dict[str, object]]:
     }
 
 
+class Unset(str):
+    r"""The placeholder of a boolean or an integer that no source sets.
+
+    It is registered as the default of such a key, instead of ``None``,
+    so a ``null`` that a user writes in ``invoke.yaml`` can be told
+    from "not set". It is a ``str``, so Invoke does not cast the text
+    of an environment variable to the type of the default: the text is
+    kept and parsed by the validation.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config._schema import Unset
+    >>> isinstance(Unset(), str)
+    True
+
+    ```
+    """
+
+    __slots__ = ()
+
+
 def _untyped(default: object) -> object:
     r"""Hide the type of a default from Invoke.
 
@@ -418,7 +440,7 @@ def _untyped(default: object) -> object:
         default: The default value of a key.
 
     Returns:
-        ``None`` if the default is a boolean or an integer, so that
+        An ``Unset`` if the default is a boolean or an integer, so that
         Invoke does not cast an environment variable to that type,
         else ``default`` unchanged.
 
@@ -426,14 +448,14 @@ def _untyped(default: object) -> object:
 
     ```pycon
     >>> from invoke_tasklib.config._schema import _untyped
-    >>> _untyped(True) is None
-    True
+    >>> type(_untyped(True)).__name__
+    'Unset'
     >>> _untyped("tests")
     'tests'
 
     ```
     """
-    return None if isinstance(default, int) else default
+    return Unset() if isinstance(default, int) else default
 
 
 def json_schema() -> dict[str, Any]:

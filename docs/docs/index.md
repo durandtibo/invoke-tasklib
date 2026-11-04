@@ -81,8 +81,8 @@ See the [user guide](uguide/config.md) for the full config schema.
 - `format.check-python` / `format.fix-python`: check or format code with ruff
 - `format.check-docstrings` / `format.fix-docstrings`: check or format docstrings with
   docformatter
-- `format.check-shell` / `format.fix-shell`: check shell scripts with shellcheck, or format them
-  with shfmt
+- `format.check-shell` / `format.check-shell-format` / `format.fix-shell`: check shell scripts with
+  shellcheck, check their format with shfmt, or format them with shfmt
 - `lint.check-python` / `lint.fix-python`: check or fix linting with ruff
 - `lint.check-spelling`: check the spelling with codespell
 - `lint.pre-commit`: run all the pre-commit hooks

@@ -20,6 +20,7 @@ def _project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     r"""Run in an empty project, so the tests do not depend on the files
     of this repository."""
     monkeypatch.chdir(tmp_path)
+    (tmp_path / "uv.lock").write_text("")
     return tmp_path
 
 
@@ -153,7 +154,7 @@ def test_create_venv_says_what_it_does(capsys: pytest.CaptureFixture[str]) -> No
     env.create_venv(make_context({"package": {"name": "mypkg"}}))
     assert capsys.readouterr().out == (
         "🐍 Creating virtual environment...\n"
-        "📦 Installing project dependencies...\n"
+        "📦 Installing from uv.lock...\n"
         "✅ Installation complete\n"
         "✅ Virtual environment created successfully\n"
     )
@@ -378,7 +379,8 @@ def test_check_tools_missing_program_says_how_to_install_it(
         env.check_tools(make_context())
     assert capsys.readouterr().out == (
         "🧰 Checking the tools of the tasks...\n"
-        "❌ 'ruff' was not found on the PATH. Install it with the 'dev' group: "
+        "❌ 'ruff' was not found on the PATH or next to the "
+        "Python interpreter. Install it with the 'dev' group: "
         "`uv sync --group dev`.\n"
         "✅ pytest: /found/pytest\n"
     )
@@ -417,7 +419,10 @@ def test_check_tools_uses_the_hint_of_the_program(
     monkeypatch.setattr(env, "find_tool", _available())
     with pytest.raises(Exit, match=r"tool\(s\) missing"):
         env.check_tools(make_context())
-    assert f"❌ 'uv' was not found on the PATH. {PROGRAM_HINTS['uv']}" in capsys.readouterr().out
+    assert (
+        f"❌ 'uv' was not found on the PATH or next to the Python interpreter. "
+        f"{PROGRAM_HINTS['uv']}" in capsys.readouterr().out
+    )
 
 
 @pytest.mark.usefixtures("_two_tools")
@@ -562,9 +567,7 @@ def test_install_helper_quotes_a_group() -> None:
 
 def test_install_helper_reports_progress(capsys: pytest.CaptureFixture[str]) -> None:
     env._install(make_context({"package": {"name": "mypkg"}}), "dev", optional_deps=True)
-    assert capsys.readouterr().out == (
-        "📦 Installing project dependencies...\n✅ Installation complete\n"
-    )
+    assert capsys.readouterr().out == ("📦 Installing from uv.lock...\n✅ Installation complete\n")
 
 
 def test_install_helper_does_not_report_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
@@ -618,3 +621,44 @@ def test_confirm_clear_names_the_directory(
     monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
     env._confirm_clear("my-env")
     assert "Clear the existing environment 'my-env'?" in capsys.readouterr().out
+
+
+#############################
+#     Tests for no lock     #
+#############################
+
+
+@pytest.fixture
+def _no_lock(_project: Path) -> None:
+    (_project / "uv.lock").unlink()
+
+
+@pytest.mark.usefixtures("_no_lock")
+def test_install_without_lock_file_does_not_pass_locked() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env.install(c)
+    assert commands(c) == ["uv sync --all-extras --group dev"]
+
+
+@pytest.mark.usefixtures("_no_lock")
+def test_install_helper_without_lock_file_says_it_resolves(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    env._install(make_context({"package": {"name": "mypkg"}}), "dev", optional_deps=True)
+    assert capsys.readouterr().out == (
+        "📦 No uv.lock: resolving the dependencies...\n✅ Installation complete\n"
+    )
+
+
+@pytest.mark.usefixtures("_no_lock")
+def test_create_venv_without_lock_file_does_not_pass_locked() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c)
+    assert commands(c) == ["uv venv --clear", "uv sync --all-extras --group dev"]
+
+
+@pytest.mark.usefixtures("_no_lock")
+def test_update_without_lock_file_reinstalls_without_locked() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env.update(c)
+    assert commands(c)[-1] == "uv sync --all-extras --group dev --group docs"
