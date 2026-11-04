@@ -22,7 +22,8 @@ core design follows these principles:
 
 ### 1. Config Resolution
 
-`invoke_tasklib.config.get_config(c)` is the single source of truth for project-specific values.
+`invoke_tasklib.config.get_config(c)` (implemented in `config/_resolve.py` with `load_config`, and
+re-exported by `config/__init__.py`) is the single source of truth for project-specific values.
 It:
 
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
