@@ -247,7 +247,8 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
     The whole tests directory is run in one pytest call, so the timeout
     of each test is the largest of the three scopes
     (``tasklib.test.unit_timeout``, ``integration_timeout`` and
-    ``functional_timeout``).
+    ``functional_timeout``). If the tests directory does not exist,
+    nothing is run.
 
     Args:
         c: The invoke context.
@@ -269,6 +270,7 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
         cov=cov,
         args=args,
         paths=paths,
+        skip_missing=True,
     )
 
 

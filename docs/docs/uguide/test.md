@@ -79,7 +79,8 @@ invoke test.all
 ```
 
 Runs everything in `paths.tests` in a single `pytest` invocation, with the largest of the three timeouts
-(60s by default, since the integration and functional tests are part of that directory).
+(60s by default, since the integration and functional tests are part of that directory). If
+`paths.tests` does not exist, the task prints a message and skips, like the other scopes.
 
 ## Coverage
 
