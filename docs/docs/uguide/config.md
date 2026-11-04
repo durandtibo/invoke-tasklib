@@ -97,7 +97,9 @@ layout).
 `package.import_name` is the name used to import the package. It is used by `imports.check-cycles`, `imports.check-isolated`,
 `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
 Set it when it is not the distribution name with `-` replaced by `_`. It must be a Python module
-name.
+name, which may be dotted for a package of a namespace package (`company.package`): the tasks that
+read the source of the package (`imports.check-cycles`, `imports.check-isolated`) find it without
+importing `company`.
 
 If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the tasks use
 `load_config`, which turns it into an `invoke.exceptions.Exit` with the same message and the exit
@@ -107,7 +109,10 @@ Unknown keys in `tasklib` itself (typically a typo of a section such as `path`) 
 `package`, `paths`, `groups`, `test`, `check` or `fix` sections (such as `paths.unit_test`) also raise a
 `ValueError` that lists the valid keys and suggests the closest one, instead of being silently
 ignored. Each section must be a mapping, `package.name` and every `paths.*` value must be a
-non-empty string, and `test.cov_fail_under` must be between 0 and 100.
+non-empty string, and `test.cov_fail_under` must be between 0 and 100. A `null` (`~`) is the same as
+not setting the key only for a key that has no default (`test.cov_fail_under`, `package.python_version`,
+...); for a boolean or an integer (`test.xdoctest`, `test.unit_timeout`, `check.cov`, ...) it is an
+error, like any other invalid value, so write the value or remove the key.
 
 `package.python_version` must be a quoted string such as `"3.10"` or `"3.10.4"`. YAML reads an
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or

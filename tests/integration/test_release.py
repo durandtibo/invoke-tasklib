@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
 from typing import TYPE_CHECKING
 
 import pytest
 from invoke.config import Config
-from invoke.exceptions import Exit
+from invoke.exceptions import Exit, UnexpectedExit
 
 from invoke_tasklib import release
+from invoke_tasklib.runner import run
 from tests.integration.test_imports import _SubprocessContext
 
 if TYPE_CHECKING:
@@ -72,3 +74,85 @@ def test_confirm_without_a_terminal_asks_for_yes() -> None:
         check=False,
     )
     assert "Publication not confirmed: pass --yes" in result.stderr
+
+
+###############################
+#     Tests for the build     #
+###############################
+
+FLAT_PYPROJECT = """
+[project]
+name = "foo"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["{packages}"]
+"""
+
+
+def _flat_project(root: Path, packages: str) -> None:
+    (root / "foo").mkdir()
+    (root / "foo" / "__init__.py").write_text("")
+    (root / "pyproject.toml").write_text(FLAT_PYPROJECT.format(packages=packages))
+
+
+def _build_context() -> _SubprocessContext:
+    return _SubprocessContext(config=Config(overrides={"tasklib": {"package": {"name": "foo"}}}))
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="uv is not installed")
+def test_build_accepts_a_flat_layout_artifact_that_contains_the_package(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _flat_project(tmp_path, "foo")
+    assert release.build(_build_context()) is None
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="uv is not installed")
+def test_build_rejects_a_flat_layout_artifact_without_the_package(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _flat_project(tmp_path, "src/foo")
+    with pytest.raises(UnexpectedExit, match=r"bad command exit code"):
+        release.build(_build_context())
+
+
+###########################################
+#    Tests for the publish environment    #
+###########################################
+
+
+@pytest.fixture
+def fake_uv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Put a ``uv`` that prints its credentials next to the
+    interpreter, which is the first directory of the tool path."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    uv = bin_dir / "uv"
+    uv.write_text('#!/bin/sh\necho "token=${UV_PUBLISH_TOKEN:-none}"\n')
+    uv.chmod(0o755)
+    monkeypatch.setattr(sys, "executable", str(bin_dir / "python"))
+
+
+@pytest.mark.usefixtures("fake_uv")
+def test_publish_environment_does_not_leak_an_inherited_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "pypi-secret")
+    result = run(_context(), "uv publish", env=release._publish_environment(None), replace_env=True)
+    assert result.stdout == "token=none\n"
+
+
+@pytest.mark.usefixtures("fake_uv")
+def test_publish_environment_gives_the_chosen_token() -> None:
+    result = run(
+        _context(), "uv publish", env=release._publish_environment("chosen"), replace_env=True
+    )
+    assert result.stdout == "token=chosen\n"

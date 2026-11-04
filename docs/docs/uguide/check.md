@@ -28,9 +28,9 @@ Runs the steps of `tasklib.check.tasks`, in that order, and stops at the first f
 | `unit`              | [`test.unit`](test.md)                 |
 
 Other steps can be added to the config (or run with `--only`): `doctest` ([`test.doctest`](test.md)),
-`shell` ([`format.check-shell`](format.md)), `spelling` ([`lint.check-spelling`](lint.md)), `docs`
+`shell` ([`format.check-shell`](format.md) and `format.check-shell-format`), `spelling` ([`lint.check-spelling`](lint.md)), `docs`
 ([`doc.build`](doc.md)) and `audit` ([`security.audit`](security.md)). They are not in the default
-set because they need more tools (`shellcheck`, `codespell`, `mkdocs`) or the network.
+set because they need more tools (`shellcheck`, `shfmt`, `codespell`, `mkdocs`) or the network.
 
 ```yaml
 tasklib:

@@ -53,6 +53,10 @@ which is often the symptom of a cycle. It also fails on a missing dependency or 
 It starts one interpreter per module, so it is slower than `imports.check-cycles` for a package
 with heavy imports; up to 8 interpreters run at the same time.
 
+The package that is checked is the one the interpreter finds: the installed (editable) package, or
+the one in the current directory for a flat layout. The task checks the source tree, not a built
+artifact: use `release.build` to check an artifact (it imports the package in isolated mode).
+
 One worker command (`python -m invoke_tasklib._discover --import-each <package>`) does the discovery
 and starts the interpreters, so the task runs a single command whatever the size of the package. It is
 not echoed and its output is hidden. The task prints one line, and then either one `✅` summary or one

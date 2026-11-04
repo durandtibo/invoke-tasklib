@@ -19,7 +19,9 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
-# Directories whose shell scripts are never checked or formatted.
+# Directories that the walk skips when looking for shell scripts
+# outside a git work tree. In a work tree git decides (a tracked
+# ``build/run.sh`` is checked), see ``project_files``.
 SHELL_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {"build", "dist", "site"}
 
 
@@ -163,6 +165,24 @@ def check_shell(c: Context, *, args: str | None = None, paths: str | None = None
     """
     messages = ("🐚 Running shellcheck on shell scripts...", "✅ Shellcheck passed")
     _run_shell_tool(c, "shellcheck", args, paths, messages)
+
+
+@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+def check_shell_format(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
+    r"""Check the format of shell scripts with shfmt.
+
+    It is the read-only counterpart of ``format.fix-shell``: ``shfmt
+    -d`` prints a diff and fails if a script would be reformatted,
+    but never changes a file.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments passed to shfmt.
+        paths: The scripts to check instead of every ``*.sh`` file of
+            the project.
+    """
+    messages = ("🔎 Running shfmt on shell scripts...", "✅ Shell format is correct")
+    _run_shell_tool(c, "shfmt -d", args, paths, messages)
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})

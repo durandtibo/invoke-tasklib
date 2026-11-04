@@ -18,6 +18,7 @@ Tasks follow a `check_<target>` / `fix_<target>` naming convention:
 | `format.check-docstrings` | Checks docstring formatting with [docformatter](https://docformatter.readthedocs.io/) (read-only) |
 | `format.fix-docstrings`   | Formats docstrings with docformatter (in place)                                                   |
 | `format.check-shell`      | Checks shell scripts with [shellcheck](https://www.shellcheck.net/) (read-only)                   |
+| `format.check-shell-format` | Checks shell script formatting with [shfmt](https://github.com/mvdan/sh) (read-only)            |
 | `format.fix-shell`        | Formats shell scripts with [shfmt](https://github.com/mvdan/sh) (in place)                        |
 
 ## Checking Format
@@ -26,6 +27,7 @@ Tasks follow a `check_<target>` / `fix_<target>` naming convention:
 invoke format.check-python
 invoke format.check-docstrings
 invoke format.check-shell
+invoke format.check-shell-format
 ```
 
 These are safe to run anywhere, including in CI, since they never modify files.
@@ -50,7 +52,7 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 
 ## Shell Scripts
 
-`format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project. In a git
+`format.check-shell`, `format.check-shell-format` and `format.fix-shell` operate on every `*.sh` file in the project. In a git
 work tree the files are the ones that git lists (`git ls-files --cached --others --exclude-standard`):
 the tracked files and the untracked files that are not ignored, so the rules of `.gitignore` are
 followed, like `ruff`, `codespell` and `pre-commit` do, and third-party scripts (for example the
@@ -71,7 +73,7 @@ the tool is not run and the task says so.
     (`shfmt` there comes from the `golang-go` toolchain or a
     [release binary](https://github.com/mvdan/sh/releases)).
 
-`format.check-shell` and `format.fix-shell` take `--args` for the tool and `--paths` to run on
+`format.check-shell`, `format.check-shell-format` and `format.fix-shell` take `--args` for the tool and `--paths` to run on
 given scripts instead of every `*.sh` file of the project.
 
 ## See Also

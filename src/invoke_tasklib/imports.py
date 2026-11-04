@@ -103,6 +103,12 @@ def check_isolated(c: Context) -> None:
     does the discovery and starts the interpreters, so the task runs a
     single command whatever the size of the package.
 
+    The package that is checked is the one that the running
+    interpreter finds: the installed (editable) package, or the one in
+    the current directory for a flat layout. It is the source tree,
+    not a built artifact, which ``release.build`` checks in isolated
+    mode.
+
     The output is one line per step and one line per module that
     fails, with the last line of its traceback, then the summary. The
     commands are not echoed, so a package of 300 modules does not
