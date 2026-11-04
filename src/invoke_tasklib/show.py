@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 
     from invoke_tasklib.config import TasklibConfig
 
+NAMESPACE = "config"
+r"""The name of the namespace of the tasks of this module."""
+
+
 LEVELS: tuple[tuple[str, str], ...] = (
     ("_defaults", "default"),
     ("_collection", "default"),
@@ -84,7 +88,7 @@ def _unknown_internals(config: Config) -> list[str]:
 
     ```pycon
     >>> from invoke.config import Config
-    >>> from invoke_tasklib.configuration import _unknown_internals
+    >>> from invoke_tasklib.show import _unknown_internals
     >>> _unknown_internals(Config())
     []
     >>> _unknown_internals(object())[-1]
@@ -110,7 +114,7 @@ def _format_value(value: object) -> str:
     Example usage:
 
     ```pycon
-    >>> from invoke_tasklib.configuration import _format_value
+    >>> from invoke_tasklib.show import _format_value
     >>> _format_value("src/pkg")
     'src/pkg'
     >>> _format_value("3.12")
@@ -153,7 +157,7 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
 
     ```pycon
     >>> from invoke.config import Config
-    >>> from invoke_tasklib.configuration import _origin
+    >>> from invoke_tasklib.show import _origin
     >>> paths = {"paths": {"src": "lib"}}
     >>> config = Config(overrides={"tasklib": paths})
     >>> _origin(config, "paths", "src", "lib")
@@ -195,7 +199,7 @@ def _render(cfg: TasklibConfig, config: Config) -> list[str]:
     >>> from invoke.config import Config
     >>> from invoke.context import Context
     >>> from invoke_tasklib.config import get_config
-    >>> from invoke_tasklib.configuration import _render
+    >>> from invoke_tasklib.show import _render
     >>> overrides = {"tasklib": {"package": {"name": "demo"}}}
     >>> config = Config(overrides=overrides)
     >>> cfg = get_config(Context(config=config))

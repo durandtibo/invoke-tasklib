@@ -59,12 +59,12 @@ Returning frozen dataclasses rather than a raw dict gives task authors static ty
 ### 2. Task Modules
 
 Each task module (`formatting.py`, `lint.py`, `imports.py`, `typecheck.py`, `testing.py`, `env.py`,
-`release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`, `fix.py`, `configuration.py`) is a
+`release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`, `fix.py`, `show.py`) is a
 collection of `@task`-decorated functions. `clean.py`, `check.py` and `fix.py` also have a default
 task (`clean.all`, `check.all`, `fix.all`) that is run by `invoke clean`, `invoke check` and
 `invoke fix`. `check.all` and `fix.all` are the composite tasks: each runs the steps of its config
 key (`tasklib.check.tasks`, `tasklib.fix.tasks`) with the step runner of `_steps.py`.
-`configuration.py` holds `config.show`, which prints the resolved config and where each value
+`show.py` holds `config.show`, which prints the resolved config and where each value
 comes from. A module groups tasks that operate on the
 same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, except
 `test.doctest-markdown`, which wraps the standard library's `doctest` module directly).
@@ -134,7 +134,9 @@ returns one, for a step whose modules depend on an option (`check._unit_modules`
 sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the
 tasks of `include` when it is set. The modules whose names would shadow the standard library or a
 builtin (`format`, `types`, `test`) are named `formatting`, `typecheck` and `testing`; the
-namespace names come from `_MODULES`, not from the module names.
+namespace name of each module is its `NAMESPACE` constant (`"format"` in `formatting.py`), which `_MODULES`
+of `__init__.py` reads, not the module name; a project that builds its own collection passes
+`name=module.NAMESPACE` to `Collection.from_module`.
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via
 `ns = make_ns()` in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns

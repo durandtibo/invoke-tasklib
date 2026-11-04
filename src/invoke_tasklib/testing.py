@@ -26,6 +26,10 @@ if TYPE_CHECKING:
 
     from invoke_tasklib.config import TasklibConfig
 
+NAMESPACE = "test"
+r"""The name of the namespace of the tasks of this module."""
+
+
 COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
 MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {

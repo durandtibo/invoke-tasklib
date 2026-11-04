@@ -26,6 +26,10 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+NAMESPACE = "release"
+r"""The name of the namespace of the tasks of this module."""
+
+
 def _latest_artifact(directory: Path, pattern: str) -> Path:
     r"""Return the most recently modified file matching a pattern.
 

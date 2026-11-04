@@ -38,7 +38,7 @@
 
 - The source is in `src/invoke_tasklib/`: one module per task namespace (`formatting.py`,
   `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
-  `imports.py`, `clean.py`, `check.py`, `fix.py`, `configuration.py`), plus `config/` (config
+  `imports.py`, `clean.py`, `check.py`, `fix.py`, `show.py`), plus `config/` (config
   resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`, `_resolve.py` with
   `get_config` and `load_config`, `__init__.py` that re-exports them, and `__main__.py` that
   prints the JSON schema), `runner.py` (the command runner), `tools.py` (tool lookup and install
@@ -47,7 +47,8 @@
   usually needs the same change in `fix.all`), `_files.py` (the file lookup of the format and
   test tasks), `_graph.py` (the static import graph used by `imports.check-cycles`) and
   `_discover.py` (the module listing run in a subprocess by `imports.check-isolated`). The
-  namespaces are registered in `_MODULES` of `src/invoke_tasklib/__init__.py`.
+  namespace of each module is its `NAMESPACE` constant, and the modules are registered in
+  `_MODULES` of `src/invoke_tasklib/__init__.py`.
 - Match the surrounding code: comment density, naming, docstring style (Google style with
   `Args:`, `Returns:`, `Raises:` and, where useful, an `Example usage:` with a `pycon` block that
   runs as a doctest).
