@@ -19,8 +19,8 @@ PIP_AUDIT_REQUIREMENT = "pip-audit>=2.10,<3"
 r"""The version range of ``pip-audit`` that ``security.audit`` runs.
 
 ``uvx`` installs the latest release in this range, so a new major
-version is never run without a change of this constant."""
-
+version is never run without a change of this constant.
+"""
 
 @task(help={"args": ARGS_HELP})
 def audit(c: Context, *, args: str | None = None) -> None:

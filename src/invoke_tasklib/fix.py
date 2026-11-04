@@ -29,8 +29,8 @@ STEPS: dict[str, Step] = {
 r"""The steps of ``fix.all`` (task and programs), by step name.
 
 To add a step, add its name to ``FIX_STEPS`` in ``config/_constants.py``
-(a test checks that the names agree)."""
-
+(a test checks that the names agree).
+"""
 
 @task(
     name="all",
