@@ -20,7 +20,8 @@ invoke clean
 Removes, if present, at the repository root:
 
 - Directories: `build`, `dist`, `.pytest_cache`, `.ruff_cache`, `.coverage_html`, `htmlcov`,
-  `.benchmarks`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`, and the MkDocs output
+  `.benchmarks`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`, the HTML coverage directory if `[tool.coverage.html] directory` of `pyproject.toml`
+  sets another one, and the MkDocs output
   directory, only if the MkDocs config file exists (what produces it): the `site_dir` of
   `paths.docs_config`, relative to the config file (`docs/site` by default). If the config is not
   valid, `site` for a `mkdocs.yml` and `docs/site` for a `docs/mkdocs.yml` are used

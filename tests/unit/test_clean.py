@@ -758,3 +758,64 @@ def test_is_inside_project_rejects_a_path_below_a_link_to_the_outside(tmp_path: 
     with pytest.MonkeyPatch.context() as m:
         m.chdir(project)
         assert clean._is_inside_project(Path("link/site")) is False
+
+
+#########################################
+#     Tests for the coverage HTML dir   #
+#########################################
+
+
+def _html_dir_project(project: Path, directory: str) -> Path:
+    (project / "pyproject.toml").write_text(f'[tool.coverage.html]\ndirectory = "{directory}"\n')
+    return _mkdir(directory)(project)
+
+
+def test_all_removes_the_configured_coverage_html_dir(project: Path) -> None:
+    html = _html_dir_project(project, "reports/html")
+    clean.all_(_git_context(""))
+    assert not html.exists()
+
+
+def test_all_keeps_the_parent_of_the_configured_coverage_html_dir(project: Path) -> None:
+    _html_dir_project(project, "reports/html")
+    clean.all_(_git_context(""))
+    assert (project / "reports").is_dir()
+
+
+def test_all_removes_the_default_coverage_html_dir_without_config(project: Path) -> None:
+    html = _mkdir("htmlcov")(project)
+    clean.all_(_git_context(""))
+    assert not html.exists()
+
+
+def test_all_asks_git_once_for_the_default_coverage_html_dir(project: Path) -> None:
+    _mkdir("htmlcov")(project)
+    c = _git_context("")
+    clean.all_(c)
+    assert commands(c) == ["git ls-files -- htmlcov"]
+
+
+def test_all_keeps_a_configured_coverage_html_dir_tracked_by_git(project: Path) -> None:
+    html = _html_dir_project(project, "reports/html")
+    clean.all_(_git_context("reports/html/index.html\n"))
+    assert html.is_dir()
+
+
+def test_all_dry_run_reports_the_configured_coverage_html_dir(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _html_dir_project(project, "reports/html")
+    clean.all_(_git_context(""), dry_run=True)
+    assert "🗑️  Would remove reports/html\n" in capsys.readouterr().out
+
+
+def test_all_keeps_a_coverage_html_dir_outside_the_project(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    outside = tmp_path / "outside-html"
+    outside.mkdir()
+    (project / "pyproject.toml").write_text(f'[tool.coverage.html]\ndirectory = "{outside}"\n')
+    with pytest.MonkeyPatch.context() as m:
+        m.chdir(project)
+        clean.all_(_git_context(""))
+    assert outside.is_dir()
