@@ -50,11 +50,18 @@ project's `pyproject.toml` (via `--config ./pyproject.toml`).
 
 ## Shell Scripts
 
-`format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project. The
-`.git`, `.venv`, `.pytest_cache`, `node_modules`, `build`, `dist` and `site` directories are not
-searched, so third-party scripts (for example the activation scripts of a virtual environment) are
-never checked or rewritten. The files are found by a walk in Python (no `find` or `xargs`) and given
-to the tool as arguments; if there is no `*.sh` file, the tool is not run and the task says so.
+`format.check-shell` and `format.fix-shell` operate on every `*.sh` file in the project. In a git
+work tree the files are the ones that git lists (`git ls-files --cached --others --exclude-standard`):
+the tracked files and the untracked files that are not ignored, so the rules of `.gitignore` are
+followed, like `ruff`, `codespell` and `pre-commit` do, and third-party scripts (for example the
+activation scripts of a virtual environment, whatever its name) are never checked or rewritten as
+long as the environment is ignored. A tracked file is kept, even in a `build` directory. The
+`.git`, `.venv`, `.pytest_cache` and `node_modules` directories are always left out.
+
+Outside a git work tree, or without `git`, the files are found by a walk in Python (no `find` or
+`xargs`) that does not search the `.git`, `.venv`, `.pytest_cache`, `node_modules`, `build`, `dist`
+and `site` directories. The files are given to the tool as arguments; if there is no `*.sh` file,
+the tool is not run and the task says so.
 
 <!-- prettier-ignore -->
 !!! note

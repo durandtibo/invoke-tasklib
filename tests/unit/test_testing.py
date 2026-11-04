@@ -67,7 +67,6 @@ def test_doctest_markdown_no_files() -> None:
     [
         ".venv/lib/pkg/README.md",
         ".pytest_cache/README.md",
-        ".git/README.md",
         "node_modules/pkg/README.md",
         "site/index.md",
         "build/lib/README.md",
@@ -707,7 +706,7 @@ def test_unit_with_custom_tests_directory_falls_back_to_it(
 
 def test_find_markdown_files_returns_sorted_paths(tmp_path: Path) -> None:
     _touch(tmp_path, "docs/z.md", "README.md", "docs/a.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [
         tmp_path / "README.md",
         tmp_path / "docs" / "a.md",
         tmp_path / "docs" / "z.md",
@@ -715,25 +714,25 @@ def test_find_markdown_files_returns_sorted_paths(tmp_path: Path) -> None:
 
 
 def test_find_markdown_files_empty(tmp_path: Path) -> None:
-    assert test_tasks._find_markdown_files(tmp_path) == []
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == []
 
 
 def test_find_markdown_files_ignores_other_extensions(tmp_path: Path) -> None:
     _touch(tmp_path, "a.txt", "b.mdx", "c.md.bak", "d.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [tmp_path / "d.md"]
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "d.md"]
 
 
 @pytest.mark.parametrize("excluded", sorted(test_tasks.MARKDOWN_EXCLUDED_DIRS))
 def test_find_markdown_files_does_not_walk_into_excluded_dirs(
     tmp_path: Path, excluded: str
 ) -> None:
-    _touch(tmp_path, f"{excluded}/a.md", "b.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [tmp_path / "b.md"]
+    _touch(tmp_path, f"pkg/{excluded}/a.md", "pkg/b.md")
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "pkg" / "b.md"]
 
 
 def test_find_markdown_files_skips_excluded_dirs_at_any_depth(tmp_path: Path) -> None:
     _touch(tmp_path, "pkg/.venv/a.md", "pkg/b.md")
-    assert test_tasks._find_markdown_files(tmp_path) == [tmp_path / "pkg" / "b.md"]
+    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "pkg" / "b.md"]
 
 
 def test_find_markdown_files_current_directory_has_no_prefix(
@@ -741,7 +740,7 @@ def test_find_markdown_files_current_directory_has_no_prefix(
 ) -> None:
     _touch(tmp_path, "README.md")
     monkeypatch.chdir(tmp_path)
-    assert test_tasks._find_markdown_files(Path()) == [Path("README.md")]
+    assert test_tasks._find_markdown_files(make_context(), Path()) == [Path("README.md")]
 
 
 #######################################

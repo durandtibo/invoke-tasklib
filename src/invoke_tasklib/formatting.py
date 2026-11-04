@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib._files import find_files
+from invoke_tasklib._files import project_files
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
@@ -95,15 +95,16 @@ def fix_docstrings(c: Context, *, args: str | None = None, paths: str | None = N
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-def _shell_command(tool: str, args: str | None, paths: str | None) -> str | None:
+def _shell_command(c: Context, tool: str, args: str | None, paths: str | None) -> str | None:
     r"""Build the command of a shell script tool.
 
     Args:
+        c: The invoke context.
         tool: The program and its fixed options, e.g. ``"shellcheck"``.
         args: Extra arguments of the user, placed before ``--``.
         paths: Scripts of the user. If not set, the ``*.sh`` files
-            found under the current directory (without
-            ``SHELL_EXCLUDED_DIRS``) are used.
+            of the project are used (see ``project_files``; outside a
+            git work tree, the walk skips ``SHELL_EXCLUDED_DIRS``).
 
     Returns:
         The command line, or ``None`` if there is no script to run the
@@ -112,8 +113,11 @@ def _shell_command(tool: str, args: str | None, paths: str | None) -> str | None
     Example usage:
 
     ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import MockContext
     >>> from invoke_tasklib.formatting import _shell_command
-    >>> _shell_command("shellcheck", "-x", "a.sh")
+    >>> c = MockContext(config=Config(), run=True)
+    >>> _shell_command(c, "shellcheck", "-x", "a.sh")
     'shellcheck -x -- a.sh'
 
     ```
@@ -121,7 +125,7 @@ def _shell_command(tool: str, args: str | None, paths: str | None) -> str | None
     base = build_command(tool, args=args)
     if paths:
         return build_command(f"{base} --", paths=paths)
-    scripts = [path.as_posix() for path in find_files(Path(), ".sh", SHELL_EXCLUDED_DIRS)]
+    scripts = [path.as_posix() for path in project_files(c, Path(), ".sh", SHELL_EXCLUDED_DIRS)]
     if not scripts:
         return None
     return build_command(f"{base} --", default_paths=scripts)
@@ -140,7 +144,7 @@ def _run_shell_tool(
         messages: The start and done messages of the step.
     """
     with step(c, *messages):
-        command = _shell_command(tool, args, paths)
+        command = _shell_command(c, tool, args, paths)
         if command is None:
             say(c, "⏭️  No shell script found: skipping")
         else:
