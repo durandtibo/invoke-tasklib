@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import make_ns
-from invoke_tasklib.runner import (
+from invoke_tasklib.tools import (
     PROGRAM_GROUPS,
     PROGRAM_HINTS,
     UNCHECKED_PROGRAMS,

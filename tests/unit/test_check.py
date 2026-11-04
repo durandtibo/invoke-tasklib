@@ -12,7 +12,7 @@ from invoke.runners import Result
 
 from invoke_tasklib import _steps, check, env
 from invoke_tasklib.config import CHECK_STEPS, load_config
-from invoke_tasklib.runner import PROGRAM_GROUPS, PROGRAM_HINTS
+from invoke_tasklib.tools import PROGRAM_GROUPS, PROGRAM_HINTS
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:

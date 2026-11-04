@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Use a fixed interpreter and ignore the installed plugins."""
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
-    monkeypatch.setattr("invoke_tasklib.runner.importlib.util.find_spec", lambda _name: object())
+    monkeypatch.setattr("invoke_tasklib.tools.importlib.util.find_spec", lambda _name: object())
 
 
 @pytest.fixture
@@ -192,7 +192,7 @@ def test_doctest_src_ignores_the_xdoctest_option() -> None:
 
 def test_doctest_src_names_the_missing_xdoctest_plugin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "invoke_tasklib.runner.importlib.util.find_spec",
+        "invoke_tasklib.tools.importlib.util.find_spec",
         lambda name: None if name == "xdoctest" else object(),
     )
     with pytest.raises(Exit, match=r"The option --xdoctest needs the pytest plugin 'xdoctest'"):

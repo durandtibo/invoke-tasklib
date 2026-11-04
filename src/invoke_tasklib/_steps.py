@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, NamedTuple
 from invoke.exceptions import Exit, Failure, UnexpectedExit
 
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import find_tool, not_found_message
+from invoke_tasklib.tools import find_tool, not_found_message
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping

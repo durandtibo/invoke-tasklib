@@ -7,7 +7,7 @@ import sys
 import pytest
 from invoke.exceptions import Exit
 
-from invoke_tasklib.runner import check_program
+from invoke_tasklib.tools import check_program
 
 
 def test_check_program_missing_program_exits_with_its_hint(
