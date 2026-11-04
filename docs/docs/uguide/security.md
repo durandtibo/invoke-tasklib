@@ -14,7 +14,9 @@
 invoke security.audit
 ```
 
-This exports `uv.lock` to a temporary requirements file (`uv export --locked`) and audits it with
+This exports `uv.lock` to a temporary requirements file (`uv export --locked`, with
+`--all-extras` and `--all-groups`, so the packages that only an extra or a group installs are
+audited too) and audits it with
 `uvx --from "pip-audit>=2.10,<3" pip-audit` against known vulnerability databases (via
 [PyPI's Advisory Database](https://github.com/pypa/advisory-database)). It exits non-zero if the lock
 file is out of date or if a vulnerability is found.

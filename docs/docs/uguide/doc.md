@@ -34,7 +34,8 @@ invoke doc.publish-latest
 ```
 
 Determines the version to publish from the highest git release tag (a tag like `v1.2.3`, read
-with `git tag --list 'v[0-9]*'`; pre-release tags such as `v1.2.0rc1` are ignored), truncated to
+with `git tag --list 'v[0-9]*'`; pre-release tags such as `v1.2.0rc1` are ignored, but a suffix like `v1.2.0-backport` is not a
+pre-release), truncated to
 `<major>.<minor>` (e.g. `1.2`). It then deploys the current docs under that tag with the `latest` alias, and sets `latest` as the
 default version shown to visitors. Pass `--no-push` to only commit the docs branch locally.
 

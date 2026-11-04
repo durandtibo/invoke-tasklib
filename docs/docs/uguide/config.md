@@ -74,8 +74,10 @@ not have it; `test.doctest-src` ignores it and always uses the plugin), whether 
 not have it; the `unit_timeout`, `integration_timeout` and `functional_timeout` values are then
 unused), and a coverage threshold:
 with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
-`cov_reports` is a comma-separated string or a list of the `--cov-report` formats of pytest-cov
-(`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. An empty
+`cov_reports` is a comma-separated string or a list of the `--cov-report` values of pytest-cov
+(`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. A value
+can have the argument of pytest-cov after a colon, for example `term-missing:skip-covered` or
+`html:cov_html` (the directory or file of the report). The value is quoted in the command. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
 
 `check.cov` is a boolean. If true, the `unit` step of `check.all` runs with `--cov`, so
@@ -169,6 +171,13 @@ tasklib:
 A test checks that the published `docs/docs/schema.json` equals the schema printed by the command
 (regenerate it with `python -m invoke_tasklib.config > docs/docs/schema.json`).
 
+## Working Directory
+
+Run `inv` from the directory of `tasks.py` (the project root). Invoke finds `tasks.py` and
+`invoke.yaml` in the parents of the current directory, but the tasks use paths relative to the
+current directory, so any task that reads the config exits with code 2 and a message when the
+current directory is another one (see [Troubleshooting](../troubleshooting.md)).
+
 ## Environment Variables
 
 Every key can also be set with an `INVOKE_TASKLIB_<SECTION>_<KEY>` environment variable, for example
@@ -177,10 +186,15 @@ works because `make_ns` registers the defaults of the `tasklib` section with Inv
 which only reads the environment variables of the keys that it knows. The usual Invoke order
 applies: the environment variables win over `invoke.yaml`.
 
-Invoke reads an environment variable as a string and converts it to the type of the default value:
-an integer for the timeouts, and, for a boolean such as `INVOKE_TASKLIB_TEST_XDOCTEST`, `0` or an
-empty value is false and anything else (including `false`) is true. `test.cov_fail_under` accepts a
-string of digits. A collection built by hand (`Collection(lint, ...)`) has no defaults, so it does
+Invoke reads an environment variable as a string, and tasklib parses it:
+
+- a boolean (`INVOKE_TASKLIB_TEST_XDOCTEST`, `..._TEST_TIMEOUT`, `..._CHECK_COV`) is one of `true`,
+  `false`, `1`, `0`, `yes`, `no`, `on` and `off`, in any case. Any other text is an error;
+- an integer (the timeouts, `test.cov_fail_under`) is a string of digits. Any other text is an
+  error.
+
+An invalid value exits with code 2 and a one-line message, like an invalid `invoke.yaml`. The same
+spellings work for a string value in `invoke.yaml`. A collection built by hand (`Collection(lint, ...)`) has no defaults, so it does
 not read the environment variables unless you call
 `ns.configure({"tasklib": invoke_tasklib.config.default_config()})`.
 

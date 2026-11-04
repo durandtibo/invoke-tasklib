@@ -2,6 +2,7 @@ r"""Resolution of the tasklib config from the Invoke config."""
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
@@ -65,6 +66,13 @@ def get_config(c: Context) -> TasklibConfig:
     for section, options in SCHEMA.items():
         given = _as_mapping(f"tasklib.{section}", user.get(section, {}))
         _check_keys(section, given, options)
+        # ``default_config`` registers the booleans and the integers
+        # with ``None``, which is not a value given by the user.
+        given = {
+            key: value
+            for key, value in given.items()
+            if value is not None or not isinstance(options[key].default, int)
+        }
         merged[section] = {**_defaults(section), **given}
     package = merged["package"]
 
@@ -83,6 +91,47 @@ def get_config(c: Context) -> TasklibConfig:
     return TasklibConfig(**resolved)
 
 
+def _check_project_root(c: Context) -> None:
+    r"""Check that Invoke runs from the directory of ``tasks.py``.
+
+    Invoke looks for ``tasks.py`` in the parents of the current
+    directory and loads the ``invoke.yaml`` next to it, but it does not
+    change directory. The tasks use paths relative to the current
+    directory (``tests/unit``, ``pyproject.toml``, ``dist``, ...), so
+    they would look in the wrong place, and skip a missing directory
+    silently.
+
+    Args:
+        c: The invoke context. A context that has no project location
+            (a context created by hand) is not checked.
+
+    Raises:
+        ValueError: If the current directory is not the directory of
+            the loaded ``tasks.py``. The message tells how to fix it.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.config._resolve import _check_project_root
+    >>> _check_project_root(Context(config=Config()))
+
+    ```
+    """
+    prefix = getattr(c.config, "_project_prefix", None)
+    if prefix is None:
+        return
+    root = Path(prefix).resolve()
+    cwd = Path.cwd().resolve()
+    if root != cwd:
+        msg = (
+            f"inv must run from the project root, where tasks.py is: {root} "
+            f"(the current directory is {cwd}). Run 'cd {root}' first."
+        )
+        raise ValueError(msg)
+
+
 def load_config(c: Context) -> TasklibConfig:
     r"""Return the effective tasklib config, exiting cleanly on an
     invalid config.
@@ -99,8 +148,9 @@ def load_config(c: Context) -> TasklibConfig:
         The resolved config, see ``get_config``.
 
     Raises:
-        Exit: If ``get_config`` raises a ``ValueError``. The message is
-            the one of the ``ValueError``.
+        Exit: If ``get_config`` raises a ``ValueError``, or if Invoke
+            runs from another directory than the one of ``tasks.py``.
+            The message is the one of the ``ValueError``.
 
     Example usage:
 
@@ -116,6 +166,7 @@ def load_config(c: Context) -> TasklibConfig:
     ```
     """
     try:
+        _check_project_root(c)
         return get_config(c)
     except ValueError as exc:
         raise Exit(str(exc), code=2) from exc

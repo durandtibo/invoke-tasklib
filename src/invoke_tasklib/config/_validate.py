@@ -237,6 +237,19 @@ def _validate_import_name(value: object) -> str:
     return value
 
 
+_BOOL_TEXT: dict[str, bool] = {
+    "true": True,
+    "1": True,
+    "yes": True,
+    "on": True,
+    "false": False,
+    "0": False,
+    "no": False,
+    "off": False,
+}
+r"""The spellings of a boolean in an environment variable."""
+
+
 def _validate_int(
     section: str, key: str, value: object, *, minimum: int, maximum: int | None = None
 ) -> int:
@@ -246,7 +259,8 @@ def _validate_int(
         section: The name of the config section, used in the error
             message.
         key: The name of the config key, used in the error message.
-        value: The raw config value.
+        value: The raw config value: an integer or a string of digits
+            (an environment variable).
         minimum: The smallest valid value.
         maximum: The largest valid value, or ``None`` for no limit.
 
@@ -254,9 +268,9 @@ def _validate_int(
         The validated integer.
 
     Raises:
-        ValueError: If the value is not an integer (a boolean is not
-            accepted), is smaller than ``minimum`` or is larger than
-            ``maximum``.
+        ValueError: If the value is not an integer or a string of
+            digits (a boolean is not accepted), is smaller than
+            ``minimum`` or is larger than ``maximum``.
 
     Example usage:
 
@@ -264,19 +278,22 @@ def _validate_int(
     >>> from invoke_tasklib.config._validate import _validate_int
     >>> _validate_int("test", "unit_timeout", 10, minimum=1)
     10
+    >>> _validate_int("test", "unit_timeout", "10", minimum=1)
+    10
 
     ```
     """
+    number = _int_from_text(value)
     if (
-        isinstance(value, bool)
-        or not isinstance(value, int)
-        or value < minimum
-        or (maximum is not None and value > maximum)
+        isinstance(number, bool)
+        or not isinstance(number, int)
+        or number < minimum
+        or (maximum is not None and number > maximum)
     ):
         bounds = f">= {minimum}" if maximum is None else f"between {minimum} and {maximum}"
         msg = f"'tasklib.{section}.{key}' must be an integer {bounds}, got {value!r}"
         raise ValueError(msg)
-    return value
+    return number
 
 
 def _validate_str(section: str, key: str, value: object) -> str:
@@ -312,10 +329,9 @@ def _validate_str(section: str, key: str, value: object) -> str:
 def _int_from_text(value: object) -> object:
     r"""Convert a string of digits to an integer.
 
-    Invoke reads an environment variable as a string, unless the default
-    of the key is a number or a boolean. The ``cov_fail_under`` key has
-    no default, so ``INVOKE_TASKLIB_TEST_COV_FAIL_UNDER=90`` is the
-    string ``"90"``.
+    Invoke reads an environment variable as a string. The integer keys
+    are registered without a default (see ``default_config``), so
+    ``INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30`` is the string ``"30"``.
 
     Args:
         value: The raw config value.
@@ -340,19 +356,49 @@ def _int_from_text(value: object) -> object:
     return value
 
 
+def _is_cov_report(name: str) -> bool:
+    r"""Check a ``--cov-report`` value of pytest-cov.
+
+    Args:
+        name: The value, e.g. ``"html"`` or ``"xml:cov.xml"``.
+
+    Returns:
+        ``True`` if the part before the first colon is one of
+        ``COV_REPORTS`` and, when there is a colon, something follows
+        it.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.config._validate import _is_cov_report
+    >>> _is_cov_report("term-missing:skip-covered")
+    True
+    >>> _is_cov_report("html:")
+    False
+
+    ```
+    """
+    report, colon, argument = name.partition(":")
+    return report in COV_REPORTS and (not colon or bool(argument))
+
+
 def _validate_cov_reports(value: object) -> tuple[str, ...]:
     r"""Validate the ``test.cov_reports`` config value.
 
     Args:
         value: The raw config value: a comma-separated string or a list
-            of report formats.
+            of ``--cov-report`` values. A value is a format of
+            ``COV_REPORTS`` with an optional ``:<argument>``, as in
+            ``term-missing:skip-covered`` or ``html:cov_html``.
 
     Returns:
-        The report formats, without duplicates, in the order given.
+        The values, without duplicates, in the order given. They are
+        not changed: the argument is kept.
 
     Raises:
         ValueError: If the value is neither a string nor a list of
-            strings, or if a format is not one of ``COV_REPORTS``.
+            strings, if a format is not one of ``COV_REPORTS``, or if
+            an argument after the colon is empty.
 
     Example usage:
 
@@ -364,11 +410,13 @@ def _validate_cov_reports(value: object) -> tuple[str, ...]:
     ('html', 'term')
     >>> _validate_cov_reports(["xml"])
     ('xml',)
+    >>> _validate_cov_reports("term-missing:skip-covered")
+    ('term-missing:skip-covered',)
 
     ```
     """
     names = _as_names("tasklib.test.cov_reports", value)
-    unknown = [name for name in names if name not in COV_REPORTS]
+    unknown = [name for name in names if not _is_cov_report(name)]
     if unknown:
         msg = (
             f"Unknown coverage report {unknown} in 'tasklib.test.cov_reports'. "
@@ -505,7 +553,7 @@ def _validate_cov_fail_under(value: object) -> int | None:
     """
     if value is None:
         return None
-    return _validate_int("test", "cov_fail_under", _int_from_text(value), minimum=0, maximum=100)
+    return _validate_int("test", "cov_fail_under", value, minimum=0, maximum=100)
 
 
 def _validate_bool(section: str, key: str, value: object) -> bool:
@@ -515,13 +563,17 @@ def _validate_bool(section: str, key: str, value: object) -> bool:
         section: The name of the config section, used in the error
             message.
         key: The name of the config key, used in the error message.
-        value: The raw config value.
+        value: The raw config value: a boolean or a string (an
+            environment variable) that is one of ``true``, ``false``,
+            ``1``, ``0``, ``yes``, ``no``, ``on`` and ``off``, in any
+            case.
 
     Returns:
         The validated boolean.
 
     Raises:
-        ValueError: If the value is not a boolean.
+        ValueError: If the value is neither a boolean nor one of the
+            accepted strings.
 
     Example usage:
 
@@ -529,9 +581,13 @@ def _validate_bool(section: str, key: str, value: object) -> bool:
     >>> from invoke_tasklib.config._validate import _validate_bool
     >>> _validate_bool("test", "xdoctest", False)
     False
+    >>> _validate_bool("test", "xdoctest", "no")
+    False
 
     ```
     """
+    if isinstance(value, str):
+        value = _BOOL_TEXT.get(value.lower(), value)
     if value is not True and value is not False:
         msg = f"'tasklib.{section}.{key}' must be a boolean (true or false), got {value!r}"
         raise ValueError(msg)

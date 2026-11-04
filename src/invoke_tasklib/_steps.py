@@ -5,7 +5,7 @@ from __future__ import annotations
 import textwrap
 from typing import TYPE_CHECKING, NamedTuple
 
-from invoke.exceptions import Exit, UnexpectedExit
+from invoke.exceptions import Exit, Failure, UnexpectedExit
 
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import find_tool, not_found_message
@@ -14,6 +14,27 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping
 
     from invoke.context import Context
+
+
+STEP_ERRORS: tuple[type[Exception], ...] = (
+    ArithmeticError,
+    AttributeError,
+    Failure,
+    ImportError,
+    LookupError,
+    OSError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+)
+r"""The errors of a step, other than ``Exit`` and ``UnexpectedExit``,
+that ``run_step`` reports as the reason of a failure.
+
+A step is a task, so it can also fail with an error of the code (a bug)
+or of the system (a missing file) or with another failure of Invoke (a
+timeout). ``KeyboardInterrupt`` and ``SystemExit`` are not listed: they
+stop the run.
+"""
 
 
 class Step(NamedTuple):
@@ -195,8 +216,12 @@ def run_step(c: Context, tasks: Mapping[str, Callable[[Context], None]], step: s
 
     Returns:
         ``None`` if the step passed, else the reason of the failure:
-        the message of an ``Exit``, or the command and the exit code of
-        a command that failed (its output was already shown).
+        the message of an ``Exit``, the command and the exit code of
+        a command that failed (its output was already shown), or the
+        type and the message of an error of ``STEP_ERRORS`` (a bug in
+        a task, an ``OSError``, a timeout), so one broken step does
+        not hide the summary of the others. ``KeyboardInterrupt`` is
+        not caught.
 
     Example usage:
 
@@ -214,6 +239,8 @@ def run_step(c: Context, tasks: Mapping[str, Callable[[Context], None]], step: s
         return f"The command {result.command!r} exited with code {result.exited}"
     except Exit as exc:
         return str(exc).strip() or type(exc).__name__
+    except STEP_ERRORS as exc:
+        return f"{type(exc).__name__}: {exc}".removesuffix(": ")
     return None
 
 

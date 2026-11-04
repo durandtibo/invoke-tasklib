@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import fields
 
 import pytest
 
 from invoke_tasklib import config as config_module
 from invoke_tasklib.config import (
-    DEFAULT_CHECK,
-    DEFAULT_FIX,
-    DEFAULT_GROUPS,
-    DEFAULT_PACKAGE,
     DEFAULT_PATHS,
     DEFAULT_TEST,
     SCHEMA,
@@ -22,7 +19,7 @@ from invoke_tasklib.config import (
     json_schema,
     main,
 )
-from invoke_tasklib.config._schema import _defaults, _path, _timeout
+from invoke_tasklib.config._schema import _defaults, _path, _timeout, _untyped
 
 ####################################
 #     Tests for default_config     #
@@ -35,13 +32,37 @@ def test_default_config_has_the_six_sections() -> None:
 
 def test_default_config_is_the_defaults() -> None:
     assert default_config() == {
-        "package": DEFAULT_PACKAGE,
-        "paths": DEFAULT_PATHS,
-        "groups": DEFAULT_GROUPS,
-        "test": DEFAULT_TEST,
-        "check": DEFAULT_CHECK,
-        "fix": DEFAULT_FIX,
+        "package": {"name": None, "import_name": None, "python_version": None},
+        "paths": {
+            "src": None,
+            "tests": "tests",
+            "unit_tests": None,
+            "integration_tests": None,
+            "functional_tests": None,
+            "benchmarks": None,
+            "docs_config": "docs/mkdocs.yml",
+        },
+        "groups": {"install": "dev", "update": "dev,docs"},
+        "test": {
+            "unit_timeout": None,
+            "integration_timeout": None,
+            "functional_timeout": None,
+            "xdoctest": None,
+            "timeout": None,
+            "cov_fail_under": None,
+            "cov_reports": "html,xml,term",
+        },
+        "check": {
+            "tasks": "format-python,format-docstrings,lint,types,imports,unit",
+            "cov": None,
+        },
+        "fix": {"tasks": "lint,format-python,format-docstrings"},
     }
+
+
+def test_default_config_does_not_change_the_schema_defaults() -> None:
+    default_config()
+    assert DEFAULT_TEST["xdoctest"] is True
 
 
 def test_default_config_returns_new_dicts() -> None:
@@ -230,3 +251,49 @@ def test_main_prints_the_usage_when_it_rejects_arguments(
 ) -> None:
     main(["--bad"])
     assert capsys.readouterr().out == "usage: python -m invoke_tasklib.config\n"
+
+
+########################################
+#     Tests for cov_reports schema     #
+########################################
+
+
+def _cov_report_pattern() -> re.Pattern[str]:
+    items = json_schema()["properties"]["tasklib"]["properties"]["test"]["properties"][
+        "cov_reports"
+    ]["anyOf"][1]["items"]
+    return re.compile(items["pattern"])
+
+
+@pytest.mark.parametrize(
+    "value", ["html", "term-missing", "term-missing:skip-covered", "xml:a.xml"]
+)
+def test_cov_reports_schema_accepts_a_valid_value(value: str) -> None:
+    assert _cov_report_pattern().match(value) is not None
+
+
+@pytest.mark.parametrize("value", ["", "nope", "html:", ":dir", "htmlx", "nope:dir"])
+def test_cov_reports_schema_rejects_an_invalid_value(value: str) -> None:
+    assert _cov_report_pattern().match(value) is None
+
+
+def test_cov_reports_schema_items_are_strings() -> None:
+    items = json_schema()["properties"]["tasklib"]["properties"]["test"]["properties"][
+        "cov_reports"
+    ]["anyOf"][1]["items"]
+    assert items["type"] == "string"
+
+
+###############################
+#     Tests for _untyped      #
+###############################
+
+
+@pytest.mark.parametrize("value", [True, False, 0, 10])
+def test_untyped_hides_booleans_and_integers(value: object) -> None:
+    assert _untyped(value) is None
+
+
+@pytest.mark.parametrize("value", ["tests", "", None])
+def test_untyped_keeps_the_other_values(value: object) -> None:
+    assert _untyped(value) == value

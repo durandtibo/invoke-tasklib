@@ -15,6 +15,15 @@ tasklib:
 
 See [Get Started](get_started.md) and [Config](uguide/config.md) for the full schema.
 
+## `inv must run from the project root, where tasks.py is: ...`
+
+Invoke looks for `tasks.py` in the parents of the current directory and loads the `invoke.yaml`
+next to it, but it does not change directory. The tasks use paths relative to the current directory
+(`tests/unit`, `pyproject.toml`, `dist`, ...), so from a subdirectory they would look in the wrong
+place, and a task like `test.unit` would skip the missing `tests/unit` directory and pass. A task
+that reads the config now exits with code 2 and this message instead. Run `inv` from the directory
+of `tasks.py`, as in `cd <project root> && inv check.all`, or use the `make` targets.
+
 ## `'ruff' was not found on the PATH`
 
 Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on

@@ -20,7 +20,8 @@ invoke clean
 Removes, if present, at the repository root:
 
 - Directories: `build`, `dist`, `.pytest_cache`, `.ruff_cache`, `.coverage_html`, `htmlcov`,
-  `.benchmarks`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`, and the MkDocs output
+  `.benchmarks`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`, the HTML coverage directory if `[tool.coverage.html] directory` of `pyproject.toml`
+  sets another one, and the MkDocs output
   directory, only if the MkDocs config file exists (what produces it): the `site_dir` of
   `paths.docs_config`, relative to the config file (`docs/site` by default). If the config is not
   valid, `site` for a `mkdocs.yml` and `docs/site` for a `docs/mkdocs.yml` are used
@@ -33,6 +34,10 @@ A top-level directory that contains files tracked by git (for example a `build/`
 scripts that are committed) is kept, and the task says so (`⏭️  Keeping build: it contains files
 tracked by git`). Outside a git repository, or without `git`, nothing counts as tracked. The caches
 (`__pycache__`, `*.egg-info`) and the files are not looked up.
+
+A directory outside the project is never removed: if the `site_dir` of the MkDocs config is an
+absolute path, contains `..` or points to the project root, the task says `⏭️  Not removing ...: it is
+outside the project` and goes on.
 
 Nothing is removed if the corresponding directory or file doesn't exist, so `clean` is safe to run
 repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a
