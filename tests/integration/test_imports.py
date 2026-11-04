@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import os
 import shlex
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from invoke.config import Config
@@ -23,9 +24,12 @@ class _SubprocessContext(Context):
     pytest reports as unraisable warnings in unrelated tests.
     """
 
-    def run(self, command: str, **kwargs: object) -> Result:
+    def run(self, command: str, **kwargs: Any) -> Result:
+        env = kwargs.get("env")
+        if env is not None and not kwargs.get("replace_env"):
+            env = {**os.environ, **env}
         proc = subprocess.run(  # noqa: S603 (commands are built by the tasks under test)
-            shlex.split(command), capture_output=True, text=True, check=False
+            shlex.split(command), capture_output=True, text=True, check=False, env=env
         )
         result = Result(stdout=proc.stdout, stderr=proc.stderr, exited=proc.returncode)
         if proc.returncode and not kwargs.get("warn"):

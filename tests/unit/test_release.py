@@ -12,6 +12,7 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import release
+from invoke_tasklib.tools import tool_path
 from tests.helpers import commands, make_context, run_kwargs
 
 
@@ -26,10 +27,10 @@ def dist(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def _env(c: MockContext) -> dict[str, str]:
-    r"""Return the ``env`` of the last command, without its ``PATH``."""
-    env = dict(run_kwargs(c)[-1]["env"])
-    del env["PATH"]
-    return env
+    r"""Return the credential variables of the ``env`` of the last
+    command."""
+    env = run_kwargs(c)[-1]["env"]
+    return {k: v for k, v in env.items() if k.startswith("UV_PUBLISH_")}
 
 
 _WHEEL_CHECK_CMD = (
@@ -607,3 +608,93 @@ def test_check_release_state_reads_the_status_without_a_pty_nor_an_echo() -> Non
         release._check_release_state(c)
     kwargs = run_kwargs(c)[0]
     assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)
+
+
+##########################################
+#     Tests for _publish_environment     #
+##########################################
+
+
+@pytest.fixture
+def _clean_environ(monkeypatch: pytest.MonkeyPatch) -> None:
+    r"""Run with a small, known process environment."""
+    monkeypatch.setattr(os, "environ", {"HOME": "/home/u", "PATH": "/usr/bin"})
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_is_the_complete_environment() -> None:
+    env = release._publish_environment("secret")
+    env.pop("PYTEST_CURRENT_TEST", None)
+    assert env == {
+        "HOME": "/home/u",
+        "PATH": tool_path(),
+        "UV_PUBLISH_TOKEN": "secret",
+    }
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_without_token_has_no_token() -> None:
+    assert "UV_PUBLISH_TOKEN" not in release._publish_environment(None)
+
+
+@pytest.mark.parametrize("name", ["UV_PUBLISH_TOKEN", "UV_PUBLISH_USERNAME", "UV_PUBLISH_PASSWORD"])
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_removes_an_inherited_credential(
+    monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    monkeypatch.setitem(os.environ, name, "inherited")
+    assert name not in release._publish_environment(None)
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_token_replaces_an_inherited_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "inherited")
+    env = release._publish_environment("chosen")
+    assert ("UV_PUBLISH_TOKEN", "chosen") in env.items()
+
+
+@pytest.mark.usefixtures("_clean_environ")
+def test_publish_environment_does_not_modify_the_process_environment() -> None:
+    before = dict(os.environ)
+    release._publish_environment("secret")
+    assert dict(os.environ) == before
+
+
+def test_publish_environment_keeps_the_other_variables(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SOME_OTHER_VARIABLE", "kept")
+    assert release._publish_environment(None)["SOME_OTHER_VARIABLE"] == "kept"
+
+
+@pytest.mark.usefixtures("dist", "token")
+def test_publish_replaces_the_environment() -> None:
+    c = make_context(_CFG)
+    release.publish(c, yes=True, skip_checks=True)
+    assert run_kwargs(c)[-1]["replace_env"] is True
+
+
+@pytest.mark.usefixtures("dist")
+def test_publish_to_test_pypi_does_not_send_an_inherited_token_with_trusted_publishing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("TEST_PYPI_TOKEN", raising=False)
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "pypi-secret")
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("ACTIONS_ID_TOKEN_REQUEST_URL", "https://example.com")
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, yes=True, skip_checks=True)
+    assert _env(c) == {}
+
+
+@pytest.mark.usefixtures("dist")
+def test_publish_to_test_pypi_dry_run_does_not_send_an_inherited_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("TEST_PYPI_TOKEN", raising=False)
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "pypi-secret")
+    c = make_context(_CFG)
+    release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
+    assert _env(c) == {}
