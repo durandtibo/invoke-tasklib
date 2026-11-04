@@ -457,9 +457,35 @@ def test_unit_with_cov() -> None:
     assert "--cov=mypkg" in commands(c)[0]
 
 
+############################
+#     Tests for _shell     #
+############################
+
+
+@pytest.fixture
+def _scripts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "run.sh").write_text("")
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.mark.usefixtures("_scripts")
+def test_shell_runs_the_lint_then_the_format_check() -> None:
+    c = _context()
+    check._shell(c)
+    assert commands(c) == ["shellcheck -- run.sh", "shfmt -d -- run.sh"]
+
+
 ###########################
 #     Tests for STEPS     #
 ###########################
+
+
+def test_shell_step_is_the_shell_wrapper() -> None:
+    assert check.STEPS["shell"].task is check._shell
+
+
+def test_shell_step_needs_shellcheck_and_shfmt() -> None:
+    assert check.STEPS["shell"].programs == ("shellcheck", "shfmt")
 
 
 def test_unit_step_is_the_unit_wrapper() -> None:

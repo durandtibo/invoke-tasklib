@@ -15,6 +15,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Format](format.md)     | `format.check-docstrings`     | Check docstring formatting with docformatter         |    ❌    |
 | [Format](format.md)     | `format.fix-docstrings`       | Format docstrings with docformatter                  |    ✅    |
 | [Format](format.md)     | `format.check-shell`          | Check shell scripts with shellcheck                  |    ❌    |
+| [Format](format.md)     | `format.check-shell-format`   | Check the format of shell scripts with shfmt         |    ❌    |
 | [Format](format.md)     | `format.fix-shell`            | Format shell scripts with shfmt                      |    ✅    |
 | [Lint](lint.md)         | `lint.check-python`           | Check code linting with ruff                         |    ❌    |
 | [Lint](lint.md)         | `lint.fix-python`             | Fix auto-fixable linting issues with ruff            |    ✅    |
@@ -100,7 +101,7 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
 | `test.coverage-report`                                                           | `coverage report`     |    ❌     |
 | `format.*-python`, `lint.check-python`, `lint.fix-python`                        | `ruff`                |    ✅     |
 | `format.*-docstrings`                                                            | `docformatter`        |    ✅     |
-| `format.check-shell`, `format.fix-shell`                                         | `shellcheck`, `shfmt` |    ✅     |
+| `format.check-shell`, `format.check-shell-format`, `format.fix-shell`            | `shellcheck`, `shfmt` |    ✅     |
 | `lint.check-spelling`                                                            | `codespell`           |    ✅     |
 | `lint.pre-commit`                                                                | `pre-commit`          |    ❌     |
 | `types.check`                                                                    | `ty` (only)           |    ✅     |
@@ -136,7 +137,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`ruff`](https://docs.astral.sh/ruff/)                            | `format.check-python`, `format.fix-python`, `lint.check-python` |
 | [`docformatter`](https://docformatter.readthedocs.io/)            | `format.check-docstrings`, `format.fix-docstrings`              |
 | [`shellcheck`](https://www.shellcheck.net/)                       | `format.check-shell`                                            |
-| [`shfmt`](https://github.com/mvdan/sh)                            | `format.fix-shell`                                              |
+| [`shfmt`](https://github.com/mvdan/sh)                            | `format.check-shell-format`, `format.fix-shell`                 |
 | [`ty`](https://docs.astral.sh/ty/)                                | `types.check`                                                   |
 | [`pyright`](https://microsoft.github.io/pyright/)                 | `types.check --complete`                                        |
 | [`pytest`](https://docs.pytest.org/)                              | `test.*` except `test.doctest` and `test.doctest-markdown`      |
