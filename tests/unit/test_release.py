@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -13,9 +13,6 @@ from invoke.runners import Result
 
 from invoke_tasklib import release
 from tests.helpers import commands, make_context, run_kwargs
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 @pytest.fixture
@@ -77,8 +74,43 @@ def test_build_with_check() -> None:
         "uv build --clear",
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
-        "uvx twine check dist/*",
+        "uvx --from 'twine>=6.1,<7' twine check dist/*",
     ]
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_with_wheel_only_does_not_verify_the_sdist() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, args="--wheel")
+    assert commands(c) == ["uv build --clear --wheel", _WHEEL_CHECK_CMD]
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_with_sdist_only_does_not_verify_the_wheel() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, args="--sdist")
+    assert commands(c) == ["uv build --clear --sdist", _SDIST_CHECK_CMD]
+
+
+@pytest.mark.usefixtures("dist")
+def test_build_verifies_the_out_dir_not_a_stale_dist(tmp_path: Path) -> None:
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "mypkg-0.0.9-py3-none-any.whl").write_text("")
+    (tmp_path / "out" / "mypkg-0.0.9.tar.gz").write_text("")
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, args="--out-dir out")
+    assert commands(c)[1].startswith("uv run --isolated --no-project --with out/mypkg-0.0.9-")
+
+
+def test_build_checks_the_out_dir_with_twine(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out").mkdir()
+    (tmp_path / "out" / "mypkg-0.0.9-py3-none-any.whl").write_text("")
+    c = make_context({"package": {"name": "mypkg"}})
+    release.build(c, check=True, args="--wheel --out-dir out")
+    assert commands(c)[-1] == "uvx --from 'twine>=6.1,<7' twine check out/*"
 
 
 def test_build_installs_the_built_wheel_not_the_package_name(dist: Path) -> None:
@@ -260,6 +292,15 @@ def test_publish_does_not_ask_in_ci(monkeypatch: pytest.MonkeyPatch) -> None:
     c = make_context(_CFG)
     release.publish(c, skip_checks=True)
     assert commands(c)[-1] == "uv publish"
+
+
+@pytest.mark.usefixtures("dist", "token")
+@pytest.mark.parametrize("value", ["false", "0", "FALSE"])
+def test_publish_asks_when_ci_is_off(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    with pytest.raises(Exit, match=r"Publication not confirmed: pass --yes"):
+        release.publish(make_context(_CFG), skip_checks=True)
 
 
 @pytest.mark.usefixtures("dist", "token")
@@ -462,11 +503,20 @@ def test_publish_to_pypi_ignores_test_pypi_token() -> None:
 
 
 @pytest.mark.usefixtures("dist")
-def test_publish_to_test_pypi_accepts_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_publish_to_test_pypi_ignores_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    with pytest.raises(Exit, match=r"Set the TEST_PYPI_TOKEN environment variable, or run in"):
+        release.publish(make_context(_CFG), test_pypi=True, yes=True, skip_checks=True)
+
+
+@pytest.mark.usefixtures("dist", "testpypi_token")
+def test_publish_to_test_pypi_prefers_test_pypi_token_over_uv_publish_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, yes=True, skip_checks=True)
-    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "uv-secret"}
+    assert run_kwargs(c)[-1]["env"] == {"UV_PUBLISH_TOKEN": "testpypi-secret"}
 
 
 @pytest.mark.usefixtures("dist")
@@ -491,3 +541,63 @@ def test_publish_reports_a_failure_of_the_upload(capsys: pytest.CaptureFixture[s
     with pytest.raises(Exit, match=r"boom"):
         release.publish(c, yes=True, skip_checks=True)
     assert "❌ Failed: Publishing" in capsys.readouterr().err
+
+
+############################
+#     Tests for _in_ci     #
+############################
+
+
+@pytest.mark.parametrize("value", ["1", "true", "True", "yes", "anything"])
+def test_in_ci_true(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    assert release._in_ci() is True
+
+
+@pytest.mark.parametrize("value", ["", "0", "false", "FALSE", "False", " false "])
+def test_in_ci_false(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    assert release._in_ci() is False
+
+
+def test_in_ci_false_when_unset() -> None:
+    assert release._in_ci() is False
+
+
+####################################
+#     Tests for _build_targets     #
+####################################
+
+
+def test_build_targets_default() -> None:
+    assert release._build_targets(None) == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+def test_build_targets_empty_args() -> None:
+    assert release._build_targets("") == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+@pytest.mark.parametrize("args", ["--wheel", "-w"])
+def test_build_targets_wheel(args: str) -> None:
+    assert release._build_targets(args) == (Path("dist"), ("*.whl",))
+
+
+def test_build_targets_sdist() -> None:
+    assert release._build_targets("--sdist") == (Path("dist"), ("*.tar.gz",))
+
+
+def test_build_targets_wheel_and_sdist() -> None:
+    assert release._build_targets("--wheel --sdist") == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+@pytest.mark.parametrize("args", ["--out-dir out", "-o out", "--out-dir=out", "--wheel -o out"])
+def test_build_targets_out_dir(args: str) -> None:
+    assert release._build_targets(args)[0] == Path("out")
+
+
+def test_build_targets_out_dir_without_value_is_the_default() -> None:
+    assert release._build_targets("--out-dir")[0] == Path("dist")
+
+
+def test_build_targets_ignores_other_options() -> None:
+    assert release._build_targets("--no-sources") == (Path("dist"), ("*.whl", "*.tar.gz"))

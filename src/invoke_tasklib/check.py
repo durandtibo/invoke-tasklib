@@ -22,13 +22,26 @@ if TYPE_CHECKING:
 
     from invoke_tasklib.config import TasklibConfig
 
+
+def _unit(c: Context) -> None:
+    r"""Run the unit tests, with coverage if ``tasklib.check.cov``.
+
+    With coverage, ``tasklib.test.cov_fail_under`` is enforced, as it is
+    by ``test.unit --cov``.
+
+    Args:
+        c: The invoke context.
+    """
+    testing.unit(c, cov=load_config(c).check.cov)
+
+
 STEPS: dict[str, Step] = {
     "format-python": Step(formatting.check_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.check_docstrings, programs=("docformatter",)),
     "lint": Step(lint.check_python, programs=("ruff",)),
     "types": Step(typecheck.check, programs=("ty",)),
     "imports": Step(imports.check_cycles),
-    "unit": Step(testing.unit, modules=("pytest", "pytest_timeout")),
+    "unit": Step(_unit, modules=("pytest", "pytest_timeout")),
     "doctest": Step(testing.doctest, modules=("pytest", "xdoctest")),
     "shell": Step(formatting.check_shell, programs=("shellcheck",)),
     "spelling": Step(lint.check_spelling, programs=("codespell",)),
@@ -56,6 +69,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
         A ``(tool, reason)`` pair for each program of a step that
         is not on the ``PATH`` and each module of a step that is
         not installed, in that order. The reason says how to install it.
+        ``xdoctest`` is only needed with ``tasklib.test.xdoctest`` and
+        ``pytest_timeout`` only with ``tasklib.test.timeout``.
 
     Example usage:
 
@@ -74,6 +89,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
     modules = STEPS[step].modules
     if step == "unit" and cfg.test.xdoctest:
         modules = (*modules, "xdoctest")
+    if step == "unit" and not cfg.test.timeout:
+        modules = tuple(module for module in modules if module != "pytest_timeout")
     return missing_tools(STEPS[step].programs, modules)
 
 
@@ -99,9 +116,11 @@ def all_(
     ``format-python``, ``format-docstrings``, ``lint``, ``types``,
     ``imports`` and ``unit``), run in that order. The other steps are
     ``doctest``, ``shell``, ``spelling``, ``docs`` and ``audit``. None
-    of them modifies a file. By default the first failure stops the
-    task; with ``keep_going`` every step is run and the failed ones are
-    listed at the end.
+    of them modifies a file (except the coverage reports of ``unit``
+    with ``tasklib.check.cov``, which also enforces
+    ``tasklib.test.cov_fail_under``). By default the first failure
+    stops the task; with ``keep_going`` every step is run and the
+    failed ones are listed at the end.
 
     Before any step is run, the tools that the selected steps need
     (the programs and modules of ``STEPS``) are looked up and all the

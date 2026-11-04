@@ -12,7 +12,7 @@ from invoke.runners import Result
 
 from invoke_tasklib import lint
 from invoke_tasklib.output import (
-    _NON_ASCII,
+    _EMOJI,
     ASCII_ENV_VAR,
     _failure_title,
     _keep_if_encodable,
@@ -115,6 +115,25 @@ def test_say_keeps_the_symbols_when_ascii_is_not_set(monkeypatch: pytest.MonkeyP
     out = StringIO()
     say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
     assert out.getvalue() == "✅ Done\n"
+
+
+def test_say_forced_ascii_replaces_accented_letters(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(ASCII_ENV_VAR, "1")
+    out = StringIO()
+    say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Removing café/é.py")
+    assert out.getvalue() == "[ok] Removing caf?/?.py\n"
+
+
+def test_say_replaces_accented_letters_the_stream_cannot_encode() -> None:
+    raw, stream = _ascii_stream()
+    say(Context(config=Config(overrides={"run": {"out_stream": stream}})), "✅ café/é.py")
+    assert raw.getvalue() == b"[ok] caf?/?.py\n"
+
+
+def test_say_keeps_accented_letters_on_a_utf8_stream() -> None:
+    out = StringIO()
+    say(Context(config=Config(overrides={"run": {"out_stream": out}})), "café")
+    assert out.getvalue() == "café\n"
 
 
 def test_say_keeps_encodable_characters_on_ascii_stream() -> None:
@@ -283,6 +302,10 @@ def test_to_encoding_keeps_the_characters_the_encoding_supports() -> None:
     assert _to_encoding("🧹 é ✅ ok", "latin-1") == "é [ok] ok"
 
 
+def test_to_encoding_keeps_accented_letters_in_ascii() -> None:
+    assert _to_encoding("✅ Removing café/é.py", "ascii") == "[ok] Removing café/é.py"
+
+
 def test_to_encoding_handles_several_symbols() -> None:
     assert _to_encoding("✅ a ❌ b", "ascii") == "[ok] a [fail] b"
 
@@ -297,17 +320,17 @@ def test_to_encoding_is_deterministic() -> None:
 
 
 def _match(text: str) -> re.Match[str]:
-    match = _NON_ASCII.search(text)
+    match = _EMOJI.search(text)
     assert match is not None
     return match
 
 
 def test_keep_if_encodable_keeps_a_supported_character_and_its_spaces() -> None:
-    assert _keep_if_encodable(_match("é  x"), "latin-1") == "é  "
+    assert _keep_if_encodable(_match("★  x"), "cp932") == "★  "
 
 
 def test_keep_if_encodable_drops_an_unsupported_character_and_its_spaces() -> None:
-    assert _keep_if_encodable(_match("é  x"), "ascii") == ""
+    assert _keep_if_encodable(_match("★  x"), "ascii") == ""
 
 
 ####################################

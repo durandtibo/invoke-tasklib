@@ -53,14 +53,56 @@ def _latest_artifact(directory: Path, pattern: str) -> Path:
     return candidates[-1]
 
 
+def _build_targets(args: str | None) -> tuple[Path, tuple[str, ...]]:
+    r"""Find what ``uv build`` produces from its arguments.
+
+    Args:
+        args: The extra arguments given to ``uv build``, as one string.
+
+    Returns:
+        A tuple ``(directory, patterns)``: the output directory
+        (``--out-dir`` or ``-o``, ``dist`` by default) and the glob
+        patterns of the artifacts that are built: the wheel with
+        ``--wheel`` or ``-w``, the source distribution with ``--sdist``,
+        both if none or both are given.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.release import _build_targets
+    >>> _build_targets(None)
+    (PosixPath('dist'), ('*.whl', '*.tar.gz'))
+    >>> _build_targets("--wheel --out-dir out")
+    (PosixPath('out'), ('*.whl',))
+
+    ```
+    """
+    words = shlex.split(args or "")
+    directory = Path("dist")
+    for i, word in enumerate(words):
+        if word in {"--out-dir", "-o"} and i + 1 < len(words):
+            directory = Path(words[i + 1])
+        elif word.startswith("--out-dir="):
+            directory = Path(word.removeprefix("--out-dir="))
+    patterns = []
+    if "--wheel" in words or "-w" in words:
+        patterns.append("*.whl")
+    if "--sdist" in words:
+        patterns.append("*.tar.gz")
+    return directory, tuple(patterns or ("*.whl", "*.tar.gz"))
+
+
 @task(help={"check": "Also check the package metadata with twine.", "args": ARGS_HELP})
 def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     r"""Build the package and verify the built artifacts.
 
     The artifacts are checked to be installable. The newest wheel and
-    the newest source distribution in ``dist/`` are each installed in an
-    isolated environment and the package is imported from it, using
-    ``package.import_name``.
+    the newest source distribution in the output directory (``dist/``,
+    or ``--out-dir`` of ``--args``) are each installed in an isolated
+    environment and the package is imported from it, using
+    ``package.import_name``. Only the kinds that the build produces are
+    verified: with ``--wheel`` or ``--sdist`` in ``--args``, the other
+    kind is not.
 
     Args:
         c: The invoke context.
@@ -73,9 +115,10 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     with report_failure(c, "📦 Building package..."):
         say(c, "📦 Building package...")
         run(c, build_command("uv build --clear", args=args))
+        directory, patterns = _build_targets(args)
         say(c, "🔍 Verifying package installation...")
-        for pattern in ("*.whl", "*.tar.gz"):
-            artifact = _latest_artifact(Path("dist"), pattern)
+        for pattern in patterns:
+            artifact = _latest_artifact(directory, pattern)
             say(c, f"🔍 Verifying {artifact}...")
             run(
                 c,
@@ -84,8 +127,15 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
             )
         if check:
             say(c, "🔍 Checking package metadata with twine...")
-            run(c, "uvx twine check dist/*")
+            twine = f"uvx --from {shlex.quote(TWINE_REQUIREMENT)} twine check"
+            run(c, f"{twine} {shlex.quote(str(directory))}/*")
 
+
+TWINE_REQUIREMENT = "twine>=6.1,<7"
+r"""The version range of ``twine`` that ``release.build --check`` runs.
+
+``uvx`` installs the latest release in this range, so a new major
+version is never run without a change of this constant."""
 
 TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
 r"""The upload endpoint of TestPyPI."""
@@ -208,11 +258,39 @@ def _confirm(target: str) -> None:
         raise Exit(msg, code=1)
 
 
+def _in_ci() -> bool:
+    r"""Tell whether the ``CI`` environment variable turns CI mode on.
+
+    Any value is accepted except an empty string, ``0`` and ``false``
+    (case-insensitive), so ``CI=false`` does not count as CI.
+
+    Returns:
+        True if ``CI`` is set to a value other than ``""``, ``"0"``
+            and ``"false"``.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.release import _in_ci
+    >>> with patch.dict(os.environ, {"CI": "true"}):
+    ...     _in_ci()
+    True
+    >>> with patch.dict(os.environ, {"CI": "false"}):
+    ...     _in_ci()
+    False
+
+    ```
+    """
+    return os.environ.get("CI", "").strip().lower() not in {"", "0", "false"}
+
+
 @task(
     help={
         "test_pypi": "Publish to TestPyPI instead of PyPI.",
         "dry_run": "Build and check, but do not upload anything.",
-        "yes": "Do not ask for a confirmation (never asked when the CI variable is set).",
+        "yes": "Do not ask for a confirmation (never asked when CI is on, e.g. CI=true).",
         "skip_checks": "Do not check the git state (clean tree, tagged HEAD, matching version).",
         "args": ARGS_HELP,
     }
@@ -231,12 +309,14 @@ def publish(
     Before anything is built, the task checks that the working tree is
     clean, that ``HEAD`` is tagged and that the tag matches the
     ``pyproject.toml`` version (``--skip-checks`` turns it off). Outside
-    of CI it then asks for a confirmation (``--yes`` turns it off).
+    of CI (``CI`` set to something other than ``0`` and ``false``) it
+    then asks for a confirmation (``--yes`` turns it off).
 
     The credentials are either a token, read from ``PYPI_TOKEN`` (from
     ``TEST_PYPI_TOKEN`` with ``--test-pypi``, so a PyPI token is never
-    sent to TestPyPI) or from ``UV_PUBLISH_TOKEN``, which ``uv publish``
-    reads natively, and passed to ``uv publish`` through its
+    sent to TestPyPI) or, without ``--test-pypi`` only, from
+    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively. The token
+    is passed to ``uv publish`` through its
     environment, so it does not appear on the command line; or, in
     GitHub Actions with the
     ``id-token: write`` permission, PyPI Trusted Publishing. ``dist/``
@@ -258,19 +338,22 @@ def publish(
     """
     target = "TestPyPI" if test_pypi else "PyPI"
     token_name = "TEST_PYPI_TOKEN" if test_pypi else "PYPI_TOKEN"
-    token = os.environ.get(token_name) or os.environ.get("UV_PUBLISH_TOKEN")
+    token = os.environ.get(token_name)
+    if not test_pypi:
+        token = token or os.environ.get("UV_PUBLISH_TOKEN")
     trusted = os.environ.get("GITHUB_ACTIONS") == "true" and bool(
         os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
     )
     if not (token or trusted or dry_run):
+        alternative = "" if test_pypi else " (or UV_PUBLISH_TOKEN)"
         msg = (
-            f"Set the {token_name} (or UV_PUBLISH_TOKEN) environment variable, or run in "
+            f"Set the {token_name}{alternative} environment variable, or run in "
             f"GitHub Actions with the id-token permission, to publish to {target}"
         )
         raise Exit(msg, code=1)
     if not skip_checks:
         _check_release_state(c)
-    if not (yes or dry_run or os.environ.get("CI")):
+    if not (yes or dry_run or _in_ci()):
         _confirm(target)
     build(c)
     cmd = ["uv publish"]

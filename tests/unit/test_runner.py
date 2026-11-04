@@ -218,6 +218,17 @@ def test_run_without_check_does_not_pass_check_to_the_context() -> None:
         ". env.sh && ruff check",
         ": && ruff check",
         "FOO=1",
+        "if true; then ruff check; fi",
+        "for f in a b; do ruff check; done",
+        "while true; do ruff check; done",
+        "! ruff check",
+        "~/bin/tool --version",
+        "./run.sh && ruff check",
+        "bin/tool --version",
+        "sudo ruff check",
+        "env FOO=1 ruff check",
+        "time ruff check",
+        "nice ruff check",
     ],
 )
 def test_check_program_accepts_valid_shell_forms(
@@ -233,6 +244,23 @@ def test_check_program_still_checks_the_program_after_an_assignment(
     monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only())
     with pytest.raises(Exit, match=r"^'ruff' was not found on the PATH"):
         check_program("FOO=1 ruff check")
+
+
+@pytest.mark.parametrize("wrapper", ["sudo", "env", "time", "nice", "env FOO=1"])
+def test_check_program_checks_the_program_run_by_a_wrapper(
+    monkeypatch: pytest.MonkeyPatch, wrapper: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only(wrapper.split(maxsplit=1)[0]))
+    with pytest.raises(Exit, match=r"^'ruff' was not found on the PATH"):
+        check_program(f"{wrapper} ruff check")
+
+
+@pytest.mark.parametrize("command", ["sudo -u root ruff check", "nice -n 5 ruff check"])
+def test_check_program_does_not_guess_after_a_wrapper_option(
+    monkeypatch: pytest.MonkeyPatch, command: str
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.runner.shutil.which", _only("sudo", "nice"))
+    assert check_program(command) is None
 
 
 def test_check_program_still_checks_the_program_after_a_builtin(
@@ -278,6 +306,14 @@ def test_build_command_quotes_paths_with_spaces() -> None:
 
 def test_build_command_quotes_shell_metacharacters() -> None:
     assert build_command("ruff check", args="--x ';rm -rf /'") == "ruff check --x ';rm -rf /'"
+
+
+def test_build_command_passes_a_glob_as_it_is() -> None:
+    assert build_command("codespell", paths="src/*.py") == "codespell 'src/*.py'"
+
+
+def test_build_command_passes_a_tilde_as_it_is() -> None:
+    assert build_command("codespell", paths="~/x") == "codespell '~/x'"
 
 
 def test_build_command_does_not_quote_the_program() -> None:
@@ -653,6 +689,43 @@ def test_program_of_xargs_without_command_is_none() -> None:
 @pytest.mark.parametrize("words", [["(", "ls", ")"], ["{", "ls"], ["}"], ["$", "(", "ls", ")"]])
 def test_program_of_a_subshell_group_or_substitution_is_none(words: list[str]) -> None:
     assert _program_of(words) is None
+
+
+@pytest.mark.parametrize("keyword", ["!", "if", "then", "else", "fi", "for", "do", "done", "case"])
+def test_program_of_a_shell_keyword_is_none(keyword: str) -> None:
+    assert _program_of([keyword, "x"]) is None
+
+
+@pytest.mark.parametrize("program", ["~/bin/tool", "./run.sh", "bin/tool", "../tool"])
+def test_program_of_a_relative_path_is_none(program: str) -> None:
+    assert _program_of([program, "--version"]) is None
+
+
+def test_program_of_an_absolute_path_is_kept() -> None:
+    assert _program_of(["/usr/bin/python", "-m", "pytest"]) == "/usr/bin/python"
+
+
+@pytest.mark.parametrize("wrapper", ["sudo", "time", "nice", "env"])
+def test_program_of_a_wrapper_is_the_command_it_runs(wrapper: str) -> None:
+    assert _program_of([wrapper, "ruff", "check"]) == "ruff"
+
+
+def test_program_of_env_skips_the_assignments() -> None:
+    assert _program_of(["env", "A=1", "B=2", "ruff", "check"]) == "ruff"
+
+
+@pytest.mark.parametrize("wrapper", ["sudo", "time", "nice", "env"])
+def test_program_of_a_wrapper_alone_is_none(wrapper: str) -> None:
+    assert _program_of([wrapper]) is None
+
+
+@pytest.mark.parametrize("words", [["sudo", "-u", "root", "ruff"], ["nice", "-n", "5", "ruff"]])
+def test_program_of_a_wrapper_with_an_option_is_none(words: list[str]) -> None:
+    assert _program_of(words) is None
+
+
+def test_program_of_a_wrapper_of_a_path_is_none() -> None:
+    assert _program_of(["sudo", "./run.sh"]) is None
 
 
 ########################################

@@ -205,6 +205,32 @@ def test_all_without_coverage() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests"]
 
 
+def test_all_without_timeout() -> None:
+    c = make_context({"package": {"name": "mypkg"}, "test": {"timeout": False}})
+    test_tasks.all_(c)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest tests"]
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_all_without_tests_directory_runs_nothing() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.all_(c)
+    assert commands(c) == []
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_all_without_tests_directory_says_it_skips(capsys: pytest.CaptureFixture[str]) -> None:
+    test_tasks.all_(make_context({"package": {"name": "mypkg"}}))
+    assert capsys.readouterr().out == "⏭️  No 'tests' directory: skipping all tests\n"
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_all_with_paths_runs_even_without_tests_directory() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    test_tasks.all_(c, paths="other")
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 other"]
+
+
 def test_all_with_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.all_(c, cov=True)
@@ -417,6 +443,13 @@ def test_functional_args() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 -x tests/functional"]
 
 
+@pytest.fixture
+def html_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "pyproject.toml").write_text('[tool.coverage.html]\ndirectory = "cov out"\n')
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.mark.usefixtures("empty_project")
 def test_coverage_report() -> None:
     c = make_context()
     test_tasks.coverage_report(c)
@@ -426,6 +459,7 @@ def test_coverage_report() -> None:
     ]
 
 
+@pytest.mark.usefixtures("empty_project")
 def test_coverage_report_with_args() -> None:
     c = make_context()
     test_tasks.coverage_report(c, args="--fail-under=90")
@@ -435,6 +469,7 @@ def test_coverage_report_with_args() -> None:
     ]
 
 
+@pytest.mark.usefixtures("empty_project")
 def test_coverage_report_open_browser() -> None:
     c = make_context()
     test_tasks.coverage_report(c, open_browser=True)
@@ -443,6 +478,25 @@ def test_coverage_report_open_browser() -> None:
         "/venv/bin/python -m coverage report",
         "/venv/bin/python -m webbrowser -t htmlcov/index.html",
     ]
+
+
+@pytest.mark.usefixtures("html_directory")
+def test_coverage_report_opens_the_configured_directory() -> None:
+    c = make_context()
+    test_tasks.coverage_report(c, open_browser=True)
+    assert commands(c)[-1] == "/venv/bin/python -m webbrowser -t 'cov out/index.html'"
+
+
+@pytest.mark.usefixtures("html_directory")
+def test_coverage_report_says_the_configured_directory(capsys: pytest.CaptureFixture[str]) -> None:
+    test_tasks.coverage_report(make_context())
+    assert "✅ Coverage report generated in cov out/" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("empty_project")
+def test_coverage_report_says_the_default_directory(capsys: pytest.CaptureFixture[str]) -> None:
+    test_tasks.coverage_report(make_context())
+    assert "✅ Coverage report generated in htmlcov/" in capsys.readouterr().out
 
 
 @pytest.mark.usefixtures("empty_project")
@@ -711,3 +765,42 @@ def test_doctest_markdown_reports_a_failure(capsys: pytest.CaptureFixture[str]) 
     with pytest.raises(Exit, match=r"boom"):
         test_tasks.doctest_markdown(c, paths="a.md")
     assert "❌ Failed: Running doctests on markdown files" in capsys.readouterr().err
+
+
+########################################
+#     Tests for _coverage_html_dir     #
+########################################
+
+
+def test_coverage_html_dir_without_file(tmp_path: Path) -> None:
+    assert test_tasks._coverage_html_dir(tmp_path / "pyproject.toml") == "htmlcov"
+
+
+def test_coverage_html_dir_reads_the_option(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text('[tool.coverage.html]\ndirectory = "reports/html"\n')
+    assert test_tasks._coverage_html_dir(path) == "reports/html"
+
+
+def test_coverage_html_dir_without_the_option(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text("[tool.coverage.run]\nbranch = true\n")
+    assert test_tasks._coverage_html_dir(path) == "htmlcov"
+
+
+def test_coverage_html_dir_with_an_empty_option(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text('[tool.coverage.html]\ndirectory = ""\n')
+    assert test_tasks._coverage_html_dir(path) == "htmlcov"
+
+
+def test_coverage_html_dir_with_a_value_that_is_not_a_string(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text("[tool.coverage.html]\ndirectory = 3\n")
+    assert test_tasks._coverage_html_dir(path) == "htmlcov"
+
+
+def test_coverage_html_dir_with_an_invalid_file(tmp_path: Path) -> None:
+    path = tmp_path / "pyproject.toml"
+    path.write_text("[tool.coverage\n")
+    assert test_tasks._coverage_html_dir(path) == "htmlcov"
