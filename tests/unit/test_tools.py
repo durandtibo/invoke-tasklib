@@ -14,6 +14,7 @@ from invoke_tasklib.runner import build_command
 from invoke_tasklib.tools import (
     DEFAULT_HINT,
     MODULE_GROUPS,
+    PLUGIN_OPTIONS,
     PROGRAM_GROUPS,
     PROGRAM_HINTS,
     _check_module,
@@ -362,6 +363,16 @@ def test_hint_module_uses_the_module_groups(monkeypatch: pytest.MonkeyPatch) -> 
     )
 
 
+def test_hint_of_pytest_benchmark_names_its_group() -> None:
+    assert hint("pytest_benchmark", module=True) == (
+        "Install it with the 'dev' group: `uv sync --group dev`."
+    )
+
+
+def test_every_plugin_module_has_a_group() -> None:
+    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= set(MODULE_GROUPS)
+
+
 def test_program_and_module_groups_do_not_share_a_name() -> None:
     assert set(PROGRAM_GROUPS) & set(MODULE_GROUPS) == set()
 
@@ -388,6 +399,11 @@ def _venv_python(monkeypatch: pytest.MonkeyPatch) -> None:
         ("--timeout=10", "--timeout", "pytest_timeout", "pytest-timeout"),
         ("--cov=mypkg", "--cov", "pytest_cov", "pytest-cov"),
         ("--benchmark-only", "--benchmark-only", "pytest_benchmark", "pytest-benchmark"),
+        ("--benchmark-compare", "--benchmark-compare", "pytest_benchmark", "pytest-benchmark"),
+        ("--benchmark-disable", "--benchmark-disable", "pytest_benchmark", "pytest-benchmark"),
+        ("--no-cov", "--no-cov", "pytest_cov", "pytest-cov"),
+        ("--cov-branch", "--cov-branch", "pytest_cov", "pytest-cov"),
+        ("--cov-config=x.toml", "--cov-config", "pytest_cov", "pytest-cov"),
     ],
 )
 def test_check_module_missing_pytest_plugin_names_the_package(

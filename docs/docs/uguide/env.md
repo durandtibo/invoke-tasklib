@@ -105,7 +105,7 @@ invoke env.check-tools
 `env.check-tools` gives a single view of the tools that the tasks run: the programs (`uv`, `uvx`,
 `git`, `ruff`, `ty`, `pyright`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`,
 `mkdocs`, `mike`) and the Python modules of the interpreter (`pytest`, `coverage`, `xdoctest`,
-`pytest_timeout`, `pytest_cov`). Each tool has one line, with its path when it is available:
+`pytest_timeout`, `pytest_cov`, `pytest_benchmark`). Each tool has one line, with its path when it is available:
 
 ```text
 ✅ ruff: /project/.venv/bin/ruff

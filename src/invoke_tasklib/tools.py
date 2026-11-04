@@ -65,6 +65,7 @@ MODULE_GROUPS: dict[str, str] = {
     "xdoctest": "dev",
     "pytest_timeout": "dev",
     "pytest_cov": "dev",
+    "pytest_benchmark": "dev",
 }
 r"""The dependency group that provides a Python module, by name."""
 
@@ -82,7 +83,12 @@ PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
     "--cov-report": ("pytest_cov", "pytest-cov"),
     "--cov-append": ("pytest_cov", "pytest-cov"),
     "--cov-fail-under": ("pytest_cov", "pytest-cov"),
+    "--cov-branch": ("pytest_cov", "pytest-cov"),
+    "--cov-config": ("pytest_cov", "pytest-cov"),
+    "--no-cov": ("pytest_cov", "pytest-cov"),
     "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
+    "--benchmark-compare": ("pytest_benchmark", "pytest-benchmark"),
+    "--benchmark-disable": ("pytest_benchmark", "pytest-benchmark"),
 }
 r"""The pytest options that come from a plugin, as a tuple of the module
 and of the package to install, by option."""
