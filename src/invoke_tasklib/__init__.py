@@ -32,10 +32,8 @@ needs the name ``test`` to keep the task names):
 
 from __future__ import annotations
 
-import functools
 import importlib.metadata
-import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from invoke.collection import Collection
 
@@ -216,46 +214,3 @@ def make_ns(
             ns.add_collection(selected)
     ns.configure({"tasklib": default_config()})
     return ns
-
-
-@functools.cache
-def _shared_ns() -> Collection:
-    r"""Build the collection that the deprecated ``ns`` returns.
-
-    Returns:
-        The same collection on every call, like the former module
-        level ``ns``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib import _shared_ns
-    >>> _shared_ns() is _shared_ns()
-    True
-
-    ```
-    """
-    return make_ns()
-
-
-def __getattr__(name: str) -> Any:
-    r"""Give the deprecated ``ns`` attribute of the module.
-
-    Args:
-        name: The name of the attribute.
-
-    Returns:
-        The shared collection, for ``ns``.
-
-    Raises:
-        AttributeError: For any other name.
-    """
-    if name == "ns":
-        msg = (
-            "'invoke_tasklib.ns' is deprecated and will be removed: it is one collection shared "
-            "by every importer. Use 'ns = make_ns()' in your tasks.py instead."
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return _shared_ns()
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)

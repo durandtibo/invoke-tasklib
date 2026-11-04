@@ -92,9 +92,9 @@ namespace names come from `_MODULES`, not from the module names.
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via
 `ns = make_ns()` in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns
-a new collection, so a project can add its own tasks without affecting other importers.
-`invoke_tasklib.ns`, a collection built once and shared by every importer, is deprecated: accessing
-it emits a `DeprecationWarning`.
+a new collection, so a project can add its own tasks without affecting other importers. (The
+module-level `invoke_tasklib.ns`, one collection shared by every importer, was removed: use
+`ns = make_ns()`.)
 
 ## Data Flow
 
