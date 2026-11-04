@@ -207,11 +207,39 @@ def _confirm(target: str) -> None:
         raise Exit(msg, code=1)
 
 
+def _in_ci() -> bool:
+    r"""Tell whether the ``CI`` environment variable turns CI mode on.
+
+    Any value is accepted except an empty string, ``0`` and ``false``
+    (case-insensitive), so ``CI=false`` does not count as CI.
+
+    Returns:
+        True if ``CI`` is set to a value other than ``""``, ``"0"``
+            and ``"false"``.
+
+    Example usage:
+
+    ```pycon
+    >>> import os
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.release import _in_ci
+    >>> with patch.dict(os.environ, {"CI": "true"}):
+    ...     _in_ci()
+    True
+    >>> with patch.dict(os.environ, {"CI": "false"}):
+    ...     _in_ci()
+    False
+
+    ```
+    """
+    return os.environ.get("CI", "").strip().lower() not in {"", "0", "false"}
+
+
 @task(
     help={
         "test_pypi": "Publish to TestPyPI instead of PyPI.",
         "dry_run": "Build and check, but do not upload anything.",
-        "yes": "Do not ask for a confirmation (never asked when the CI variable is set).",
+        "yes": "Do not ask for a confirmation (never asked when CI is on, e.g. CI=true).",
         "skip_checks": "Do not check the git state (clean tree, tagged HEAD, matching version).",
         "args": ARGS_HELP,
     }
@@ -230,7 +258,8 @@ def publish(
     Before anything is built, the task checks that the working tree is
     clean, that ``HEAD`` is tagged and that the tag matches the
     ``pyproject.toml`` version (``--skip-checks`` turns it off). Outside
-    of CI it then asks for a confirmation (``--yes`` turns it off).
+    of CI (``CI`` set to something other than ``0`` and ``false``) it
+    then asks for a confirmation (``--yes`` turns it off).
 
     The credentials are either a token, read from ``PYPI_TOKEN`` (from
     ``TEST_PYPI_TOKEN`` with ``--test-pypi``, so a PyPI token is never
@@ -269,7 +298,7 @@ def publish(
         raise Exit(msg, code=1)
     if not skip_checks:
         _check_release_state(c)
-    if not (yes or dry_run or os.environ.get("CI")):
+    if not (yes or dry_run or _in_ci()):
         _confirm(target)
     build(c)
     cmd = ["uv publish"]

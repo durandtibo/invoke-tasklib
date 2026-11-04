@@ -263,6 +263,15 @@ def test_publish_does_not_ask_in_ci(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.usefixtures("dist", "token")
+@pytest.mark.parametrize("value", ["false", "0", "FALSE"])
+def test_publish_asks_when_ci_is_off(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    with pytest.raises(Exit, match=r"Publication not confirmed: pass --yes"):
+        release.publish(make_context(_CFG), skip_checks=True)
+
+
+@pytest.mark.usefixtures("dist", "token")
 def test_publish_checks_the_git_state_first() -> None:
     c = _git_context(status=" M a.py\n")
     with pytest.raises(Exit, match=r"working tree is not clean"):
@@ -474,3 +483,24 @@ def test_publish_to_test_pypi_dry_run_needs_no_token() -> None:
     c = make_context(_CFG)
     release.publish(c, test_pypi=True, dry_run=True, skip_checks=True)
     assert run_kwargs(c)[-1]["env"] == {}
+
+
+############################
+#     Tests for _in_ci     #
+############################
+
+
+@pytest.mark.parametrize("value", ["1", "true", "True", "yes", "anything"])
+def test_in_ci_true(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    assert release._in_ci() is True
+
+
+@pytest.mark.parametrize("value", ["", "0", "false", "FALSE", "False", " false "])
+def test_in_ci_false(value: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CI", value)
+    assert release._in_ci() is False
+
+
+def test_in_ci_false_when_unset() -> None:
+    assert release._in_ci() is False
