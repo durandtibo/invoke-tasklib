@@ -113,7 +113,7 @@ repo. `clean.all` then needs the config, which it does not load today; keep it w
 
 ```text
 >>> _to_encoding("✅ Removing café/é.py\n", "ascii")
-'[ok] Removing caf/.py\n'
+'[ok] Removing caf/.py\n'  # codespell:ignore caf
 ```
 
 A path or a message with an accent is silently changed, so the output names a file that does not
