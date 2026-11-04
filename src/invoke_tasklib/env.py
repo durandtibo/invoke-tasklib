@@ -11,7 +11,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import find_tool, hint, run
+from invoke_tasklib.runner import find_tool, not_found_message, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -232,8 +232,7 @@ def check_tools(c: Context) -> None:
             say(c, f"✅ {name}: {found}")
             continue
         missing.append(name)
-        kind = "Python module" if module else "program"
-        say(c, f"❌ {name}: {kind} not found. {hint(name)}")
+        say(c, f"❌ {not_found_message(name, module=module)}")
     if missing:
         msg = f"{len(missing)} of {len(lookups)} tool(s) missing: {', '.join(missing)}"
         raise Exit(msg, code=127)

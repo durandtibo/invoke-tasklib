@@ -26,6 +26,7 @@ from invoke_tasklib.runner import (
     check_program,
     find_tool,
     hint,
+    not_found_message,
     python_executable,
     run,
     split_args,
@@ -803,3 +804,28 @@ def test_find_tool_module_is_not_looked_up_as_a_program(monkeypatch: pytest.Monk
     monkeypatch.setattr(shutil, "which", lambda name: f"/bin/{name}")
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: None)
     assert find_tool("ruff", module=True) is None
+
+
+#######################################
+#     Tests for not_found_message     #
+#######################################
+
+
+def test_not_found_message_for_a_program() -> None:
+    assert not_found_message("uv") == f"'uv' was not found on the PATH. {PROGRAM_HINTS['uv']}"
+
+
+def test_not_found_message_for_a_module_names_the_running_interpreter() -> None:
+    assert not_found_message("pytest", module=True) == (
+        f"The Python module 'pytest' is not installed for {sys.executable}. {hint('pytest')}"
+    )
+
+
+def test_not_found_message_for_a_module_names_the_given_interpreter() -> None:
+    assert not_found_message("pytest", module=True, interpreter="/x/python").startswith(
+        "The Python module 'pytest' is not installed for /x/python. "
+    )
+
+
+def test_not_found_message_for_an_unknown_program_uses_the_default_hint() -> None:
+    assert not_found_message("zzz").endswith(DEFAULT_HINT)

@@ -400,6 +400,35 @@ def _check_plugin_options(words: Sequence[str]) -> None:
             raise Exit(msg, code=127)
 
 
+def not_found_message(name: str, *, module: bool = False, interpreter: str | None = None) -> str:
+    r"""Build the message for a program or a module that is missing.
+
+    Args:
+        name: The name of the program, or of the Python module.
+        module: If True, ``name`` is a Python module.
+        interpreter: The interpreter the module is looked up for.
+            Default is the running one.
+
+    Returns:
+        The message, with how to install the tool, see ``hint``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import not_found_message
+    >>> not_found_message("uv")[:36]
+    "'uv' was not found on the PATH. Inst"
+
+    ```
+    """
+    if module:
+        return (
+            f"The Python module '{name}' is not installed for "
+            f"{interpreter or sys.executable}. {hint(name)}"
+        )
+    return f"'{name}' was not found on the PATH. {hint(name)}"
+
+
 def _check_module(words: Sequence[str]) -> None:
     r"""Check the module of a ``python -m <module>`` command.
 
@@ -429,8 +458,7 @@ def _check_module(words: Sequence[str]) -> None:
         return
     module = words[2]
     if importlib.util.find_spec(module) is None:
-        msg = f"The Python module '{module}' is not installed for {words[0]}. {hint(module)}"
-        raise Exit(msg, code=127)
+        raise Exit(not_found_message(module, module=True, interpreter=words[0]), code=127)
     if module == "pytest":
         _check_plugin_options(words[3:])
 
@@ -508,8 +536,7 @@ def check_program(command: str) -> None:
             _check_module(words)
             continue
         if shutil.which(program) is None:
-            msg = f"'{program}' was not found on the PATH. {hint(program)}"
-            raise Exit(msg, code=127)
+            raise Exit(not_found_message(program), code=127)
 
 
 def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Result:

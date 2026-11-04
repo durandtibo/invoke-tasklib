@@ -107,7 +107,7 @@ invoke env.check-tools
 
 ```text
 ✅ ruff: /project/.venv/bin/ruff
-❌ shfmt: program not found. Install shfmt with your system package manager, ...
+❌ 'shfmt' was not found on the PATH. Install shfmt with your system package manager, ...
 ```
 
 All the tools are listed, so one run shows everything that is missing. The task does not read the
