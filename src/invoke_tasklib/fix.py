@@ -37,7 +37,9 @@ STEPS: dict[str, Step] = {
     default=True,
     help={
         "keep_going": "Run every step and report all the failures, instead of stopping.",
-        "only": f"Comma-separated steps to run instead of tasklib.fix.tasks ({', '.join(FIX_STEPS)}).",
+        "only": (
+            f"Comma-separated steps to run instead of tasklib.fix.tasks ({', '.join(FIX_STEPS)})."
+        ),
         "skip": "Comma-separated steps to leave out.",
     },
 )

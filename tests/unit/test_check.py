@@ -386,7 +386,10 @@ def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
     assert check._missing_tools("types", _cfg()) == [
         (
             "ty",
-            "'ty' was not found on the PATH. Install it with the 'dev' group: `uv sync --group dev`.",
+            (
+                "'ty' was not found on the PATH. "
+                "Install it with the 'dev' group: `uv sync --group dev`."
+            ),
         )
     ]
 

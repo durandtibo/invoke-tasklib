@@ -199,7 +199,10 @@ SCHEMA: dict[str, dict[str, Option]] = {
             None,
             _validate_python_version,
             {"type": "string", "pattern": PYTHON_VERSION_PATTERN.pattern},
-            "Python version of the virtual environment (default: from .python-version or requires-python).",
+            (
+                "Python version of the virtual environment "
+                "(default: from .python-version or requires-python)."
+            ),
         ),
     },
     "paths": {

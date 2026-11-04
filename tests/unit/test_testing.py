@@ -48,7 +48,10 @@ def test_doctest_markdown(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     c = make_context()
     test_tasks.doctest_markdown(c)
     assert commands(c) == [
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md docs/index.md"
+        (
+            "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS "
+            "-o REPORT_NDIFF README.md docs/index.md"
+        )
     ]
 
 
@@ -96,7 +99,10 @@ def test_doctest_markdown_sorts_files(tmp_path: Path, monkeypatch: MonkeyPatch) 
     c = make_context()
     test_tasks.doctest_markdown(c)
     assert commands(c) == [
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF README.md docs/a.md docs/z.md"
+        (
+            "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS "
+            "-o REPORT_NDIFF README.md docs/a.md docs/z.md"
+        )
     ]
 
 
@@ -107,7 +113,10 @@ def test_doctest_markdown_quotes_file_names(tmp_path: Path, monkeypatch: MonkeyP
     c = make_context()
     test_tasks.doctest_markdown(c)
     assert commands(c) == [
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF 'my docs/a b.md'"
+        (
+            "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS "
+            "-o REPORT_NDIFF 'my docs/a b.md'"
+        )
     ]
 
 
@@ -161,7 +170,10 @@ def test_doctest_markdown_with_args(tmp_path: Path, monkeypatch: MonkeyPatch) ->
     c = make_context()
     test_tasks.doctest_markdown(c, args="-v")
     assert commands(c) == [
-        "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF -v README.md"
+        (
+            "/venv/bin/python -m doctest -o NORMALIZE_WHITESPACE -o ELLIPSIS "
+            "-o REPORT_NDIFF -v README.md"
+        )
     ]
 
 

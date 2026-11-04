@@ -323,7 +323,8 @@ def publish_dev(c: Context, *, push: bool = True) -> None:
         say(c, "🚀 Deploying 'main' and 'dev' aliases...")
         run(
             c,
-            f"mike deploy --config-file {docs_config}{_push_option(push)} --update-aliases main dev",
+            f"mike deploy --config-file {docs_config}{_push_option(push)}"
+            " --update-aliases main dev",
         )
     say(c, "✅ Development documentation published")
 
