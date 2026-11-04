@@ -477,6 +477,86 @@ def test_create_venv_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> No
     assert "❌ Failed: Creating virtual environment" in capsys.readouterr().err
 
 
+def _fail_on_sync(command: str, **_kwargs: object) -> None:
+    if command.startswith("uv sync"):
+        msg = "boom"
+        raise Exit(msg, code=1)
+
+
+def test_create_venv_reports_a_failed_install_once(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env.create_venv(c)
+    assert capsys.readouterr().err == "❌ Failed: Creating virtual environment\n"
+
+
+def test_update_reports_a_failed_install_once(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env.update(c)
+    assert capsys.readouterr().err == "❌ Failed: Updating dependencies\n"
+
+
+def test_install_reports_a_failed_sync_once(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env.install(c)
+    assert capsys.readouterr().err == "❌ Failed: Installing project dependencies\n"
+
+
+##############################
+#     Tests for _install     #
+##############################
+
+
+def test_install_helper_runs_uv_sync_with_the_groups() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "dev,docs", optional_deps=True)
+    assert commands(c) == ["uv sync --locked --all-extras --group dev --group docs"]
+
+
+def test_install_helper_without_optional_deps() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "dev", optional_deps=False)
+    assert commands(c) == ["uv sync --locked --group dev"]
+
+
+def test_install_helper_with_no_group() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "", optional_deps=False)
+    assert commands(c) == ["uv sync --locked"]
+
+
+def test_install_helper_installs_a_repeated_group_once() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "dev, dev ,docs", optional_deps=False)
+    assert commands(c) == ["uv sync --locked --group dev --group docs"]
+
+
+def test_install_helper_quotes_a_group() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    env._install(c, "a;b", optional_deps=False)
+    assert commands(c) == ["uv sync --locked --group 'a;b'"]
+
+
+def test_install_helper_reports_progress(capsys: pytest.CaptureFixture[str]) -> None:
+    env._install(make_context({"package": {"name": "mypkg"}}), "dev", optional_deps=True)
+    assert capsys.readouterr().out == (
+        "📦 Installing project dependencies...\n✅ Installation complete\n"
+    )
+
+
+def test_install_helper_does_not_report_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    c.run = Mock(side_effect=_fail_on_sync)
+    with pytest.raises(Exit, match=r"boom"):
+        env._install(c, "dev", optional_deps=True)
+    assert "Failed" not in capsys.readouterr().err
+
+
 ####################################
 #     Tests for _confirm_clear     #
 ####################################

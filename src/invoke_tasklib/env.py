@@ -82,7 +82,7 @@ def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None
         say(c, f"🐍 Creating virtual environment{with_version}...")
         option = f" --python {python_version}" if python_version else ""
         run(c, f"uv venv{option} --clear")
-        install(c)
+        _install(c, ",".join(cfg.groups.install), optional_deps=True)
     say(c, "✅ Virtual environment created successfully")
 
 
@@ -111,13 +111,32 @@ def install(c: Context, *, optional_deps: bool = True, groups: str | None = None
     if groups is None:
         groups = ",".join(load_config(c).groups.install)
     with report_failure(c, "📦 Installing project dependencies..."):
-        say(c, "📦 Installing project dependencies...")
-        cmd = ["uv sync --locked"]
-        if optional_deps:
-            cmd.append("--all-extras")
-        names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
-        cmd.extend(f"--group {shlex.quote(group)}" for group in names)
-        run(c, " ".join(cmd))
+        _install(c, groups, optional_deps=optional_deps)
+
+
+def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
+    r"""Install the dependencies and the package, without a report.
+
+    It is the body of ``install``, without its failure line. A task
+    that installs as one step of a longer job (``create_venv``,
+    ``update``) calls it inside its own ``report_failure`` block, so a
+    failure is reported once, with the title of the outer job.
+
+    Args:
+        c: The invoke context.
+        groups: Comma-separated list of dependency groups to install.
+            An empty string installs no group, and a group listed
+            twice is installed once.
+        optional_deps: If True, install all the optional dependencies
+            (extras) of the project.
+    """
+    say(c, "📦 Installing project dependencies...")
+    cmd = ["uv sync --locked"]
+    if optional_deps:
+        cmd.append("--all-extras")
+    names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
+    cmd.extend(f"--group {shlex.quote(group)}" for group in names)
+    run(c, " ".join(cmd))
     say(c, "✅ Installation complete")
 
 
@@ -160,7 +179,7 @@ def update(c: Context, *, groups: str | None = None) -> None:
         else:
             say(c, f"⏭️  No {PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
         say(c, f"📦 Reinstalling with dependency groups: {groups}...")
-        install(c, groups=groups)
+        _install(c, groups, optional_deps=True)
     say(c, "✅ Update complete")
 
 

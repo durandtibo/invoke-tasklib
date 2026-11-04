@@ -9,6 +9,7 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib.config import SCHEMA, get_config, load_config
+from invoke_tasklib.config._resolve import _check_project_root
 from invoke_tasklib.config._schema import _defaults
 
 if TYPE_CHECKING:
@@ -540,6 +541,82 @@ def test_get_config_rejects_an_unknown_fix_key() -> None:
     c = _context({"package": {"name": "mypkg"}, "fix": {"task": "lint"}})
     with pytest.raises(ValueError, match=r"Unknown key 'task' \(did you mean 'tasks'"):
         get_config(c)
+
+
+#####################################
+#     Tests for _check_project_root #
+#####################################
+
+
+def _located_context(location: Path | None, name: str = "mypkg") -> Context:
+    config = Config(
+        overrides={"tasklib": {"package": {"name": name}}},
+        project_location=location,
+    )
+    return Context(config=config)
+
+
+def test_check_project_root_accepts_the_directory_of_tasks_py(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert _check_project_root(_located_context(tmp_path)) is None
+
+
+def test_check_project_root_accepts_a_context_without_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert _check_project_root(_located_context(None)) is None
+
+
+def test_check_project_root_rejects_a_subdirectory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    with pytest.raises(ValueError, match=r"inv must run from the project root, where tasks\.py is"):
+        _check_project_root(_located_context(tmp_path))
+
+
+def test_check_project_root_names_both_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    root = tmp_path.resolve()
+    with pytest.raises(
+        ValueError, match=rf"{root}.*\(the current directory is {root}/sub\)\. Run 'cd {root}'"
+    ):
+        _check_project_root(_located_context(tmp_path))
+
+
+def test_check_project_root_follows_symlinks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "real").mkdir()
+    (tmp_path / "link").symlink_to(tmp_path / "real", target_is_directory=True)
+    monkeypatch.chdir(tmp_path / "link")
+    assert _check_project_root(_located_context(tmp_path / "real")) is None
+
+
+def test_load_config_exits_from_a_subdirectory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    with pytest.raises(Exit, match=r"inv must run from the project root"):
+        load_config(_located_context(tmp_path))
+
+
+def test_load_config_exit_code_is_2_from_a_subdirectory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "sub").mkdir()
+    monkeypatch.chdir(tmp_path / "sub")
+    with pytest.raises(Exit) as info:
+        load_config(_located_context(tmp_path))
+    assert info.value.code == 2
 
 
 def test_get_config_ignores_the_none_registered_for_a_boolean() -> None:

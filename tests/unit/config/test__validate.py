@@ -8,6 +8,7 @@ from invoke_tasklib.config._validate import (
     _as_names,
     _check_keys,
     _int_from_text,
+    _is_cov_report,
     _normalize_groups,
     _validate_bool,
     _validate_check_tasks,
@@ -501,3 +502,65 @@ def test_validate_cov_fail_under_accepts_a_percentage(value: object, expected: i
 def test_validate_cov_fail_under_rejects_an_invalid_value(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer"):
         _validate_cov_fail_under(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "term-missing:skip-covered",
+        "html:cov_html",
+        "xml:reports/coverage.xml",
+        "json:cov.json",
+        "lcov:cov.info",
+        "annotate:notes",
+        "html:C:/cov",
+    ],
+)
+def test_validate_cov_reports_accepts_an_argument(value: str) -> None:
+    assert _validate_cov_reports(value) == (value,)
+
+
+def test_validate_cov_reports_keeps_the_arguments_in_a_list() -> None:
+    value = ["term-missing:skip-covered", "html:cov_html", "xml"]
+    assert _validate_cov_reports(value) == ("term-missing:skip-covered", "html:cov_html", "xml")
+
+
+def test_validate_cov_reports_keeps_two_arguments_of_a_format() -> None:
+    assert _validate_cov_reports("html:a,html:b") == ("html:a", "html:b")
+
+
+@pytest.mark.parametrize("value", ["html:", "term-missing:", ":skip-covered", ":"])
+def test_validate_cov_reports_rejects_an_empty_part(value: str) -> None:
+    with pytest.raises(ValueError, match=r"Unknown coverage report"):
+        _validate_cov_reports(value)
+
+
+def test_validate_cov_reports_rejects_an_unknown_format_with_an_argument() -> None:
+    with pytest.raises(ValueError, match=r"Unknown coverage report \['htlm:dir'\]"):
+        _validate_cov_reports("htlm:dir")
+
+
+@pytest.mark.parametrize("value", ["HTML", "term_missing", "html/", "html cov"])
+def test_validate_cov_reports_rejects_a_misspelled_format(value: str) -> None:
+    with pytest.raises(ValueError, match=r"Unknown coverage report"):
+        _validate_cov_reports(value)
+
+
+####################################
+#     Tests for _is_cov_report     #
+####################################
+
+
+@pytest.mark.parametrize("report", sorted(COV_REPORTS))
+def test_is_cov_report_accepts_a_format(report: str) -> None:
+    assert _is_cov_report(report) is True
+
+
+@pytest.mark.parametrize("name", ["html:dir", "term-missing:skip-covered", "xml:a:b"])
+def test_is_cov_report_accepts_a_format_with_an_argument(name: str) -> None:
+    assert _is_cov_report(name) is True
+
+
+@pytest.mark.parametrize("name", ["", "nope", "html:", ":dir", "nope:dir"])
+def test_is_cov_report_rejects_other_values(name: str) -> None:
+    assert _is_cov_report(name) is False
