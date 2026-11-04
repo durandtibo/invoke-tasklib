@@ -99,14 +99,17 @@ See [Doc](uguide/doc.md).
 
 ## `release.publish` fails to authenticate
 
-`release.publish` passes the `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`) environment variable to
-`uv publish`. Without a token it only works in GitHub Actions with the `id-token: write`
+`release.publish` passes the `PYPI_TOKEN` (`TEST_PYPI_TOKEN` with `--test-pypi`, or
+`UV_PUBLISH_TOKEN`) environment variable to `uv publish`. Without a token it only works in GitHub Actions with the `id-token: write`
 permission (Trusted Publishing); anywhere else it stops with a clear message. Make sure the
 variable is set (e.g. as a CI secret) before running it:
 
 ```shell
 export PYPI_TOKEN=pypi-...
 invoke release.publish
+
+export TEST_PYPI_TOKEN=pypi-...
+invoke release.publish --test-pypi
 ```
 
 See [Release](uguide/release.md).
