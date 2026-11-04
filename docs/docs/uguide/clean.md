@@ -34,6 +34,10 @@ scripts that are committed) is kept, and the task says so (`⏭️  Keeping buil
 tracked by git`). Outside a git repository, or without `git`, nothing counts as tracked. The caches
 (`__pycache__`, `*.egg-info`) and the files are not looked up.
 
+A directory outside the project is never removed: if the `site_dir` of the MkDocs config is an
+absolute path, contains `..` or points to the project root, the task says `⏭️  Not removing ...: it is
+outside the project` and goes on.
+
 Nothing is removed if the corresponding directory or file doesn't exist, so `clean` is safe to run
 repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a
 directory is removed as a link, and the directory it points to is left untouched.
