@@ -48,7 +48,8 @@ def test_get_config_defaults() -> None:
             "cov_reports": ("html", "xml", "term"),
         },
         "check": {
-            "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit")
+            "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit"),
+            "cov": False,
         },
         "fix": {"tasks": ("lint", "format-python", "format-docstrings")},
     }
@@ -211,6 +212,17 @@ def test_get_config_overrides_the_python_version() -> None:
 
 def test_get_config_overrides_the_src_path() -> None:
     assert get_config(_context(_OVERRIDES)).paths.src == "mypkg"
+
+
+def test_get_config_check_cov_override() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "check": {"cov": True}}))
+    assert cfg.check.cov is True
+
+
+def test_get_config_check_cov_must_be_a_boolean() -> None:
+    c = _context({"package": {"name": "mypkg"}, "check": {"cov": "yes"}})
+    with pytest.raises(ValueError, match=r"'tasklib\.check\.cov' must be a boolean"):
+        get_config(c)
 
 
 def test_get_config_overrides_the_docs_config_path() -> None:

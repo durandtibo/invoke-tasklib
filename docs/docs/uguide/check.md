@@ -38,7 +38,9 @@ tasklib:
     tasks: [format-python, lint, types, unit, doctest, docs]
 ```
 
-None of them modifies a file.
+None of them modifies a file. The exception is the `unit` step with `tasklib.check.cov: true`: it
+runs `test.unit --cov`, which generates the coverage reports and enforces `tasklib.test.cov_fail_under`
+(without it `check` never checks the threshold).
 
 | Option         | Effect                                                                                 |
 | -------------- | -------------------------------------------------------------------------------------- |

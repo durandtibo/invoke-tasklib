@@ -204,6 +204,11 @@
               ],
               "description": "Steps of check.all (comma-separated string or list).",
               "default": "format-python,format-docstrings,lint,types,imports,unit"
+            },
+            "cov": {
+              "type": "boolean",
+              "description": "Run the unit step of check.all with --cov, so cov_fail_under is enforced.",
+              "default": false
             }
           }
         },
