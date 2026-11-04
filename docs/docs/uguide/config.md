@@ -144,7 +144,10 @@ the library, or no value for an optional key), `project file` (`invoke.yaml`),
 `environment variable INVOKE_TASKLIB_...`, `system config file`, `user config file`,
 `runtime config file` or `override` (set from the command line or by code). `derived` is a value
 that no source sets, computed from other values or from the project (`import_name`, `src` and the
-test paths). The config is validated first, so an invalid one stops the task with
+test paths). The origins come from private attributes of Invoke (there is no public API for them):
+if a release of Invoke renames one, the task writes a warning on the error stream that names it,
+and the check that `inv` runs from the project root (also based on one of them) writes a
+`RuntimeWarning`, instead of going on silently. The config is validated first, so an invalid one stops the task with
 the usual one-line message. The task reads nothing but the config and the project directories of
 [`paths`](#defaults), and changes nothing.
 
