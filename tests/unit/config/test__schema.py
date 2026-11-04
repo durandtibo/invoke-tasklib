@@ -110,7 +110,8 @@ def test_schema_default_dicts_are_derived_from_the_schema() -> None:
 
 def test_defaults_of_a_section() -> None:
     assert _defaults("check") == {
-        "tasks": "format-python,format-docstrings,lint,types,imports,unit"
+        "tasks": "format-python,format-docstrings,lint,types,imports,unit",
+        "cov": False,
     }
 
 

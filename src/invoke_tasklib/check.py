@@ -17,13 +17,26 @@ if TYPE_CHECKING:
 
     from invoke_tasklib.config import TasklibConfig
 
+
+def _unit(c: Context) -> None:
+    r"""Run the unit tests, with coverage if ``tasklib.check.cov``.
+
+    With coverage, ``tasklib.test.cov_fail_under`` is enforced, as it is
+    by ``test.unit --cov``.
+
+    Args:
+        c: The invoke context.
+    """
+    testing.unit(c, cov=load_config(c).check.cov)
+
+
 STEPS: dict[str, Callable[[Context], None]] = {
     "format-python": formatting.check_python,
     "format-docstrings": formatting.check_docstrings,
     "lint": lint.check_python,
     "types": typecheck.check,
     "imports": imports.check_cycles,
-    "unit": testing.unit,
+    "unit": _unit,
     "doctest": testing.doctest,
     "shell": formatting.check_shell,
     "spelling": lint.check_spelling,
@@ -48,7 +61,9 @@ PROGRAMS: dict[str, tuple[str, ...]] = {
 r"""The programs that each step of ``check.all`` runs, by step name."""
 
 # The Python modules that each step of ``check.all`` runs, by step name.
-# ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true.
+# ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true,
+# and does not need ``pytest_timeout`` if ``tasklib.test.timeout`` is
+# false.
 MODULES: dict[str, tuple[str, ...]] = {
     "format-python": (),
     "format-docstrings": (),
@@ -75,6 +90,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
         A ``(tool, reason)`` pair for each program of ``PROGRAMS`` that
         is not on the ``PATH`` and each module of ``MODULES`` that is
         not installed, in that order. The reason says how to install it.
+        ``xdoctest`` is only needed with ``tasklib.test.xdoctest`` and
+        ``pytest_timeout`` only with ``tasklib.test.timeout``.
 
     Example usage:
 
@@ -93,6 +110,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
     modules = MODULES[step]
     if step == "unit" and cfg.test.xdoctest:
         modules = (*modules, "xdoctest")
+    if step == "unit" and not cfg.test.timeout:
+        modules = tuple(module for module in modules if module != "pytest_timeout")
     return missing_tools(PROGRAMS[step], modules)
 
 
@@ -118,9 +137,11 @@ def all_(
     ``format-python``, ``format-docstrings``, ``lint``, ``types``,
     ``imports`` and ``unit``), run in that order. The other steps are
     ``doctest``, ``shell``, ``spelling``, ``docs`` and ``audit``. None
-    of them modifies a file. By default the first failure stops the
-    task; with ``keep_going`` every step is run and the failed ones are
-    listed at the end.
+    of them modifies a file (except the coverage reports of ``unit``
+    with ``tasklib.check.cov``, which also enforces
+    ``tasklib.test.cov_fail_under``). By default the first failure
+    stops the task; with ``keep_going`` every step is run and the
+    failed ones are listed at the end.
 
     Before any step is run, the tools that the selected steps need
     (``PROGRAMS`` and ``MODULES``) are looked up and all the missing

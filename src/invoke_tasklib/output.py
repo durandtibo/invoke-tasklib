@@ -20,14 +20,16 @@ r"""Environment variable that forces ASCII-only messages when set."""
 _ASCII_TAGS: dict[str, str] = {"✅": "[ok]", "❌": "[fail]", "⏭️": "[skip]"}
 r"""The symbols that carry a status, and their ASCII tag."""
 
-_NON_ASCII = re.compile(r"([^\x00-\x7f]\ufe0f?) *")
+_EMOJI = re.compile("([\U0001f000-\U0001faff\u2600-\u27bf\u2b00-\u2bff]\ufe0f?|\ufe0f) *")
+r"""The emojis, the symbols and the variation selector, with the spaces
+that follow them. The accented letters are not matched."""
 
 
 def _keep_if_encodable(match: re.Match[str], encoding: str) -> str:
     r"""Keep a matched character if the encoding can represent it.
 
     Args:
-        match: A match of ``_NON_ASCII``: the character, with its
+        match: A match of ``_EMOJI``: the emoji, with its
             trailing spaces.
         encoding: The encoding of the stream, e.g. ``"ascii"``.
 
@@ -39,10 +41,10 @@ def _keep_if_encodable(match: re.Match[str], encoding: str) -> str:
 
     ```pycon
     >>> import re
-    >>> from invoke_tasklib.output import _NON_ASCII, _keep_if_encodable
-    >>> match = _NON_ASCII.search("é x")
-    >>> _keep_if_encodable(match, "latin-1")
-    'é '
+    >>> from invoke_tasklib.output import _EMOJI, _keep_if_encodable
+    >>> match = _EMOJI.search("★ x")
+    >>> _keep_if_encodable(match, "cp932")
+    '★ '
     >>> _keep_if_encodable(match, "ascii")
     ''
 
@@ -59,17 +61,19 @@ def _to_encoding(text: str, encoding: str) -> str:
     r"""Rewrite a message so that a stream can encode it.
 
     The status symbols (``✅``, ``❌`` and ``⏭️``) become the tags
-    ``[ok]``, ``[fail]`` and ``[skip]``. Any other character that the
+    ``[ok]``, ``[fail]`` and ``[skip]``. Any other emoji that the
     encoding cannot represent (the decorative emojis) is removed with
-    the space that follows it. The characters the encoding can
-    represent are kept.
+    the space that follows it.
+    The other characters, such as the accented letters of a path, are
+    kept: the caller replaces those the stream cannot encode.
 
     Args:
         text: The message.
         encoding: The encoding of the stream, e.g. ``"ascii"``.
 
     Returns:
-        The message, which can be encoded with ``encoding``.
+        The message, without the emojis ``encoding`` cannot
+        represent.
 
     Example usage:
 
@@ -85,7 +89,7 @@ def _to_encoding(text: str, encoding: str) -> str:
     for symbol, tag in _ASCII_TAGS.items():
         text = re.sub(f"{symbol} *", f"{tag} ", text)
 
-    return _NON_ASCII.sub(lambda match: _keep_if_encodable(match, encoding), text)
+    return _EMOJI.sub(lambda match: _keep_if_encodable(match, encoding), text)
 
 
 def say(c: Context, message: str, *, err: bool = False) -> None:
@@ -102,9 +106,10 @@ def say(c: Context, message: str, *, err: bool = False) -> None:
     A message never fails a task: if the stream cannot encode a
     character (for example an emoji on an ASCII terminal), the status
     symbols are replaced by the tags ``[ok]``, ``[fail]`` and
-    ``[skip]`` and the other emojis are removed. Set the environment
-    variable ``INVOKE_TASKLIB_ASCII`` to ``1`` to get this ASCII
-    output on any stream.
+    ``[skip]``, the other emojis are removed and any other character
+    the stream cannot encode (an accented letter) becomes ``?``. Set
+    the environment variable ``INVOKE_TASKLIB_ASCII`` to ``1`` to get
+    this ASCII output on any stream.
 
     Args:
         c: The invoke context.
@@ -127,7 +132,7 @@ def say(c: Context, message: str, *, err: bool = False) -> None:
     stream = configured or (sys.stderr if err else sys.stdout)
     text = f"{message}\n"
     if os.environ.get(ASCII_ENV_VAR, "") not in {"", "0"}:
-        text = _to_encoding(text, "ascii")
+        text = _to_encoding(text, "ascii").encode("ascii", "replace").decode("ascii")
     try:
         stream.write(text)
     except UnicodeEncodeError:

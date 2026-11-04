@@ -25,12 +25,15 @@ Creates (or recreates) a `.venv` using the `package.python_version` from the
 `requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync --locked`), so
 the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
 imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
-available (for example through `uv tool install invoke`) to run it. It accepts no option: use
-`env.install` to choose the dependency groups.
+available (for example through `uv tool install invoke`) to run it. Use `env.install` to choose
+the dependency groups.
 
 <!-- prettier-ignore -->
 !!! warning
-    This clears any existing `.venv`.
+    This clears any existing `.venv`, so the task asks for a confirmation when the directory exists
+    (`--yes` turns it off, and is needed without a terminal). `--dry-run` prints what would be done
+    and does nothing. The `invoke` that runs the task often lives in that `.venv`: run it from
+    another environment.
 
 ## Installing Dependencies
 

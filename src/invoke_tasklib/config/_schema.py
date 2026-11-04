@@ -69,6 +69,7 @@ class TestConfig:
     integration_timeout: int
     functional_timeout: int
     xdoctest: bool
+    timeout: bool
     cov_fail_under: int | None
     cov_reports: tuple[str, ...]
 
@@ -78,6 +79,7 @@ class CheckConfig:
     r"""Resolved ``check`` config section."""
 
     tasks: tuple[str, ...]
+    cov: bool
 
 
 @dataclass(frozen=True)
@@ -241,6 +243,12 @@ SCHEMA: dict[str, dict[str, Option]] = {
             {"type": "boolean"},
             "Run pytest with --xdoctest.",
         ),
+        "timeout": Option(
+            True,
+            partial(_validate_bool, "test", "timeout"),
+            {"type": "boolean"},
+            "Run pytest with --timeout (it requires pytest-timeout).",
+        ),
         "cov_fail_under": Option(
             None,
             _validate_cov_fail_under,
@@ -270,6 +278,12 @@ SCHEMA: dict[str, dict[str, Option]] = {
                 ]
             },
             "Steps of check.all (comma-separated string or list).",
+        ),
+        "cov": Option(
+            False,
+            partial(_validate_bool, "check", "cov"),
+            {"type": "boolean"},
+            "Run the unit step of check.all with --cov, so cov_fail_under is enforced.",
         ),
     },
     "fix": {
