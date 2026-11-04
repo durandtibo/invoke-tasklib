@@ -13,6 +13,7 @@ from invoke_tasklib._steps import (
     parse_steps,
     run_steps,
     select_steps,
+    step_modules,
     tasks_of,
 )
 from invoke_tasklib.config import CHECK_STEPS, load_config
@@ -35,13 +36,44 @@ def _unit(c: Context) -> None:
     testing.unit(c, cov=load_config(c).check.cov)
 
 
+def _unit_modules(cfg: TasklibConfig) -> tuple[str, ...]:
+    r"""List the Python modules that the ``unit`` step needs.
+
+    Args:
+        cfg: The resolved config.
+
+    Returns:
+        ``pytest``, plus ``pytest_timeout`` if ``tasklib.test.timeout``
+        is true and ``xdoctest`` if ``tasklib.test.xdoctest`` is true.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import MockContext
+    >>> from invoke_tasklib.check import _unit_modules
+    >>> from invoke_tasklib.config import load_config
+    >>> cfg = {"tasklib": {"package": {"name": "p"}}}
+    >>> c = MockContext(config=Config(overrides=cfg))
+    >>> _unit_modules(load_config(c))
+    ('pytest', 'pytest_timeout', 'xdoctest')
+
+    ```
+    """
+    return (
+        "pytest",
+        *(("pytest_timeout",) if cfg.test.timeout else ()),
+        *(("xdoctest",) if cfg.test.xdoctest else ()),
+    )
+
+
 STEPS: dict[str, Step] = {
     "format-python": Step(formatting.check_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.check_docstrings, programs=("docformatter",)),
     "lint": Step(lint.check_python, programs=("ruff",)),
     "types": Step(typecheck.check, programs=("ty",)),
     "imports": Step(imports.check_cycles),
-    "unit": Step(_unit, modules=("pytest", "pytest_timeout")),
+    "unit": Step(_unit, modules=_unit_modules),
     "doctest": Step(testing.doctest, modules=("pytest", "xdoctest")),
     "shell": Step(formatting.check_shell, programs=("shellcheck",)),
     "spelling": Step(lint.check_spelling, programs=("codespell",)),
@@ -51,9 +83,8 @@ STEPS: dict[str, Step] = {
 r"""The steps of ``check.all`` (task, programs and Python modules), by
 step name.
 
-``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true,
-and does not need ``pytest_timeout`` if ``tasklib.test.timeout`` is
-false. To add a step, add its name to ``CHECK_STEPS`` in
+The modules of ``unit`` depend on the config, see ``_unit_modules``.
+To add a step, add its name to ``CHECK_STEPS`` in
 ``config/_constants.py`` (a test checks that the names agree), and its
 install hints to ``runner.py`` and its tools to ``env.py``.
 """
@@ -70,8 +101,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
         A ``(tool, reason)`` pair for each program of a step that
         is not on the ``PATH`` and each module of a step that is
         not installed, in that order. The reason says how to install it.
-        ``xdoctest`` is only needed with ``tasklib.test.xdoctest`` and
-        ``pytest_timeout`` only with ``tasklib.test.timeout``.
+        The modules of a step can depend on the config, see
+        ``Step.modules``.
 
     Example usage:
 
@@ -87,12 +118,7 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
 
     ```
     """
-    modules = STEPS[step].modules
-    if step == "unit" and cfg.test.xdoctest:
-        modules = (*modules, "xdoctest")
-    if step == "unit" and not cfg.test.timeout:
-        modules = tuple(module for module in modules if module != "pytest_timeout")
-    return missing_tools(STEPS[step].programs, modules)
+    return missing_tools(STEPS[step].programs, step_modules(STEPS[step], cfg))
 
 
 @task(

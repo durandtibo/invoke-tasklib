@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
     from invoke.context import Context
 
+    from invoke_tasklib.config import TasklibConfig
+
 
 STEP_ERRORS: tuple[type[Exception], ...] = (
     ArithmeticError,
@@ -55,8 +57,37 @@ class Step(NamedTuple):
     programs: tuple[str, ...] = ()
     r"""The programs that the step runs, looked up on the ``PATH``."""
 
-    modules: tuple[str, ...] = ()
-    r"""The Python modules that the step runs."""
+    modules: tuple[str, ...] | Callable[[TasklibConfig], tuple[str, ...]] = ()
+    r"""The Python modules that the step runs, or a function of the
+    config that returns them (a step whose modules depend on the
+    options), see ``step_modules``."""
+
+
+def step_modules(step: Step, cfg: TasklibConfig) -> tuple[str, ...]:
+    r"""Return the Python modules that a step needs.
+
+    Args:
+        step: The step.
+        cfg: The resolved config, given to ``step.modules`` if it is a
+            function.
+
+    Returns:
+        ``step.modules``, or what it returns for ``cfg``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._steps import Step, step_modules
+    >>> step_modules(Step(lambda c: None, modules=("pytest",)), None)
+    ('pytest',)
+    >>> step = Step(lambda c: None, modules=lambda cfg: ("a",))
+    >>> step_modules(step, None)
+    ('a',)
+
+    ```
+    """
+    modules = step.modules
+    return modules if isinstance(modules, tuple) else modules(cfg)
 
 
 def tasks_of(steps: Mapping[str, Step]) -> dict[str, Callable[[Context], None]]:

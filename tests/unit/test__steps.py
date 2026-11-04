@@ -18,13 +18,18 @@ from invoke_tasklib._steps import (
     run_step,
     run_steps,
     select_steps,
+    step_modules,
     tasks_of,
 )
+from invoke_tasklib.config import load_config
+from tests.helpers import make_context
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from invoke.context import Context
+
+    from invoke_tasklib.config import TasklibConfig
 
 _VALID = ("lint", "unit", "docs")
 _MESSAGES = ("start", "done")
@@ -457,3 +462,35 @@ def test_tasks_of_returns_the_task_of_each_step() -> None:
 
 def test_tasks_of_no_step_is_empty() -> None:
     assert tasks_of({}) == {}
+
+
+###################################
+#     Tests for step_modules      #
+###################################
+
+
+def _config(*, xdoctest: bool = True) -> TasklibConfig:
+    tasklib = {"package": {"name": "mypkg"}, "test": {"xdoctest": xdoctest}}
+    return load_config(make_context(tasklib))
+
+
+def test_step_modules_returns_a_tuple_as_it_is() -> None:
+    step = Step(lambda _c: None, modules=("pytest", "xdoctest"))
+    assert step_modules(step, _config()) == ("pytest", "xdoctest")
+
+
+def test_step_modules_of_a_step_without_modules_is_empty() -> None:
+    assert step_modules(Step(lambda _c: None), _config()) == ()
+
+
+def test_step_modules_calls_a_function_with_the_config() -> None:
+    step = Step(lambda _c: None, modules=lambda cfg: ("xdoctest",) if cfg.test.xdoctest else ())
+    assert step_modules(step, _config(xdoctest=False)) == ()
+
+
+def test_step_modules_calls_a_function_each_time() -> None:
+    calls = Mock(return_value=("a",))
+    step = Step(lambda _c: None, modules=calls)
+    step_modules(step, _config())
+    step_modules(step, _config())
+    assert calls.call_count == 2
