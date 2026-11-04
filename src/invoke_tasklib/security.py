@@ -23,7 +23,7 @@ version is never run without a change of this constant."""
 
 
 @task(help={"args": ARGS_HELP})
-def audit(c: Context, args: str | None = None) -> None:
+def audit(c: Context, *, args: str | None = None) -> None:
     r"""Audit the locked dependencies for known vulnerabilities.
 
     The dependencies of ``uv.lock`` are exported to a temporary

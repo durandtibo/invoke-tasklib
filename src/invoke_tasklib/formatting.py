@@ -29,7 +29,7 @@ _FIND_SH = (
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def check_python(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def check_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check code format with ruff without modifying files.
 
     Args:
@@ -43,7 +43,7 @@ def check_python(c: Context, args: str | None = None, paths: str | None = None) 
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def check_docstrings(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def check_docstrings(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check docstring format with docformatter.
 
     The files are not modified.
@@ -62,7 +62,7 @@ def check_docstrings(c: Context, args: str | None = None, paths: str | None = No
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def fix_python(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def fix_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format code in place with ruff.
 
     Args:
@@ -80,7 +80,7 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def fix_docstrings(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def fix_docstrings(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format docstrings in source code with docformatter.
 
     Args:
@@ -129,7 +129,7 @@ def _shell_command(tool: str, args: str | None, paths: str | None) -> str:
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def check_shell(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def check_shell(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check shell scripts with shellcheck.
 
     Args:
@@ -143,7 +143,7 @@ def check_shell(c: Context, args: str | None = None, paths: str | None = None) -
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def fix_shell(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def fix_shell(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format shell scripts in place with shfmt.
 
     Args:

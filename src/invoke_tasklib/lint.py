@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 )
 def check_python(
     c: Context,
+    *,
     output_format: str | None = None,
     args: str | None = None,
     paths: str | None = None,
@@ -51,7 +52,7 @@ def check_python(
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def fix_python(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def fix_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Fix auto-fixable linting issues in place with ruff.
 
     Args:
@@ -69,7 +70,7 @@ def fix_python(c: Context, args: str | None = None, paths: str | None = None) ->
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
-def check_spelling(c: Context, args: str | None = None, paths: str | None = None) -> None:
+def check_spelling(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check the spelling with codespell.
 
     The configuration of codespell is read from the project
@@ -86,7 +87,7 @@ def check_spelling(c: Context, args: str | None = None, paths: str | None = None
 
 
 @task(help={"args": ARGS_HELP})
-def pre_commit(c: Context, args: str | None = None) -> None:
+def pre_commit(c: Context, *, args: str | None = None) -> None:
     r"""Run all the pre-commit hooks on all the files.
 
     Args:
