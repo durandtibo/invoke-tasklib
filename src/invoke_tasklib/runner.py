@@ -45,7 +45,6 @@ def python_executable() -> str:
 ARGS_HELP = 'Extra arguments for the tool, as one string, e.g. "-k foo -x".'
 r"""Help of the ``--args`` option of the tasks."""
 
-
 PATHS_HELP = (
     "Files or directories to run on, as one string, instead of the default "
     "(globs and ~ are passed as they are)."

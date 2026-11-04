@@ -54,6 +54,7 @@ class Step(NamedTuple):
 
     task: Callable[[Context], None]
     r"""The task that runs the step."""
+
     programs: tuple[str, ...] = ()
     r"""The programs that the step runs, looked up on the ``PATH``."""
 
