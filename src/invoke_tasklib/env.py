@@ -12,7 +12,7 @@ from invoke.tasks import task
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say
 from invoke_tasklib.runner import run
-from invoke_tasklib.tools import find_tool, not_found_message
+from invoke_tasklib.tools import TOOLS, find_tool, not_found_message
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -212,32 +212,13 @@ def show_python_config(c: Context) -> None:
     run(c, "command -v python", warn=True)
 
 
-TOOL_PROGRAMS: tuple[str, ...] = (
-    "uv",
-    "uvx",
-    "git",
-    "ruff",
-    "ty",
-    "pyright",
-    "docformatter",
-    "codespell",
-    "pre-commit",
-    "shellcheck",
-    "shfmt",
-    "mkdocs",
-    "mike",
-)
-r"""The programs that the tasks run, looked up on the ``PATH``."""
+TOOL_PROGRAMS: tuple[str, ...] = tuple(t.name for t in TOOLS.values() if t.kind == "program")
+r"""The programs that the tasks run, looked up on the ``PATH``
+(derived from ``tools.TOOLS``)."""
 
-TOOL_MODULES: tuple[str, ...] = (
-    "pytest",
-    "coverage",
-    "xdoctest",
-    "pytest_timeout",
-    "pytest_cov",
-    "pytest_benchmark",
-)
-r"""The Python modules and pytest plugins that the tasks need."""
+TOOL_MODULES: tuple[str, ...] = tuple(t.name for t in TOOLS.values() if t.kind == "module")
+r"""The Python modules and pytest plugins that the tasks need (derived
+from ``tools.TOOLS``)."""
 
 
 @task

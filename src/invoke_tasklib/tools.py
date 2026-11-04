@@ -9,7 +9,7 @@ import shlex
 import shutil
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, NamedTuple
 
 from invoke.exceptions import Exit
 
@@ -27,45 +27,143 @@ Some of them have an executable on some systems only (for example ``cd``
 on macOS).
 """
 
+
+class Tool(NamedTuple):
+    r"""A program or a Python module that the tasks run.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.tools import Tool
+    >>> Tool("ruff", group="dev").kind
+    'program'
+
+    ```
+    """
+
+    name: str
+    r"""The name of the program, or of the module (``pytest_cov``)."""
+
+    kind: Literal["program", "module"] = "program"
+    r"""Whether the tool is looked up on the ``PATH`` or as a module."""
+
+    group: str | None = None
+    r"""The dependency group that provides the tool, if ``uv sync
+    --group <group>`` installs it."""
+
+    hint: str | None = None
+    r"""How to install a tool that no group provides. It replaces the
+    hint built from ``group``."""
+
+    plugin_options: tuple[str, ...] = ()
+    r"""The pytest options that the tool, a pytest plugin, provides. The
+    package to install is the module name with ``-`` instead of
+    ``_``."""
+
+
+_UV_URL = "https://docs.astral.sh/uv/getting-started/installation/"
+
+
+def _system_hint(name: str, *, extra: str = "") -> str:
+    r"""Build the hint of a program of the system package manager.
+
+    Args:
+        name: The name of the program.
+        extra: A sentence added at the end.
+
+    Returns:
+        The hint.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.tools import _system_hint
+    >>> _system_hint("jq")[:30]
+    'Install jq with your system pa'
+
+    ```
+    """
+    return (
+        f"Install {name} with your system package manager, for example "
+        f"`brew install {name}` or `apt install {name}`{extra}."
+    )
+
+
+TOOLS: dict[str, Tool] = {
+    tool.name: tool
+    for tool in (
+        Tool("uv", hint=f"Install uv, see {_UV_URL}."),
+        Tool("uvx", hint=f"Install uv, which provides uvx, see {_UV_URL}."),
+        Tool(
+            "git",
+            hint=_system_hint("git", extra=", or on macOS `xcode-select --install`"),
+        ),
+        Tool("ruff", group="dev"),
+        Tool("ty", group="dev"),
+        Tool("pyright", group="dev"),
+        Tool("docformatter", group="dev"),
+        Tool(
+            "codespell",
+            hint="Add codespell to the dependencies of the project, e.g. `uv add --dev codespell`.",
+        ),
+        Tool("pre-commit", group="dev"),
+        Tool("shellcheck", hint=_system_hint("shellcheck")),
+        Tool("shfmt", hint=_system_hint("shfmt")),
+        Tool("mkdocs", group="docs"),
+        Tool("mike", group="docs"),
+        Tool("pytest", "module", group="dev"),
+        Tool("coverage", "module", group="dev"),
+        Tool("xdoctest", "module", group="dev", plugin_options=("--xdoctest",)),
+        Tool("pytest_timeout", "module", group="dev", plugin_options=("--timeout",)),
+        Tool(
+            "pytest_cov",
+            "module",
+            group="dev",
+            plugin_options=(
+                "--cov",
+                "--cov-report",
+                "--cov-append",
+                "--cov-fail-under",
+                "--cov-branch",
+                "--cov-config",
+                "--no-cov",
+            ),
+        ),
+        Tool(
+            "pytest_benchmark",
+            "module",
+            group="dev",
+            plugin_options=("--benchmark-only", "--benchmark-compare", "--benchmark-disable"),
+        ),
+    )
+}
+r"""Every program and module that the tasks run, by name.
+
+It is the one place to edit to add a tool: ``hint``,
+``not_found_message``, ``env.check-tools`` and the check of the pytest
+plugins read it. The tables below are derived from it.
+"""
+
 PROGRAM_HINTS: dict[str, str] = {
-    "uv": "Install uv, see https://docs.astral.sh/uv/getting-started/installation/.",
-    "shellcheck": (
-        "Install shellcheck with your system package manager, for example "
-        "`brew install shellcheck` or `apt install shellcheck`."
-    ),
-    "shfmt": (
-        "Install shfmt with your system package manager, for example "
-        "`brew install shfmt` or `apt install shfmt`."
-    ),
-    "uvx": "Install uv, which provides uvx, see https://docs.astral.sh/uv/getting-started/installation/.",
-    "git": (
-        "Install git with your system package manager, for example "
-        "`brew install git` or `apt install git`, or on macOS `xcode-select --install`."
-    ),
-    "codespell": "Add codespell to the dependencies of the project, e.g. `uv add --dev codespell`.",
+    tool.name: tool.hint
+    for tool in TOOLS.values()
+    if tool.kind == "program" and tool.hint is not None
 }
 r"""How to install the programs that ``invoke env.install`` does not
 install (or that it needs itself), by program name."""
 
 PROGRAM_GROUPS: dict[str, str] = {
-    "ruff": "dev",
-    "ty": "dev",
-    "pyright": "dev",
-    "docformatter": "dev",
-    "pre-commit": "dev",
-    "mkdocs": "docs",
-    "mike": "docs",
+    tool.name: tool.group
+    for tool in TOOLS.values()
+    if tool.kind == "program" and tool.group is not None and tool.hint is None
 }
 r"""The dependency group that provides a program, by program name, for
 the programs that are not in ``PROGRAM_HINTS``."""
 
 MODULE_GROUPS: dict[str, str] = {
-    "pytest": "dev",
-    "coverage": "dev",
-    "xdoctest": "dev",
-    "pytest_timeout": "dev",
-    "pytest_cov": "dev",
-    "pytest_benchmark": "dev",
+    tool.name: tool.group
+    for tool in TOOLS.values()
+    if tool.kind == "module" and tool.group is not None
 }
 r"""The dependency group that provides a Python module, by name."""
 
@@ -77,18 +175,9 @@ r"""The hint of the programs that are in neither ``PROGRAM_HINTS`` nor
 ``PROGRAM_GROUPS``."""
 
 PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
-    "--xdoctest": ("xdoctest", "xdoctest"),
-    "--timeout": ("pytest_timeout", "pytest-timeout"),
-    "--cov": ("pytest_cov", "pytest-cov"),
-    "--cov-report": ("pytest_cov", "pytest-cov"),
-    "--cov-append": ("pytest_cov", "pytest-cov"),
-    "--cov-fail-under": ("pytest_cov", "pytest-cov"),
-    "--cov-branch": ("pytest_cov", "pytest-cov"),
-    "--cov-config": ("pytest_cov", "pytest-cov"),
-    "--no-cov": ("pytest_cov", "pytest-cov"),
-    "--benchmark-only": ("pytest_benchmark", "pytest-benchmark"),
-    "--benchmark-compare": ("pytest_benchmark", "pytest-benchmark"),
-    "--benchmark-disable": ("pytest_benchmark", "pytest-benchmark"),
+    option: (tool.name, tool.name.replace("_", "-"))
+    for tool in TOOLS.values()
+    for option in tool.plugin_options
 }
 r"""The pytest options that come from a plugin, as a tuple of the module
 and of the package to install, by option."""
