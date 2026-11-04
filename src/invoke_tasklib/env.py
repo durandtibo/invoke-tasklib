@@ -13,7 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import DEFAULT_HINT, PROGRAM_HINTS, run
+from invoke_tasklib.runner import hint, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -219,7 +219,7 @@ def check_tools(c: Context) -> None:
             continue
         missing.append(name)
         kind = "Python module" if module else "program"
-        say(c, f"❌ {name}: {kind} not found. {PROGRAM_HINTS.get(name, DEFAULT_HINT)}")
+        say(c, f"❌ {name}: {kind} not found. {hint(name)}")
     if missing:
         msg = f"{len(missing)} of {len(lookups)} tool(s) missing: {', '.join(missing)}"
         raise Exit(msg, code=127)

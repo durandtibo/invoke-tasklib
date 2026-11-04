@@ -61,16 +61,39 @@ PROGRAM_HINTS: dict[str, str] = {
         "Install shfmt with your system package manager, for example "
         "`brew install shfmt` or `apt install shfmt`."
     ),
+    "uvx": "Install uv, which provides uvx, see https://docs.astral.sh/uv/getting-started/installation/.",
+    "git": (
+        "Install git with your system package manager, for example "
+        "`brew install git` or `apt install git`, or on macOS `xcode-select --install`."
+    ),
     "codespell": "Add codespell to the dependencies of the project, e.g. `uv add --dev codespell`.",
 }
 r"""How to install the programs that ``invoke env.install`` does not
 install (or that it needs itself), by program name."""
 
+PROGRAM_GROUPS: dict[str, str] = {
+    "ruff": "dev",
+    "ty": "dev",
+    "pyright": "dev",
+    "docformatter": "dev",
+    "pre-commit": "dev",
+    "pytest": "dev",
+    "coverage": "dev",
+    "xdoctest": "dev",
+    "pytest_timeout": "dev",
+    "pytest_cov": "dev",
+    "mkdocs": "docs",
+    "mike": "docs",
+}
+r"""The dependency group that provides a tool, by program or module
+name, for the tools that are not in ``PROGRAM_HINTS``."""
+
 DEFAULT_HINT = (
     "Install the project tools with `invoke env.install` (see the troubleshooting page of the "
     "documentation)."
 )
-r"""The hint of the programs that are not in ``PROGRAM_HINTS``."""
+r"""The hint of the programs that are in neither ``PROGRAM_HINTS`` nor
+``PROGRAM_GROUPS``."""
 
 _SEPARATORS = frozenset({"|", "||", "&&", ";", "&"})
 
@@ -213,26 +236,34 @@ def _program_of(words: Sequence[str]) -> str | None:
     return next((w for w in words[1:] if not w.startswith("-")), None)
 
 
-def _hint(program: str) -> str:
+def hint(program: str) -> str:
     r"""Return how to install a program.
 
     Args:
         program: The name of the program, or of the Python module.
 
     Returns:
-        The entry of ``PROGRAM_HINTS`` for the program, or
-        ``DEFAULT_HINT``.
+        The entry of ``PROGRAM_HINTS`` for the program; else, if the
+        program is in ``PROGRAM_GROUPS``, the command that installs its
+        dependency group; else ``DEFAULT_HINT``.
 
     Example usage:
 
     ```pycon
-    >>> from invoke_tasklib.runner import _hint
-    >>> _hint("uv")
+    >>> from invoke_tasklib.runner import hint
+    >>> hint("uv")
     'Install uv, see https://docs.astral.sh/uv/getting-started/installation/.'
+    >>> hint("mike")
+    "Install it with the 'docs' group: `uv sync --group docs`."
 
     ```
     """
-    return PROGRAM_HINTS.get(program, DEFAULT_HINT)
+    if program in PROGRAM_HINTS:
+        return PROGRAM_HINTS[program]
+    group = PROGRAM_GROUPS.get(program)
+    if group is None:
+        return DEFAULT_HINT
+    return f"Install it with the '{group}' group: `uv sync --group {group}`."
 
 
 def _check_module(words: Sequence[str]) -> None:
@@ -262,7 +293,7 @@ def _check_module(words: Sequence[str]) -> None:
         return
     module = words[2]
     if importlib.util.find_spec(module) is None:
-        msg = f"The Python module '{module}' is not installed for {words[0]}. {_hint(module)}"
+        msg = f"The Python module '{module}' is not installed for {words[0]}. {hint(module)}"
         raise Exit(msg, code=127)
 
 
@@ -301,7 +332,7 @@ def check_program(command: str) -> None:
             _check_module(words)
             continue
         if shutil.which(program) is None:
-            msg = f"'{program}' was not found on the PATH. {_hint(program)}"
+            msg = f"'{program}' was not found on the PATH. {hint(program)}"
             raise Exit(msg, code=127)
 
 
