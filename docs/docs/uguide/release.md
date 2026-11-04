@@ -21,7 +21,9 @@ invoke release.build
 Runs `uv build`, then verifies the artifacts it produced: the newest wheel and the newest source
 distribution in `dist/` are each installed in an isolated `uv run` environment
 (`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it.
-The task fails if the build did not produce a wheel or a source distribution.
+The task fails if the build did not produce a wheel or a source distribution. With `--wheel` or
+`--sdist` in `--args`, only that kind is verified, and with `--out-dir <dir>` (or `-o`) the files
+of `<dir>` are verified (and checked by `--check`) instead of `dist/`.
 
 Pass `--check` to additionally validate the package's PyPI metadata with
 [`twine check`](https://twine.readthedocs.io/):
@@ -43,15 +45,16 @@ invoke release.publish
 Before anything is built, the task checks the git state: the working tree must be clean, `HEAD`
 must be tagged and the tag (without a leading `v`) must be the static `project.version` of
 `pyproject.toml` (a dynamic version is not compared). It then asks for a confirmation, unless
-`--yes` is given or the `CI` environment variable is set. Finally it builds the package (via
+`--yes` is given or the `CI` environment variable is set to something other than `0` and
+`false`. Finally it builds the package (via
 `release.build`, which clears `dist/` first so stale artifacts are never uploaded) and runs
 `uv publish`.
 
 Credentials, in this order:
 
 - a token in `PYPI_TOKEN` (`TEST_PYPI_TOKEN` with `--test-pypi`, because the two indexes reject
-  each other's tokens and a PyPI token must not be sent to TestPyPI) or in `UV_PUBLISH_TOKEN`,
-  handed to `uv publish` through its environment so it never appears on the command line;
+  each other's tokens and a PyPI token must not be sent to TestPyPI) or, without `--test-pypi`, in
+  `UV_PUBLISH_TOKEN` (usually the production token, so it is never used for TestPyPI), handed to `uv publish` through its environment so it never appears on the command line;
 - [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), used
   automatically in GitHub Actions with the `id-token: write` permission (`--trusted-publishing
 always`); no token is needed.

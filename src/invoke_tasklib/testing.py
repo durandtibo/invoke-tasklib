@@ -3,6 +3,8 @@ r"""Test and benchmark tasks."""
 from __future__ import annotations
 
 import os
+import shlex
+import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -247,7 +249,8 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
     The whole tests directory is run in one pytest call, so the timeout
     of each test is the largest of the three scopes
     (``tasklib.test.unit_timeout``, ``integration_timeout`` and
-    ``functional_timeout``).
+    ``functional_timeout``). If the tests directory does not exist,
+    nothing is run.
 
     Args:
         c: The invoke context.
@@ -269,6 +272,7 @@ def all_(c: Context, cov: bool = False, args: str | None = None, paths: str | No
         cov=cov,
         args=args,
         paths=paths,
+        skip_missing=True,
     )
 
 
@@ -370,12 +374,43 @@ def functional(
     )
 
 
+def _coverage_html_dir(pyproject: Path = Path("pyproject.toml")) -> str:
+    r"""Return the directory of the HTML coverage report.
+
+    Args:
+        pyproject: The path of the ``pyproject.toml`` file.
+
+    Returns:
+        The ``directory`` option of ``[tool.coverage.html]``, or
+        ``"htmlcov"`` (the default of coverage.py) if the file does not
+        exist, cannot be parsed or does not set it.
+
+    Example usage:
+
+    ```pycon
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.testing import _coverage_html_dir
+    >>> _coverage_html_dir(Path("no/such/pyproject.toml"))
+    'htmlcov'
+
+    ```
+    """
+    try:
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return "htmlcov"
+    directory = data.get("tool", {}).get("coverage", {}).get("html", {}).get("directory")
+    return directory if isinstance(directory, str) and directory else "htmlcov"
+
+
 @task(help={"open_browser": "Open the HTML report in the default web browser.", "args": ARGS_HELP})
 def coverage_report(c: Context, open_browser: bool = False, args: str | None = None) -> None:
     r"""Generate an HTML coverage report.
 
     The report is built from the last recorded coverage data, and the
-    terminal summary is printed.
+    terminal summary is printed. The report is written to the
+    ``directory`` of ``[tool.coverage.html]`` in ``pyproject.toml``
+    (``htmlcov`` by default).
 
     Args:
         c: The invoke context.
@@ -384,12 +419,16 @@ def coverage_report(c: Context, open_browser: bool = False, args: str | None = N
         args: Extra arguments passed to ``coverage report``, e.g.
             ``"--fail-under=90"``.
     """
-    with step(c, "📊 Generating coverage report...", "✅ Coverage report generated in htmlcov/"):
+    directory = _coverage_html_dir()
+    with step(
+        c, "📊 Generating coverage report...", f"✅ Coverage report generated in {directory}/"
+    ):
         run(c, f"{python_executable()} -m coverage html")
         run(c, build_command(f"{python_executable()} -m coverage report", args=args))
         if open_browser:
             say(c, "🌐 Opening coverage report in the browser...")
-            run(c, f"{python_executable()} -m webbrowser -t htmlcov/index.html")
+            index = shlex.quote(f"{directory}/index.html")
+            run(c, f"{python_executable()} -m webbrowser -t {index}")
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})

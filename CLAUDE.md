@@ -38,9 +38,14 @@
 
 - The source is in `src/invoke_tasklib/`: one module per task namespace (`formatting.py`,
   `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
-  `imports.py`, `clean.py`, `check.py`), plus `config/` (config resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`
+  `imports.py`, `clean.py`, `check.py`, `fix.py`, `configuration.py`), plus `config/` (config
+  resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`
   and `__init__.py` with `get_config` and `load_config`), `runner.py` (the command runner) and
-  `output.py` (progress messages). The namespaces are registered in
+  `output.py` (progress messages). Three private modules support the tasks: `_steps.py` (the
+  step runner shared by `check.py` and `fix.py`, so a change to the steps of `check.all` usually
+  needs the same change in `fix.all`), `_graph.py` (the static import graph used by
+  `imports.check-cycles`) and `_discover.py` (the module listing run in a subprocess by
+  `imports.check-isolated`). The namespaces are registered in
   `_MODULES` of `src/invoke_tasklib/__init__.py`.
 - Match the surrounding code: comment density, naming, docstring style (Google style with
   `Args:`, `Returns:`, `Raises:` and, where useful, an `Example usage:` with a `pycon` block that

@@ -45,7 +45,8 @@ ns.add_task(check_complexity)
   available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test` and `cfg.check`.
 - **Build the command with `build_command`**: the program is used as it is, and the user's `args`
   and `paths` (and the default paths) are split like a shell does and quoted, so a space or a `;`
-  never splits or injects a command.
+  never splits or injects a command. For the same reason a glob (`*.py`), `~` or `$HOME` reaches
+  the tool as it is: the shell does not expand it.
 - **Run it with `run`**: it echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the `PATH` (with an installation hint if it is not). Do not call `c.run`
   directly. For `python -m <module>`, the module is checked only when the command uses the running
@@ -56,8 +57,9 @@ ns.add_task(check_complexity)
   `❌ Failed: <what was being done>` on the error stream (stderr, like the message of an `Exit`) if
   the block raises (the exception is raised again, so the exit code is unchanged). Use `say` for any
   other message (`say(c, msg, err=True)` writes to stderr); neither fails on a terminal that cannot
-  encode an emoji: `✅`, `❌` and `⏭️` become `[ok]`, `[fail]` and `[skip]`, and the other emojis are
-  removed. Set `INVOKE_TASKLIB_ASCII=1` to get this output on any terminal.
+  encode an emoji: `✅`, `❌` and `⏭️` become `[ok]`, `[fail]` and `[skip]`, the other emojis are
+  removed and any other character the stream cannot encode (an accent) becomes `?`. Set
+  `INVOKE_TASKLIB_ASCII=1` to get this output on any terminal.
 
 Follow the naming convention of the shared tasks: `check_<target>` never modifies a file and
 `fix_<target>` does. Add the task to a `make_ns()` result, as above, so it does not leak into other
