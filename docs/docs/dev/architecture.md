@@ -92,7 +92,12 @@ Five small modules support the task modules:
   subprocess by `imports.check-isolated`.
 
 `config.EXCLUDED_DIRS` lists the directories that the tasks that walk the file tree (`clean`,
-`format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...).
+`format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...). The format and
+test tasks find their files with `_files.project_files`: in a git work tree they ask
+`git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and there is no
+list of directories to maintain (the `EXCLUDED_DIRS` are still left out); outside a work tree they
+walk the tree and skip the excluded directories. `clean` keeps its own walk, because the
+`__pycache__` directories it removes are ignored by git.
 
 ### Adding a step to `check.all` or `fix.all`
 

@@ -55,7 +55,11 @@ differences are ignored, and `...` in expected output matches any text), and `RE
 a readable diff when an example's output doesn't match. A markdown file with no `>>>` doctest
 blocks is still visited but simply reports zero tests, so it always "passes".
 The task reports the number of files it checks: the files of `--paths` when it is set, otherwise
-every markdown file of the project.
+every markdown file of the project. As for the shell scripts (see [Format](format.md)), the files are
+the ones that git lists in a git work tree, so the rules of `.gitignore` are followed and a package
+named `build` or `site` is not skipped; outside a git work tree a walk skips the `.git`, `.venv`,
+`.pytest_cache`, `node_modules`, `build`, `dist`, `site`, `htmlcov`, `.tox`, `.nox`, `.mypy_cache`
+and `.ruff_cache` directories.
 
 ## Running Tests by Scope
 
