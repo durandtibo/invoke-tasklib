@@ -41,6 +41,10 @@ regression isn't a merge blocker; `ci-verify-workflows.yaml` lints
 `.github/workflows/*` itself, so it triggers on workflow-file changes rather
 than every PR/push.
 
+`nightly-repo-tasks.yaml` is the exception to the `nightly-` rule: it runs
+`inv` tasks (`security.audit`, `check.all --only shell,spelling`) on the
+repo's source, since the locked dependencies change without any commit.
+
 ## Composite actions vs. reusable workflows
 
 - **`.github/actions/*`** (composite actions): used when the shared unit is a
