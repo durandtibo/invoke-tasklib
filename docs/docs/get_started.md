@@ -82,8 +82,8 @@ Available tasks:
   doc.serve                     Serve the documentation locally with live
                                 reload.
   env.check-tools               Check which tools of the tasks are available.
-  env.create-venv               Create a virtual environment and install invoke
-                                in it.
+  env.create-venv               Create a virtual environment and install the
+                                project in it.
   env.install                   Install the dependencies and the package
                                 (editable).
   env.show-installed-packages   Show the installed packages.

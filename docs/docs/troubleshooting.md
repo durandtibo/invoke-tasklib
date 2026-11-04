@@ -48,7 +48,8 @@ always put its console scripts on `PATH` the way you expect. Make sure:
 - Your virtual environment is activated (`source .venv/bin/activate`), or
 - You run it via `uv run invoke ...`, or
 - `invoke` itself is installed as a tool (`uv tool install invoke`). Note that
-  [`env.create-venv`](uguide/env.md) installs `invoke` into the new `.venv`, not as a tool.
+  [`env.create-venv`](uguide/env.md) installs the project, with `invoke`, into the new `.venv`, not
+  as a tool.
 
 ## `invoke --list` shows no tasks / `ns` is empty
 
