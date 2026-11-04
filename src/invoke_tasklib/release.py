@@ -193,9 +193,15 @@ def _confirm(target: str) -> None:
         target: What is published to, e.g. ``"PyPI"``.
 
     Raises:
-        Exit: If the answer is not ``y`` or ``yes``.
+        Exit: If the answer is not ``y`` or ``yes``, if there is no
+            terminal to read the answer from (end of input), or if the
+            user interrupts the question.
     """
-    answer = input(f"Publish the package to {target}? This cannot be undone. [y/N] ")
+    try:
+        answer = input(f"Publish the package to {target}? This cannot be undone. [y/N] ")
+    except (EOFError, KeyboardInterrupt):
+        msg = "Publication not confirmed: pass --yes to publish without a terminal"
+        raise Exit(msg, code=1) from None
     if answer.strip().lower() not in {"y", "yes"}:
         msg = "Publication cancelled"
         raise Exit(msg, code=1)
