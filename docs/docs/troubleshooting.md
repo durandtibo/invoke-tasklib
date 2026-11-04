@@ -97,6 +97,15 @@ backwards. Pass `--force` if that is what you want.
 
 See [Doc](uguide/doc.md).
 
+## The output has `[ok]` and `[fail]` instead of emojis
+
+On a terminal that cannot encode them (an ASCII locale, `PYTHONIOENCODING=ascii`), the progress
+messages use the tags `[ok]`, `[fail]` and `[skip]` and leave the other emojis out. Use a UTF-8
+locale (for example `LANG=C.UTF-8`) to get the emojis. Set `INVOKE_TASKLIB_ASCII=1` to get the
+tags on any terminal, for example in a log that is read by a tool.
+
+See [Custom tasks](uguide/custom_tasks.md).
+
 ## `release.publish` fails to authenticate
 
 `release.publish` passes the `PYPI_TOKEN` (or `UV_PUBLISH_TOKEN`) environment variable to
