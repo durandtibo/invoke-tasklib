@@ -140,6 +140,11 @@
               "description": "Run pytest with --xdoctest.",
               "default": true
             },
+            "timeout": {
+              "type": "boolean",
+              "description": "Run pytest with --timeout (it requires pytest-timeout).",
+              "default": true
+            },
             "cov_fail_under": {
               "type": [
                 "integer",

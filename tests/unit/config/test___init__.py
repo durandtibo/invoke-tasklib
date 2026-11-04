@@ -44,6 +44,7 @@ def test_get_config_defaults() -> None:
             "integration_timeout": 60,
             "functional_timeout": 60,
             "xdoctest": True,
+            "timeout": True,
             "cov_fail_under": None,
             "cov_reports": ("html", "xml", "term"),
         },
@@ -65,6 +66,7 @@ def test_get_config_test_overrides() -> None:
                     "integration_timeout": 120,
                     "functional_timeout": 300,
                     "xdoctest": False,
+                    "timeout": False,
                     "cov_fail_under": 90,
                     "cov_reports": ["xml"],
                 },
@@ -76,9 +78,16 @@ def test_get_config_test_overrides() -> None:
         "integration_timeout": 120,
         "functional_timeout": 300,
         "xdoctest": False,
+        "timeout": False,
         "cov_fail_under": 90,
         "cov_reports": ("xml",),
     }
+
+
+def test_get_config_test_timeout_must_be_a_boolean() -> None:
+    c = _context({"package": {"name": "mypkg"}, "test": {"timeout": "no"}})
+    with pytest.raises(ValueError, match=r"'tasklib\.test\.timeout' must be a boolean"):
+        get_config(c)
 
 
 def test_get_config_test_partial_override_keeps_other_defaults() -> None:

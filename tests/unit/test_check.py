@@ -355,8 +355,21 @@ def test_all_keep_going_lists_every_missing_tool_of_a_step(
 ###################################
 
 
-def _cfg(xdoctest: bool = True) -> TasklibConfig:
-    return load_config(make_context({"package": {"name": "mypkg"}, "test": {"xdoctest": xdoctest}}))
+def _cfg(xdoctest: bool = True, timeout: bool = True) -> TasklibConfig:
+    test = {"xdoctest": xdoctest, "timeout": timeout}
+    return load_config(make_context({"package": {"name": "mypkg"}, "test": test}))
+
+
+def test_missing_tools_unit_needs_pytest_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "xdoctest"))
+    assert [name for name, _ in check._missing_tools("unit", _cfg())] == ["pytest_timeout"]
+
+
+def test_missing_tools_unit_does_not_need_pytest_timeout_when_it_is_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest", "xdoctest"))
+    assert check._missing_tools("unit", _cfg(timeout=False)) == []
 
 
 def test_missing_tools_none_missing() -> None:

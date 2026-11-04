@@ -204,6 +204,12 @@ def test_all_without_coverage() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests"]
 
 
+def test_all_without_timeout() -> None:
+    c = make_context({"package": {"name": "mypkg"}, "test": {"timeout": False}})
+    test_tasks.all_(c)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest tests"]
+
+
 @pytest.mark.usefixtures("empty_project")
 def test_all_without_tests_directory_runs_nothing() -> None:
     c = make_context({"package": {"name": "mypkg"}})
