@@ -5,7 +5,7 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING
 
-from invoke_tasklib import env
+from invoke_tasklib.runner import find_tool
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -29,20 +29,20 @@ def _check_tools(project: Path, path: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def testfind_tool_finds_a_real_program() -> None:
-    assert env.find_tool("python3" if os.name != "nt" else "python") is not None
+def test_find_tool_finds_a_real_program() -> None:
+    assert find_tool("python3" if os.name != "nt" else "python") is not None
 
 
-def testfind_tool_finds_a_real_module() -> None:
-    assert env.find_tool("invoke", module=True) is not None
+def test_find_tool_finds_a_real_module() -> None:
+    assert find_tool("invoke", module=True) is not None
 
 
-def testfind_tool_does_not_find_a_missing_program() -> None:
-    assert env.find_tool("no-such-program-xyz") is None
+def test_find_tool_does_not_find_a_missing_program() -> None:
+    assert find_tool("no-such-program-xyz") is None
 
 
-def testfind_tool_does_not_find_a_missing_module() -> None:
-    assert env.find_tool("no_such_module_xyz", module=True) is None
+def test_find_tool_does_not_find_a_missing_module() -> None:
+    assert find_tool("no_such_module_xyz", module=True) is None
 
 
 def test_check_tools_reports_the_missing_tools_without_a_config(tmp_path: Path) -> None:
