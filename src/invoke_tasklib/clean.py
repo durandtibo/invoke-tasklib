@@ -13,7 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
-from invoke_tasklib.runner import build_command, run
+from invoke_tasklib.runner import build_command, capture
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -241,7 +241,7 @@ def _has_tracked_files(c: Context, path: Path) -> bool:
         ``True`` if ``git ls-files`` lists at least one file under it.
     """
     cmd = build_command("git ls-files --", default_paths=[str(path)])
-    result = run(c, cmd, hide=True, warn=True, echo=False, check=False)
+    result = capture(c, cmd, warn=True, check=False)
     return bool(result.ok and result.stdout.strip())
 
 

@@ -589,3 +589,45 @@ def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Resul
     kwargs.setdefault("echo", True)
     kwargs.setdefault("pty", bool(c.config.run.pty) or sys.stdout.isatty())
     return c.run(command, **kwargs)
+
+
+def capture(c: Context, command: str, *, warn: bool = False, check: bool = True) -> Result:
+    r"""Run a command whose output the caller reads.
+
+    It is ``run`` with the options that a command read by the code
+    needs: the output is hidden (``hide=True``) and the command is not
+    echoed (``echo=False``), and no pty is used (``pty=False``), so
+    that stderr is not merged into stdout and a warning of the tool is
+    never read as data.
+
+    Args:
+        c: The invoke context.
+        command: The command to run.
+        warn: If True, a command that fails does not raise: look at
+            ``result.ok``.
+        check: If False, do not check that the program is available,
+            see ``run``.
+
+    Returns:
+        The result of ``c.run``, with the standard output in
+        ``stdout``.
+
+    Raises:
+        Exit: If ``check`` is True and the program of the command is not
+            found.
+        UnexpectedExit: If the command fails and ``warn`` is False.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import MockContext
+    >>> from invoke_tasklib.runner import capture
+    >>> c = MockContext(config=Config(), run=True)
+    >>> _ = capture(c, "ls")
+    >>> c.run.call_args.kwargs["pty"]
+    False
+
+    ```
+    """
+    return run(c, command, check=check, hide=True, echo=False, pty=False, warn=warn)

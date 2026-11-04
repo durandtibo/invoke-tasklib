@@ -601,3 +601,23 @@ def test_build_targets_out_dir_without_value_is_the_default() -> None:
 
 def test_build_targets_ignores_other_options() -> None:
     assert release._build_targets("--no-sources") == (Path("dist"), ("*.whl", "*.tar.gz"))
+
+
+def test_head_tag_reads_git_without_a_pty_nor_an_echo() -> None:
+    c = make_context()
+    release._head_tag(c)
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["warn"], kwargs["echo"], kwargs["pty"]) == (
+        True,
+        True,
+        False,
+        False,
+    )
+
+
+def test_check_release_state_reads_the_status_without_a_pty_nor_an_echo() -> None:
+    c = make_context()
+    with pytest.raises(Exit, match=r"HEAD is not tagged"):
+        release._check_release_state(c)
+    kwargs = run_kwargs(c)[0]
+    assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)

@@ -598,7 +598,12 @@ def test_has_tracked_files_does_not_echo_nor_fail() -> None:
     c = _git_context()
     clean._has_tracked_files(c, Path("build"))
     kwargs = run_kwargs(c)[0]
-    assert (kwargs["hide"], kwargs["warn"], kwargs["echo"]) == (True, True, False)
+    assert (kwargs["hide"], kwargs["warn"], kwargs["echo"], kwargs["pty"]) == (
+        True,
+        True,
+        False,
+        False,
+    )
 
 
 def test_remove_file_dry_run_keeps_the_file(tmp_path: Path) -> None:

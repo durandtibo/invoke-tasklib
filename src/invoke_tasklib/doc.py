@@ -13,7 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say, step
-from invoke_tasklib.runner import ARGS_HELP, build_command, run
+from invoke_tasklib.runner import ARGS_HELP, build_command, capture, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -196,7 +196,7 @@ def _last_version_tag(c: Context) -> str | None:
 
     ```
     """
-    result = run(c, "git tag --list 'v[0-9]*'", hide=True, pty=False)
+    result = capture(c, "git tag --list 'v[0-9]*'")
     releases = [
         tag
         for tag in result.stdout.split()
@@ -277,7 +277,7 @@ def _published_releases(c: Context, docs_config: str) -> list[tuple[int, int]]:
         UnexpectedExit: If ``mike`` fails.
     """
     command = f"mike list --config-file {shlex.quote(docs_config)} --json"
-    result = run(c, command, hide=True, pty=False)
+    result = capture(c, command)
     return _parse_releases(result.stdout, command)
 
 

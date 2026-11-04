@@ -12,6 +12,7 @@ documented in the reference pages ([`runner`](../refs/runner.md), [`output`](../
 | `invoke_tasklib.config.load_config`    | Read the [resolved config](config.md); an invalid one exits cleanly  |
 | `invoke_tasklib.runner.build_command`  | Build a command line with quoted arguments and paths                 |
 | `invoke_tasklib.runner.run`            | Run a command: echo, pty only on a terminal, program check           |
+| `invoke_tasklib.runner.capture`        | Run a command and read its output: hidden, not echoed, no pty        |
 | `invoke_tasklib.runner.check_program`  | Check that the programs of a command are installed                   |
 | `invoke_tasklib.runner.find_tool`      | Find a program on the `PATH`, or a Python module of the interpreter  |
 | `invoke_tasklib.runner.split_args`     | Split the value of an option like a shell does                       |

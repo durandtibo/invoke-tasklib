@@ -13,7 +13,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say
-from invoke_tasklib.runner import ARGS_HELP, build_command, run
+from invoke_tasklib.runner import ARGS_HELP, build_command, capture, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -192,7 +192,7 @@ def _head_tag(c: Context) -> str | None:
 
     ```
     """
-    result = run(c, "git describe --exact-match --tags HEAD", hide=True, warn=True, echo=False)
+    result = capture(c, "git describe --exact-match --tags HEAD", warn=True)
     return result.stdout.strip() if result.ok and result.stdout.strip() else None
 
 
@@ -224,7 +224,7 @@ def _check_release_state(c: Context) -> None:
 
     ```
     """
-    status = run(c, "git status --porcelain", hide=True, echo=False)
+    status = capture(c, "git status --porcelain")
     if status.stdout.strip():
         msg = "The working tree is not clean: commit or stash the changes before publishing"
         raise Exit(msg, code=1)

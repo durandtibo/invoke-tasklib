@@ -14,6 +14,7 @@ import pytest
 from invoke.config import Config
 from invoke.context import MockContext
 from invoke.exceptions import Exit
+from invoke.runners import Result
 
 from invoke_tasklib.runner import (
     DEFAULT_HINT,
@@ -25,6 +26,7 @@ from invoke_tasklib.runner import (
     _stages,
     _strip_assignments,
     build_command,
+    capture,
     check_program,
     find_tool,
     hint,
@@ -855,3 +857,64 @@ def test_not_found_message_for_a_module_names_the_given_interpreter() -> None:
 
 def test_not_found_message_for_an_unknown_program_uses_the_default_hint() -> None:
     assert not_found_message("zzz").endswith(DEFAULT_HINT)
+
+
+############################
+#     Tests for capture    #
+############################
+
+
+def test_capture_hides_the_output_and_the_command_and_uses_no_pty() -> None:
+    c = _context()
+    capture(c, "git status")
+    kwargs = _run_mock(c).call_args.kwargs
+    assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)
+
+
+def test_capture_does_not_use_a_pty_on_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    c = _context({"pty": True})
+    capture(c, "git status")
+    assert _run_mock(c).call_args.kwargs["pty"] is False
+
+
+def test_capture_passes_the_command() -> None:
+    c = _context()
+    capture(c, "git status")
+    assert _run_mock(c).call_args.args == ("git status",)
+
+
+def test_capture_does_not_warn_by_default() -> None:
+    c = _context()
+    capture(c, "git status")
+    assert _run_mock(c).call_args.kwargs["warn"] is False
+
+
+def test_capture_warns_on_request() -> None:
+    c = _context()
+    capture(c, "git status", warn=True)
+    assert _run_mock(c).call_args.kwargs["warn"] is True
+
+
+def test_capture_returns_the_result_of_the_context() -> None:
+    c = MockContext(config=Config(), run=Result(stdout="out\n"))
+    assert capture(c, "git status").stdout == "out\n"
+
+
+def test_capture_checks_the_program_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+    with pytest.raises(Exit, match=r"'nonexistent-tool' was not found"):
+        capture(_context(), "nonexistent-tool --version")
+
+
+def test_capture_can_skip_the_program_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+    c = _context()
+    capture(c, "nonexistent-tool --version", check=False)
+    assert _run_mock(c).call_args.args == ("nonexistent-tool --version",)
+
+
+def test_capture_does_not_pass_check_to_the_context() -> None:
+    c = _context()
+    capture(c, "git status")
+    assert "check" not in _run_mock(c).call_args.kwargs
