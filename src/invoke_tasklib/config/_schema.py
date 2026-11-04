@@ -37,7 +37,7 @@ class PackageConfig:
 
     name: str
     import_name: str
-    python_version: str
+    python_version: str | None
 
 
 @dataclass(frozen=True)
@@ -201,7 +201,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
             {"type": "string", "pattern": PYTHON_VERSION_PATTERN.pattern},
             (
                 "Python version of the virtual environment "
-                "(default: from .python-version or requires-python)."
+                "(default: the one that uv chooses, see .python-version and requires-python)."
             ),
         ),
     },

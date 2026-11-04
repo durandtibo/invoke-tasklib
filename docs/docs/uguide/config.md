@@ -46,7 +46,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | -------------------------- | ------------------------------------------------------------------------------------- |
 | `package.name`             | required                                                                              |
 | `package.import_name`      | `<package.name>` with `-` replaced by `_`                                             |
-| `package.python_version`   | the `.python-version` file, else the `requires-python` lower bound, else `"3.14"`     |
+| `package.python_version`   | not set: `uv venv` chooses the version                                                |
 | `paths.src`                | `src/<package.import_name>`, or `<package.import_name>` if only that directory exists |
 | `paths.tests`              | `tests`                                                                               |
 | `paths.unit_tests`         | `<paths.tests>/unit`                                                                  |
@@ -108,12 +108,10 @@ non-empty string, and `test.cov_fail_under` must be between 0 and 100.
 unquoted `3.10` as the number `3.1`, so `get_config` raises a `ValueError` for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.
 
-When the key is not set, the version is read from the project, in this order:
-
-1. the first line of the `.python-version` file, if it is a version such as `3.12` or `3.12.1`
-   (an implementation name such as `pypy3.10` is ignored);
-2. the lower bound of `project.requires-python` in `pyproject.toml` (`">=3.11"` gives `3.11`);
-3. `3.14`.
+When the key is not set (`null` in `config.show`), `env.create-venv` does not pass `--python` and
+`uv venv` chooses the version: the one of the `.python-version` file if there is one, else the
+newest interpreter that satisfies `project.requires-python` of `pyproject.toml`, else the newest
+one that is available. Set the key to pin the version of the virtual environment.
 
 ## Showing the Resolved Config
 
@@ -140,10 +138,10 @@ The origin is the source with the highest priority that sets the key: `default` 
 the library, or no value for an optional key), `project file` (`invoke.yaml`),
 `environment variable INVOKE_TASKLIB_...`, `system config file`, `user config file`,
 `runtime config file` or `override` (set from the command line or by code). `derived` is a value
-that no source sets, computed from other values or from the project (`import_name`, `src`, the test
-paths and the Python version). The config is validated first, so an invalid one stops the task with
-the usual one-line message. The task reads nothing but the config and the two project files of
-[`package.python_version`](#defaults), and changes nothing.
+that no source sets, computed from other values or from the project (`import_name`, `src` and the
+test paths). The config is validated first, so an invalid one stops the task with
+the usual one-line message. The task reads nothing but the config and the project directories of
+[`paths`](#defaults), and changes nothing.
 
 ## Editor Completion (JSON Schema)
 

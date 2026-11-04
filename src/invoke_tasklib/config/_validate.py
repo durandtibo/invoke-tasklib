@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
-def _validate_python_version(value: object) -> str:
+def _validate_python_version(value: object) -> str | None:
     r"""Validate the ``package.python_version`` config value.
 
     YAML reads an unquoted ``3.10`` as the float ``3.1``, which would
@@ -25,14 +25,15 @@ def _validate_python_version(value: object) -> str:
     such as ``"3.10"`` or ``"3.10.4"`` are accepted.
 
     Args:
-        value: The raw config value.
+        value: The raw config value, or ``None`` if it is not set.
 
     Returns:
-        The validated version string.
+        The validated version string, or ``None`` if the value is not
+        set: ``uv`` then chooses the Python version.
 
     Raises:
-        ValueError: If the value is not a string like ``"3.10"`` or
-            ``"3.10.4"``.
+        ValueError: If the value is set and is not a string like
+            ``"3.10"`` or ``"3.10.4"``.
 
     Example usage:
 
@@ -42,9 +43,13 @@ def _validate_python_version(value: object) -> str:
     ... )
     >>> _validate_python_version("3.10")
     '3.10'
+    >>> _validate_python_version(None) is None
+    True
 
     ```
     """
+    if value is None:
+        return None
     if not isinstance(value, str) or not PYTHON_VERSION_PATTERN.fullmatch(value):
         msg = (
             f'\'tasklib.package.python_version\' must be a string like "3.10" or "3.10.4", '

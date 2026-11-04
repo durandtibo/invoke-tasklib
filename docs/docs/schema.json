@@ -27,7 +27,7 @@
             "python_version": {
               "type": "string",
               "pattern": "\\d+\\.\\d+(\\.\\d+)?",
-              "description": "Python version of the virtual environment (default: from .python-version or requires-python)."
+              "description": "Python version of the virtual environment (default: the one that uv chooses, see .python-version and requires-python)."
             }
           },
           "required": [

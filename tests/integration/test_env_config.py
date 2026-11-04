@@ -65,14 +65,14 @@ def test_environment_variable_sets_the_coverage_threshold(tmp_path: Path) -> Non
     assert _show(tmp_path, INVOKE_TASKLIB_TEST_COV_FAIL_UNDER="90") == "src/demo 10 True 90"
 
 
-def test_python_version_comes_from_the_python_version_file(tmp_path: Path) -> None:
+def test_python_version_is_not_derived_from_the_python_version_file(tmp_path: Path) -> None:
     (tmp_path / ".python-version").write_text("3.12\n")
-    assert _show(tmp_path, tasks=VERSION_TASKS).split()[0] == "3.12"
+    assert _show(tmp_path, tasks=VERSION_TASKS).split()[0] == "None"
 
 
-def test_python_version_comes_from_requires_python(tmp_path: Path) -> None:
+def test_python_version_is_not_derived_from_requires_python(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.11"\n')
-    assert _show(tmp_path, tasks=VERSION_TASKS).split()[0] == "3.11"
+    assert _show(tmp_path, tasks=VERSION_TASKS).split()[0] == "None"
 
 
 def _config_show(project: Path, **env: str) -> list[str]:

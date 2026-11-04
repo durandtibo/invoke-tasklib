@@ -19,7 +19,6 @@ from __future__ import annotations
 from invoke_tasklib.config._constants import (
     CHECK_STEPS,
     COV_REPORTS,
-    DEFAULT_PYTHON_VERSION,
     EXCLUDED_DIRS,
     FIX_STEPS,
     PYTHON_VERSION_PATTERN,
@@ -54,7 +53,6 @@ __all__ = [
     "DEFAULT_GROUPS",
     "DEFAULT_PACKAGE",
     "DEFAULT_PATHS",
-    "DEFAULT_PYTHON_VERSION",
     "DEFAULT_TEST",
     "EXCLUDED_DIRS",
     "FIX_STEPS",

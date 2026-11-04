@@ -28,7 +28,7 @@ def test_get_config_requires_package_name() -> None:
 def test_get_config_defaults() -> None:
     cfg = get_config(_context({"package": {"name": "mypkg"}}))
     assert asdict(cfg) == {
-        "package": {"name": "mypkg", "import_name": "mypkg", "python_version": "3.14"},
+        "package": {"name": "mypkg", "import_name": "mypkg", "python_version": None},
         "paths": {
             "src": "src/mypkg",
             "tests": "tests",
@@ -330,14 +330,18 @@ def test_get_config_rejects_non_string_python_version(version: object) -> None:
         get_config(c)
 
 
-def test_get_config_python_version_comes_from_the_python_version_file(tmp_path: Path) -> None:
+def test_get_config_python_version_is_none_by_default() -> None:
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version is None
+
+
+def test_get_config_python_version_ignores_the_python_version_file(tmp_path: Path) -> None:
     (tmp_path / ".python-version").write_text("3.12\n")
-    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version == "3.12"
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version is None
 
 
-def test_get_config_python_version_comes_from_requires_python(tmp_path: Path) -> None:
+def test_get_config_python_version_ignores_requires_python(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text('[project]\nrequires-python = ">=3.11"\n')
-    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version == "3.11"
+    assert get_config(_context({"package": {"name": "mypkg"}})).package.python_version is None
 
 
 def test_get_config_python_version_of_the_config_wins(tmp_path: Path) -> None:

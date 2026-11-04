@@ -217,3 +217,7 @@ def test_show_exits_on_an_invalid_config() -> None:
 
 def test_show_is_the_one_task_of_the_module() -> None:
     assert configuration.show.__name__ == "show"
+
+
+def test_render_an_unset_python_version_is_null() -> None:
+    assert "    python_version: null  # default" in _lines({"package": {"name": "demo"}})
