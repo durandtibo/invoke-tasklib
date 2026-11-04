@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../format/" class="md-tabs__link">
+        <a href="../invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -874,6 +874,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1077,6 +1105,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1529,6 +1585,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1820,8 +1932,9 @@ defined in the project extras. Default is True.</p>
               <div class="doc-md-description">
                 <p>Comma-separated list of dependency groups to install,
 e.g. <code>"dev,docs"</code>. Use an empty string to install no
-group. Defaults to the <code>tasklib.groups.install</code> config
-value (<code>"dev"</code> unless overridden in <code>invoke.yaml</code>).</p>
+group. A group listed twice is installed once. Defaults to
+the <code>tasklib.groups.install</code> config value (<code>"dev"</code>
+unless overridden in <code>invoke.yaml</code>).</p>
               </div>
             </td>
             <td>

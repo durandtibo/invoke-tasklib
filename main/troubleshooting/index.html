@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://durandtibo.github.io/invoke-tasklib/main/troubleshooting/">
       
       
-        <link rel="prev" href="../uguide/config/">
+        <link rel="prev" href="../uguide/custom_tasks/">
       
       
         <link rel="next" href="../dev/development/">
@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../refs/format/" class="md-tabs__link">
+        <a href="../refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -874,6 +874,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1250,6 +1278,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../refs/format/" class="md-nav__link">
         
   
@@ -1579,6 +1635,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1811,12 +1923,15 @@ always put its console scripts on <code>PATH</code> the way you expect. Make sur
   <a href="../uguide/env/"><code>env.create-venv</code></a> installs <code>invoke</code> into the new <code>.venv</code>, not as a tool.</li>
 </ul>
 <h2 id="invoke-list-shows-no-tasks-ns-is-empty"><code>invoke --list</code> shows no tasks / <code>ns</code> is empty<a class="headerlink" href="#invoke-list-shows-no-tasks-ns-is-empty" title="Permanent link">&para;</a></h2>
-<p>Check that <code>tasks.py</code> actually imports and exposes <code>ns</code>:</p>
+<p>Check that <code>tasks.py</code> actually builds and exposes <code>ns</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># tasks.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_ns</span>
+
+<span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
 </code></pre></div>
 <p>Invoke discovers tasks from a module-level <code>ns</code> (or <code>namespace</code>) variable in <code>tasks.py</code>; if you
-renamed the import or wrapped it, Invoke won't find it.</p>
+renamed the variable or wrapped it, Invoke won't find it. (<code>from invoke_tasklib import ns</code> still
+works but is deprecated and warns.)</p>
 <h2 id="a-task-fails-with-command-not-found-ruff-ty-shellcheck">A task fails with "command not found" (<code>ruff</code>, <code>ty</code>, <code>shellcheck</code>, ...)<a class="headerlink" href="#a-task-fails-with-command-not-found-ruff-ty-shellcheck" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Install
 the missing tool, either directly or via your project's dependency groups:</p>

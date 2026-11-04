@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../format/" class="md-tabs__link">
+        <a href="../invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -874,6 +874,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1085,6 +1113,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../format/" class="md-nav__link">
         
   
@@ -1213,6 +1269,17 @@
     <span class="md-ellipsis">
       
         check_cycles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.imports.check_isolated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_isolated
       
     </span>
   </a>
@@ -1485,6 +1552,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1566,6 +1689,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.imports.check_isolated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_isolated
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1635,17 +1769,139 @@
 
 
 <a href="#invoke_tasklib.imports.check_cycles" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_cycles</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_cycles</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">lazy</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">type_checking</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Check for cyclic imports, one module at a time.</p>
+        <p>Check for cyclic imports with a static import graph.</p>
+<p>The import graph of the package is built from the source files
+with <code>ast</code>, without importing anything, and each cycle is
+printed as a path (<code>a -&gt; b -&gt; a</code>). Imports under <code>if
+TYPE_CHECKING:</code> and inside functions never run when a module is
+imported, so they are ignored unless asked. A syntax error or a
+missing optional dependency is not reported as a cycle.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>lazy</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, also follow the imports inside functions.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>type_checking</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, also follow the imports under <code>if
+TYPE_CHECKING:</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="invoke.exceptions.Exit">Exit</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the package cannot be found, a module cannot be
+parsed, or an import cycle is found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="invoke_tasklib.imports.check_isolated" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">invoke_tasklib.imports.check_isolated</span>
+
+
+<a href="#invoke_tasklib.imports.check_isolated" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_isolated</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check that every module imports on its own.</p>
 <p>Every module of the package (not only the subpackages) is discovered
 without being imported, then imported in its own interpreter. A
 module that fails to import on its own depends on something that is
 only initialized as a side effect of importing another module first,
-which is the usual symptom of a cyclic import.</p>
+which is the usual symptom of a cyclic import. It also fails on a
+missing dependency or a syntax error, and it starts one interpreter
+per module, so it is slow for a package with heavy imports; see
+<code>check_cycles</code> for the static check.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>

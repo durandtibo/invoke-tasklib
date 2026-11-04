@@ -14,7 +14,7 @@
         <link rel="prev" href="../development/">
       
       
-        <link rel="next" href="../../refs/format/">
+        <link rel="next" href="../../refs/invoke_tasklib/">
       
       
         
@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../refs/format/" class="md-tabs__link">
+        <a href="../../refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -874,6 +874,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1103,10 +1131,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-the-ns-namespace" class="md-nav__link">
+  <a href="#3-the-namespace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The ns Namespace
+        3. The Namespace
       
     </span>
   </a>
@@ -1142,10 +1170,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-a-shared-get_config-instead-of-per-task-config" class="md-nav__link">
+  <a href="#why-a-shared-load_config-instead-of-per-task-config" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why a Shared get_config Instead of Per-Task Config?
+        Why a Shared load_config Instead of Per-Task Config?
       
     </span>
   </a>
@@ -1279,6 +1307,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1616,6 +1672,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1722,10 +1834,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-the-ns-namespace" class="md-nav__link">
+  <a href="#3-the-namespace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The ns Namespace
+        3. The Namespace
       
     </span>
   </a>
@@ -1761,10 +1873,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-a-shared-get_config-instead-of-per-task-config" class="md-nav__link">
+  <a href="#why-a-shared-load_config-instead-of-per-task-config" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why a Shared get_config Instead of Per-Task Config?
+        Why a Shared load_config Instead of Per-Task Config?
       
     </span>
   </a>
@@ -1859,10 +1971,11 @@
 core design follows these principles:</p>
 <ol>
 <li><strong>One config entry point</strong>: every task reads project-specific values through
-   <code>invoke_tasklib.config.get_config</code>, never directly from <code>c.config</code>.</li>
+   <code>invoke_tasklib.config.load_config</code> (which wraps <code>get_config</code> and exits with a message on an
+   invalid config), never directly from <code>c.config</code>.</li>
 <li><strong>Convention over configuration</strong>: sensible defaults derived from <code>package.name</code> mean most
    projects only set one value (<code>tasklib.package.name</code>).</li>
-<li><strong>Composability</strong>: the pre-built <code>ns</code> namespace is a convenience; any subset of task modules
+<li><strong>Composability</strong>: <code>make_ns()</code> builds the default namespace; any subset of task modules
    can be imported and combined with project-specific tasks.</li>
 <li><strong>No hidden state</strong>: tasks only run external commands (<code>ruff</code>, <code>pytest</code>, <code>uv</code>, <code>mike</code>, ...);
    they don't maintain state between invocations.</li>
@@ -1874,20 +1987,26 @@ It:</p>
 <ul>
 <li>Reads the <code>tasklib</code> key from the Invoke config (<code>c.config</code>), which Invoke itself populates from
   <code>invoke.yaml</code>.</li>
-<li>Merges it on top of <code>DEFAULT_PACKAGE</code>, <code>DEFAULT_PATHS</code>, <code>DEFAULT_GROUPS</code> and <code>DEFAULT_TEST</code>.</li>
+<li>Merges it on top of the defaults declared in <code>SCHEMA</code> (also exposed as <code>DEFAULT_PACKAGE</code>,
+  <code>DEFAULT_PATHS</code>, <code>DEFAULT_GROUPS</code>, <code>DEFAULT_TEST</code> and <code>DEFAULT_CHECK</code>).</li>
 <li>Rejects unknown keys and validates the values (<code>package.python_version</code>, <code>package.import_name</code>,
-  <code>groups.*</code>, <code>test.*</code>).</li>
+  <code>groups.*</code>, <code>test.*</code>, <code>check.tasks</code>).</li>
 <li>Derives unset <code>paths.*</code> entries from <code>package.import_name</code> (for <code>paths.src</code>) or <code>paths.tests</code> (for the
   <code>unit_tests</code>/<code>integration_tests</code>/<code>functional_tests</code>/<code>benchmarks</code> entries).</li>
 <li>Raises <code>ValueError</code> if <code>package.name</code> is missing, since nearly every task needs it, or if a
   value is invalid. Tasks call <code>load_config</code>, which turns the <code>ValueError</code> into an <code>Exit</code>.</li>
 </ul>
+<p>Adding a key means adding one <code>Option(default, validate, json_schema, doc)</code> to <code>SCHEMA</code> and the
+field to the dataclass of its section (a test checks that they match), then one row in the
+<code>uguide/config.md</code> table (a test checks that too). The known keys, the defaults, the validation, the
+environment variable names and the JSON schema (<code>python -m invoke_tasklib.config</code>) follow from it.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TasklibConfig</span><span class="p">:</span>
     <span class="n">package</span><span class="p">:</span> <span class="n">PackageConfig</span>
     <span class="n">paths</span><span class="p">:</span> <span class="n">PathsConfig</span>
     <span class="n">groups</span><span class="p">:</span> <span class="n">GroupsConfig</span>
     <span class="n">test</span><span class="p">:</span> <span class="n">TestConfig</span>
+    <span class="n">check</span><span class="p">:</span> <span class="n">CheckConfig</span>
 </code></pre></div>
 <p>Returning frozen dataclasses rather than a raw dict gives task authors static typing on
 <code>cfg.package.name</code> and similar accesses, and the values cannot be modified by a task.</p>
@@ -1900,16 +2019,32 @@ same underlying tool or concern (e.g. most of <code>testing.py</code> wraps <cod
 <code>test.doctest-markdown</code>, which wraps the standard library's <code>doctest</code> module directly).</p>
 <p>Tasks that need project-specific values call <code>load_config(c)</code> at the top of the function body;
 tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
-<h3 id="3-the-ns-namespace">3. The <code>ns</code> Namespace<a class="headerlink" href="#3-the-ns-namespace" title="Permanent link">&para;</a></h3>
+<p>Three small modules support the task modules:</p>
+<ul>
+<li><code>runner.py</code>: <code>run(c, command)</code> is the only way a task runs an external command. It checks that
+  the program is on the <code>PATH</code> (with a hint per program when it is not), echoes the command, and
+  uses a pty only on a terminal. <code>build_command</code> builds a command line and quotes the arguments, and
+  <code>ARGS_HELP</code>/<code>PATHS_HELP</code> are the help of the <code>--args</code> and <code>--paths</code> options.</li>
+<li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
+  cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
+  step, or a failure message.</li>
+<li><code>_discover.py</code>: lists the modules of a package without importing them. It is run in a
+  subprocess by <code>imports.check-isolated</code>.</li>
+</ul>
+<p><code>config.EXCLUDED_DIRS</code> lists the directories that the tasks that walk the file tree (<code>clean</code>,
+<code>format</code>, <code>test.doctest-markdown</code>) never enter (<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, ...).</p>
+<h3 id="3-the-namespace">3. The Namespace<a class="headerlink" href="#3-the-namespace" title="Permanent link">&para;</a></h3>
 <p><code>invoke_tasklib/__init__.py</code> has <code>make_ns(*, exclude=(), include=None)</code>, which builds a new
 <code>Collection</code> by adding each task module (<code>Collection.from_module(module, name=...)</code>) as a
 sub-collection named after the module, leaving out the tasks of <code>exclude</code> and keeping only the
 tasks of <code>include</code> when it is set. The modules whose names would shadow the standard library or a
 builtin (<code>format</code>, <code>types</code>, <code>test</code>) are named <code>formatting</code>, <code>typecheck</code> and <code>testing</code>; the
-namespace names come from <code>_MODULES</code>, not from the module names. <code>ns = make_ns()</code> is the pre-built collection.</p>
-<p>This is what gives consuming projects <code>format.check-python</code>, <code>test.unit</code>, etc. via a single
-<code>from invoke_tasklib import ns</code> in their <code>tasks.py</code>, or a trimmed copy with <code>make_ns(...)</code>. A
-project that adds its own tasks should do it on its own <code>make_ns()</code> result, not on the shared <code>ns</code>.</p>
+namespace names come from <code>_MODULES</code>, not from the module names.</p>
+<p>This is what gives consuming projects <code>format.check-python</code>, <code>test.unit</code>, etc. via
+<code>ns = make_ns()</code> in their <code>tasks.py</code>, or a trimmed copy with <code>make_ns(exclude=...)</code>. Each call returns
+a new collection, so a project can add its own tasks without affecting other importers.
+<code>invoke_tasklib.ns</code>, a collection built once and shared by every importer, is deprecated: accessing
+it emits a <code>DeprecationWarning</code>.</p>
 <h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
 <p>Here's how a task invocation flows through the system:</p>
 <div class="highlight"><pre><span></span><code>User runs `invoke test.unit --cov`
@@ -1918,19 +2053,20 @@ Invoke loads invoke.yaml into c.config
     ↓
 test.unit(c, cov=True) is called
     ↓
-get_config(c) resolves package.name and paths.unit_tests
+load_config(c) resolves package.name and paths.unit_tests
     ↓
-Task builds the pytest command line
+Task builds the pytest command line with build_command (quoted)
     ↓
-c.run(cmd, pty=True) executes it as a subprocess
+runner.run(c, cmd) checks the program, echoes the command and
+executes it with c.run (pty only on a terminal)
 </code></pre></div>
 <h2 id="design-decisions">Design Decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h2>
-<h3 id="why-a-shared-get_config-instead-of-per-task-config">Why a Shared <code>get_config</code> Instead of Per-Task Config?<a class="headerlink" href="#why-a-shared-get_config-instead-of-per-task-config" title="Permanent link">&para;</a></h3>
+<h3 id="why-a-shared-load_config-instead-of-per-task-config">Why a Shared <code>load_config</code> Instead of Per-Task Config?<a class="headerlink" href="#why-a-shared-load_config-instead-of-per-task-config" title="Permanent link">&para;</a></h3>
 <p><strong>Rationale</strong>: A single resolution function keeps defaults and the validation of the config in one place, and
 guarantees every task sees the same resolved paths (e.g. <code>test.unit</code> and <code>types.check</code> agree on
 <code>package.name</code>).</p>
 <p><strong>Trade-off</strong>: Every task pays the (cheap) cost of re-resolving config on each call, rather than
-resolving it once. This is negligible since <code>get_config</code> does no I/O beyond reading <code>c.config</code>.</p>
+resolving it once. This is negligible since <code>load_config</code> does no I/O beyond reading <code>c.config</code>.</p>
 <h3 id="why-check_targetfix_target-naming">Why <code>check_&lt;target&gt;</code>/<code>fix_&lt;target&gt;</code> Naming?<a class="headerlink" href="#why-check_targetfix_target-naming" title="Permanent link">&para;</a></h3>
 <p><strong>Rationale</strong>: Makes the read-only/mutating counterpart of a task discoverable by name alone, and
 lets CI safely run every <code>check_*</code> task without risk of it modifying the working tree.</p>
@@ -1944,8 +2080,8 @@ validation dependency.</p>
 <code>get_config</code> (e.g. the <code>package.name</code> and <code>package.python_version</code> checks). It runs when a task starts, not when the collection
 is loaded, because the <code>invoke.yaml</code> values are only known once Invoke has built the context.</p>
 <h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
-<p>Tests use <code>invoke.context.MockContext</code>, which records every <code>c.run(...)</code> call without executing
-it. This lets tests assert on the exact shell command a task would run, without depending on
+<p>Tests use <code>invoke.context.MockContext</code>, which records every <code>c.run(...)</code> call (made by
+<code>runner.run</code>) without executing it. This lets tests assert on the exact shell command a task would run, without depending on
 <code>ruff</code>, <code>pytest</code>, <code>uv</code>, etc. being installed or configured in the test environment. The unit
 tests also patch <code>shutil.which</code> (an autouse fixture in <code>tests/unit/conftest.py</code>) so that the check
 of the <code>PATH</code> done by <code>invoke_tasklib.runner.run</code> passes on any machine.</p>

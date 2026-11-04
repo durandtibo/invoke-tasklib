@@ -14,7 +14,7 @@
         <link rel="prev" href="../check/">
       
       
-        <link rel="next" href="../../troubleshooting/">
+        <link rel="next" href="../custom_tasks/">
       
       
         
@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../refs/format/" class="md-tabs__link">
+        <a href="../../refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -938,6 +938,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#editor-completion-json-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor Completion (JSON Schema)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1007,6 +1018,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1212,6 +1251,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1549,6 +1616,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1625,6 +1748,17 @@
     <span class="md-ellipsis">
       
         Defaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#editor-completion-json-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor Completion (JSON Schema)
       
     </span>
   </a>
@@ -1740,6 +1874,12 @@ invalid config, see below) to read project-specific values from an
 <span class="w">  </span><span class="nt">groups</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">install</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dev</span>
 <span class="w">    </span><span class="nt">update</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dev,docs</span>
+<span class="w">  </span><span class="nt">test</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">unit_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">xdoctest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">cov_reports</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html,xml,term</span>
+<span class="w">  </span><span class="nt">check</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">format-python,format-docstrings,lint,types,imports,unit</span>
 </code></pre></div>
 <p>Only <code>tasklib.package.name</code> (the distribution name, as on PyPI) is required. Everything else has a default, and most of the <code>paths</code>
 defaults are derived from <code>package.name</code> or from <code>paths.tests</code>.</p>
@@ -1752,6 +1892,10 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>package.name</code></td>
+<td>required</td>
+</tr>
 <tr>
 <td><code>package.import_name</code></td>
 <td><code>&lt;package.name&gt;</code> with <code>-</code> replaced by <code>_</code></td>
@@ -1820,6 +1964,10 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 <td><code>test.cov_reports</code></td>
 <td><code>html,xml,term</code></td>
 </tr>
+<tr>
+<td><code>check.tasks</code></td>
+<td><code>format-python,format-docstrings,lint,types,imports,unit</code></td>
+</tr>
 </tbody>
 </table>
 <p>The <code>test</code> section sets the per-test timeout in seconds of each test scope, whether <code>pytest</code> runs
@@ -1829,7 +1977,10 @@ not have it), and a coverage threshold: with <code>--cov</code>, <code>cov_fail_
 <code>cov_reports</code> is a comma-separated string or a list of the <code>--cov-report</code> formats of pytest-cov
 (<code>html</code>, <code>xml</code>, <code>json</code>, <code>lcov</code>, <code>annotate</code>, <code>term</code>, <code>term-missing</code>) that <code>--cov</code> generates. An empty
 value passes no <code>--cov-report</code>, so pytest-cov uses its default.</p>
-<p><code>package.import_name</code> is the name used to import the package. It is used by <code>imports.check-cycles</code>,
+<p><code>check.tasks</code> is a comma-separated string or a list of the steps of <code>check.all</code>, run in that order:
+<code>format-python</code>, <code>format-docstrings</code>, <code>lint</code>, <code>types</code>, <code>imports</code>, <code>unit</code>, <code>doctest</code>, <code>shell</code>,
+<code>spelling</code>, <code>docs</code> and <code>audit</code>. It must have at least one step and no unknown step.</p>
+<p><code>package.import_name</code> is the name used to import the package. It is used by <code>imports.check-cycles</code>, <code>imports.check-isolated</code>,
 <code>release.build</code> (the import check of the built artifacts) and the <code>--cov</code> option of the test tasks.
 Set it when it is not the distribution name with <code>-</code> replaced by <code>_</code>. It must be a Python module
 name.</p>
@@ -1844,10 +1995,19 @@ non-empty string, and <code>test.cov_fail_under</code> must be between 0 and 100
 <p><code>package.python_version</code> must be a quoted string such as <code>"3.10"</code> or <code>"3.10.4"</code>. YAML reads an
 unquoted <code>3.10</code> as the number <code>3.1</code>, so <code>get_config</code> raises a <code>ValueError</code> for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.</p>
+<h2 id="editor-completion-json-schema">Editor Completion (JSON Schema)<a class="headerlink" href="#editor-completion-json-schema" title="Permanent link">&para;</a></h2>
+<p>The keys, the defaults and the descriptions are declared once, in <code>invoke_tasklib.config.SCHEMA</code>
+(one <code>Option</code> per key: default, validation and JSON schema). The defaults, the key checks, the
+error messages and the JSON schema are all generated from it, so they cannot drift. Print the
+schema of the <code>tasklib</code> section of <code>invoke.yaml</code> with:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>invoke_tasklib.config<span class="w"> </span>&gt;<span class="w"> </span>invoke-tasklib.schema.json
+</code></pre></div>
+<p>and point your editor to it (for example with a <code># yaml-language-server: $schema=...</code> comment at
+the top of <code>invoke.yaml</code>) to get completion and validation of the keys.</p>
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <p>Every key can also be set with an <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code> environment variable, for example
 <code>INVOKE_TASKLIB_PATHS_SRC=lib</code> or <code>INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30</code>. This is handy in CI. It
-works because <code>make_ns</code> (and so <code>ns</code>) registers the defaults of the <code>tasklib</code> section with Invoke,
+works because <code>make_ns</code> registers the defaults of the <code>tasklib</code> section with Invoke,
 which only reads the environment variables of the keys that it knows. The usual Invoke order
 applies: the environment variables win over <code>invoke.yaml</code>.</p>
 <p>Invoke reads an environment variable as a string and converts it to the type of the default value:

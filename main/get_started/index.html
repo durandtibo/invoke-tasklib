@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../refs/format/" class="md-tabs__link">
+        <a href="../refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -1037,6 +1037,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1237,6 +1265,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1574,6 +1630,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1801,7 +1913,9 @@ listed above):</p>
 <h3 id="1-add-a-taskspy">1. Add a <code>tasks.py</code><a class="headerlink" href="#1-add-a-taskspy" title="Permanent link">&para;</a></h3>
 <p>Add a <code>tasks.py</code> at the root of your project that imports the shared namespace:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># tasks.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ns</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_ns</span>
+
+<span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="2-add-an-invokeyaml">2. Add an <code>invoke.yaml</code><a class="headerlink" href="#2-add-an-invokeyaml" title="Permanent link">&para;</a></h3>
 <p>Add an <code>invoke.yaml</code> at the root of your project with, at minimum, the package name:</p>
@@ -1816,7 +1930,7 @@ listed above):</p>
 
   check.all (check)             Run the main checks of the project.
   clean.all (clean)             Remove build artifacts and caches.
-  clean.pycache                 Remove all ``__pycache__`` directories.
+  clean.pycache                 Remove all __pycache__ directories.
   doc.build                     Build the documentation and fail on any
                                 warning.
   doc.publish-dev               Publish development (e.g. unstable) docs.
@@ -1838,7 +1952,9 @@ listed above):</p>
                                 docformatter.
   format.fix-python             Format code in place with ruff.
   format.fix-shell              Format shell scripts in place with shfmt.
-  imports.check-cycles          Check for cyclic imports, one module at a time.
+  imports.check-cycles          Check for cyclic imports with a static import
+                                graph.
+  imports.check-isolated        Check that every module imports on its own.
   lint.check-python             Check code linting with ruff.
   lint.check-spelling           Check the spelling with codespell.
   lint.fix-python               Fix auto-fixable linting issues in place with

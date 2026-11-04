@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../refs/format/" class="md-tabs__link">
+        <a href="../../refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -990,6 +990,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1190,6 +1218,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1527,6 +1583,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1745,7 +1857,8 @@ is out of date with <code>pyproject.toml</code> instead of silently using it (ru
 </tbody>
 </table>
 <p><code>--groups</code> takes a comma-separated list of <a href="https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups">dependency groups</a>
-to install, e.g. <code>dev,docs</code>. Pass an empty string to skip installing any group.</p>
+to install, e.g. <code>dev,docs</code>. A group listed twice is installed once. Pass an empty string to skip
+installing any group.</p>
 <p>Disable the on-by-default optional deps, or override the groups, with:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install<span class="w"> </span>--no-optional-deps<span class="w"> </span>--groups<span class="w"> </span><span class="s2">""</span>
 invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs

@@ -326,7 +326,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="refs/format/" class="md-tabs__link">
+        <a href="refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -1101,6 +1101,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1301,6 +1329,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1638,6 +1694,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1947,7 +2059,9 @@ project imports one namespace and gets a consistent set of <code>invoke</code> c
 repositories is tedious, and small inconsistencies (a missing <code>--xdoctest</code> flag, a different
 coverage flag) creep in over time.</p>
 <p><code>invoke-tasklib</code> centralizes these tasks in one importable package:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ns</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_ns</span>
+
+<span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>--list
 </code></pre></div>
@@ -1974,7 +2088,8 @@ used by the tasks:</p>
 <p><a href="uguide/format/">Learn more →</a></p>
 <h3 id="cyclic-imports">🔁 <strong>Cyclic Imports</strong><a class="headerlink" href="#cyclic-imports" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>imports.check-cycles</code>: check for cyclic import dependencies</li>
+<li><code>imports.check-cycles</code>: check for cyclic import dependencies (static import graph)</li>
+<li><code>imports.check-isolated</code>: check that every module imports on its own</li>
 </ul>
 <p><a href="uguide/imports/">Learn more →</a></p>
 <h3 id="type-checking">🔬 <strong>Type Checking</strong><a class="headerlink" href="#type-checking" title="Permanent link">&para;</a></h3>

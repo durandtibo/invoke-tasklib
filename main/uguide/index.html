@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../refs/format/" class="md-tabs__link">
+        <a href="../refs/invoke_tasklib/" class="md-tabs__link">
           
   
   
@@ -979,6 +979,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1179,6 +1207,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1516,6 +1572,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1734,6 +1846,12 @@ one page in this guide.</p>
 <td style="text-align: center;">❌</td>
 </tr>
 <tr>
+<td><a href="imports/">Imports</a></td>
+<td><code>imports.check-isolated</code></td>
+<td>Check that every module imports on its own</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
 <td><a href="types/">Types</a></td>
 <td><code>types.check</code></td>
 <td>Check type hints with ty (<code>--complete</code>: + pyright)</td>
@@ -1897,6 +2015,10 @@ one page in this guide.</p>
 invoke<span class="w"> </span>lint.check-python<span class="w"> </span>imports.check-cycles<span class="w"> </span>types.check<span class="w">  </span><span class="c1"># check quality</span>
 invoke<span class="w"> </span>test.unit<span class="w"> </span>--cov<span class="w">                            </span><span class="c1"># run tests with coverage</span>
 </code></pre></div>
+<p>To run the main read-only checks (format, lint, types, imports and the unit tests) in one command:</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>check
+</code></pre></div>
+<p>See <a href="check/">Check</a> for the steps and the options.</p>
 <p>And what CI typically runs (nothing should modify the working tree):</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>format.check-python<span class="w"> </span>format.check-docstrings<span class="w"> </span>lint.check-python<span class="w"> </span>imports.check-cycles<span class="w"> </span>types.check
 invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
@@ -1995,7 +2117,7 @@ invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
 </tbody>
 </table>
 <p>The tasks that have no option are the composite tasks (<code>check.all</code>, <code>test.doctest</code>), the tasks
-that run no external tool (<code>clean.*</code>, <code>imports.check-cycles</code>) and the tasks with their own options
+that run no external tool (<code>clean.*</code>, <code>imports.*</code>) and the tasks with their own options
 (<code>env.*</code>, <code>doc.publish-*</code>).</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit<span class="w"> </span>--args<span class="w"> </span><span class="s2">"-k foo -x"</span><span class="w"> </span>--paths<span class="w"> </span>tests/unit/test_foo.py
 invoke<span class="w"> </span>lint.check-python<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--select E"</span><span class="w"> </span>--paths<span class="w"> </span><span class="s2">"src/a.py src/b.py"</span>
@@ -2036,6 +2158,10 @@ arguments and the paths are quoted, so they are never interpreted by the shell.<
 <tr>
 <td><a href="https://docs.astral.sh/ty/"><code>ty</code></a></td>
 <td><code>types.check</code></td>
+</tr>
+<tr>
+<td><a href="https://microsoft.github.io/pyright/"><code>pyright</code></a></td>
+<td><code>types.check --complete</code></td>
 </tr>
 <tr>
 <td><a href="https://docs.pytest.org/"><code>pytest</code></a></td>
@@ -2082,6 +2208,10 @@ arguments and the paths are quoted, so they are never interpreted by the shell.<
 <td><code>doc.build</code>, <code>doc.serve</code></td>
 </tr>
 <tr>
+<td><a href="https://squidfunk.github.io/mkdocs-material/"><code>mkdocs-material</code></a></td>
+<td>the theme of the docs built by <code>doc.build</code>, <code>doc.serve</code></td>
+</tr>
+<tr>
 <td><a href="https://github.com/jimporter/mike"><code>mike</code></a></td>
 <td><code>doc.publish-dev</code>, <code>doc.publish-latest</code></td>
 </tr>
@@ -2102,6 +2232,7 @@ arguments and the paths are quoted, so they are never interpreted by the shell.<
 <ul>
 <li><a href="../get_started/">Get Started</a>: installing <code>invoke-tasklib</code> and wiring up a new project.</li>
 <li><a href="config/">Config</a>: the shared configuration all tasks read from.</li>
+<li><a href="custom_tasks/">Writing a Custom Task</a>: the helpers to write a task like the shared ones.</li>
 <li><a href="../troubleshooting/">Troubleshooting</a>: common errors and how to fix them.</li>
 </ul>
 
