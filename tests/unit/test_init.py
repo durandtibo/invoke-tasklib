@@ -20,6 +20,7 @@ def test_ns_contains_the_complete_list_of_tasks() -> None:
         "check.all",
         "clean.all",
         "clean.pycache",
+        "config.show",
         "doc.build",
         "doc.publish-dev",
         "doc.publish-latest",
@@ -71,6 +72,7 @@ def test_ns_contains_expected_subcollections() -> None:
         "security",
         "clean",
         "check",
+        "config",
     }
 
 
@@ -249,6 +251,7 @@ _WITHOUT_ARGS = frozenset(
         # No external tool to give arguments to.
         "clean.all",
         "clean.pycache",
+        "config.show",
         "imports.check-cycles",
         "imports.check-isolated",
         # Tasks with their own, specific options.

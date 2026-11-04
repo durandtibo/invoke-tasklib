@@ -48,6 +48,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Check](check.md)       | `check.all` (or `check`)      | Run the main read-only checks                       |    ❌    |
 | [Clean](clean.md)       | `clean.all` (or `clean`)      | Remove build artifacts and caches                   |    ✅    |
 | [Clean](clean.md)       | `clean.pycache`               | Remove all `__pycache__` directories                |    ✅    |
+| [Config](config.md)     | `config.show`                 | Show the resolved config and its origins            |    ❌    |
 | [Config](config.md)     | _(none — shared config)_      | Config resolution used by all tasks above           |    —     |
 
 ## Everyday Workflow

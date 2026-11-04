@@ -147,6 +147,12 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 [Learn more →](uguide/clean.md)
 
+### ⚙️ **Config**
+
+- `config.show`: show the resolved config and where each value comes from
+
+[Learn more →](uguide/config.md)
+
 ## Contributing
 
 Contributions are welcome! Please open an issue first to discuss significant changes. See the
