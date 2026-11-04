@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import load_config
+from invoke_tasklib.config import SCHEMA, load_config
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
@@ -106,8 +106,8 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
         The label of the source with the highest priority that sets a
         value for the key (see ``LEVELS``), with the name of the
         variable for an environment variable. If no source sets a
-        value, ``"derived"`` when the resolved value is computed and
-        ``"default"`` when it is ``None``.
+        value, ``"default"`` when the key has a default or the resolved
+        value is ``None``, and ``"derived"`` when the value is computed.
 
     Example usage:
 
@@ -122,6 +122,8 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
     'derived'
     >>> _origin(Config(), "test", "cov_fail_under", None)
     'default'
+    >>> _origin(Config(), "test", "xdoctest", True)
+    'default'
 
     ```
     """
@@ -132,7 +134,8 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
             if attribute == "_env":
                 return f"{label} INVOKE_TASKLIB_{section.upper()}_{key.upper()}"
             return label
-    return "default" if value is None else "derived"
+    has_default = SCHEMA[section][key].default is not None
+    return "default" if value is None or has_default else "derived"
 
 
 def _render(cfg: TasklibConfig, config: Config) -> list[str]:
