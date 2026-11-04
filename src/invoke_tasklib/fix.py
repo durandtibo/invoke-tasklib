@@ -23,13 +23,14 @@ STEPS: dict[str, Callable[[Context], None]] = {
 }
 r"""The task of each step of ``fix.all``, by step name."""
 
+# The programs that each step of ``fix.all`` runs, by step name.
 PROGRAMS: dict[str, tuple[str, ...]] = {
     "lint": ("ruff",),
     "format-python": ("ruff",),
     "format-docstrings": ("docformatter",),
     "shell": ("shfmt",),
 }
-r"""The programs that each step of ``fix.all`` runs, by step name."""
+
 
 @task(
     name="all",
