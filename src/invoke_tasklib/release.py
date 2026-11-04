@@ -292,16 +292,15 @@ def publish(
     of CI (``CI`` set to something other than ``0`` and ``false``) it
     then asks for a confirmation (``--yes`` turns it off).
 
-    The credentials are either a token, read from ``PYPI_TOKEN`` (from
-    ``TEST_PYPI_TOKEN`` with ``--test-pypi``, so a PyPI token is never
-    sent to TestPyPI) or, without ``--test-pypi`` only, from
-    ``UV_PUBLISH_TOKEN``, which ``uv publish`` reads natively. The token
-    is passed to ``uv publish`` through its
-    environment, so it does not appear on the command line; or, in
-    GitHub Actions with the
-    ``id-token: write`` permission, PyPI Trusted Publishing. ``dist/``
-    is cleared by the build, so only the freshly built artifacts are
-    uploaded.
+    The credentials are either a token or, in GitHub Actions with the
+    ``id-token: write`` permission, PyPI Trusted Publishing. The token
+    is read from ``PYPI_TOKEN`` (from ``TEST_PYPI_TOKEN`` with
+    ``--test-pypi``, so a PyPI token is never sent to TestPyPI) or,
+    without ``--test-pypi`` only, from ``UV_PUBLISH_TOKEN``, which
+    ``uv publish`` reads natively. It is passed to ``uv publish``
+    through its environment, so it does not appear on the command
+    line. ``dist/`` is cleared by the build, so only the freshly built
+    artifacts are uploaded.
 
     Args:
         c: The invoke context.

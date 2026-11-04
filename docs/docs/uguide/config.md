@@ -254,21 +254,25 @@ The `--groups` flag of the tasks stays a comma-separated string (`--groups dev,d
 
 ## Using `get_config` in a Custom Task
 
-`get_config` returns frozen dataclasses (`cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`), so the
-values are read as attributes and cannot be modified. It raises a `ValueError` on an invalid config;
-use `load_config` in a task to exit with a message instead. `get_config` is the same function every built-in task uses, so a project-specific task can read
-the same config:
+`get_config` returns frozen dataclasses (`cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`,
+`cfg.check` and `cfg.fix`), so the values are read as attributes and cannot be modified. It raises a
+`ValueError` on an invalid config. A task uses `load_config`, which exits with a one-line message
+instead (and also checks that `inv` runs from the project root), like every built-in task, so a
+project-specific task reads the same config:
 
 ```python
 from invoke.tasks import task
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import load_config
+from invoke_tasklib.output import say
 
 
 @task
 def my_task(c):
-    cfg = get_config(c)
-    print(cfg.package.name, cfg.paths.src)
+    cfg = load_config(c)
+    say(c, f"{cfg.package.name} {cfg.paths.src}")
 ```
+
+Use `get_config` outside a task, where a `ValueError` is the right error.
 
 ## See Also
 

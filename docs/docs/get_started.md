@@ -110,8 +110,8 @@ Available tasks:
   lint.pre-commit               Run all the pre-commit hooks on all the files.
   release.build                 Build the package and verify the built
                                 artifacts.
-  release.pypi                  Build and publish the package to PyPI.
-  security.audit                Audit the dependencies for known
+  release.publish               Build and publish the package to PyPI.
+  security.audit                Audit the locked dependencies for known
                                 vulnerabilities.
   test.all                      Run all tests (unit, integration, and
                                 functional).

@@ -128,7 +128,7 @@ def _matches(name: str, patterns: Iterable[str]) -> bool:
     r"""Check whether a task or a namespace is selected by patterns.
 
     Args:
-        name: The dotted name of a task (``"release.pypi"``) or of a
+        name: The dotted name of a task (``"release.publish"``) or of a
             namespace (``"release"``).
         patterns: Names of namespaces or tasks. A pattern matches the
             name that is equal to it or that is inside it.
@@ -140,9 +140,9 @@ def _matches(name: str, patterns: Iterable[str]) -> bool:
 
     ```pycon
     >>> from invoke_tasklib import _matches
-    >>> _matches("release.pypi", ["release"])
+    >>> _matches("release.publish", ["release"])
     True
-    >>> _matches("release.pypi", ["release.build"])
+    >>> _matches("release.publish", ["release.build"])
     False
 
     ```
@@ -178,12 +178,11 @@ def make_ns(
     r"""Build a new collection of the tasks, optionally restricted.
 
     Each call returns a new collection, so a project can add its own
-    tasks to it or remove some without any effect on other importers
-    (unlike ``ns``, which is shared by the process).
+    tasks to it or remove some without any effect on other importers.
 
     Args:
         exclude: Names of the namespaces (``"doc"``) or of the tasks
-            (``"release.pypi"``) to leave out. A single string is one
+            (``"release.publish"``) to leave out. A single string is one
             name.
         include: Names of the namespaces or of the tasks to keep. If
             ``None``, all the tasks are kept. ``exclude`` is applied

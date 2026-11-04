@@ -109,9 +109,10 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
 | `release.build`                                                                  | `uv build`            |    ❌     |
 | `release.publish`                                                                | `uv publish`          |    ❌     |
 
-The tasks that have no option are the composite tasks (`check.all`, `test.doctest`), the tasks
-that run no external tool (`clean.*`, `imports.*`) and the tasks with their own options
-(`env.*`, `doc.publish-*`).
+The other tasks have no `--args`: the composite tasks (`check.all` and `fix.all` with
+`--only`, `--skip` and `--keep-going`, `test.doctest`), the tasks that run no external tool
+(`clean.*`, `imports.*`, `config.show`) and the tasks with their own options (`env.*`,
+`doc.publish-*`).
 
 ```shell
 invoke test.unit --args "-k foo -x" --paths tests/unit/test_foo.py
@@ -151,7 +152,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`mkdocs`](https://www.mkdocs.org/)                               | `doc.build`, `doc.serve`                                        |
 | [`mkdocs-material`](https://squidfunk.github.io/mkdocs-material/) | the theme of the docs built by `doc.build`, `doc.serve`         |
 | [`mike`](https://github.com/jimporter/mike)                       | `doc.publish-dev`, `doc.publish-latest`                         |
-| [`git`](https://git-scm.com/)                                     | `doc.publish-latest`                                            |
+| [`git`](https://git-scm.com/)                                     | `doc.publish-latest`, `release.publish`                         |
 | [`pip-audit`](https://github.com/pypa/pip-audit) (via `uvx`)      | `security.audit`                                                |
 
 Most of these come from your project's own dev/docs dependency groups; see
