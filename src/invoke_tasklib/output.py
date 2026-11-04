@@ -22,7 +22,10 @@ r"""The symbols that carry a status, and their ASCII tag."""
 
 _EMOJI = re.compile("([\U0001f000-\U0001faff\u2600-\u27bf\u2b00-\u2bff]\ufe0f?|\ufe0f) *")
 r"""The emojis, the symbols and the variation selector, with the spaces
-that follow them. The accented letters are not matched."""
+that follow them.
+
+The accented letters are not matched.
+"""
 
 
 def _keep_if_encodable(match: re.Match[str], encoding: str) -> str:

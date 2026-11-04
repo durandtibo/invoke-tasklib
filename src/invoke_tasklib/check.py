@@ -55,7 +55,8 @@ step name.
 and does not need ``pytest_timeout`` if ``tasklib.test.timeout`` is
 false. To add a step, add its name to ``CHECK_STEPS`` in
 ``config/_constants.py`` (a test checks that the names agree), and its
-install hints to ``runner.py`` and its tools to ``env.py``."""
+install hints to ``runner.py`` and its tools to ``env.py``.
+"""
 
 
 def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:

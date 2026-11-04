@@ -33,6 +33,7 @@ class Step(NamedTuple):
     r"""The task that runs the step."""
     programs: tuple[str, ...] = ()
     r"""The programs that the step runs, looked up on the ``PATH``."""
+
     modules: tuple[str, ...] = ()
     r"""The Python modules that the step runs."""
 

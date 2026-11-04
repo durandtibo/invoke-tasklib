@@ -135,7 +135,8 @@ TWINE_REQUIREMENT = "twine>=6.1,<7"
 r"""The version range of ``twine`` that ``release.build --check`` runs.
 
 ``uvx`` installs the latest release in this range, so a new major
-version is never run without a change of this constant."""
+version is never run without a change of this constant.
+"""
 
 TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
 r"""The upload endpoint of TestPyPI."""

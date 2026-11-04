@@ -15,11 +15,10 @@ from invoke_tasklib.runner import ARGS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
+# The version range of ``pip-audit`` that ``security.audit`` runs.
+# ``uvx`` installs the latest release in this range, so a new major
+# version is never run without a change of this constant.
 PIP_AUDIT_REQUIREMENT = "pip-audit>=2.10,<3"
-r"""The version range of ``pip-audit`` that ``security.audit`` runs.
-
-``uvx`` installs the latest release in this range, so a new major
-version is never run without a change of this constant."""
 
 
 @task(help={"args": ARGS_HELP})
