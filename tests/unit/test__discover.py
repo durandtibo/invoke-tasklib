@@ -118,6 +118,6 @@ def test_main_invalid_arguments_usage(capsys: pytest.CaptureFixture[str]) -> Non
 def test_running_the_module_exits_with_the_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "argv", ["_discover", "no_such_pkg_xyz"])
     monkeypatch.delitem(sys.modules, "invoke_tasklib._discover")
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(SystemExit, match=r"^1$") as exc_info:
         runpy.run_module("invoke_tasklib._discover", run_name="__main__")
     assert exc_info.value.code == 1

@@ -60,7 +60,14 @@ def test_last_version_tag_without_tag_is_none() -> None:
     assert doc._last_version_tag(_context()) is None
 
 
-@pytest.mark.usefixtures("repo")
+@pytest.fixture
+def tags(request: pytest.FixtureRequest) -> None:
+    r"""Create the git tags given by the parameter in the ``repo``."""
+    request.getfixturevalue("repo")
+    for tag in request.param:
+        _git("tag", tag)
+
+
 @pytest.mark.parametrize(
     ("tags", "expected"),
     [
@@ -68,10 +75,10 @@ def test_last_version_tag_without_tag_is_none() -> None:
         (("v1.2.0", "v1.2.0rc1", "v1.1.0"), "v1.2.0"),
         (("v1.3.0rc1", "v1.2.0"), "v1.2.0"),
     ],
+    indirect=["tags"],
 )
-def test_last_version_tag_returns_the_highest_release(tags: tuple[str, ...], expected: str) -> None:
-    for tag in tags:
-        _git("tag", tag)
+@pytest.mark.usefixtures("tags")
+def test_last_version_tag_returns_the_highest_release(expected: str) -> None:
     assert doc._last_version_tag(_context()) == expected
 
 

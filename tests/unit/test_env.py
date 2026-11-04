@@ -55,7 +55,9 @@ def test_create_venv_dry_run_says_what_it_would_do(capsys: pytest.CaptureFixture
 
 @pytest.mark.usefixtures("_existing_venv")
 def test_create_venv_dry_run_does_not_ask() -> None:
-    env.create_venv(make_context({"package": {"name": "mypkg"}}), dry_run=True)
+    c = make_context({"package": {"name": "mypkg"}})
+    env.create_venv(c, dry_run=True)
+    assert commands(c) == []
 
 
 @pytest.mark.usefixtures("_existing_venv")
@@ -424,9 +426,12 @@ def test_check_tools_does_not_run_any_command(monkeypatch: pytest.MonkeyPatch) -
     assert commands(c) == []
 
 
-def test_check_tools_does_not_need_the_config(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_tools_does_not_need_the_config(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
     env.check_tools(make_context())
+    assert "✅ All the 18 tools are available\n" in capsys.readouterr().out
 
 
 def test_every_program_with_a_hint_is_checked() -> None:
