@@ -85,7 +85,7 @@ def test_get_config_test_overrides() -> None:
 
 
 def test_get_config_test_timeout_must_be_a_boolean() -> None:
-    c = _context({"package": {"name": "mypkg"}, "test": {"timeout": "no"}})
+    c = _context({"package": {"name": "mypkg"}, "test": {"timeout": "maybe"}})
     with pytest.raises(ValueError, match=r"'tasklib\.test\.timeout' must be a boolean"):
         get_config(c)
 
@@ -111,7 +111,7 @@ def test_get_config_test_invalid_timeout() -> None:
 
 
 def test_get_config_test_invalid_xdoctest() -> None:
-    c = _context({"package": {"name": "mypkg"}, "test": {"xdoctest": "no"}})
+    c = _context({"package": {"name": "mypkg"}, "test": {"xdoctest": "maybe"}})
     with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
         get_config(c)
 
@@ -229,7 +229,7 @@ def test_get_config_check_cov_override() -> None:
 
 
 def test_get_config_check_cov_must_be_a_boolean() -> None:
-    c = _context({"package": {"name": "mypkg"}, "check": {"cov": "yes"}})
+    c = _context({"package": {"name": "mypkg"}, "check": {"cov": "maybe"}})
     with pytest.raises(ValueError, match=r"'tasklib\.check\.cov' must be a boolean"):
         get_config(c)
 
@@ -540,3 +540,23 @@ def test_get_config_rejects_an_unknown_fix_key() -> None:
     c = _context({"package": {"name": "mypkg"}, "fix": {"task": "lint"}})
     with pytest.raises(ValueError, match=r"Unknown key 'task' \(did you mean 'tasks'"):
         get_config(c)
+
+
+def test_get_config_ignores_the_none_registered_for_a_boolean() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"xdoctest": None}}))
+    assert cfg.test.xdoctest is True
+
+
+def test_get_config_ignores_the_none_registered_for_an_integer() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": None}}))
+    assert cfg.test.unit_timeout == 10
+
+
+def test_get_config_parses_a_boolean_given_as_text() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"xdoctest": "false"}}))
+    assert cfg.test.xdoctest is False
+
+
+def test_get_config_parses_an_integer_given_as_text() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "test": {"unit_timeout": "30"}}))
+    assert cfg.test.unit_timeout == 30
