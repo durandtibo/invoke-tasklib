@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from invoke.config import Config
+from invoke.exceptions import Exit
 
 from invoke_tasklib import testing
 from tests.integration.test_imports import _SubprocessContext
@@ -100,6 +101,20 @@ def test_unit_with_coverage_accepts_term_missing_skip_covered(
     reports = "term-missing:skip-covered"
     testing.unit(_context(cov_reports=reports), cov=True, args="-p no:cacheprovider")
     assert "✅ Unit tests complete" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("flat_project")
+def test_benchmark_without_directory_fails() -> None:
+    with pytest.raises(Exit, match=r"No 'tests/benchmarks' directory"):
+        testing.benchmark(_context())
+
+
+def test_benchmark_measures_a_benchmark_file(flat_project: Path) -> None:
+    (flat_project / "bench").mkdir()
+    (flat_project / "bench" / "test_b.py").write_text(
+        "def test_b(benchmark):\n    assert benchmark(sum, [1, 2]) == 3\n"
+    )
+    assert testing.benchmark(_context(), args="-p no:cacheprovider", paths="bench") is None
 
 
 def test_doctest_markdown_does_not_walk_into_the_venv(
