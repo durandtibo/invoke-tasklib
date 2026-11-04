@@ -3,13 +3,15 @@ r"""Cleanup tasks."""
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from invoke.exceptions import Exit
 from invoke.tasks import task
 
-from invoke_tasklib.config import EXCLUDED_DIRS
+from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import build_command, run
 
@@ -34,6 +36,7 @@ FILES = (".coverage", "coverage.xml")
 FILE_GLOBS = (".coverage.*",)
 SITE_DIR = "site"
 MKDOCS_CONFIGS = ("mkdocs.yml", "docs/mkdocs.yml")
+_SITE_DIR_PATTERN = re.compile(r"^site_dir:[ \t]*(?P<value>[^#\n]*)", re.MULTILINE)
 
 
 @task(
@@ -46,9 +49,11 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
 
     The removed paths are ``dist``, ``build``, ``__pycache__``,
     ``.pytest_cache``, ``.coverage``, etc. The ``site`` directory is
-    only removed if the project has a ``mkdocs.yml`` file, because that
-    is what produces it. The ``*.egg-info`` directories are removed at
-    the root and in ``src``.
+    only removed if the project has a MkDocs config file, because that
+    is what produces it: the ``site_dir`` of ``paths.docs_config``
+    (relative to the config file, ``docs/site`` by default), or
+    ``site`` if the config is not valid. The ``*.egg-info`` directories
+    are removed at the root and in ``src``.
 
     A top-level directory (``build``, ``dist``, ``site``, ...) that
     contains files tracked by git is kept, and the task says so.
@@ -60,8 +65,7 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     """
     say(c, "🧹 Cleaning build artifacts and caches" + (" (dry run)..." if dry_run else "..."))
     dirs = [Path(d) for d in DIRS]
-    if _has_mkdocs_config():
-        dirs.append(Path(SITE_DIR))
+    dirs.extend(_site_dirs(c))
     for d in dirs:
         _remove_dir(c, d, dry_run=dry_run, keep_tracked=True)
     for pattern in DIR_GLOBS:
@@ -151,31 +155,76 @@ def _find_pycache_dirs(root: Path) -> list[Path]:
     return sorted(found)
 
 
-def _has_mkdocs_config() -> bool:
-    r"""Check if the project builds documentation with MkDocs.
+def _site_dirs(c: Context) -> list[Path]:
+    r"""Return the directories where MkDocs builds the site.
+
+    The config file is ``paths.docs_config``. If the config is not
+    valid (for example there is no ``package.name`` yet), the
+    ``MKDOCS_CONFIGS`` files are used instead.
+
+    Args:
+        c: The invoke context.
 
     Returns:
-        ``True`` if one of ``MKDOCS_CONFIGS`` exists in the current
-        directory, ``False`` otherwise.
+        The ``site_dir`` of each config file that exists (``site`` if
+        the file does not set it), relative to the directory of the
+        config file. The list is empty if no config file exists.
 
     Example usage:
 
     ```pycon
     >>> import os
     >>> import tempfile
-    >>> from invoke_tasklib.clean import _has_mkdocs_config
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.clean import _site_dirs
     >>> cwd = os.getcwd()
     >>> with tempfile.TemporaryDirectory() as tmp:
     ...     os.chdir(tmp)
-    ...     found = _has_mkdocs_config()
+    ...     found = _site_dirs(Context(config=Config()))
     ...     os.chdir(cwd)
     ...
     >>> found
-    False
+    []
 
     ```
     """
-    return any(Path(config).is_file() for config in MKDOCS_CONFIGS)
+    try:
+        configs = [Path(load_config(c).paths.docs_config)]
+    except Exit:
+        configs = [Path(config) for config in MKDOCS_CONFIGS]
+    return [config.parent / _read_site_dir(config) for config in configs if config.is_file()]
+
+
+def _read_site_dir(config: Path) -> str:
+    r"""Read the ``site_dir`` option of a MkDocs config file.
+
+    The file is not parsed as YAML: the plain ``site_dir: value`` line
+    is read, with or without quotes.
+
+    Args:
+        config: The path of the MkDocs config file.
+
+    Returns:
+        The value of ``site_dir``, or ``"site"`` if it is not set.
+
+    Example usage:
+
+    ```pycon
+    >>> import tempfile
+    >>> from pathlib import Path
+    >>> from invoke_tasklib.clean import _read_site_dir
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     path = Path(tmp) / "mkdocs.yml"
+    ...     _ = path.write_text("site_dir: 'public'  # output\n")
+    ...     _read_site_dir(path)
+    'public'
+
+    ```
+    """
+    match = _SITE_DIR_PATTERN.search(config.read_text(encoding="utf-8"))
+    value = match.group("value").strip().strip("'\"") if match else ""
+    return value or SITE_DIR
 
 
 def _has_tracked_files(c: Context, path: Path) -> bool:

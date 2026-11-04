@@ -24,7 +24,10 @@ def test_audit_commands() -> None:
             "uv export --locked --no-emit-project --no-hashes --all-groups "
             "--quiet -o /work/x/requirements.txt"
         ),
-        "uvx pip-audit -r /work/x/requirements.txt --no-deps --disable-pip",
+        (
+            "uvx --from 'pip-audit>=2.10,<3' pip-audit -r /work/x/requirements.txt "
+            "--no-deps --disable-pip"
+        ),
     ]
 
 
@@ -34,7 +37,8 @@ def test_audit_with_args() -> None:
         tmp.return_value.__enter__.return_value = "/work/x"
         security.audit(c, args="--ignore-vuln PYSEC-1")
     assert commands(c)[1] == (
-        "uvx pip-audit -r /work/x/requirements.txt --no-deps --disable-pip --ignore-vuln PYSEC-1"
+        "uvx --from 'pip-audit>=2.10,<3' pip-audit -r /work/x/requirements.txt "
+        "--no-deps --disable-pip --ignore-vuln PYSEC-1"
     )
 
 

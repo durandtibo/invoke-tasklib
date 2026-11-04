@@ -79,7 +79,8 @@ invoke test.all
 ```
 
 Runs everything in `paths.tests` in a single `pytest` invocation, with the largest of the three timeouts
-(60s by default, since the integration and functional tests are part of that directory).
+(60s by default, since the integration and functional tests are part of that directory). If
+`paths.tests` does not exist, the task prints a message and skips, like the other scopes.
 
 ## Coverage
 
@@ -113,7 +114,8 @@ invoke test.coverage-report
 
 Runs `python -m coverage` (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (`.coverage`)
 is currently on disk — the data produced by an earlier `--cov` run — without re-running the tests.
-Pass `--open-browser` to also open `htmlcov/index.html` in your default browser:
+The report goes to `htmlcov/`, or to the `directory` of `[tool.coverage.html]` in `pyproject.toml`.
+Pass `--open-browser` to also open its `index.html` in your default browser:
 
 ```shell
 invoke test.coverage-report --open-browser

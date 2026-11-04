@@ -140,6 +140,11 @@
               "description": "Run pytest with --xdoctest.",
               "default": true
             },
+            "timeout": {
+              "type": "boolean",
+              "description": "Run pytest with --timeout (it requires pytest-timeout).",
+              "default": true
+            },
             "cov_fail_under": {
               "type": [
                 "integer",
@@ -204,6 +209,11 @@
               ],
               "description": "Steps of check.all (comma-separated string or list).",
               "default": "format-python,format-docstrings,lint,types,imports,unit"
+            },
+            "cov": {
+              "type": "boolean",
+              "description": "Run the unit step of check.all with --cov, so cov_fail_under is enforced.",
+              "default": false
             }
           }
         },

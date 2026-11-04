@@ -19,8 +19,8 @@ echo "demo==1.0" > "$2"
 """
 
 _UVX = """#!/bin/sh
-# fake `uvx pip-audit -r FILE ...`: record the content of FILE
-cat "$3" > "$FAKE_AUDIT_LOG"
+# fake `uvx --from SPEC pip-audit -r FILE ...`: record the content of FILE
+cat "$5" > "$FAKE_AUDIT_LOG"
 """
 
 

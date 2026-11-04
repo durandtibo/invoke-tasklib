@@ -259,15 +259,19 @@ def test_publish_latest_does_not_check_the_published_versions_of_a_pre_release(
 #     Tests for _last_version_tag     #
 #######################################
 
-_TAG_COMMAND = "git tag --list 'v[0-9]*' --sort=-v:refname"
+_TAG_COMMAND = "git tag --list 'v[0-9]*'"
 
 
 def _git(stdout: str) -> MockContext:
     return MockContext(config=Config(), run={_TAG_COMMAND: Result(stdout=stdout)})
 
 
-def test_last_version_tag_returns_the_first_tag() -> None:
-    assert doc._last_version_tag(_git("v1.2.0\nv1.1.0\n")) == "v1.2.0"
+def test_last_version_tag_returns_the_highest_tag() -> None:
+    assert doc._last_version_tag(_git("v1.1.0\nv1.2.0\n")) == "v1.2.0"
+
+
+def test_last_version_tag_compares_numbers_not_text() -> None:
+    assert doc._last_version_tag(_git("v1.9.5\nv1.10.0\nv1.2.0\n")) == "v1.10.0"
 
 
 def test_last_version_tag_without_tag_is_none() -> None:
@@ -278,8 +282,33 @@ def test_last_version_tag_skips_a_tag_that_is_not_a_version() -> None:
     assert doc._last_version_tag(_git("v2beta\nv1.1.0\n")) == "v1.1.0"
 
 
-def test_last_version_tag_keeps_a_pre_release_tag() -> None:
-    assert doc._last_version_tag(_git("v1.3.0rc1\nv1.2.0\n")) == "v1.3.0rc1"
+def test_last_version_tag_skips_a_pre_release_tag() -> None:
+    assert doc._last_version_tag(_git("v1.3.0rc1\nv1.2.0\n")) == "v1.2.0"
+
+
+def test_last_version_tag_prefers_the_release_over_its_candidate() -> None:
+    assert doc._last_version_tag(_git("v1.2.0rc1\nv1.2.0\nv1.1.0\n")) == "v1.2.0"
+
+
+def test_last_version_tag_with_only_pre_releases_is_none() -> None:
+    assert doc._last_version_tag(_git("v1.2.0rc1\nv1.2.0b2\n")) is None
+
+
+@pytest.mark.parametrize(
+    ("tag", "key"),
+    [
+        ("v1.10.0", (1, 10, 0)),
+        ("1.2", (1, 2)),
+        ("v2.0.1.4", (2, 0, 1, 4)),
+        ("v1.2.0rc1", (1, 2, 0)),
+    ],
+)
+def test_version_key(tag: str, key: tuple[int, ...]) -> None:
+    assert doc._version_key(tag) == key
+
+
+def test_version_key_without_number_is_empty() -> None:
+    assert doc._version_key("latest") == ()
 
 
 #########################################
