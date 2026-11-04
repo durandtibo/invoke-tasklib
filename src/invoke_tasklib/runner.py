@@ -45,7 +45,10 @@ def python_executable() -> str:
 ARGS_HELP = 'Extra arguments for the tool, as one string, e.g. "-k foo -x".'
 r"""Help of the ``--args`` option of the tasks."""
 
-PATHS_HELP = "Files or directories to run on, as one string, instead of the default."
+PATHS_HELP = (
+    "Files or directories to run on, as one string, instead of the default "
+    "(globs and ~ are passed as they are)."
+)
 r"""Help of the ``--paths`` option of the tasks."""
 
 UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
@@ -145,7 +148,10 @@ def build_command(
             like a shell does, e.g. ``"-k foo -x"``. They come after the
             fixed arguments.
         paths: Paths of the user, as one string that is split like a
-            shell does. They replace ``default_paths``.
+            shell does. They replace ``default_paths``. A glob (``*``)
+            or ``~`` is quoted, so the tool receives it as it is: it
+            is up to the tool to expand a glob, and ``~`` is never
+            expanded.
         default_paths: The paths used when ``paths`` is not set.
         args_option: The name of the option that ``args`` comes from,
             used in the error message (for a task that has more than
@@ -153,7 +159,7 @@ def build_command(
 
     Returns:
         The command line. The arguments and the paths are quoted when
-        needed.
+        needed, so the shell does not expand a glob, ``~`` or ``$VAR``.
 
     Raises:
         Exit: If ``args`` or ``paths`` cannot be split (for example an
@@ -167,6 +173,8 @@ def build_command(
     'ruff check .'
     >>> build_command("ruff", args="-x", paths="src")
     'ruff -x src'
+    >>> build_command("ruff", paths="*.py")
+    "ruff '*.py'"
 
     ```
     """

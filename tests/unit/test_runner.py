@@ -303,6 +303,14 @@ def test_build_command_quotes_shell_metacharacters() -> None:
     assert build_command("ruff check", args="--x ';rm -rf /'") == "ruff check --x ';rm -rf /'"
 
 
+def test_build_command_passes_a_glob_as_it_is() -> None:
+    assert build_command("codespell", paths="src/*.py") == "codespell 'src/*.py'"
+
+
+def test_build_command_passes_a_tilde_as_it_is() -> None:
+    assert build_command("codespell", paths="~/x") == "codespell '~/x'"
+
+
 def test_build_command_does_not_quote_the_program() -> None:
     assert build_command("uv run pip-audit") == "uv run pip-audit"
 
