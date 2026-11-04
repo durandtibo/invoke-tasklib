@@ -1620,21 +1620,22 @@
 <tbody>
 <tr>
 <td><code>security.audit</code></td>
-<td>Audits installed dependencies for known vulnerabilities (read-only)</td>
+<td>Audits the locked dependencies for known vulnerabilities (read-only)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>security.audit
 </code></pre></div>
-<p>This runs <code>uv run pip-audit</code>, which checks the currently installed dependencies against known
-vulnerability databases (via <a href="https://github.com/pypa/advisory-database">PyPI's Advisory Database</a>)
-and exits non-zero if any known vulnerability is found.</p>
-<p>Since it audits <em>installed</em> packages, run <a href="../env/"><code>env.install</code></a> first if dependencies haven't
-been installed yet.</p>
+<p>This exports <code>uv.lock</code> to a temporary requirements file (<code>uv export --locked</code>) and audits it with
+<code>uvx pip-audit</code> against known vulnerability databases (via
+<a href="https://github.com/pypa/advisory-database">PyPI's Advisory Database</a>). It exits non-zero if the lock
+file is out of date or if a vulnerability is found.</p>
+<p>The task does not sync or modify the environment, and the result depends on the lock file, not on
+what was installed last. <code>pip-audit</code> does not have to be a dependency of the project.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../env/">Env</a>: <code>env.install</code> to install the dependencies this task audits.</li>
+<li><a href="../env/">Env</a>: <code>env.update</code> to update the lock file this task audits.</li>
 <li><a href="../../refs/security/"><code>invoke_tasklib.security</code> reference</a></li>
 <li><a href="../../troubleshooting/">Troubleshooting</a>: fixes for "command not found" errors.</li>
 </ul>

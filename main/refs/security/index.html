@@ -1640,8 +1640,37 @@
 
     <div class="doc doc-contents ">
 
-        <p>Audit the dependencies for known vulnerabilities.</p>
-<p>The audit is done with <code>pip-audit</code>.</p>
+        <p>Audit the locked dependencies for known vulnerabilities.</p>
+<p>The dependencies of <code>uv.lock</code> are exported to a temporary
+requirements file, which is audited with <code>pip-audit</code> (run with
+<code>uvx</code>, so it does not have to be a dependency of the project).
+Unlike <code>uv run pip-audit</code>, this does not sync or modify the
+environment, and the result does not depend on what was installed
+last.</p>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnexpectedExit">UnexpectedExit</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the lock file is out of date, or if a
+vulnerability is found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
