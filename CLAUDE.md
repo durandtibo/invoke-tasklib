@@ -82,7 +82,9 @@
   of the neighbouring test modules. Do not call a real tool in a unit test.
 - Do not use local imports inside tests. Import at the top of the module.
 - One behaviour per test: a test has one `assert` or one `pytest.raises`. Split a test that checks
-  several things into several tests.
+  several things into several tests. A `pytest.raises` may be followed by one `assert` on the
+  caught exception (`info.value.code`), because the exception is the one behaviour. Do not add an
+  `assert` on something else after it.
 - Keep the unit tests simple and fast: no sleeps, no large data, no real network or heavy I/O,
   and no logic (loops, branches) in the test body.
 - Add the missing tests to get 100% coverage of the code you add or change
