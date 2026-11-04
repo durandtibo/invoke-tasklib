@@ -151,6 +151,8 @@ def test_render_the_whole_config() -> None:
         "    cov_reports: [html, xml, term]  # default",
         "  check:",
         "    tasks: [format-python, format-docstrings, lint, types, imports, unit]  # default",
+        "  fix:",
+        "    tasks: [lint, format-python, format-docstrings]  # default",
     ]
 
 
@@ -187,7 +189,7 @@ def test_show_prints_the_lines(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_show_prints_nothing_else(capsys: pytest.CaptureFixture[str]) -> None:
     configuration.show(_context(_MINIMAL))
-    assert capsys.readouterr().out.splitlines()[-1].startswith("    tasks: [")
+    assert capsys.readouterr().out.splitlines()[-1].startswith("    tasks: [lint, ")
 
 
 def test_show_exits_on_an_invalid_config() -> None:

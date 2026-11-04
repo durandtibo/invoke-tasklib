@@ -140,6 +140,12 @@ See the [user guide](uguide/config.md) for the full config schema.
 
 [Learn more →](uguide/check.md)
 
+### 🔧 **Fix**
+
+- `fix.all` (or `fix`): fix the lint and format issues
+
+[Learn more →](uguide/fix.md)
+
 ### 🧹 **Clean**
 
 - `clean.all` (or `clean`): remove build artifacts and caches

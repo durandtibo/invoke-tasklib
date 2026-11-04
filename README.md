@@ -160,6 +160,7 @@ Tasks are grouped into namespaces, one per module. Each task either
 | `doc`      | `doc.serve`                   | Serve the docs locally                                                                   |    ❌    |
 | `security` | `security.audit`              | Audit the locked dependencies for known vulnerabilities with pip-audit                   |    ❌    |
 | `check`    | `check.all` (or `check`)      | Run the main read-only checks                                                            |    ❌    |
+| `fix`      | `fix.all` (or `fix`)          | Fix the lint and format issues                                                           |    ✅    |
 | `clean`    | `clean.all` (or `clean`)      | Remove build artifacts and caches                                                        |    ✅    |
 | `clean`    | `clean.pycache`               | Remove all `__pycache__` directories                                                     |    ✅    |
 | `config`   | `config.show`                 | Show the resolved config and where each value comes from                                 |    ❌    |
@@ -202,6 +203,8 @@ tasklib:
     cov_reports: html,xml,term
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit # steps of check.all
+  fix:
+    tasks: lint,format-python,format-docstrings # steps of fix.all
 ```
 
 See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)
