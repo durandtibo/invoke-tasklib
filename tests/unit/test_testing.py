@@ -204,6 +204,12 @@ def test_all_without_coverage() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 60 tests"]
 
 
+def test_all_without_timeout() -> None:
+    c = make_context({"package": {"name": "mypkg"}, "test": {"timeout": False}})
+    test_tasks.all_(c)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest tests"]
+
+
 def test_all_with_coverage() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     test_tasks.all_(c, cov=True)

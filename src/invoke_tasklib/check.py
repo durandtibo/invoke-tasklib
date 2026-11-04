@@ -48,7 +48,9 @@ PROGRAMS: dict[str, tuple[str, ...]] = {
 r"""The programs that each step of ``check.all`` runs, by step name."""
 
 # The Python modules that each step of ``check.all`` runs, by step name.
-# ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true.
+# ``unit`` also needs ``xdoctest`` if ``tasklib.test.xdoctest`` is true,
+# and does not need ``pytest_timeout`` if ``tasklib.test.timeout`` is
+# false.
 MODULES: dict[str, tuple[str, ...]] = {
     "format-python": (),
     "format-docstrings": (),
@@ -75,6 +77,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
         A ``(tool, reason)`` pair for each program of ``PROGRAMS`` that
         is not on the ``PATH`` and each module of ``MODULES`` that is
         not installed, in that order. The reason says how to install it.
+        ``xdoctest`` is only needed with ``tasklib.test.xdoctest`` and
+        ``pytest_timeout`` only with ``tasklib.test.timeout``.
 
     Example usage:
 
@@ -93,6 +97,8 @@ def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
     modules = MODULES[step]
     if step == "unit" and cfg.test.xdoctest:
         modules = (*modules, "xdoctest")
+    if step == "unit" and not cfg.test.timeout:
+        modules = tuple(module for module in modules if module != "pytest_timeout")
     return missing_tools(PROGRAMS[step], modules)
 
 

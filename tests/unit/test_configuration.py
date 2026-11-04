@@ -147,6 +147,7 @@ def test_render_the_whole_config() -> None:
         "    integration_timeout: 60  # default",
         "    functional_timeout: 60  # default",
         "    xdoctest: true  # default",
+        "    timeout: true  # default",
         "    cov_fail_under: null  # default",
         "    cov_reports: [html, xml, term]  # default",
         "  check:",

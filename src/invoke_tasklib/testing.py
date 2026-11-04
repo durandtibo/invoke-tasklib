@@ -176,9 +176,12 @@ def _run_pytest(
 ) -> None:
     r"""Run pytest on a directory of tests.
 
-    The command is ``python -m pytest [--xdoctest] --timeout <timeout>``
-    followed by the coverage options and the path. ``--xdoctest`` is
-    used unless ``tasklib.test.xdoctest`` is false, and
+    The command is
+    ``python -m pytest [--xdoctest] [--timeout <timeout>]`` followed by
+    the coverage options and the path. ``--xdoctest`` is used unless
+    ``tasklib.test.xdoctest`` is false, ``--timeout`` is used unless
+    ``tasklib.test.timeout`` is false (the project does not have
+    ``pytest-timeout``), and
     ``--cov-fail-under`` is used with ``cov`` if
     ``tasklib.test.cov_fail_under`` is set.
 
@@ -187,7 +190,8 @@ def _run_pytest(
         path: The directory (or file) of tests.
         label: The name of the scope, used in the messages, e.g.
             ``"unit tests"``.
-        timeout: The timeout in seconds of each test.
+        timeout: The timeout in seconds of each test. It is not used if
+            ``tasklib.test.timeout`` is false.
         cov: If True, generate coverage reports in HTML, XML and
             terminal formats.
         append: If True and ``cov`` is True, append to the coverage data
@@ -228,7 +232,8 @@ def _run_pytest(
         cmd = [f"{python_executable()} -m pytest"]
         if options.xdoctest:
             cmd.append("--xdoctest")
-        cmd.append(f"--timeout {timeout}")
+        if options.timeout:
+            cmd.append(f"--timeout {timeout}")
         if cov:
             cmd.extend(f"--cov-report {report}" for report in options.cov_reports)
             if append:

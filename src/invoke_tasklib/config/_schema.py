@@ -69,6 +69,7 @@ class TestConfig:
     integration_timeout: int
     functional_timeout: int
     xdoctest: bool
+    timeout: bool
     cov_fail_under: int | None
     cov_reports: tuple[str, ...]
 
@@ -240,6 +241,12 @@ SCHEMA: dict[str, dict[str, Option]] = {
             partial(_validate_bool, "test", "xdoctest"),
             {"type": "boolean"},
             "Run pytest with --xdoctest.",
+        ),
+        "timeout": Option(
+            True,
+            partial(_validate_bool, "test", "timeout"),
+            {"type": "boolean"},
+            "Run pytest with --timeout (it requires pytest-timeout).",
         ),
         "cov_fail_under": Option(
             None,
