@@ -363,8 +363,8 @@ One branch and one pull request per row, in this order. Each row can be released
 marked **breaking** goes in the notes of `0.1.0`. Rows 1-5 are independent of each other; row 6
 needs row 3; rows 7-10 are stacked and need row 2 (the test protects the refactor).
 
-| Step | Change                                                                                                                                                                                                        | Breaking                         | Fixes  | PR  |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------ | --- |
+| Step | Change                                                                                                                                                                                                        | Breaking                         | Fixes  | PR   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------ | ---- |
 | 1    | `run_step` catches `Exception`; delete `STEP_ERRORS`. Regression tests for `EOFError`, `StopIteration`, `TimeoutExpired` (they fail without the change); P4 sentence in `architecture.md`.                    | no                               | F2     | #371 |
 | 2    | M6 test for `check.STEPS` and `fix.STEPS`: the commands of each step against `Step.needs`. Fix any drift it finds (none expected); `architecture.md` gets M6.                                                 | no                               | F3     | #372 |
 | 3    | Real defaults in `SCHEMA` (tuples), `json_schema()` arrays, remove the stale `Option` sentence, fix the `get_config` docstring, regenerate `schema.json`.                                                     | no (schema defaults change type) | F6     | #373 |
