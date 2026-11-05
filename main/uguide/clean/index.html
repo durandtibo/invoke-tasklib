@@ -1831,8 +1831,10 @@
 <p>Removes, if present, at the repository root:</p>
 <ul>
 <li>Directories: <code>build</code>, <code>dist</code>, <code>.pytest_cache</code>, <code>.ruff_cache</code>, <code>.coverage_html</code>, <code>htmlcov</code>,
-  <code>.benchmarks</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>, and <code>site</code> only if the project has a
-  <code>mkdocs.yml</code> or <code>docs/mkdocs.yml</code> file (what produces it)</li>
+  <code>.benchmarks</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>, and the MkDocs output
+  directory, only if the MkDocs config file exists (what produces it): the <code>site_dir</code> of
+  <code>paths.docs_config</code>, relative to the config file (<code>docs/site</code> by default). If the config is not
+  valid, <code>site</code> for a <code>mkdocs.yml</code> and <code>docs/site</code> for a <code>docs/mkdocs.yml</code> are used</li>
 <li>Glob-matched directories: <code>*.egg-info</code> (at the root and in <code>src</code>) and every <code>__pycache__</code>
   directory of the project. The <code>.venv</code>, <code>.git</code>, <code>.pytest_cache</code> and <code>node_modules</code> directories are never walked
   into, so nothing inside them is removed.</li>

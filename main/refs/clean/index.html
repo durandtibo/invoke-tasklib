@@ -1861,9 +1861,11 @@
         <p>Remove build artifacts and caches.</p>
 <p>The removed paths are <code>dist</code>, <code>build</code>, <code>__pycache__</code>,
 <code>.pytest_cache</code>, <code>.coverage</code>, etc. The <code>site</code> directory is
-only removed if the project has a <code>mkdocs.yml</code> file, because that
-is what produces it. The <code>*.egg-info</code> directories are removed at
-the root and in <code>src</code>.</p>
+only removed if the project has a MkDocs config file, because that
+is what produces it: the <code>site_dir</code> of <code>paths.docs_config</code>
+(relative to the config file, <code>docs/site</code> by default), or
+<code>site</code> if the config is not valid. The <code>*.egg-info</code> directories
+are removed at the root and in <code>src</code>.</p>
 <p>A top-level directory (<code>build</code>, <code>dist</code>, <code>site</code>, ...) that
 contains files tracked by git is kept, and the task says so.</p>
 
