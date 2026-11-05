@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shlex
 import sys
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
@@ -83,9 +82,7 @@ def step_needs_of_commands(
     monkeypatch.setattr(
         runner,
         "check_program",
-        lambda command: checked.append(
-            shlex.split(command) if isinstance(command, str) else list(command)
-        ),
+        lambda command: checked.append(list(command)),
     )
     step.task(c)
     modules = {words[2] for words in checked if words[:2] == [sys.executable, "-m"]}

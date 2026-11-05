@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import importlib.util
 import os
-import re
-import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -25,16 +23,6 @@ __all__ = [
     "not_found_message",
     "tool_path",
 ]
-
-_UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
-    {"command", "cd", "export", "test", "[", "exec", "source", ".", ":"}
-)
-r"""First words of a command that are not looked up on the ``PATH``
-(shell builtins).
-
-Some of them have an executable on some systems only (for example ``cd``
-on macOS).
-"""
 
 
 class Tool(NamedTuple):
@@ -172,33 +160,6 @@ _PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
 }
 r"""The pytest options that come from a plugin, as a tuple of the module
 and of the package to install, by option."""
-
-_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
-
-
-def _strip_assignments(words: Sequence[str]) -> list[str]:
-    r"""Remove the leading ``NAME=value`` words of a command.
-
-    Args:
-        words: The words of a command.
-
-    Returns:
-        The words from the first one that is not an assignment of an
-        environment variable.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.tools import _strip_assignments
-    >>> _strip_assignments(["FOO=1", "BAR=", "ruff", "check"])
-    ['ruff', 'check']
-
-    ```
-    """
-    start = 0
-    while start < len(words) and _ASSIGNMENT.match(words[start]):
-        start += 1
-    return list(words[start:])
 
 
 def hint(name: str) -> str:
@@ -399,29 +360,22 @@ def find_tool(name: str, *, module: bool = False) -> str | None:
     return shutil.which(name, path=tool_path())
 
 
-def check_program(command: str | Sequence[str]) -> None:
+def check_program(command: Sequence[str]) -> None:
     r"""Check that the program of a command is available.
 
-    The command is a list of words, or a command line. Only the first
-    word of the command is checked, after the ``NAME=value`` words that
-    set environment variables if it is a command line (a list is a
-    program and its arguments: the first word is the program). It is not
-    checked when it is a path (for example the running interpreter, see
-    ``python_executable``, or ``~/bin/tool``) or one of
-    ``_UNCHECKED_PROGRAMS`` (the shell builtins). For
-    ``python -m <module>`` with the running interpreter, the module is
-    checked, and so are the plugins of the pytest options (see
-    ``_PLUGIN_OPTIONS``).
+    The command is a program and its arguments, as a list of words: only
+    the first word is looked up. It is not checked when it is a path
+    (for example the running interpreter, see ``python_executable``, or
+    ``~/bin/tool``). For ``python -m <module>`` with the running
+    interpreter, the module is checked, and so are the plugins of the
+    pytest options (see ``_PLUGIN_OPTIONS``).
 
-    The tasks run one program, so the rest of the command line is not
-    parsed: a pipeline (``a | b``), a list (``a && b``), a subshell or
-    a reserved word of the shell is not understood, and only its first
-    word is looked up. To run such a command, pass ``check=False`` to
-    ``run``. A command that cannot be split like a shell does (an
-    unclosed quote) is not checked: the shell reports it.
+    The words are never given to a shell parser, so a program that is a
+    shell builtin or a shell function or alias is not found: pass
+    ``check=False`` to ``run`` to run it.
 
     Args:
-        command: The words of the command, or the command line.
+        command: The words of the command.
 
     Raises:
         Exit: If the program (or the module) is not found. The message
@@ -431,26 +385,19 @@ def check_program(command: str | Sequence[str]) -> None:
 
     ```pycon
     >>> from invoke_tasklib.tools import check_program
-    >>> check_program("cd docs")
-    >>> check_program(["cd", "docs"])
-    >>> check_program("no-such-program --version")
+    >>> check_program(["/bin/sh", "-c", "true"])
+    >>> check_program(["no-such-program", "--version"])
     Traceback (most recent call last):
         ...
     invoke.exceptions.Exit: ...
 
     ```
     """
-    if isinstance(command, str):
-        try:
-            words = _strip_assignments(shlex.split(command))
-        except ValueError:
-            return
-    else:
-        words = list(command)
+    words = list(command)
     if not words:
         return
     program = words[0]
-    if "/" in program or program in _UNCHECKED_PROGRAMS:
+    if "/" in program:
         _check_module(words)
     elif shutil.which(program, path=tool_path()) is None:
         raise Exit(not_found_message(program), code=127)

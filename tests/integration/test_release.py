@@ -142,7 +142,10 @@ def test_publish_environment_does_not_leak_an_inherited_token(
 ) -> None:
     monkeypatch.setenv("UV_PUBLISH_TOKEN", "pypi-secret")
     result = run(
-        subprocess_context(), "uv publish", env=release._publish_environment(None), replace_env=True
+        subprocess_context(),
+        ["uv", "publish"],
+        env=release._publish_environment(None),
+        replace_env=True,
     )
     assert result.stdout == "token=none\n"
 
@@ -151,7 +154,7 @@ def test_publish_environment_does_not_leak_an_inherited_token(
 def test_publish_environment_gives_the_chosen_token() -> None:
     result = run(
         subprocess_context(),
-        "uv publish",
+        ["uv", "publish"],
         env=release._publish_environment("chosen"),
         replace_env=True,
     )
