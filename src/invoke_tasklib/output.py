@@ -13,8 +13,9 @@ if TYPE_CHECKING:
 
     from invoke.context import Context
 
+__all__ = ["report_failure", "say", "step"]
 
-ASCII_ENV_VAR = "INVOKE_TASKLIB_ASCII"
+_ASCII_ENV_VAR = "INVOKE_TASKLIB_ASCII"
 r"""Environment variable that forces ASCII-only messages when set."""
 
 _ASCII_TAGS: dict[str, str] = {"✅": "[ok]", "❌": "[fail]", "⏭️": "[skip]"}
@@ -134,7 +135,7 @@ def say(c: Context, message: str, *, err: bool = False) -> None:
     configured = c.config.run.err_stream if err else c.config.run.out_stream
     stream = configured or (sys.stderr if err else sys.stdout)
     text = f"{message}\n"
-    if os.environ.get(ASCII_ENV_VAR, "") not in {"", "0"}:
+    if os.environ.get(_ASCII_ENV_VAR, "") not in {"", "0"}:
         text = _to_encoding(text, "ascii").encode("ascii", "replace").decode("ascii")
     try:
         stream.write(text)

@@ -17,6 +17,18 @@ if TYPE_CHECKING:
     from invoke.context import Context
     from invoke.runners import Result
 
+__all__ = [
+    "ARGS_HELP",
+    "PATHS_HELP",
+    "build_command",
+    "capture",
+    "in_ci",
+    "in_github_actions",
+    "python_executable",
+    "run",
+    "split_args",
+]
+
 
 def python_executable() -> str:
     r"""Return the shell-quoted path of the running Python interpreter.

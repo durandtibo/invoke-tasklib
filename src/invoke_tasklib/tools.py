@@ -16,8 +16,17 @@ from invoke.exceptions import Exit
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+__all__ = [
+    "TOOLS",
+    "Tool",
+    "check_program",
+    "find_tool",
+    "hint",
+    "not_found_message",
+    "tool_path",
+]
 
-UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
+_UNCHECKED_PROGRAMS: frozenset[str] = frozenset(
     {"command", "cd", "export", "test", "[", "exec", "source", ".", ":"}
 )
 r"""First words of a command that are not looked up on the ``PATH``
@@ -151,13 +160,13 @@ plugins read it. Names are unique across the programs and the
 modules.
 """
 
-DEFAULT_HINT = (
+_DEFAULT_HINT = (
     "Install the project tools with `invoke env.install` (see the troubleshooting page of the "
     "documentation)."
 )
 r"""The hint of a tool that is not in ``TOOLS``."""
 
-PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
+_PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
     option: (tool.name, tool.name.replace("_", "-"))
     for tool in TOOLS.values()
     for option in tool.plugin_options
@@ -201,7 +210,7 @@ def hint(name: str) -> str:
 
     Returns:
         The ``hint`` of the tool in ``TOOLS``; else the command that
-        installs its dependency group; else ``DEFAULT_HINT`` (the tool
+        installs its dependency group; else ``_DEFAULT_HINT`` (the tool
         is not in ``TOOLS``).
 
     Example usage:
@@ -219,12 +228,12 @@ def hint(name: str) -> str:
     """
     tool = TOOLS.get(name)
     if tool is None:
-        return DEFAULT_HINT
+        return _DEFAULT_HINT
     if tool.hint is not None:
         return tool.hint
     if tool.group is not None:
         return f"Install it with the '{tool.group}' group: `uv sync --group {tool.group}`."
-    return DEFAULT_HINT
+    return _DEFAULT_HINT
 
 
 def _check_plugin_options(words: Sequence[str]) -> None:
@@ -238,7 +247,7 @@ def _check_plugin_options(words: Sequence[str]) -> None:
         words: The words of the command, after ``python -m pytest``.
 
     Raises:
-        Exit: If an option of ``PLUGIN_OPTIONS`` is used and the module
+        Exit: If an option of ``_PLUGIN_OPTIONS`` is used and the module
             of its plugin is not installed.
 
     Example usage:
@@ -253,9 +262,9 @@ def _check_plugin_options(words: Sequence[str]) -> None:
         if word == "--":
             return
         option = word.partition("=")[0]
-        if option not in PLUGIN_OPTIONS:
+        if option not in _PLUGIN_OPTIONS:
             continue
-        module, package = PLUGIN_OPTIONS[option]
+        module, package = _PLUGIN_OPTIONS[option]
         if importlib.util.find_spec(module) is None:
             msg = (
                 f"The option {option} needs the pytest plugin '{package}', which is not "
@@ -334,7 +343,7 @@ def _check_module(words: Sequence[str]) -> None:
     a module is looked up for this interpreter. Without this check, a
     missing module is reported by Python as ``No module named ...``,
     with no hint. For ``pytest``, the plugins of the options are checked
-    too, see ``PLUGIN_OPTIONS``.
+    too, see ``_PLUGIN_OPTIONS``.
 
     Args:
         words: The words of a command.
@@ -398,10 +407,10 @@ def check_program(command: str) -> None:
     ``NAME=value`` words that set environment variables. It is not
     checked when it is a path (for example the running interpreter, see
     ``python_executable``, or ``~/bin/tool``) or one of
-    ``UNCHECKED_PROGRAMS`` (the shell builtins). For
+    ``_UNCHECKED_PROGRAMS`` (the shell builtins). For
     ``python -m <module>`` with the running interpreter, the module is
     checked, and so are the plugins of the pytest options (see
-    ``PLUGIN_OPTIONS``).
+    ``_PLUGIN_OPTIONS``).
 
     The tasks run one program, so the rest of the command line is not
     parsed: a pipeline (``a | b``), a list (``a && b``), a subshell or
@@ -436,7 +445,7 @@ def check_program(command: str) -> None:
     if not words:
         return
     program = words[0]
-    if "/" in program or program in UNCHECKED_PROGRAMS:
+    if "/" in program or program in _UNCHECKED_PROGRAMS:
         _check_module(words)
     elif shutil.which(program, path=tool_path()) is None:
         raise Exit(not_found_message(program), code=127)

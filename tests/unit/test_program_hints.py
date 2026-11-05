@@ -9,8 +9,8 @@ from invoke.exceptions import Exit
 
 from invoke_tasklib import make_ns
 from invoke_tasklib.tools import (
+    _UNCHECKED_PROGRAMS,
     TOOLS,
-    UNCHECKED_PROGRAMS,
     _strip_assignments,
 )
 from tests.helpers import commands, make_context
@@ -66,5 +66,5 @@ def _programs_of(task: Task) -> set[str]:
 
 @pytest.mark.parametrize("name", sorted(_TASKS))
 def test_every_program_of_a_task_has_an_install_hint(name: str) -> None:
-    known = set(TOOLS) | UNCHECKED_PROGRAMS
+    known = set(TOOLS) | _UNCHECKED_PROGRAMS
     assert _programs_of(_TASKS[name]) - known == set()

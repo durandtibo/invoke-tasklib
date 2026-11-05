@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import ast
+import importlib
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,6 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 SRC = Path(__file__).parents[2] / "src" / "invoke_tasklib"
+GUIDE = Path(__file__).parents[2] / "docs" / "docs" / "uguide" / "custom_tasks.md"
 PACKAGE = "invoke_tasklib"
 
 # The layers of ``architecture.md``: a module imports only from its own
@@ -189,3 +192,46 @@ def test_tool_is_registered_under_its_name(name: str) -> None:
 @pytest.mark.parametrize("steps", [check.STEPS, fix.STEPS], ids=["check", "fix"])
 def test_every_tool_of_the_steps_is_in_tools(steps: dict) -> None:
     assert _tools_needed(steps) - set(TOOLS) == set()
+
+
+###########################################
+#     Tests for M2 (the public names)     #
+###########################################
+
+# The support modules whose public names the user guide documents.
+SUPPORT_MODULES = ["config", "output", "runner", "tools"]
+
+
+def _public_names(module: str) -> set[str]:
+    r"""List the functions, classes and constants that a module defines
+    and whose name does not start with an underscore."""
+    tree = ast.parse((SRC / f"{module}.py").read_text(encoding="utf-8"))
+    names: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef | ast.ClassDef):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+    return {name for name in names if not name.startswith("_")}
+
+
+@pytest.mark.parametrize("module", SUPPORT_MODULES)
+def test_every_name_of_all_is_in_the_user_guide(module: str) -> None:
+    mod = importlib.import_module(f"{PACKAGE}.{module}")
+    guide = GUIDE.read_text(encoding="utf-8")
+    missing = [name for name in mod.__all__ if not re.search(rf"\b{re.escape(name)}\b", guide)]
+    assert missing == []
+
+
+@pytest.mark.parametrize("module", ["output", "runner", "tools"])
+def test_every_public_name_of_a_support_module_is_in_all(module: str) -> None:
+    mod = importlib.import_module(f"{PACKAGE}.{module}")
+    assert _public_names(module) - set(mod.__all__) == set()
+
+
+@pytest.mark.parametrize("module", SUPPORT_MODULES)
+def test_every_name_of_all_exists(module: str) -> None:
+    mod = importlib.import_module(f"{PACKAGE}.{module}")
+    assert [name for name in mod.__all__ if not hasattr(mod, name)] == []

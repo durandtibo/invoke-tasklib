@@ -86,7 +86,7 @@ Seven small modules support the task modules:
   the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
   `not_found_message` say how to install a tool. Every program and module is one `Tool` of
   `tools.TOOLS` (name, kind, dependency group or install hint, pytest options for a plugin);
-  `hint(name)` is one lookup in it, `PLUGIN_OPTIONS` (option to plugin) is derived from it, and
+  `hint(name)` is one lookup in it, `_PLUGIN_OPTIONS` (option to plugin) is derived from it, and
   `env.check-tools` loops over it.
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
@@ -188,6 +188,7 @@ says what enforces each one.
 | P5  | Fail before acting     | An unknown key, an invalid value or a wrong working directory exits with `2` before any command runs.                      | `config/_validate.py`; `tests/unit/config/`                 |
 | P7  | Commands are data      | A task builds one command string from the config and the options, and every user value is quoted.                          | `runner.build_command`; `tests/integration/test_quoting.py` |
 | M1  | Layers                 | See the previous section.                                                                                                  | `test_architecture.py`                                      |
+| M2  | Public means documented | A name of `config`, `runner`, `tools` or `output` is public only if it is in the `__all__` of its module and in `uguide/custom_tasks.md`. Everything else starts with `_`. | `test_architecture.py` |
 | M3  | Every function tested  | Every function, private ones included, has a docstring and a unit test. Coverage is 100%.                                  | `test_docstrings.py`, `--cov-fail-under=100`                |
 
 The tool tables are kept consistent by the same test module: every program and module named by a
