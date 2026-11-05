@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 NAMESPACE = "lint"
 r"""The name of the namespace of the tasks of this module."""
 
-
 @task(
     help={
         "output_format": (

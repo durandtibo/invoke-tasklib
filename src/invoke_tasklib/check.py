@@ -97,8 +97,8 @@ step name.
 
 The modules of ``unit`` depend on the config, see ``_unit_modules``. To
 add a step, add its name to ``CHECK_STEPS`` in ``config/_constants.py``
-(a test checks that the names agree), and its programs and install
-hints to ``TOOLS`` in ``tools.py``.
+(a test checks that the names agree), and its programs and install hints
+to ``TOOLS`` in ``tools.py``.
 """
 
 
