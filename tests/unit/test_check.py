@@ -13,7 +13,7 @@ from invoke_tasklib._steps import missing_tools
 from invoke_tasklib.config import get_config, load_config
 from invoke_tasklib.config._constants import CHECK_STEPS
 from invoke_tasklib.tools import TOOLS
-from tests.helpers import commands, make_context
+from tests.helpers import commands, declared_needs, make_context, step_needs_of_commands
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -473,3 +473,18 @@ def test_types_step_needs_the_configured_checker() -> None:
 
 def test_types_step_needs_ty_by_default() -> None:
     assert check.STEPS["types"].needs(_cfg())[0] == ("ty",)
+
+
+###########################################
+#     Tests for the tools of the commands #
+###########################################
+
+
+@pytest.mark.parametrize("name", list(check.STEPS))
+def test_step_declares_the_tools_that_its_task_runs(
+    name: str, monkeypatch: pytest.MonkeyPatch, default_project: Path
+) -> None:
+    (default_project / "run.sh").write_text("")
+    c = _context()
+    step = check.STEPS[name]
+    assert step_needs_of_commands(step, c, monkeypatch) == declared_needs(step, load_config(c))

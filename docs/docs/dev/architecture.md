@@ -204,9 +204,11 @@ its maintainers (`M1`-`M5`). The last column says what enforces each one; a prop
 | M3  | Every function tested   | Every function, private ones included, has a docstring, a unit test and, if the unit test patches a collaborator, an integration test. Coverage is 100% (lines and branches). A function has no parameter that every caller passes with the same value.                                                                                     | `test_docstrings.py`, `--cov-fail-under=100`; the last sentence is a review rule                                 |
 | M4  | Cheap to import         | `import invoke_tasklib` stays below 100 ms; `make_ns()` does no I/O.                                                                                                                                                                                                                                                                        | `tests/benchmarks/test_init_benchmark.py`, nightly `ci-benchmark.yaml`                                           |
 | M5  | Invoke internals apart  | The private attributes of `invoke.config.Config` are read in one module, `config/_invoke.py`, which warns when one is missing. No other module calls `getattr` or `hasattr` on a config for a name that starts with `_`.                                                                                                                    | `test_architecture.py` (AST scan of `src/` for `getattr`/`hasattr` of a private name)                            |
+| M6 | Declared equals run | The programs and modules that a `Step` declares are exactly those that its task runs with a check. A tool that a task runs and the step does not declare would be missing from the preflight (P6); one that is declared and not run blocks a step for nothing. | `test_check.py` and `test_fix.py` record the commands of every step |
 
 The tool tables are kept consistent by the same test module: every program and module named by a
-step of `check.STEPS` or `fix.STEPS` is in `tools.TOOLS`.
+step of `check.STEPS` or `fix.STEPS` is in `tools.TOOLS`, and (M6) is the one that the task of the
+step runs with a check.
 
 ## Data Flow
 

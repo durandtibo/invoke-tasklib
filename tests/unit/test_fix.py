@@ -6,10 +6,10 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import _steps, fix
-from invoke_tasklib.config import get_config
+from invoke_tasklib.config import get_config, load_config
 from invoke_tasklib.config._constants import FIX_STEPS
 from invoke_tasklib.tools import TOOLS
-from tests.helpers import commands, make_context
+from tests.helpers import commands, declared_needs, make_context, step_needs_of_commands
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -124,3 +124,18 @@ def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:
     cfg = get_config(_context())
     programs = {name for step in fix.STEPS.values() for name in step.needs(cfg)[0]}
     assert programs <= {n for n, t in TOOLS.items() if t.kind == "program"}
+
+
+###########################################
+#     Tests for the tools of the commands #
+###########################################
+
+
+@pytest.mark.parametrize("name", list(fix.STEPS))
+def test_step_declares_the_tools_that_its_task_runs(
+    name: str, monkeypatch: pytest.MonkeyPatch, default_project: Path
+) -> None:
+    (default_project / "run.sh").write_text("")
+    c = _context()
+    step = fix.STEPS[name]
+    assert step_needs_of_commands(step, c, monkeypatch) == declared_needs(step, load_config(c))
