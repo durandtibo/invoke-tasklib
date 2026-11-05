@@ -8,7 +8,8 @@ from invoke.tasks import task
 
 from invoke_tasklib import formatting, lint
 from invoke_tasklib._steps import Step, run_composite
-from invoke_tasklib.config import FIX_STEPS, load_config
+from invoke_tasklib.config import load_config
+from invoke_tasklib.config._constants import FIX_STEPS
 
 if TYPE_CHECKING:
     from invoke.context import Context

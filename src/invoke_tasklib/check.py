@@ -8,7 +8,8 @@ from invoke.tasks import task
 
 from invoke_tasklib import doc, formatting, imports, lint, security, testing, typecheck
 from invoke_tasklib._steps import Step, run_composite
-from invoke_tasklib.config import CHECK_STEPS, load_config
+from invoke_tasklib.config import load_config
+from invoke_tasklib.config._constants import CHECK_STEPS
 
 if TYPE_CHECKING:
     from invoke.context import Context

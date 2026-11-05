@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib.config import PROJECT_PREFIX_ATTRIBUTE, SCHEMA, Unset, load_config
+from invoke_tasklib.config import SCHEMA, load_config
+from invoke_tasklib.config._resolve import PROJECT_PREFIX_ATTRIBUTE
+from invoke_tasklib.config._schema import Unset
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:

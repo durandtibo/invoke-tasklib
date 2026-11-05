@@ -6,7 +6,7 @@ import json
 import sys
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, get_type_hints
 
 from invoke_tasklib.config._constants import (
     CHECK_STEPS,
@@ -20,14 +20,13 @@ from invoke_tasklib.config._constants import (
 from invoke_tasklib.config._validate import (
     _normalize_groups,
     _validate_bool,
-    _validate_check_tasks,
     _validate_checker,
     _validate_cov_fail_under,
     _validate_cov_reports,
-    _validate_fix_tasks,
     _validate_import_name,
     _validate_int,
     _validate_python_version,
+    _validate_steps,
     _validate_str,
 )
 
@@ -296,7 +295,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     "check": {
         "tasks": Option(
             ",".join(DEFAULT_CHECK_STEPS),
-            _validate_check_tasks,
+            partial(_validate_steps, "check", CHECK_STEPS),
             {
                 "anyOf": [
                     {"type": "string"},
@@ -315,7 +314,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     "fix": {
         "tasks": Option(
             ",".join(DEFAULT_FIX_STEPS),
-            _validate_fix_tasks,
+            partial(_validate_steps, "fix", FIX_STEPS),
             {
                 "anyOf": [
                     {"type": "string"},
@@ -332,15 +331,7 @@ It is the single source of the known keys, the defaults, the validation
 and the JSON schema.
 """
 
-_SECTION_CLASSES: dict[str, type] = {
-    "package": PackageConfig,
-    "paths": PathsConfig,
-    "groups": GroupsConfig,
-    "test": TestConfig,
-    "types": TypesConfig,
-    "check": CheckConfig,
-    "fix": FixConfig,
-}
+_SECTION_CLASSES: dict[str, type] = get_type_hints(TasklibConfig)
 r"""The dataclass of each section of ``SCHEMA``."""
 
 
@@ -365,28 +356,6 @@ def _defaults(section: str) -> dict[str, object]:
     return {key: option.default for key, option in SCHEMA[section].items()}
 
 
-DEFAULT_PACKAGE: dict[str, object] = _defaults("package")
-r"""Defaults of the ``package`` section."""
-
-DEFAULT_PATHS: dict[str, object] = _defaults("paths")
-r"""Defaults of the ``paths`` section."""
-
-DEFAULT_GROUPS: dict[str, object] = _defaults("groups")
-r"""Defaults of the ``groups`` section."""
-
-DEFAULT_TEST: dict[str, object] = _defaults("test")
-r"""Defaults of the ``test`` section."""
-
-DEFAULT_TYPES: dict[str, object] = _defaults("types")
-r"""Defaults of the ``types`` section."""
-
-DEFAULT_CHECK: dict[str, object] = _defaults("check")
-r"""Defaults of the ``check`` section."""
-
-DEFAULT_FIX: dict[str, object] = _defaults("fix")
-r"""Defaults of the ``fix`` section."""
-
-
 def default_config() -> dict[str, dict[str, object]]:
     r"""Return the defaults of the ``tasklib`` config section.
 
@@ -402,9 +371,9 @@ def default_config() -> dict[str, dict[str, object]]:
 
     Returns:
         A new dict with the ``package``, ``paths``, ``groups``,
-        ``test``, ``check`` and ``fix`` sections, each a copy of its
-        ``DEFAULT_*`` dict, except that a boolean or an integer is
-        an ``Unset``.
+        ``test``, ``check`` and ``fix`` sections, each with the default
+        of every key of ``SCHEMA``, except that a boolean or an integer
+        is an ``Unset``.
 
     Example usage:
 
@@ -419,18 +388,9 @@ def default_config() -> dict[str, dict[str, object]]:
 
     ```
     """
-    sections = {
-        "package": DEFAULT_PACKAGE,
-        "paths": DEFAULT_PATHS,
-        "groups": DEFAULT_GROUPS,
-        "test": DEFAULT_TEST,
-        "types": DEFAULT_TYPES,
-        "check": DEFAULT_CHECK,
-        "fix": DEFAULT_FIX,
-    }
     return {
-        section: {key: _untyped(value) for key, value in defaults.items()}
-        for section, defaults in sections.items()
+        section: {key: _untyped(option.default) for key, option in options.items()}
+        for section, options in SCHEMA.items()
     }
 
 
@@ -546,7 +506,7 @@ def main(argv: Sequence[str]) -> int:
     Example usage:
 
     ```pycon
-    >>> from invoke_tasklib.config import main
+    >>> from invoke_tasklib.config._schema import main
     >>> _ = main(["--bad"])
     usage: python -m invoke_tasklib.config
 

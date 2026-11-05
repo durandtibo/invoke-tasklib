@@ -1,7 +1,12 @@
 from __future__ import annotations
 
-from invoke_tasklib.config import CHECK_STEPS, DEFAULT_CHECK, DEFAULT_FIX, FIX_STEPS
-from invoke_tasklib.config._constants import DEFAULT_CHECK_STEPS, DEFAULT_FIX_STEPS
+from invoke_tasklib.config import SCHEMA
+from invoke_tasklib.config._constants import (
+    CHECK_STEPS,
+    DEFAULT_CHECK_STEPS,
+    DEFAULT_FIX_STEPS,
+    FIX_STEPS,
+)
 
 ####################################
 #     Tests for the step lists     #
@@ -32,8 +37,8 @@ def test_default_fix_steps_are_the_first_fix_steps() -> None:
 
 
 def test_default_check_tasks_are_derived_from_the_default_steps() -> None:
-    assert DEFAULT_CHECK["tasks"] == ",".join(DEFAULT_CHECK_STEPS)
+    assert SCHEMA["check"]["tasks"].default == ",".join(DEFAULT_CHECK_STEPS)
 
 
 def test_default_fix_tasks_are_derived_from_the_default_steps() -> None:
-    assert DEFAULT_FIX["tasks"] == ",".join(DEFAULT_FIX_STEPS)
+    assert SCHEMA["fix"]["tasks"].default == ",".join(DEFAULT_FIX_STEPS)
