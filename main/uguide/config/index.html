@@ -2207,7 +2207,10 @@ the library, or no value for an optional key), <code>project file</code> (<code>
 <code>environment variable INVOKE_TASKLIB_...</code>, <code>system config file</code>, <code>user config file</code>,
 <code>runtime config file</code> or <code>override</code> (set from the command line or by code). <code>derived</code> is a value
 that no source sets, computed from other values or from the project (<code>import_name</code>, <code>src</code> and the
-test paths). The config is validated first, so an invalid one stops the task with
+test paths). The origins come from private attributes of Invoke (there is no public API for them):
+if a release of Invoke renames one, the task writes a warning on the error stream that names it,
+and the check that <code>inv</code> runs from the project root (also based on one of them) writes a
+<code>RuntimeWarning</code>, instead of going on silently. The config is validated first, so an invalid one stops the task with
 the usual one-line message. The task reads nothing but the config and the project directories of
 <a href="#defaults"><code>paths</code></a>, and changes nothing.</p>
 <h2 id="editor-completion-json-schema">Editor Completion (JSON Schema)<a class="headerlink" href="#editor-completion-json-schema" title="Permanent link">&para;</a></h2>

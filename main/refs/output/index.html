@@ -2158,14 +2158,17 @@ stream.</p>
 
 
 <a href="#invoke_tasklib.output.step" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">step</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">done</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Generator">Generator</span></span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">step</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">done</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Generator">Generator</span></span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Report the start and the end of a step of a task.</p>
 <p>The start message is written when the block is entered and the done
-message when it exits normally. If the block raises, a failure
+message (if there is one) when it exits normally. If the block
+raises, a failure
 message (<code>❌ Failed: &lt;start message without symbol and dots&gt;</code>) is
 written to the error stream instead and the exception is raised
 again, so that a failed step is visible and not only the output of
@@ -2220,15 +2223,17 @@ the tool.</p>
                 <code>done</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="str">str</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The message written when the step succeeds.</p>
+                <p>The message written when the step succeeds, or <code>None</code>
+for a step that has none (its work is the last thing the
+task says).</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>

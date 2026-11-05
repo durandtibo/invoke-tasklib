@@ -2015,19 +2015,22 @@
   </span>
 
 <a href="#invoke_tasklib.env.TOOL_MODULES" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">TOOL_MODULES</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"pytest"</span><span class="p">,</span>
-    <span class="s2">"coverage"</span><span class="p">,</span>
-    <span class="s2">"xdoctest"</span><span class="p">,</span>
-    <span class="s2">"pytest_timeout"</span><span class="p">,</span>
-    <span class="s2">"pytest_cov"</span><span class="p">,</span>
-    <span class="s2">"pytest_benchmark"</span><span class="p">,</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">TOOL_MODULES</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">(</span>
+    <span class="n"><span title="t">t</span></span><span class="o">.</span><span class="n"><span title="t.name">name</span></span>
+    <span class="k">for</span> <span class="n"><span title="t">t</span></span> <span class="ow">in</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.tools.TOOLS
+
+
+  
+      module-attribute
+  " href="../tools/#invoke_tasklib.tools.TOOLS">TOOLS</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.tools.TOOLS.values">values</span></span><span class="p">()</span>
+    <span class="k">if</span> <span class="n"><span title="t">t</span></span><span class="o">.</span><span class="n"><span title="t.kind">kind</span></span> <span class="o">==</span> <span class="s2">"module"</span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>The Python modules and pytest plugins that the tasks need.</p>
+        <p>The Python modules and pytest plugins that the tasks need (derived
+from <code>tools.TOOLS</code>).</p>
 
     </div>
 
@@ -2046,26 +2049,22 @@
   </span>
 
 <a href="#invoke_tasklib.env.TOOL_PROGRAMS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">TOOL_PROGRAMS</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"uv"</span><span class="p">,</span>
-    <span class="s2">"uvx"</span><span class="p">,</span>
-    <span class="s2">"git"</span><span class="p">,</span>
-    <span class="s2">"ruff"</span><span class="p">,</span>
-    <span class="s2">"ty"</span><span class="p">,</span>
-    <span class="s2">"pyright"</span><span class="p">,</span>
-    <span class="s2">"docformatter"</span><span class="p">,</span>
-    <span class="s2">"codespell"</span><span class="p">,</span>
-    <span class="s2">"pre-commit"</span><span class="p">,</span>
-    <span class="s2">"shellcheck"</span><span class="p">,</span>
-    <span class="s2">"shfmt"</span><span class="p">,</span>
-    <span class="s2">"mkdocs"</span><span class="p">,</span>
-    <span class="s2">"mike"</span><span class="p">,</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">TOOL_PROGRAMS</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">(</span>
+    <span class="n"><span title="t">t</span></span><span class="o">.</span><span class="n"><span title="t.name">name</span></span>
+    <span class="k">for</span> <span class="n"><span title="t">t</span></span> <span class="ow">in</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.tools.TOOLS
+
+
+  
+      module-attribute
+  " href="../tools/#invoke_tasklib.tools.TOOLS">TOOLS</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.tools.TOOLS.values">values</span></span><span class="p">()</span>
+    <span class="k">if</span> <span class="n"><span title="t">t</span></span><span class="o">.</span><span class="n"><span title="t.kind">kind</span></span> <span class="o">==</span> <span class="s2">"program"</span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>The programs that the tasks run, looked up on the <code>PATH</code>.</p>
+        <p>The programs that the tasks run, looked up on the <code>PATH</code>
+(derived from <code>tools.TOOLS</code>).</p>
 
     </div>
 

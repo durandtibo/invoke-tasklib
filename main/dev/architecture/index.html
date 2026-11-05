@@ -2171,8 +2171,10 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <li><code>tools.py</code>: finds the tools that the tasks run: <code>find_tool</code> looks a program up on the <code>PATH</code> or
   a module up for the running interpreter, <code>check_program</code> checks the first word of a command (and
   the module of <code>python -m &lt;module&gt;</code> and the plugins of the pytest options), and <code>hint</code> and
-  <code>not_found_message</code> say how to install a tool (<code>PROGRAM_HINTS</code>, <code>PROGRAM_GROUPS</code> and
-  <code>MODULE_GROUPS</code>).</li>
+  <code>not_found_message</code> say how to install a tool. Every program and module is one <code>Tool</code> of
+  <code>tools.TOOLS</code> (name, kind, dependency group or install hint, pytest options for a plugin);
+  <code>PROGRAM_HINTS</code>, <code>PROGRAM_GROUPS</code>, <code>MODULE_GROUPS</code>, <code>PLUGIN_OPTIONS</code> and <code>env.TOOL_PROGRAMS</code> /
+  <code>env.TOOL_MODULES</code> are derived from it.</li>
 <li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
   step, or a failure message.</li>
@@ -2204,9 +2206,9 @@ returns one, for a step whose modules depend on an option (<code>check._unit_mod
    <code>check.STEPS</code> (or <code>fix.STEPS</code>).</li>
 <li>Add the name to <code>CHECK_STEPS</code> (or <code>FIX_STEPS</code>) in <code>config/_constants.py</code>: the config must not
    import the task modules, and a test checks that the names agree with <code>STEPS</code>.</li>
-<li>Add the programs and modules to <code>TOOL_PROGRAMS</code> and <code>TOOL_MODULES</code> of <code>env.py</code> (a test checks
-   that every tool of <code>STEPS</code> is listed), and their install hints to <code>PROGRAM_HINTS</code> or
-   <code>PROGRAM_GROUPS</code> (or <code>MODULE_GROUPS</code> for a module) of <code>tools.py</code> (a test checks that too).</li>
+<li>Add each new program or module to <code>TOOLS</code> of <code>tools.py</code> as a <code>Tool</code> with its dependency group
+   (or an install hint), and the pytest options of a plugin: <code>env.check-tools</code>, the hints and the
+   check of the plugins read it (a test checks that every tool of <code>STEPS</code> is listed).</li>
 <li>To run the step by default, put it among the first steps of <code>CHECK_STEPS</code> (or <code>FIX_STEPS</code>) and
    extend <code>DEFAULT_CHECK_STEPS</code> (or <code>DEFAULT_FIX_STEPS</code>) in <code>config/_constants.py</code>, which derive the
    default of <code>check.tasks</code> (or <code>fix.tasks</code>) in <code>config/_schema.py</code>; update the tables of the user
