@@ -1952,7 +1952,8 @@ always put its console scripts on <code>PATH</code> the way you expect. Make sur
 <li>Your virtual environment is activated (<code>source .venv/bin/activate</code>), or</li>
 <li>You run it via <code>uv run invoke ...</code>, or</li>
 <li><code>invoke</code> itself is installed as a tool (<code>uv tool install invoke</code>). Note that
-  <a href="../uguide/env/"><code>env.create-venv</code></a> installs <code>invoke</code> into the new <code>.venv</code>, not as a tool.</li>
+  <a href="../uguide/env/"><code>env.create-venv</code></a> installs the project, with <code>invoke</code>, into the new <code>.venv</code>, not
+  as a tool.</li>
 </ul>
 <h2 id="invoke-list-shows-no-tasks-ns-is-empty"><code>invoke --list</code> shows no tasks / <code>ns</code> is empty<a class="headerlink" href="#invoke-list-shows-no-tasks-ns-is-empty" title="Permanent link">&para;</a></h2>
 <p>Check that <code>tasks.py</code> actually builds and exposes <code>ns</code>:</p>

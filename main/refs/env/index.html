@@ -2076,7 +2076,10 @@ needed, so the task can be run before anything is set up.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Create a virtual environment and install invoke in it.</p>
+        <p>Create a virtual environment and install the project in it.</p>
+<p>The project is installed with <code>env.install</code> (<code>uv sync</code>), so the
+environment gets <code>invoke</code> within the bounds of the project, and
+the packages that <code>tasks.py</code> imports, such as <code>invoke-tasklib</code>.</p>
 
 
 <details class="note" open>
