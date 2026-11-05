@@ -141,8 +141,8 @@ invoke test.benchmark
 Runs `pytest --benchmark-only --benchmark-enable` against `paths.benchmarks` (`--benchmark-enable` measures even if
 the pytest config has `--benchmark-disable` in `addopts`, which this repository uses so that a normal test run
 executes each benchmark once). This requires
-[`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task is skipped
-with a message if `paths.benchmarks` does not exist.
+[`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task fails with the exit code 1 if `paths.benchmarks` does not exist
+(and `--paths` is not given): it is run on purpose, so a scheduled job does not pass without measuring.
 
 `test.benchmark`, `test.doctest-src` and `test.doctest-markdown` take `--args` and `--paths`, and
 `test.coverage-report` takes `--args` (for example `--fail-under=90`).
