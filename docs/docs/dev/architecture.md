@@ -30,7 +30,8 @@ It:
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
   `invoke.yaml`.
 - Merges it on top of the defaults declared in `SCHEMA` (`default_config()` and
-  the JSON schema are loops over it).
+  the JSON schema are loops over it; `default_config()` registers an `Unset` for every key so Invoke
+  reads the environment variables as text).
 - Rejects unknown keys and validates the values (`package.python_version`, `package.import_name`,
   `groups.*`, `test.*`, `check.tasks`, `fix.tasks`).
 - Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
