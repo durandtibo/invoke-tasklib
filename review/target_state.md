@@ -358,7 +358,7 @@ others branch from `main`.
 | 11   | **Make the task modules' extra names private (F5, M2).** The 22 names get a `_`; the test of M2 extends to the task modules; trim `docs/refs/`. Last of the breaking steps: it comes after 4, 5, 6, 7 and 10, which touch the same names.           | yes                             |
 | 12   | **Release `0.1.0`.** The notes list the breaking rows (9, 11) and the one behaviour row (6) with the replacement for each name. Needs a decision to ship (it was step 13 of the previous plan).                                                     | -                               |
 
-**Status.** Steps 1-3 are merged (#354-#356) and step 7 is in #361; no other step is started; the six decisions of section 9 are made, so no step waits on one. The previous plan's steps 1-12 are merged (#334-#349,
+**Status.** Steps 1-5 are merged (#354-#356, #358, #359) and step 7 is in #361; no other step is started; the six decisions of section 9 are made, so no step waits on one. The previous plan's steps 1-12 are merged (#334-#349,
 #350 for the tracking page); its step 13, the release, is the last row above.
 
 Order: 1 first (it is the baseline of the contract), then 2. 3 is independent and can go at any

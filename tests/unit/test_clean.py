@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from invoke.runners import Result
 
 from invoke_tasklib import clean
+from invoke_tasklib.config import TasklibConfig, get_config, load_config
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -364,41 +365,41 @@ def test_find_pycache_dirs_does_not_descend_into_pycache(tmp_path: Path) -> None
 
 @pytest.mark.usefixtures("project")
 def test_site_dirs_is_empty_without_a_config() -> None:
-    assert clean._site_dirs(make_context()) == []
+    assert clean._site_dirs(None) == []
 
 
 def test_site_dirs_finds_the_root_config(project: Path) -> None:
     (project / "mkdocs.yml").write_text("")
-    assert clean._site_dirs(make_context()) == [Path("site")]
+    assert clean._site_dirs(None) == [Path("site")]
 
 
 def test_site_dirs_finds_the_docs_config(project: Path) -> None:
     _mkdir("docs")(project)
     (project / "docs" / "mkdocs.yml").write_text("")
-    assert clean._site_dirs(make_context()) == [Path("docs/site")]
+    assert clean._site_dirs(None) == [Path("docs/site")]
 
 
 def test_site_dirs_uses_the_configured_docs_config(project: Path) -> None:
     _mkdir("d")(project)
     (project / "d" / "mkdocs.yml").write_text("")
-    c = make_context({**_CFG, "paths": {"docs_config": "d/mkdocs.yml"}})
-    assert clean._site_dirs(c) == [Path("d/site")]
+    cfg = get_config(make_context({**_CFG, "paths": {"docs_config": "d/mkdocs.yml"}}))
+    assert clean._site_dirs(cfg) == [Path("d/site")]
 
 
 def test_site_dirs_ignores_the_fallback_files_with_a_valid_config(project: Path) -> None:
     (project / "mkdocs.yml").write_text("")
-    assert clean._site_dirs(make_context(_CFG)) == []
+    assert clean._site_dirs(get_config(make_context(_CFG))) == []
 
 
 def test_site_dirs_reads_the_site_dir_option(project: Path) -> None:
     _mkdir("docs")(project)
     (project / "docs" / "mkdocs.yml").write_text("site_dir: out\n")
-    assert clean._site_dirs(make_context(_CFG)) == [Path("docs/out")]
+    assert clean._site_dirs(get_config(make_context(_CFG))) == [Path("docs/out")]
 
 
 def test_site_dirs_ignores_a_directory_named_like_the_config(project: Path) -> None:
     _mkdir("mkdocs.yml")(project)
-    assert clean._site_dirs(make_context()) == []
+    assert clean._site_dirs(None) == []
 
 
 ####################################
@@ -929,17 +930,37 @@ def test_all_removes_a_file_listed_twice_once(
     assert capsys.readouterr().out.count("Removing coverage.xml") == 1
 
 
+#################################
+#     Tests for _try_config     #
+#################################
+
+
+def test_try_config_returns_the_config() -> None:
+    assert isinstance(clean._try_config(make_context(_CFG)), TasklibConfig)
+
+
+def test_try_config_of_an_invalid_config_is_none() -> None:
+    assert clean._try_config(make_context()) is None
+
+
+def test_all_loads_the_config_once() -> None:
+    with patch("invoke_tasklib.clean.load_config", wraps=load_config) as loader:
+        clean.all_(make_context(_CFG), dry_run=True)
+    assert loader.call_count == 1
+
+
 ##################################
 #     Tests for _cov_reports     #
 ##################################
 
 
 def test_cov_reports_reads_the_config() -> None:
-    assert clean._cov_reports(_cov_context("html:cov_html,term")) == ("html:cov_html", "term")
+    cfg = get_config(_cov_context("html:cov_html,term"))
+    assert clean._cov_reports(cfg) == ("html:cov_html", "term")
 
 
-def test_cov_reports_of_an_invalid_config_is_empty() -> None:
-    assert clean._cov_reports(make_context()) == ()
+def test_cov_reports_without_a_config_is_empty() -> None:
+    assert clean._cov_reports(None) == ()
 
 
 ######################################
@@ -949,12 +970,17 @@ def test_cov_reports_of_an_invalid_config_is_empty() -> None:
 
 def test_coverage_outputs_reads_the_pyproject_of_the_project(project: Path) -> None:
     (project / "pyproject.toml").write_text('[tool.coverage.html]\ndirectory = "h"\n')
-    assert clean._coverage_outputs(make_context()).html_dir == "h"
+    assert clean._coverage_outputs(None).html_dir == "h"
 
 
 def test_coverage_outputs_ignores_an_invalid_pyproject(project: Path) -> None:
     (project / "pyproject.toml").write_text("[tool.coverage\n")
-    assert clean._coverage_outputs(make_context()).html_dir == "htmlcov"
+    assert clean._coverage_outputs(None).html_dir == "htmlcov"
+
+
+def test_coverage_outputs_follows_the_reports_of_the_config() -> None:
+    cfg = get_config(_cov_context("html:cov_html"))
+    assert clean._coverage_outputs(cfg).html_dir == "cov_html"
 
 
 def test_all_removes_the_default_coverage_html_dir_with_an_invalid_pyproject(
