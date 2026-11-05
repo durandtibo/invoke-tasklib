@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import runpy
 import sys
 from typing import TYPE_CHECKING
 
@@ -16,7 +15,6 @@ from invoke_tasklib._discover import (
     discover_modules,
     find_spec,
     import_each,
-    main,
 )
 
 if TYPE_CHECKING:
@@ -155,87 +153,6 @@ def test_walk_returns_sorted_dotted_names(pkg: Path) -> None:
 
 def test_walk_empty_directory(tmp_path: Path) -> None:
     assert _walk("p", [str(tmp_path)]) == []
-
-
-##########################
-#     Tests for main     #
-##########################
-
-
-def test_main_prints_one_module_per_line(pkg: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    main([pkg.name])
-    assert capsys.readouterr().out == (
-        "discoverpkg\ndiscoverpkg.a\ndiscoverpkg.sub\ndiscoverpkg.sub.b\ndiscoverpkg.sub.deep\n"
-    )
-
-
-def test_main_success_exit_code(pkg: Path) -> None:
-    assert main([pkg.name]) == 0
-
-
-def test_main_unknown_package_exit_code() -> None:
-    assert main(["no_such_pkg_xyz"]) == 1
-
-
-def test_main_unknown_package_message(capsys: pytest.CaptureFixture[str]) -> None:
-    main(["no_such_pkg_xyz"])
-    assert capsys.readouterr().err == "No module named 'no_such_pkg_xyz'\n"
-
-
-@pytest.mark.parametrize("argv", [[], ["a", "b"]])
-def test_main_invalid_arguments_exit_code(argv: list[str]) -> None:
-    assert main(argv) == 2
-
-
-def test_main_invalid_arguments_usage(capsys: pytest.CaptureFixture[str]) -> None:
-    main([])
-    assert capsys.readouterr().err == (
-        "usage: python -m invoke_tasklib._discover [--import-each] <package>\n"
-    )
-
-
-def test_main_import_each_without_a_package_is_a_usage_error() -> None:
-    assert main(["--import-each"]) == 2
-
-
-def test_main_import_each_prints_the_count(capsys: pytest.CaptureFixture[str]) -> None:
-    main(["--import-each", "keyword"])
-    assert capsys.readouterr().out == "1\n"
-
-
-def test_main_import_each_unknown_package_exit_code() -> None:
-    assert main(["--import-each", "no_such_pkg_xyz"]) == 1
-
-
-def test_main_import_each_exit_code_is_0_when_a_module_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    (tmp_path / "failpkg").mkdir()
-    (tmp_path / "failpkg" / "__init__.py").write_text("raise RuntimeError('boom')\n")
-    monkeypatch.syspath_prepend(str(tmp_path))
-    importlib.invalidate_caches()
-    assert main(["--import-each", "failpkg"]) == 0
-
-
-def test_main_import_each_prints_the_failures(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    (tmp_path / "failpkg2").mkdir()
-    (tmp_path / "failpkg2" / "__init__.py").write_text("")
-    (tmp_path / "failpkg2" / "bad.py").write_text("raise RuntimeError('boom')\n")
-    monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("PYTHONPATH", str(tmp_path))
-    importlib.invalidate_caches()
-    main(["--import-each", "failpkg2"])
-    assert capsys.readouterr().out == "2\nfailpkg2.bad\tRuntimeError: boom\n"
-
-
-def test_running_the_module_exits_with_the_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(sys, "argv", ["_discover", "no_such_pkg_xyz"])
-    monkeypatch.delitem(sys.modules, "invoke_tasklib._discover")
-    with pytest.raises(SystemExit, match=r"^1$") as exc_info:
-        runpy.run_module("invoke_tasklib._discover", run_name="__main__")
-    assert exc_info.value.code == 1
 
 
 #####################################

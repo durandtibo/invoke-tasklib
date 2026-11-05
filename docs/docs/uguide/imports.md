@@ -59,9 +59,9 @@ Unlike `imports.check-cycles`, the package that is checked is the one the interp
 installed (editable) package, or the one in the current directory for a flat layout. The task checks the source tree, not a built
 artifact: use `release.build` to check an artifact (it imports the package in isolated mode).
 
-One worker command (`python -m invoke_tasklib._discover --import-each <package>`) does the discovery
-and starts the interpreters, so the task runs a single command whatever the size of the package. It is
-not echoed and its output is hidden. The task prints one line, and then either one `✅` summary or one
+The discovery runs in the Invoke process and imports nothing; only the imports start interpreters
+(one per module), so the task runs no command in the Invoke context. If the package cannot be found,
+the task exits with 1 and says so. The task prints one line, and then either one `✅` summary or one
 `❌ <module>: <last line of the traceback>` line for each module that failed (in the order of the
 modules) and the exit code 1. Every module is tried, so one run lists all the failures.
 

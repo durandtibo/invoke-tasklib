@@ -1,16 +1,8 @@
 r"""Discover the modules of a package without importing them.
 
-It is run in a subprocess by ``imports.check-isolated``::
-
-    python -m invoke_tasklib._discover <package>
-
-and prints one module name per line, or::
-
-    python -m invoke_tasklib._discover --import-each <package>
-
-which imports every module in its own interpreter (the worker of
-``imports.check-isolated``) and prints the number of modules, then one
-line ``<module>\t<reason>`` for each module that fails to import.
+``imports.check-isolated`` calls ``import_each``, which imports every
+module in its own interpreter. ``find_spec`` and ``discover_modules``
+are shared with the import graph (``_graph``).
 """
 
 from __future__ import annotations
@@ -274,53 +266,3 @@ def import_each(name: str, workers: int = MAX_WORKERS) -> tuple[int, list[tuple[
     modules = discover_modules(name)
     reasons = asyncio.run(_try_import_all(modules, workers))
     return len(modules), [(m, r) for m, r in zip(modules, reasons, strict=True) if r is not None]
-
-
-def main(argv: list[str]) -> int:
-    r"""Print the modules of the package given on the command line.
-
-    With ``--import-each`` before the name, every module is imported in
-    its own interpreter instead (see ``import_each``): the output is the
-    number of modules, then ``<module>\t<reason>`` for each failure.
-    The exit code is 0 even if modules failed: the caller reads the
-    output.
-
-    Args:
-        argv: The command line arguments, without the program name:
-            the name of the package, with ``--import-each`` before it
-            to import the modules.
-
-    Returns:
-        The exit code: 0 on success, 2 if the arguments are invalid,
-        1 if the package cannot be found.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib._discover import main
-    >>> _ = main(["invoke_tasklib"])  # doctest: +ELLIPSIS
-    invoke_tasklib
-    ...
-
-    ```
-    """
-    each = argv[:1] == ["--import-each"]
-    names = argv[1:] if each else argv
-    if len(names) != 1:
-        sys.stderr.write("usage: python -m invoke_tasklib._discover [--import-each] <package>\n")
-        return 2
-    try:
-        if each:
-            total, failures = import_each(names[0])
-            lines = [str(total), *(f"{module}\t{reason}" for module, reason in failures)]
-        else:
-            lines = discover_modules(names[0])
-    except ModuleNotFoundError as exc:
-        sys.stderr.write(f"{exc}\n")
-        return 1
-    sys.stdout.write("\n".join(lines) + "\n")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
