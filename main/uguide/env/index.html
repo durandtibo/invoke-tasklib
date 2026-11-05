@@ -1937,12 +1937,15 @@ inspect a project's Python environment using <a href="https://docs.astral.sh/uv/
 <code>requires-python</code>), and then runs <a href="#installing-dependencies"><code>env.install</code></a> (<code>uv sync --locked</code>), so
 the environment has <code>invoke</code> within the bounds of the project and the packages that <code>tasks.py</code>
 imports, such as <code>invoke-tasklib</code>. The task is run with <code>invoke</code>, so <code>invoke</code> must already be
-available (for example through <code>uv tool install invoke</code>) to run it. It accepts no option: use
-<code>env.install</code> to choose the dependency groups.</p>
+available (for example through <code>uv tool install invoke</code>) to run it. Use <code>env.install</code> to choose
+the dependency groups.</p>
 <!-- prettier-ignore -->
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This clears any existing <code>.venv</code>.</p>
+<p>This clears any existing <code>.venv</code>, so the task asks for a confirmation when the directory exists
+(<code>--yes</code> turns it off, and is needed without a terminal). <code>--dry-run</code> prints what would be done
+and does nothing. The <code>invoke</code> that runs the task often lives in that <code>.venv</code>: run it from
+another environment.</p>
 </div>
 <h2 id="installing-dependencies">Installing Dependencies<a class="headerlink" href="#installing-dependencies" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install

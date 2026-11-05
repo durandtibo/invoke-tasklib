@@ -2072,9 +2072,9 @@ It:</p>
 <li>Reads the <code>tasklib</code> key from the Invoke config (<code>c.config</code>), which Invoke itself populates from
   <code>invoke.yaml</code>.</li>
 <li>Merges it on top of the defaults declared in <code>SCHEMA</code> (also exposed as <code>DEFAULT_PACKAGE</code>,
-  <code>DEFAULT_PATHS</code>, <code>DEFAULT_GROUPS</code>, <code>DEFAULT_TEST</code> and <code>DEFAULT_CHECK</code>).</li>
+  <code>DEFAULT_PATHS</code>, <code>DEFAULT_GROUPS</code>, <code>DEFAULT_TEST</code>, <code>DEFAULT_CHECK</code> and <code>DEFAULT_FIX</code>).</li>
 <li>Rejects unknown keys and validates the values (<code>package.python_version</code>, <code>package.import_name</code>,
-  <code>groups.*</code>, <code>test.*</code>, <code>check.tasks</code>).</li>
+  <code>groups.*</code>, <code>test.*</code>, <code>check.tasks</code>, <code>fix.tasks</code>).</li>
 <li>Derives unset <code>paths.*</code> entries from <code>package.import_name</code> (for <code>paths.src</code>) or <code>paths.tests</code> (for the
   <code>unit_tests</code>/<code>integration_tests</code>/<code>functional_tests</code>/<code>benchmarks</code> entries).</li>
 <li>Raises <code>ValueError</code> if <code>package.name</code> is missing, since nearly every task needs it, or if a
@@ -2091,19 +2091,24 @@ environment variable names and the JSON schema (<code>python -m invoke_tasklib.c
     <span class="n">groups</span><span class="p">:</span> <span class="n">GroupsConfig</span>
     <span class="n">test</span><span class="p">:</span> <span class="n">TestConfig</span>
     <span class="n">check</span><span class="p">:</span> <span class="n">CheckConfig</span>
+    <span class="n">fix</span><span class="p">:</span> <span class="n">FixConfig</span>
 </code></pre></div>
 <p>Returning frozen dataclasses rather than a raw dict gives task authors static typing on
 <code>cfg.package.name</code> and similar accesses, and the values cannot be modified by a task.</p>
 <h3 id="2-task-modules">2. Task Modules<a class="headerlink" href="#2-task-modules" title="Permanent link">&para;</a></h3>
 <p>Each task module (<code>formatting.py</code>, <code>lint.py</code>, <code>imports.py</code>, <code>typecheck.py</code>, <code>testing.py</code>, <code>env.py</code>,
-<code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>) is a collection of <code>@task</code>-decorated
-functions. <code>clean.py</code> and <code>check.py</code> also have a default task (<code>clean.all</code>, <code>check.all</code>) that is
-run by <code>invoke clean</code> and <code>invoke check</code>. A module groups tasks that operate on the
+<code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>, <code>fix.py</code>, <code>configuration.py</code>) is a
+collection of <code>@task</code>-decorated functions. <code>clean.py</code>, <code>check.py</code> and <code>fix.py</code> also have a default
+task (<code>clean.all</code>, <code>check.all</code>, <code>fix.all</code>) that is run by <code>invoke clean</code>, <code>invoke check</code> and
+<code>invoke fix</code>. <code>check.all</code> and <code>fix.all</code> are the composite tasks: each runs the steps of its config
+key (<code>tasklib.check.tasks</code>, <code>tasklib.fix.tasks</code>) with the step runner of <code>_steps.py</code>.
+<code>configuration.py</code> holds <code>config.show</code>, which prints the resolved config and where each value
+comes from. A module groups tasks that operate on the
 same underlying tool or concern (e.g. most of <code>testing.py</code> wraps <code>pytest</code>, except
 <code>test.doctest-markdown</code>, which wraps the standard library's <code>doctest</code> module directly).</p>
 <p>Tasks that need project-specific values call <code>load_config(c)</code> at the top of the function body;
 tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
-<p>Three small modules support the task modules:</p>
+<p>Five small modules support the task modules:</p>
 <ul>
 <li><code>runner.py</code>: <code>run(c, command)</code> is the only way a task runs an external command. It checks that
   the program is on the <code>PATH</code> (with a hint per program when it is not), echoes the command, and
@@ -2112,6 +2117,11 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
   step, or a failure message.</li>
+<li><code>_steps.py</code>: the step runner shared by <code>check.all</code> and <code>fix.all</code>: the selection of the steps
+  (<code>--only</code>, <code>--skip</code> and the config), the look-up of the missing tools before anything runs, the
+  <code>--keep-going</code> mode and the final summary of the failures.</li>
+<li><code>_graph.py</code>: the static import graph of a package (built with <code>ast</code>, without importing
+  anything) and its cycles. It is used by <code>imports.check-cycles</code>.</li>
 <li><code>_discover.py</code>: lists the modules of a package without importing them. It is run in a
   subprocess by <code>imports.check-isolated</code>.</li>
 </ul>

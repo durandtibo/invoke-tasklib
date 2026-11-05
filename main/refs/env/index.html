@@ -2155,7 +2155,9 @@ needed, so the task can be run before anything is set up.</p>
 
 
 <a href="#invoke_tasklib.env.create_venv" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_venv</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_venv</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">yes</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">dry_run</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2169,10 +2171,98 @@ the packages that <code>tasks.py</code> imports, such as <code>invoke-tasklib</c
 <details class="note" open>
   <summary>Note</summary>
   <p>The virtual environment will be created in the .venv directory
-and any existing environment will be cleared. The task itself
-runs with <code>invoke</code>, so <code>invoke</code> must already be available to
-run it.</p>
+and any existing environment will be cleared, after a
+confirmation (<code>--yes</code> turns it off). The task itself runs with
+<code>invoke</code>, which is often installed in that very environment,
+so <code>invoke</code> must be available from somewhere else to run it.</p>
 </details>
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>yes</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, do not ask for a confirmation before clearing an
+existing <code>.venv</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dry_run</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, print what would be done and do nothing.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="invoke.exceptions.Exit">Exit</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the confirmation is refused or cannot be asked.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
 
     </div>
 
