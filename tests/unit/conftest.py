@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(autouse=True)
@@ -10,3 +15,15 @@ def _all_programs_available(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "invoke_tasklib.tools.shutil.which", lambda program, **_kwargs: f"/bin/{program}"
     )
+
+
+@pytest.fixture
+def default_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    r"""A project with the default paths of ``mypkg``, as the working
+    directory: ``src/mypkg``, ``tests/unit`` and ``docs/mkdocs.yml``."""
+    (tmp_path / "src" / "mypkg").mkdir(parents=True)
+    (tmp_path / "tests" / "unit").mkdir(parents=True)
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "mkdocs.yml").write_text("site_name: mypkg\n")
+    monkeypatch.chdir(tmp_path)
+    return tmp_path

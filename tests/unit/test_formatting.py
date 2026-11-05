@@ -20,6 +20,7 @@ def test_check_python() -> None:
     assert commands(c) == ["ruff format --check ."]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_check_docstrings_uses_configured_src_path() -> None:
     c = make_context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     formatting.check_docstrings(c)
@@ -37,6 +38,7 @@ def test_fix_python() -> None:
     assert commands(c) == ["ruff format ."]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_fix_docstrings_uses_configured_src_path() -> None:
     c = make_context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     formatting.fix_docstrings(c)
@@ -196,6 +198,7 @@ def test_check_docstrings_paths_replace_src() -> None:
     assert commands(c) == ["docformatter --config ./pyproject.toml --check src/mypkg/a.py"]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_check_docstrings_args() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     formatting.check_docstrings(c, args="--wrap-summaries 80")
@@ -210,6 +213,7 @@ def test_fix_docstrings_paths_replace_src() -> None:
     assert commands(c) == ["docformatter --config ./pyproject.toml --in-place src/mypkg/a.py"]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_fix_docstrings_args() -> None:
     c = make_context({"package": {"name": "mypkg"}})
     formatting.fix_docstrings(c, args="--wrap-summaries 80")

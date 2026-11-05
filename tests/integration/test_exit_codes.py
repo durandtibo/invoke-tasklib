@@ -76,6 +76,12 @@ def test_exit_code(tmp_path: Path, yaml: str, module: str, task: str, code: int)
     assert _inv(project, task).returncode == code
 
 
+def test_exit_code_of_a_missing_source_directory_names_the_key(tmp_path: Path) -> None:
+    project = _project(tmp_path, VALID_YAML, "X = 1\n")
+    result = _inv(project, "test.doctest-src")
+    assert (result.returncode, "(tasklib.paths.src) does not exist" in result.stderr) == (2, True)
+
+
 def test_exit_code_of_a_missing_tool(tmp_path: Path) -> None:
     project = _project(tmp_path, VALID_YAML, "X = 1\n")
     result = _inv(project, "format.check-shell", path=_bash_only(tmp_path))

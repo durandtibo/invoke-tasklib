@@ -41,11 +41,11 @@ def _available(*names: str) -> Callable[..., str | None]:
 
 
 @pytest.fixture(autouse=True)
-def _package(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def _package(default_project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Make ``mypkg`` findable, for the static import check."""
-    (tmp_path / "mypkg").mkdir()
-    (tmp_path / "mypkg" / "__init__.py").write_text("")
-    monkeypatch.syspath_prepend(str(tmp_path))
+    (default_project / "mypkg").mkdir()
+    (default_project / "mypkg" / "__init__.py").write_text("")
+    monkeypatch.syspath_prepend(str(default_project))
 
 
 def _context(check_config: dict | None = None) -> MockContext:

@@ -120,7 +120,9 @@ def test_doctest_markdown_quotes_file_names(tmp_path: Path, monkeypatch: MonkeyP
     ]
 
 
-def test_doctest_src_quotes_the_source_path() -> None:
+def test_doctest_src_quotes_the_source_path(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    (tmp_path / "my src").mkdir()
+    monkeypatch.chdir(tmp_path)
     c = make_context({"package": {"name": "mypkg"}, "paths": {"src": "my src"}})
     test_tasks.doctest_src(c)
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest 'my src'"]
@@ -177,12 +179,14 @@ def test_doctest_markdown_with_args(tmp_path: Path, monkeypatch: MonkeyPatch) ->
     ]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_doctest_src() -> None:
     c = make_context({"package": {"name": "mypkg"}, "paths": {"src": "src/mypkg"}})
     test_tasks.doctest_src(c)
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest src/mypkg"]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_doctest_src_ignores_the_xdoctest_option() -> None:
     cfg = {"package": {"name": "mypkg"}, "test": {"xdoctest": False}}
     c = make_context(cfg)
@@ -190,6 +194,7 @@ def test_doctest_src_ignores_the_xdoctest_option() -> None:
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest src/mypkg"]
 
 
+@pytest.mark.usefixtures("default_project")
 def test_doctest_src_names_the_missing_xdoctest_plugin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(
         "invoke_tasklib.tools.importlib.util.find_spec",
@@ -199,6 +204,7 @@ def test_doctest_src_names_the_missing_xdoctest_plugin(monkeypatch: MonkeyPatch)
         test_tasks.doctest_src(make_context({"package": {"name": "mypkg"}}))
 
 
+@pytest.mark.usefixtures("default_project")
 def test_doctest(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     _touch(tmp_path, "README.md")
     monkeypatch.chdir(tmp_path)

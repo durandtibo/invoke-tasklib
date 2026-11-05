@@ -38,7 +38,9 @@ invoke test.doctest-src
 Runs doctests against `paths.src` from the [resolved config](config.md). It always runs
 `pytest --xdoctest`: `tasklib.test.xdoctest` only applies to the test scopes, since the task has no
 purpose without the plugin. If the `xdoctest` package is missing, the task stops with a message that
-names it; use `test.doctest-markdown` alone in a project that does not have the package.
+names it; use `test.doctest-markdown` alone in a project that does not have the package. If
+`paths.src` does not exist (and `--paths` is not set), the task exits with 2 and names
+`tasklib.paths.src`.
 
 ```shell
 invoke test.doctest-markdown

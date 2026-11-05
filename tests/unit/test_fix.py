@@ -13,6 +13,12 @@ from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
+
+
+@pytest.fixture(autouse=True)
+def _project(default_project: Path) -> None:
+    r"""Run in a project that has the default paths."""
 
 
 @pytest.fixture(autouse=True)

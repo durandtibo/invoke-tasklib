@@ -106,6 +106,9 @@ Seven small modules support the task modules:
 - `_coverage.py`: `coverage_outputs(reports, pyproject)` returns the HTML directory and the report
   files, from the `--cov-report` arguments, then `[tool.coverage.*]`, then the coverage.py defaults.
   `testing` and `clean` use it.
+- `_files.py` also has `require_path(path, key)`, which exits with 2 and names the config key when a
+  path that a task is about does not exist (`paths.src`, `paths.docs_config`); the module docstring
+  and the user guide give the rule for the other paths.
 - `_graph.py`: the static import graph of a package (built with `ast`, without importing
   anything) and its cycles. It is used by `imports.check-cycles`.
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
