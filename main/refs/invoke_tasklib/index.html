@@ -2041,6 +2041,30 @@ namespace or a task, which is usually a typo.</p>
           </tr>
       </tbody>
     </table>
+
+
+<p><span class="doc-section-title">Warns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>RuntimeWarning</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>On Windows, which is not supported (the tasks
+need a POSIX shell).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
         <p>Example usage:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_ns</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s2">"lint.check-python"</span><span class="p">,</span> <span class="s2">"test.unit"</span><span class="p">])</span>
