@@ -1746,14 +1746,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../refs/configuration/" class="md-nav__link">
+      <a href="../../refs/show/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Configuration
+    Show
   
 
     
@@ -2183,7 +2183,7 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 │       ├── clean.py          # clean.* tasks
 │       ├── check.py          # check.* tasks
 │       ├── fix.py            # fix.* tasks
-│       └── configuration.py  # config.* tasks
+│       └── show.py           # config.* tasks
 ├── tests/
 │   ├── helpers.py            # `make_context` and `commands`, shared by the tests
 │   ├── unit/                 # Unit tests, one module per source module
@@ -2199,8 +2199,9 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 <ol>
 <li>Pick the right module (<code>formatting.py</code>, <code>lint.py</code>, <code>imports.py</code>, <code>typecheck.py</code>, <code>testing.py</code>,
    <code>env.py</code>, <code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>, <code>fix.py</code> or
-   <code>configuration.py</code>), or create a new one
-   if the task doesn't fit an existing namespace.</li>
+   <code>show.py</code>), or create a new one
+   if the task doesn't fit an existing namespace (give it a <code>NAMESPACE</code> constant, and add it to
+   <code>_MODULES</code> of <code>__init__.py</code>).</li>
 <li>Follow the <code>check_&lt;target&gt;</code>/<code>fix_&lt;target&gt;</code> naming convention when applicable (see
    <a href="../../uguide/format/">Format</a>).</li>
 <li>Call <code>load_config(c)</code> if the task needs project-specific paths or the package name, rather than

@@ -1746,14 +1746,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../refs/configuration/" class="md-nav__link">
+      <a href="../../refs/show/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Configuration
+    Show
   
 
     
@@ -2148,12 +2148,12 @@ environment variable names and the JSON schema (<code>python -m invoke_tasklib.c
 <code>cfg.package.name</code> and similar accesses, and the values cannot be modified by a task.</p>
 <h3 id="2-task-modules">2. Task Modules<a class="headerlink" href="#2-task-modules" title="Permanent link">&para;</a></h3>
 <p>Each task module (<code>formatting.py</code>, <code>lint.py</code>, <code>imports.py</code>, <code>typecheck.py</code>, <code>testing.py</code>, <code>env.py</code>,
-<code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>, <code>fix.py</code>, <code>configuration.py</code>) is a
+<code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>, <code>fix.py</code>, <code>show.py</code>) is a
 collection of <code>@task</code>-decorated functions. <code>clean.py</code>, <code>check.py</code> and <code>fix.py</code> also have a default
 task (<code>clean.all</code>, <code>check.all</code>, <code>fix.all</code>) that is run by <code>invoke clean</code>, <code>invoke check</code> and
 <code>invoke fix</code>. <code>check.all</code> and <code>fix.all</code> are the composite tasks: each runs the steps of its config
 key (<code>tasklib.check.tasks</code>, <code>tasklib.fix.tasks</code>) with the step runner of <code>_steps.py</code>.
-<code>configuration.py</code> holds <code>config.show</code>, which prints the resolved config and where each value
+<code>show.py</code> holds <code>config.show</code>, which prints the resolved config and where each value
 comes from. A module groups tasks that operate on the
 same underlying tool or concern (e.g. most of <code>testing.py</code> wraps <code>pytest</code>, except
 <code>test.doctest-markdown</code>, which wraps the standard library's <code>doctest</code> module directly).</p>
@@ -2220,7 +2220,9 @@ returns one, for a step whose modules depend on an option (<code>check._unit_mod
 sub-collection named after the module, leaving out the tasks of <code>exclude</code> and keeping only the
 tasks of <code>include</code> when it is set. The modules whose names would shadow the standard library or a
 builtin (<code>format</code>, <code>types</code>, <code>test</code>) are named <code>formatting</code>, <code>typecheck</code> and <code>testing</code>; the
-namespace names come from <code>_MODULES</code>, not from the module names.</p>
+namespace name of each module is its <code>NAMESPACE</code> constant (<code>"format"</code> in <code>formatting.py</code>), which <code>_MODULES</code>
+of <code>__init__.py</code> reads, not the module name; a project that builds its own collection passes
+<code>name=module.NAMESPACE</code> to <code>Collection.from_module</code>.</p>
 <p>This is what gives consuming projects <code>format.check-python</code>, <code>test.unit</code>, etc. via
 <code>ns = make_ns()</code> in their <code>tasks.py</code>, or a trimmed copy with <code>make_ns(exclude=...)</code>. Each call returns
 a new collection, so a project can add its own tasks without affecting other importers. (The

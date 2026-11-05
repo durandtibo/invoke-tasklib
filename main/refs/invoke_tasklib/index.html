@@ -1615,14 +1615,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../show/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Configuration
+    Show
   
 
     
@@ -1865,10 +1865,12 @@ ns = make_ns()
 <p>To compose a custom subset of tasks, use the <code>exclude</code> and
 <code>include</code> options of <code>make_ns</code>, or import individual task modules
 (the module of the <code>test</code> tasks is <code>testing</code>, so its collection
-needs the name <code>test</code> to keep the task names):</p>
+needs the name <code>test</code> to keep the task names: each task module has
+it in its <code>NAMESPACE</code> constant):</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.collection</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">lint</span><span class="p">,</span> <span class="n">testing</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span> <span class="o">=</span> <span class="n">Collection</span><span class="p">(</span><span class="n">lint</span><span class="p">,</span> <span class="n">Collection</span><span class="o">.</span><span class="n">from_module</span><span class="p">(</span><span class="n">testing</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"test"</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test</span> <span class="o">=</span> <span class="n">Collection</span><span class="o">.</span><span class="n">from_module</span><span class="p">(</span><span class="n">testing</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">testing</span><span class="o">.</span><span class="n">NAMESPACE</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span> <span class="o">=</span> <span class="n">Collection</span><span class="p">(</span><span class="n">lint</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">ns</span><span class="o">.</span><span class="n">task_names</span><span class="p">)</span>
 <span class="go">['lint.check-python', 'lint.check-spelling', 'lint.fix-python',</span>
 <span class="go"> 'lint.pre-commit', 'test.all', 'test.benchmark',</span>
