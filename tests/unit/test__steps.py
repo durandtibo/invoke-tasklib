@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import sys
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
@@ -228,6 +229,12 @@ def test_run_step_names_the_exception_when_the_message_is_empty() -> None:
         (ModuleNotFoundError("No module named 'x'"), "ModuleNotFoundError: No module named 'x'"),
         (TypeError("bad type"), "TypeError: bad type"),
         (RuntimeError("broken"), "RuntimeError: broken"),
+        (EOFError("no input"), "EOFError: no input"),
+        (StopIteration("exhausted"), "StopIteration: exhausted"),
+        (
+            subprocess.TimeoutExpired("ruff", 5),
+            "TimeoutExpired: Command 'ruff' timed out after 5 seconds",
+        ),
     ],
 )
 def test_run_step_returns_the_type_and_message_of_an_error(error: Exception, reason: str) -> None:
@@ -245,9 +252,15 @@ def test_run_step_returns_only_the_type_of_an_error_without_message() -> None:
     assert run_step(MockContext(), {"lint": task}, "lint") == "RuntimeError"
 
 
-def test_run_step_does_not_catch_other_exceptions() -> None:
+def test_run_step_does_not_catch_keyboard_interrupt() -> None:
     task = Mock(side_effect=KeyboardInterrupt("interrupted"))
     with pytest.raises(KeyboardInterrupt, match=r"interrupted"):
+        run_step(MockContext(), {"lint": task}, "lint")
+
+
+def test_run_step_does_not_catch_system_exit() -> None:
+    task = Mock(side_effect=SystemExit("stopped"))
+    with pytest.raises(SystemExit, match=r"stopped"):
         run_step(MockContext(), {"lint": task}, "lint")
 
 
