@@ -156,3 +156,11 @@ def test_publish_environment_gives_the_chosen_token() -> None:
         _context(), "uv publish", env=release._publish_environment("chosen"), replace_env=True
     )
     assert result.stdout == "token=chosen\n"
+
+
+def test_check_release_state_names_the_line_of_an_invalid_pyproject(repo: Path) -> None:
+    (repo / "pyproject.toml").write_text("[project\n")
+    _git("commit", "-q", "-am", "break")
+    _git("tag", "v1.2.3")
+    with pytest.raises(Exit, match=r"invalid TOML in 'pyproject\.toml' \(line 1, column 9\)"):
+        release._check_release_state(_context())

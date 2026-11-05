@@ -11,10 +11,11 @@ from typing import TYPE_CHECKING
 from invoke.exceptions import Exit
 from invoke.tasks import task
 
+from invoke_tasklib._coverage import CoverageOutputs, coverage_outputs
+from invoke_tasklib._pyproject import read_pyproject
 from invoke_tasklib.config import EXCLUDED_DIRS, load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import build_command, capture
-from invoke_tasklib.testing import coverage_outputs
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -79,7 +80,7 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     say(c, "🧹 Cleaning build artifacts and caches" + (" (dry run)..." if dry_run else "..."))
     dirs = [Path(d) for d in DIRS]
     dirs.extend(_site_dirs(c))
-    outputs = coverage_outputs(_cov_reports(c))
+    outputs = _coverage_outputs(c)
     html_dir = Path(outputs.html_dir)
     if html_dir not in dirs:
         dirs.append(html_dir)
@@ -198,6 +199,34 @@ def _cov_reports(c: Context) -> tuple[str, ...]:
         return load_config(c).test.cov_reports
     except Exit:
         return ()
+
+
+def _coverage_outputs(c: Context) -> CoverageOutputs:
+    r"""Return where the coverage reports are written.
+
+    Args:
+        c: The invoke context.
+
+    Returns:
+        The places of the reports. A ``pyproject.toml`` that cannot be
+        parsed is ignored, so the default places are cleaned.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke.config import Config
+    >>> from invoke.context import Context
+    >>> from invoke_tasklib.clean import _coverage_outputs
+    >>> _coverage_outputs(Context(config=Config())).html_dir
+    'htmlcov'
+
+    ```
+    """
+    try:
+        pyproject = read_pyproject()
+    except Exit:
+        pyproject = {}
+    return coverage_outputs(_cov_reports(c), pyproject)
 
 
 def _site_dirs(c: Context) -> list[Path]:

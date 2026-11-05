@@ -98,6 +98,13 @@ Seven small modules support the task modules:
   `git ls-files` in a git work tree and with `find_files`, a walk in Python (no `find` or `xargs`)
   that skips the `EXCLUDED_DIRS` at any depth, otherwise. It is used by the format and test tasks
   that work on shell scripts and markdown files.
+- `_pyproject.py`: `read_pyproject(path)` reads `pyproject.toml` (`{}` if the file is missing). An
+  invalid file exits with `1` and a message that names the file, the line and the column of the
+  error. `release` (the `[project] version`) and `_coverage` use it; `clean` ignores the error,
+  because it must work on a broken project.
+- `_coverage.py`: `coverage_outputs(reports, pyproject)` returns the HTML directory and the report
+  files, from the `--cov-report` arguments, then `[tool.coverage.*]`, then the coverage.py defaults.
+  `testing` and `clean` use it.
 - `_graph.py`: the static import graph of a package (built with `ast`, without importing
   anything) and its cycles. It is used by `imports.check-cycles`.
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
@@ -156,13 +163,12 @@ checks the rule on the package itself.
 L5  __init__          make_ns: one Collection per module
 L4  check  fix        composites: run STEPS with the step runner
 L3  formatting lint typecheck testing env release doc security imports clean show
-L2  _steps  _files  _graph             private helpers of the tasks
+L2  _steps  _files  _graph  _coverage  _pyproject   private helpers of the tasks
 L1  config/  runner  tools  output     support: the documented helpers
 L0  _discover                          worker run in a subprocess
 ```
 
-One import breaks the rule today, `clean -> testing`
-(`KNOWN_VIOLATIONS` in the test); the test fails if a new one appears.
+No import breaks the rule; the test fails if one appears.
 
 ## Properties
 
