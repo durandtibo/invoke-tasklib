@@ -362,8 +362,8 @@ def _validate_str(path: str, value: object) -> str:
 def _int_from_text(value: object) -> object:
     r"""Convert a string of digits to an integer.
 
-    Invoke reads an environment variable as a string. The integer keys
-    are registered without a default (see ``default_config``), so
+    Invoke reads an environment variable as a string. The keys are
+    registered with an ``Unset`` (see ``default_config``), so
     ``INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30`` is the string ``"30"``.
 
     Args:

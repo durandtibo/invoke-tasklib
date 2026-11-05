@@ -126,6 +126,16 @@ def test_config_show_reports_a_boolean_from_the_environment(tmp_path: Path) -> N
     assert "    xdoctest: false  # environment variable INVOKE_TASKLIB_TEST_XDOCTEST" in lines
 
 
+def test_config_show_reports_a_string_from_the_environment(tmp_path: Path) -> None:
+    lines = _config_show(tmp_path, INVOKE_TASKLIB_TYPES_CHECKER="mypy")
+    assert "    checker: mypy  # environment variable INVOKE_TASKLIB_TYPES_CHECKER" in lines
+
+
+def test_config_show_reports_a_list_from_the_environment(tmp_path: Path) -> None:
+    lines = _config_show(tmp_path, INVOKE_TASKLIB_GROUPS_INSTALL="dev,docs")
+    assert "    install: [dev, docs]  # environment variable INVOKE_TASKLIB_GROUPS_INSTALL" in lines
+
+
 def test_invalid_integer_variable_exits_with_a_message(tmp_path: Path) -> None:
     (tmp_path / "tasks.py").write_text("from invoke_tasklib import make_ns\n\nns = make_ns()\n")
     (tmp_path / "invoke.yaml").write_text("tasklib:\n  package:\n    name: demo\n")

@@ -16,7 +16,7 @@ from invoke_tasklib.config import (
     default_config,
     json_schema,
 )
-from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _untyped
+from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout
 
 ####################################
 #     Tests for default_config     #
@@ -24,31 +24,31 @@ from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _un
 
 
 def test_default_config_whole_output() -> None:
-    # The booleans and the integers are an ``Unset``, which equals "".
+    # Every key is an ``Unset``, which equals "".
     assert default_config() == {
-        "package": {"name": None, "import_name": None, "python_version": None},
+        "package": {"name": "", "import_name": "", "python_version": ""},
         "paths": {
-            "src": None,
-            "tests": "tests",
-            "unit_tests": None,
-            "integration_tests": None,
-            "functional_tests": None,
-            "benchmarks": None,
-            "docs_config": "docs/mkdocs.yml",
+            "src": "",
+            "tests": "",
+            "unit_tests": "",
+            "integration_tests": "",
+            "functional_tests": "",
+            "benchmarks": "",
+            "docs_config": "",
         },
-        "groups": {"install": "dev", "update": "dev,docs"},
+        "groups": {"install": "", "update": ""},
         "test": {
             "unit_timeout": "",
             "integration_timeout": "",
             "functional_timeout": "",
             "xdoctest": "",
             "timeout": "",
-            "cov_fail_under": None,
-            "cov_reports": "html,xml,term",
+            "cov_fail_under": "",
+            "cov_reports": "",
         },
-        "types": {"checker": "ty"},
-        "check": {"tasks": "format-python,format-docstrings,lint,types,imports,unit", "cov": ""},
-        "fix": {"tasks": "lint,format-python,format-docstrings"},
+        "types": {"checker": ""},
+        "check": {"tasks": "", "cov": ""},
+        "fix": {"tasks": ""},
     }
 
 
@@ -64,43 +64,26 @@ def test_default_config_has_the_seven_sections() -> None:
     ]
 
 
-def test_default_config_is_the_defaults() -> None:
-    assert default_config() == {
-        "package": {"name": None, "import_name": None, "python_version": None},
-        "paths": {
-            "src": None,
-            "tests": "tests",
-            "unit_tests": None,
-            "integration_tests": None,
-            "functional_tests": None,
-            "benchmarks": None,
-            "docs_config": "docs/mkdocs.yml",
-        },
-        "groups": {"install": "dev", "update": "dev,docs"},
-        "test": {
-            "unit_timeout": "",
-            "integration_timeout": "",
-            "functional_timeout": "",
-            "xdoctest": "",
-            "timeout": "",
-            "cov_fail_under": None,
-            "cov_reports": "html,xml,term",
-        },
-        "types": {"checker": "ty"},
-        "check": {
-            "tasks": "format-python,format-docstrings,lint,types,imports,unit",
-            "cov": "",
-        },
-        "fix": {"tasks": "lint,format-python,format-docstrings"},
+@pytest.mark.parametrize(
+    ("section", "key"),
+    [
+        ("package", "name"),
+        ("paths", "tests"),
+        ("groups", "install"),
+        ("test", "xdoctest"),
+        ("test", "unit_timeout"),
+        ("test", "cov_fail_under"),
+        ("types", "checker"),
+    ],
+)
+def test_default_config_registers_a_placeholder(section: str, key: str) -> None:
+    assert isinstance(default_config()[section][key], Unset)
+
+
+def test_default_config_has_the_keys_of_the_schema() -> None:
+    assert {s: list(keys) for s, keys in default_config().items()} == {
+        s: list(options) for s, options in SCHEMA.items()
     }
-
-
-def test_default_config_registers_a_placeholder_for_a_boolean() -> None:
-    assert isinstance(default_config()["test"]["xdoctest"], Unset)
-
-
-def test_default_config_registers_a_placeholder_for_an_integer() -> None:
-    assert isinstance(default_config()["test"]["unit_timeout"], Unset)
 
 
 def test_default_config_does_not_change_the_schema_defaults() -> None:
@@ -298,24 +281,14 @@ def test_cov_reports_schema_items_are_strings() -> None:
     assert items["type"] == "string"
 
 
-###############################
-#     Tests for _untyped      #
-###############################
-
-
-@pytest.mark.parametrize("value", [True, False, 0, 10])
-def test_untyped_hides_booleans_and_integers(value: object) -> None:
-    assert isinstance(_untyped(value), Unset)
+#############################
+#     Tests for Unset     #
+#############################
 
 
 def test_unset_is_not_none() -> None:
-    assert _untyped(True) is not None
+    assert Unset() is not None
 
 
 def test_unset_is_a_string_so_that_invoke_keeps_the_text_of_a_variable() -> None:
     assert isinstance(Unset(), str)
-
-
-@pytest.mark.parametrize("value", ["tests", "", None])
-def test_untyped_keeps_the_other_values(value: object) -> None:
-    assert _untyped(value) == value
