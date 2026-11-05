@@ -936,6 +936,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -1529,6 +1557,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/config/" class="md-nav__link">
         
   
@@ -1772,8 +1828,14 @@
 more thorough):</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>types.check<span class="w"> </span>--complete
 </code></pre></div>
-<p><code>--args</code> is passed to <code>ty</code> only; <code>--paths</code> is passed to both tools (see
-<a href="../#passing-arguments-to-the-tools">Passing Arguments to the Tools</a>).</p>
+<p><code>--args</code> is passed to <code>ty</code> only, and <code>--pyright-args</code> to <code>pyright</code> only (it is used with
+<code>--complete</code>); <code>--paths</code> is passed to both tools (see
+<a href="../#passing-arguments-to-the-tools">Passing Arguments to the Tools</a>):</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>types.check<span class="w"> </span>--complete<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--python-version 3.12"</span><span class="w"> </span>--pyright-args<span class="w"> </span><span class="s2">"--pythonversion 3.12"</span>
+</code></pre></div>
+<p>Without <code>--paths</code>, <code>ty</code> checks the project and <code>pyright</code> the files of its own <code>include</code> setting (in
+<code>pyproject.toml</code> or <code>pyrightconfig.json</code>), so the two tools can look at different files. Set the
+same files in both, or pass <code>--paths</code>, to keep them aligned.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../refs/types/"><code>invoke_tasklib.typecheck</code> reference</a></li>

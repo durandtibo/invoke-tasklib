@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://durandtibo.github.io/invoke-tasklib/main/refs/config/">
       
       
-        <link rel="prev" href="../check/">
+        <link rel="prev" href="../fix/">
       
       
         <link rel="next" href="../configuration/">
@@ -853,6 +853,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../uguide/fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../uguide/config/" class="md-nav__link">
         
   
@@ -1446,6 +1474,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1550,6 +1606,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.DEFAULT_FIX" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFAULT_FIX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.config.DEFAULT_GROUPS" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1616,6 +1683,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.FIX_STEPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FIX_STEPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.config.PYTHON_VERSION_PATTERN" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1642,6 +1720,17 @@
     <span class="md-ellipsis">
       
         CheckConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.FixConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FixConfig
       
     </span>
   </a>
@@ -1971,6 +2060,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.DEFAULT_FIX" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFAULT_FIX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.config.DEFAULT_GROUPS" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2037,6 +2137,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.FIX_STEPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FIX_STEPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.config.PYTHON_VERSION_PATTERN" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2063,6 +2174,17 @@
     <span class="md-ellipsis">
       
         CheckConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.FixConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FixConfig
       
     </span>
   </a>
@@ -2358,6 +2480,30 @@ report</code> of pytest-cov).</p>
 
 
 
+<h3 id="invoke_tasklib.config.DEFAULT_FIX" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.config.DEFAULT_FIX</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.config.DEFAULT_FIX" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">DEFAULT_FIX</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="object">object</span></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="invoke_tasklib.config._schema._defaults">_defaults</span></span><span class="p">(</span><span class="s1">'fix'</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Defaults of the <code>fix</code> section.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="invoke_tasklib.config.DEFAULT_GROUPS" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.config.DEFAULT_GROUPS</span>
 
@@ -2497,6 +2643,37 @@ report</code> of pytest-cov).</p>
 
         <p>Directories that the tasks never walk into (not owned by the
 project).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="invoke_tasklib.config.FIX_STEPS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.config.FIX_STEPS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.config.FIX_STEPS" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">FIX_STEPS</span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"lint"</span><span class="p">,</span>
+    <span class="s2">"format-python"</span><span class="p">,</span>
+    <span class="s2">"format-docstrings"</span><span class="p">,</span>
+    <span class="s2">"shell"</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The steps that <code>fix.all</code> can run (<code>tasklib.fix.tasks</code>).</p>
+<p>They are listed in the order that converges: the lint fixes come before
+the formatting, which has the last word on the layout.</p>
 
     </div>
 
@@ -2747,6 +2924,32 @@ project).</p>
             <span class="s2">"Steps of check.all (comma-separated string or list)."</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">},</span>
+    <span class="s2">"fix"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"tasks"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.config.Option
+
+
+  
+      dataclass
+   (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
+            <span class="s2">"lint,format-python,format-docstrings"</span><span class="p">,</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_fix_tasks">_validate_fix_tasks</span></span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span>
+                        <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"enum"</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.config.FIX_STEPS
+
+
+  
+      module-attribute
+   (invoke_tasklib.config._constants.FIX_STEPS)" href="#invoke_tasklib.config.FIX_STEPS">FIX_STEPS</a></span><span class="p">)},</span>
+                    <span class="p">},</span>
+                <span class="p">]</span>
+            <span class="p">},</span>
+            <span class="s2">"Steps of fix.all (comma-separated string or list)."</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">},</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -2782,6 +2985,56 @@ and the JSON schema.</p>
 
 
         <p>Resolved <code>check</code> config section.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="invoke_tasklib.config.FixConfig" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">invoke_tasklib.config.FixConfig</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#invoke_tasklib.config.FixConfig" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Resolved <code>fix</code> config section.</p>
 
 
 
@@ -3212,7 +3465,7 @@ the defaults.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A new dict with the <code>package</code>, <code>paths</code>, <code>groups</code> and</p>
+                <p>A new dict with the <code>package</code>, <code>paths</code>, <code>groups</code>,</p>
               </div>
             </td>
           </tr>
@@ -3222,7 +3475,7 @@ the defaults.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>test</code> and <code>check</code> sections, each a copy of its</p>
+                <p><code>test</code>, <code>check</code> and <code>fix</code> sections, each a copy of its</p>
               </div>
             </td>
           </tr>
@@ -3241,7 +3494,7 @@ the defaults.</p>
         <p>Example usage:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_config</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">default_config</span><span class="p">())</span>
-<span class="go">['check', 'groups', 'package', 'paths', 'test']</span>
+<span class="go">['check', 'fix', 'groups', 'package', 'paths', 'test']</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">default_config</span><span class="p">()[</span><span class="s2">"groups"</span><span class="p">]</span>
 <span class="go">{'install': 'dev', 'update': 'dev,docs'}</span>
 </code></pre></div>
@@ -3339,7 +3592,7 @@ the defaults.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>groups</code>, <code>test</code> and <code>check</code> sections, each a frozen</p>
+                <p><code>groups</code>, <code>test</code>, <code>check</code> and <code>fix</code> sections, each a</p>
               </div>
             </td>
           </tr>
@@ -3354,22 +3607,7 @@ the defaults.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>dataclass too,</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="invoke_tasklib.config.TasklibConfig
-
-
-  
-      dataclass
-   (invoke_tasklib.config._schema.TasklibConfig)" href="#invoke_tasklib.config.TasklibConfig">TasklibConfig</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>e.g. <code>cfg.paths.src</code>.</p>
+                <p>frozen dataclass too, e.g. <code>cfg.paths.src</code>.</p>
               </div>
             </td>
           </tr>
@@ -3393,8 +3631,9 @@ the defaults.</p>
             <td>
               <div class="doc-md-description">
                 <p>If <code>tasklib</code> or one of its sections (<code>package</code>,
-<code>paths</code>, <code>groups</code>, <code>test</code> and <code>check</code>) is not a
-mapping, or if <code>tasklib</code> or a section has an unknown key
+<code>paths</code>, <code>groups</code>, <code>test</code>, <code>check</code> and <code>fix</code>) is
+not a mapping, or if <code>tasklib</code> or a section has an
+unknown key
 (for example a typo such as <code>unit_test</code> for
 <code>unit_tests</code>), or if <code>tasklib.package.name</code> is not set
 or is not a string, or if a <code>tasklib.paths</code> value is not
@@ -3408,7 +3647,8 @@ invalid (a timeout and <code>cov_fail_under</code> must be integers,
 with a timeout &gt; 0 and <code>cov_fail_under</code> between 0 and
 100, <code>cov_reports</code> must be report formats, and
 <code>xdoctest</code> must be a boolean), or if
-<code>tasklib.check.tasks</code> is empty or has an unknown step.</p>
+<code>tasklib.check.tasks</code> or <code>tasklib.fix.tasks</code> is empty
+or has an unknown step.</p>
               </div>
             </td>
           </tr>
@@ -3483,7 +3723,7 @@ itself) are allowed.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">json_schema</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">schema</span> <span class="o">=</span> <span class="n">json_schema</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"tasklib"</span><span class="p">][</span><span class="s2">"properties"</span><span class="p">])</span>
-<span class="go">['check', 'groups', 'package', 'paths', 'test']</span>
+<span class="go">['check', 'fix', 'groups', 'package', 'paths', 'test']</span>
 </code></pre></div>
 
 

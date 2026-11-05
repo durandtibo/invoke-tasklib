@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://durandtibo.github.io/invoke-tasklib/main/uguide/config/">
       
       
-        <link rel="prev" href="../check/">
+        <link rel="prev" href="../fix/">
       
       
         <link rel="next" href="../custom_tasks/">
@@ -853,6 +853,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1606,6 +1634,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/config/" class="md-nav__link">
         
   
@@ -1930,6 +1986,8 @@ invalid config, see below) to read project-specific values from an
 <span class="w">    </span><span class="nt">cov_reports</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html,xml,term</span>
 <span class="w">  </span><span class="nt">check</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">format-python,format-docstrings,lint,types,imports,unit</span>
+<span class="w">  </span><span class="nt">fix</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lint,format-python,format-docstrings</span>
 </code></pre></div>
 <p>Only <code>tasklib.package.name</code> (the distribution name, as on PyPI) is required. Everything else has a default, and most of the <code>paths</code>
 defaults are derived from <code>package.name</code> or from <code>paths.tests</code>.</p>
@@ -2018,6 +2076,10 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 <td><code>check.tasks</code></td>
 <td><code>format-python,format-docstrings,lint,types,imports,unit</code></td>
 </tr>
+<tr>
+<td><code>fix.tasks</code></td>
+<td><code>lint,format-python,format-docstrings</code></td>
+</tr>
 </tbody>
 </table>
 <p>The <code>test</code> section sets the per-test timeout in seconds of each test scope, whether <code>pytest</code> runs
@@ -2030,6 +2092,9 @@ value passes no <code>--cov-report</code>, so pytest-cov uses its default.</p>
 <p><code>check.tasks</code> is a comma-separated string or a list of the steps of <code>check.all</code>, run in that order:
 <code>format-python</code>, <code>format-docstrings</code>, <code>lint</code>, <code>types</code>, <code>imports</code>, <code>unit</code>, <code>doctest</code>, <code>shell</code>,
 <code>spelling</code>, <code>docs</code> and <code>audit</code>. It must have at least one step and no unknown step.</p>
+<p><code>fix.tasks</code> is the same for the steps of <code>fix.all</code>: <code>lint</code>, <code>format-python</code>, <code>format-docstrings</code> and
+<code>shell</code>, run in that order (the lint fixes first, so that the formatting has the last word on the
+layout).</p>
 <p><code>package.import_name</code> is the name used to import the package. It is used by <code>imports.check-cycles</code>, <code>imports.check-isolated</code>,
 <code>release.build</code> (the import check of the built artifacts) and the <code>--cov</code> option of the test tasks.
 Set it when it is not the distribution name with <code>-</code> replaced by <code>_</code>. It must be a Python module

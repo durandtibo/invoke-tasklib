@@ -853,6 +853,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../uguide/fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../uguide/config/" class="md-nav__link">
         
   
@@ -1520,6 +1548,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../config/" class="md-nav__link">
         
   
@@ -1780,6 +1836,8 @@
     <span class="n">complete</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">paths</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pyright_args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -1861,8 +1919,28 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The files or directories to check instead of the project
-default, passed to <code>ty</code> and <code>pyright</code>.</p>
+                <p>The files or directories to check instead of the
+project default, passed to <code>ty</code> and <code>pyright</code>. Without
+it, <code>ty</code> checks the project and <code>pyright</code> the files of
+its own <code>include</code> setting, so the two tools can look at
+different files.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pyright_args</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra arguments passed to <code>pyright</code> (not to
+<code>ty</code>). They are only used with <code>complete</code>.</p>
               </div>
             </td>
             <td>
