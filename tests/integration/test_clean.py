@@ -3,18 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from invoke.config import Config
 
 from invoke_tasklib import clean
-from tests.integration.test_imports import _SubprocessContext
+from tests.integration.helpers import subprocess_context
 from tests.integration.test_release import _git
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-
-def _context() -> _SubprocessContext:
-    return _SubprocessContext(config=Config())
 
 
 @pytest.fixture
@@ -31,17 +26,17 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_all_keeps_a_build_directory_tracked_by_git(repo: Path) -> None:
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert (repo / "build" / "script.sh").is_file()
 
 
 def test_all_removes_an_untracked_dist_directory(repo: Path) -> None:
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert not (repo / "dist").exists()
 
 
 def test_all_dry_run_removes_nothing(repo: Path) -> None:
-    clean.all_(_context(), dry_run=True)
+    clean.all_(subprocess_context(), dry_run=True)
     assert (repo / "dist" / "pkg.whl").is_file()
 
 
@@ -51,7 +46,7 @@ def test_all_outside_a_git_repository_removes_the_directories(
     monkeypatch.chdir(tmp_path)
     (tmp_path / "build").mkdir()
     monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert not (tmp_path / "build").exists()
 
 
@@ -59,14 +54,14 @@ def test_all_keeps_a_site_dir_outside_the_repository(repo: Path) -> None:
     outside = repo.parent / "shared-site"
     outside.mkdir()
     (repo / "mkdocs.yml").write_text(f"site_dir: {outside}\n")
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert outside.is_dir()
 
 
 def test_all_removes_an_untracked_configured_coverage_html_dir(repo: Path) -> None:
     (repo / "pyproject.toml").write_text('[tool.coverage.html]\ndirectory = "reports/html"\n')
     (repo / "reports" / "html").mkdir(parents=True)
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert not (repo / "reports" / "html").exists()
 
 
@@ -74,18 +69,18 @@ def test_all_keeps_a_coverage_file_tracked_by_git(repo: Path) -> None:
     (repo / "coverage.xml").write_text("<coverage/>")
     _git("add", "coverage.xml")
     _git("commit", "-q", "-m", "add the report")
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert (repo / "coverage.xml").is_file()
 
 
 def test_all_removes_an_untracked_coverage_file(repo: Path) -> None:
     (repo / "coverage.xml").write_text("<coverage/>")
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert not (repo / "coverage.xml").exists()
 
 
 def test_all_still_runs_with_an_invalid_pyproject(repo: Path) -> None:
     (repo / "pyproject.toml").write_text("[tool.coverage\n")
     (repo / "htmlcov").mkdir()
-    clean.all_(_context())
+    clean.all_(subprocess_context())
     assert not (repo / "htmlcov").exists()

@@ -5,14 +5,14 @@ import os
 import shutil
 import subprocess
 import sys
+from functools import partial
 from pathlib import Path
 
 import pytest
-from invoke.config import Config
 from invoke.exceptions import Exit
 
 from invoke_tasklib import doc
-from tests.integration.test_imports import _SubprocessContext
+from tests.integration.helpers import subprocess_context
 
 GIT = shutil.which("git") or "git"
 
@@ -44,9 +44,9 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
-def _context() -> _SubprocessContext:
-    overrides = {"tasklib": {"package": {"name": "demo"}, "paths": {"docs_config": "mkdocs.yml"}}}
-    return _SubprocessContext(config=Config(overrides=overrides))
+_context = partial(
+    subprocess_context, {"package": {"name": "demo"}, "paths": {"docs_config": "mkdocs.yml"}}
+)
 
 
 def _published() -> list[str]:

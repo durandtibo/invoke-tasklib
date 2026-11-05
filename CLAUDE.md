@@ -83,8 +83,9 @@
   fast and efficient; tests that run the real tools (subprocess, files) go in
   `tests/integration/`.
 - Unit tests mirror the source tree (`tests/unit/test_<module>.py`) and use
-  `invoke.context.MockContext` to record the commands, with the `_context` and `_commands` helpers
-  of the neighbouring test modules. Do not call a real tool in a unit test.
+  `invoke.context.MockContext` to record the commands, with `make_context` and `commands` of
+  `tests/helpers.py` (and, in the integration tests, `subprocess_context` of
+  `tests/integration/helpers.py`). Do not call a real tool in a unit test.
 - Do not use local imports inside tests. Import at the top of the module.
 - One behaviour per test: a test has one `assert` or one `pytest.raises`. Split a test that checks
   several things into several tests. A `pytest.raises` may be followed by one `assert` on the

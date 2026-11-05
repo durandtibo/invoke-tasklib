@@ -4,10 +4,9 @@ import stat
 from typing import TYPE_CHECKING
 
 import pytest
-from invoke.config import Config
 
 from invoke_tasklib import security
-from tests.integration.test_imports import _SubprocessContext
+from tests.integration.helpers import subprocess_context
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -40,11 +39,11 @@ def fake_uv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_audit_gives_the_exported_requirements_to_the_audit(fake_uv: Path) -> None:
-    security.audit(_SubprocessContext(config=Config()))
+    security.audit(subprocess_context())
     assert fake_uv.read_text() == "demo==1.0\n"
 
 
 def test_audit_exports_the_extras_and_the_groups(fake_uv: Path) -> None:
-    security.audit(_SubprocessContext(config=Config()))
+    security.audit(subprocess_context())
     args = fake_uv.with_name("audit.log.args").read_text().split()
     assert ("--all-extras" in args, "--all-groups" in args) == (True, True)

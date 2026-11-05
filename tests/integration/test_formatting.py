@@ -4,12 +4,11 @@ import shutil
 from typing import TYPE_CHECKING
 
 import pytest
-from invoke.config import Config
 from invoke.exceptions import UnexpectedExit
 
 from invoke_tasklib import formatting
 from invoke_tasklib._files import find_files
-from tests.integration.test_imports import _SubprocessContext
+from tests.integration.helpers import subprocess_context
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -55,15 +54,11 @@ UNFORMATTED = "if true; then\necho hi\nfi\n"
 FORMATTED = "if true; then\n\techo hi\nfi\n"
 
 
-def _shell_context() -> _SubprocessContext:
-    return _SubprocessContext(config=Config())
-
-
 @pytest.mark.skipif(shutil.which("shfmt") is None, reason="shfmt is not installed")
 def test_check_shell_format_accepts_a_formatted_script(tmp_path: Path) -> None:
     script = tmp_path / "ok.sh"
     script.write_text(FORMATTED)
-    assert formatting.check_shell_format(_shell_context(), paths=str(script)) is None
+    assert formatting.check_shell_format(subprocess_context(), paths=str(script)) is None
 
 
 @pytest.mark.skipif(shutil.which("shfmt") is None, reason="shfmt is not installed")
@@ -71,7 +66,7 @@ def test_check_shell_format_rejects_an_unformatted_script(tmp_path: Path) -> Non
     script = tmp_path / "bad.sh"
     script.write_text(UNFORMATTED)
     with pytest.raises(UnexpectedExit, match=r"bad command exit code"):
-        formatting.check_shell_format(_shell_context(), paths=str(script))
+        formatting.check_shell_format(subprocess_context(), paths=str(script))
 
 
 @pytest.mark.skipif(shutil.which("shfmt") is None, reason="shfmt is not installed")
@@ -79,7 +74,7 @@ def test_check_shell_format_does_not_modify_the_script(tmp_path: Path) -> None:
     script = tmp_path / "bad.sh"
     script.write_text(UNFORMATTED)
     with pytest.raises(UnexpectedExit, match=r"bad command exit code"):
-        formatting.check_shell_format(_shell_context(), paths=str(script))
+        formatting.check_shell_format(subprocess_context(), paths=str(script))
     assert script.read_text() == UNFORMATTED
 
 
@@ -87,5 +82,5 @@ def test_check_shell_format_does_not_modify_the_script(tmp_path: Path) -> None:
 def test_fix_shell_makes_the_script_pass_the_format_check(tmp_path: Path) -> None:
     script = tmp_path / "bad.sh"
     script.write_text(UNFORMATTED)
-    formatting.fix_shell(_shell_context(), paths=str(script))
-    assert formatting.check_shell_format(_shell_context(), paths=str(script)) is None
+    formatting.fix_shell(subprocess_context(), paths=str(script))
+    assert formatting.check_shell_format(subprocess_context(), paths=str(script)) is None
