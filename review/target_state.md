@@ -77,7 +77,8 @@ enforced: an existing mechanism, or **new:** a test that this plan adds (section
   hardly support.
 - **A skipped step is not a checked step.** `check.all` prints `⏭️` for the `unit` step of a
   project without `tests/unit`, then `✅ All checks passed`. This is P10 working as designed; the
-  cost is that a typo in `paths.unit_tests` is a skip, not an error. The alternative is in D5.
+  cost is that a typo in `paths.unit_tests` is a skip, not an error. The alternative was
+  considered and rejected (D5).
 - **Private Invoke attributes.** `config.show` and `_check_project_root` read ten private
   attributes of `invoke.config.Config` (`_defaults`, `_project_prefix`, ...). `invoke>=3.0,<4.0`
   allows every 3.x. The code warns when one is missing (`RuntimeWarning`, `⚠️` in `config.show`);
@@ -271,9 +272,11 @@ code does not change: `_graph.read_sources(name, src=...)` gets an optional dire
 ### 3.7 Shared readers and the composite of version helpers
 
 - `_pyproject.py`: `read_pyproject(path=Path("pyproject.toml")) -> dict` returns `{}` for a missing
-  file and raises `Exit(1)` naming the file for invalid TOML. One policy, used by `release`
-  (`[project] version`) and `_coverage`. `clean` stays best-effort, as it already is for the
-  config (`_cov_reports` catches `Exit`).
+  file and raises `Exit(1)` for invalid TOML (D6). The message says where to look: the file, the
+  line and column of the parse error, and the parser's reason, for example
+  `❌ Failed: invalid TOML in 'pyproject.toml' (line 12, column 5): Invalid value. Fix the file
+and run the task again.` One policy, used by `release` (`[project] version`) and `_coverage`.
+  `clean` stays best-effort, as it already is for the config (`_cov_reports` catches `Exit`).
 - `_coverage.py`: `CoverageOutputs`, `coverage_outputs`, and the helpers that read
   `[tool.coverage.*]` and `--cov-report` arguments (about 100 lines today in `testing.py`). Both
   `testing` and `clean` import it (F7).
@@ -372,7 +375,7 @@ the others branch from `main`.
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | 1    | **Make `main` clean (F11).** `ruff check --fix` for D202, rewrap the W505 docstring, `ruff format`. Check `git stash` first, as `CLAUDE.md` says: these are failures of `main`.                                                                                                                                                                                        | no                                     |
 | 2    | **Write the contract (F10).** Properties and layers into `architecture.md`; `tests/unit/test_architecture.py` with the P1 scan, the M1 layering (allowed edges listed, `clean -> testing` marked as the one known exception that step 4 removes), the tool-name uniqueness; integration test for P2 (`git status` after the read-only tasks); the exit-code test (P4). | no                                     |
-| 3    | **`_pyproject.py` and `_coverage.py` (F7).** Extract, make `release` and `_coverage` use `read_pyproject`, `clean` and `testing` import `_coverage`. Remove the known exception of step 2.                                                                                                                                                                             | yes (`testing.coverage_outputs` moves) |
+| 3    | **`_pyproject.py` and `_coverage.py` (F7).** Extract, make `release` and `_coverage` use `read_pyproject`, `clean` and `testing` import `_coverage`. Remove the known exception of step 2. An invalid `pyproject.toml` stops with a message naming the file, line and column (D6).                                                                                     | yes (`testing.coverage_outputs` moves) |
 | 4    | **One exclusion list (F1).** `EXCLUDED_DIRS` into `_files`; delete the two per-task lists and the `excluded` argument; update the docstrings and `architecture.md`. Stacked on 3 (same files).                                                                                                                                                                         | yes (three constants removed)          |
 | 5    | **`run_composite` (F2).** Add to `_steps`, shrink `check.all_` and `fix.all_`, `Step.needs` replaces `step_programs`/`step_modules`; delete the sentence in `CLAUDE.md`.                                                                                                                                                                                               | no (private)                           |
 | 6    | **`hint` over `TOOLS` (F3).** Delete the three derived dicts and the two `env` tuples; `env.check-tools` loops over `TOOLS`.                                                                                                                                                                                                                                           | yes                                    |
@@ -404,6 +407,10 @@ Update the changelog or status table with the pull request number in each step.
   against what the hand-written one returned.
 - **Files.** `project_files` in a git probe: tracked `build/x.sh` is returned; in a plain tree
   `build/x.sh` is skipped. `find_files` without the `excluded` argument.
+- **`pyproject.toml` (D6).** `read_pyproject`: missing file gives `{}`; invalid TOML exits `1` with
+  a message that names the file, the line and the column (`match=` on the file name and
+  `line 12`); `testing` and `release` both stop on it; `clean` still runs. Integration test: a
+  broken `pyproject.toml` in the probe project, `inv test.unit` exits `1` with the message.
 - **Imports.** Unit: `read_sources` with a directory, and the fallback message. Integration (real
   `inv`, no patch): the probe project, `src/foo` not installed, `imports.check-cycles` exits `0`;
   a cycle in `src/foo` exits `1`. Regression test for F5; check that it fails without the fix
@@ -428,16 +435,23 @@ Update the changelog or status table with the pull request number in each step.
 
 ## 9. Decisions for the maintainers
 
+All seven decisions are made: D1-D4 and D7 follow the recommendation, D5 is "yes" (skipped steps
+stay green), and D6 follows the recommendation with an explicit error message.
+
 **D1. Define the public API now (step 11).** _Recommended: yes, before `0.1.0`._ A name in
 `docs/refs/` is a promise; 33 functions and classes, plus constants, is more than anyone intends to keep, and an alpha is the
 cheap moment to say which ones. The alternative is to leave the surface as it is and treat
 everything as public: no work now, but every later cleanup (this one included) is a breaking
 change.
 
+Decision: follow recommendation
+
 **D2. Keep the flat layout and the `NAMESPACE` constants.** _Recommended: keep._ Modules named
 after the tool (`formatting`, `typecheck`, `testing`) and a `NAMESPACE` constant were chosen in
 pull request 324. Renaming again to put the namespace in the module name (`format_`, `types_`) trades one
 workaround for another and breaks imports for no gain.
+
+Decision: follow recommendation
 
 **D3. One exclusion list, git is the policy in a work tree (step 4).** _Recommended._ It keeps
 the documented behaviour (`.gitignore` decides) and removes the dead code. The alternative is to
@@ -445,11 +459,15 @@ make the lists apply in git too: then a project that tracks scripts under `build
 them checked, which is a silent loss. If a project needs a custom exclusion, `--paths` is the
 escape hatch; a config key is not worth adding.
 
+Decision: follow recommendation
+
 **D4. Keep `CHECK_STEPS`/`FIX_STEPS` next to `STEPS`, guarded by a test.** _Recommended: keep._
 `config` must not import the task modules (they import `config`), and the JSON schema enum gives
 an editor completion of the step names. The alternative, validating the names at use time in
 `check.all_`, removes the duplicate list but also the editor help and the early error (P5), and it
 would be the first step toward downstream registration of steps (not covered, section 10).
+
+Decision: follow recommendation
 
 **D5. Skipped steps stay green.** _Recommended: yes, as P10 says._ The alternative is to make a
 missing `tests/unit` an error in `check.all` only (a `skip` becomes a failure when the step is
@@ -458,14 +476,23 @@ a project without functional tests then needs a way to say so, which is a new op
 typo case matters more than the extra option, add the check in `_unit` of `check.py` and nowhere
 else.
 
+Decision: yes. The alternative (a missing `tests/unit` fails `check.all`) is rejected; a typo in
+`paths.unit_tests` stays a visible `⏭️` skip.
+
 **D6. `pyproject.toml` that does not parse is an error everywhere except `clean` (step 3).**
 _Recommended._ Today `testing` returns the default silently and `release` stops. One policy is
 easier to state; `clean` stays best-effort because it must work on a broken project.
+
+Decision: follow recommendation, with an explicit error message so the user knows where to look.
+The message names the file, the line and column of the parse error, and the parser's reason
+(section 3.7). `clean` keeps ignoring the error.
 
 **D7. Fix the `ruff` drift in step 1 or pin the lint version in CI.** _Recommended: fix it
 (step 1)._ The lock file already pins `0.17.3`; the two errors and the five formatting
 differences are in code, not in the version. If CI runs another `ruff`, the question is why, not
 the code.
+
+Decision: follow recommendation
 
 ## 10. Not covered
 
