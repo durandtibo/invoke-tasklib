@@ -147,38 +147,15 @@ r"""Every program and module that the tasks run, by name.
 
 It is the one place to edit to add a tool: ``hint``,
 ``not_found_message``, ``env.check-tools`` and the check of the pytest
-plugins read it. The tables below are derived from it.
+plugins read it. Names are unique across the programs and the
+modules.
 """
-
-PROGRAM_HINTS: dict[str, str] = {
-    tool.name: tool.hint
-    for tool in TOOLS.values()
-    if tool.kind == "program" and tool.hint is not None
-}
-r"""How to install the programs that ``invoke env.install`` does not
-install (or that it needs itself), by program name."""
-
-PROGRAM_GROUPS: dict[str, str] = {
-    tool.name: tool.group
-    for tool in TOOLS.values()
-    if tool.kind == "program" and tool.group is not None and tool.hint is None
-}
-r"""The dependency group that provides a program, by program name, for
-the programs that are not in ``PROGRAM_HINTS``."""
-
-MODULE_GROUPS: dict[str, str] = {
-    tool.name: tool.group
-    for tool in TOOLS.values()
-    if tool.kind == "module" and tool.group is not None
-}
-r"""The dependency group that provides a Python module, by name."""
 
 DEFAULT_HINT = (
     "Install the project tools with `invoke env.install` (see the troubleshooting page of the "
     "documentation)."
 )
-r"""The hint of the programs that are in neither ``PROGRAM_HINTS`` nor
-``PROGRAM_GROUPS``."""
+r"""The hint of a tool that is not in ``TOOLS``."""
 
 PLUGIN_OPTIONS: dict[str, tuple[str, str]] = {
     option: (tool.name, tool.name.replace("_", "-"))
@@ -216,18 +193,16 @@ def _strip_assignments(words: Sequence[str]) -> list[str]:
     return list(words[start:])
 
 
-def hint(name: str, *, module: bool = False) -> str:
+def hint(name: str) -> str:
     r"""Return how to install a program or a Python module.
 
     Args:
         name: The name of the program, or of the Python module.
-        module: If True, name is a Python module.
 
     Returns:
-        The entry of PROGRAM_HINTS for the program; else the
-        command that installs its dependency group, from
-        PROGRAM_GROUPS (or MODULE_GROUPS for a module); else
-        DEFAULT_HINT.
+        The ``hint`` of the tool in ``TOOLS``; else the command that
+        installs its dependency group; else ``DEFAULT_HINT`` (the tool
+        is not in ``TOOLS``).
 
     Example usage:
 
@@ -237,17 +212,19 @@ def hint(name: str, *, module: bool = False) -> str:
     'Install uv, see https://docs.astral.sh/uv/getting-started/installation/.'
     >>> hint("mike")
     "Install it with the 'docs' group: `uv sync --group docs`."
-    >>> hint("pytest", module=True)
+    >>> hint("pytest")
     "Install it with the 'dev' group: `uv sync --group dev`."
 
     ```
     """
-    if not module and name in PROGRAM_HINTS:
-        return PROGRAM_HINTS[name]
-    group = (MODULE_GROUPS if module else PROGRAM_GROUPS).get(name)
-    if group is None:
+    tool = TOOLS.get(name)
+    if tool is None:
         return DEFAULT_HINT
-    return f"Install it with the '{group}' group: `uv sync --group {group}`."
+    if tool.hint is not None:
+        return tool.hint
+    if tool.group is not None:
+        return f"Install it with the '{tool.group}' group: `uv sync --group {tool.group}`."
+    return DEFAULT_HINT
 
 
 def _check_plugin_options(words: Sequence[str]) -> None:
@@ -345,7 +322,7 @@ def not_found_message(name: str, *, module: bool = False, interpreter: str | Non
     if module:
         return (
             f"The Python module '{name}' is not installed for "
-            f"{interpreter or sys.executable}. {hint(name, module=True)}"
+            f"{interpreter or sys.executable}. {hint(name)}"
         )
     return f"'{name}' was not found on the PATH or next to the Python interpreter. {hint(name)}"
 
@@ -438,7 +415,7 @@ def check_program(command: str) -> None:
 
     Raises:
         Exit: If the program (or the module) is not found. The message
-            says how to install it, see ``PROGRAM_HINTS``.
+            says how to install it, see ``hint``.
 
     Example usage:
 

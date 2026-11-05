@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.tools import DEFAULT_HINT, PLUGIN_OPTIONS, PROGRAM_HINTS, hint
+from invoke_tasklib.tools import DEFAULT_HINT, PLUGIN_OPTIONS, TOOLS, Tool, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -343,8 +343,8 @@ def test_update_does_not_sync_twice() -> None:
 @pytest.fixture
 def _two_tools(monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Limit the tools to one program and one module."""
-    monkeypatch.setattr(env, "TOOL_PROGRAMS", ("ruff",))
-    monkeypatch.setattr(env, "TOOL_MODULES", ("pytest",))
+    tools = {"ruff": Tool("ruff"), "pytest": Tool("pytest", "module")}
+    monkeypatch.setattr(env, "TOOLS", tools)
 
 
 def _available(*names: str) -> object:
@@ -421,7 +421,7 @@ def test_check_tools_uses_the_hint_of_the_program(
         env.check_tools(make_context())
     assert (
         f"❌ 'uv' was not found on the PATH or next to the Python interpreter. "
-        f"{PROGRAM_HINTS['uv']}" in capsys.readouterr().out
+        f"{TOOLS['uv'].hint}" in capsys.readouterr().out
     )
 
 
@@ -449,31 +449,18 @@ def test_check_tools_does_not_run_any_command(monkeypatch: pytest.MonkeyPatch) -
 def test_check_tools_does_not_need_the_config(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(env, "find_tool", _available(*env.TOOL_PROGRAMS, *env.TOOL_MODULES))
+    monkeypatch.setattr(env, "find_tool", _available(*TOOLS))
     env.check_tools(make_context())
     assert "✅ All the 20 tools are available\n" in capsys.readouterr().out
 
 
 def test_every_plugin_module_is_checked() -> None:
-    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= set(env.TOOL_MODULES)
+    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= set(TOOLS)
 
 
-def test_check_tools_checks_pytest_benchmark() -> None:
-    assert "pytest_benchmark" in env.TOOL_MODULES
-
-
-def test_every_program_with_a_hint_is_checked() -> None:
-    assert set(PROGRAM_HINTS) <= set(env.TOOL_PROGRAMS)
-
-
-@pytest.mark.parametrize("name", env.TOOL_PROGRAMS)
-def test_every_checked_program_has_an_explicit_hint(name: str) -> None:
+@pytest.mark.parametrize("name", TOOLS)
+def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
     assert hint(name) != DEFAULT_HINT
-
-
-@pytest.mark.parametrize("name", env.TOOL_MODULES)
-def test_every_checked_module_has_an_explicit_hint(name: str) -> None:
-    assert hint(name, module=True) != DEFAULT_HINT
 
 
 def test_install_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
