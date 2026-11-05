@@ -618,6 +618,12 @@ def test_build_targets_ignores_other_options() -> None:
     assert release._build_targets("--no-sources") == (Path("dist"), ("*.whl", "*.tar.gz"))
 
 
+def test_build_targets_unbalanced_quote_exits_with_2() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --args") as info:
+        release._build_targets("--out-dir 'out")
+    assert info.value.code == 2
+
+
 def test_head_tag_reads_git_without_a_pty_nor_an_echo() -> None:
     c = make_context()
     release._head_tag(c)
@@ -636,6 +642,81 @@ def test_check_release_state_reads_the_status_without_a_pty_nor_an_echo() -> Non
         release._check_release_state(c)
     kwargs = run_kwargs(c)[0]
     assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)
+
+
+##################################
+#     Tests for _credentials     #
+##################################
+
+
+def test_credentials_without_anything_set() -> None:
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", None, False)
+
+
+def test_credentials_without_anything_set_for_test_pypi() -> None:
+    assert release._credentials(test_pypi=True) == ("TEST_PYPI_TOKEN", None, False)
+
+
+@pytest.mark.usefixtures("token")
+def test_credentials_pypi_token() -> None:
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", "pypi-secret", False)
+
+
+def test_credentials_test_pypi_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TEST_PYPI_TOKEN", "test-secret")
+    assert release._credentials(test_pypi=True) == ("TEST_PYPI_TOKEN", "test-secret", False)
+
+
+@pytest.mark.usefixtures("token")
+def test_credentials_test_pypi_ignores_the_pypi_token() -> None:
+    assert release._credentials(test_pypi=True) == ("TEST_PYPI_TOKEN", None, False)
+
+
+def test_credentials_pypi_ignores_the_test_pypi_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TEST_PYPI_TOKEN", "test-secret")
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", None, False)
+
+
+def test_credentials_pypi_falls_back_to_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", "uv-secret", False)
+
+
+@pytest.mark.usefixtures("token")
+def test_credentials_pypi_prefers_the_pypi_token_to_uv_publish_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", "pypi-secret", False)
+
+
+def test_credentials_test_pypi_ignores_uv_publish_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("UV_PUBLISH_TOKEN", "uv-secret")
+    assert release._credentials(test_pypi=True) == ("TEST_PYPI_TOKEN", None, False)
+
+
+@pytest.mark.usefixtures("oidc")
+def test_credentials_trusted_publishing() -> None:
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", None, True)
+
+
+@pytest.mark.usefixtures("token", "oidc")
+def test_credentials_trusted_publishing_with_a_token() -> None:
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", "pypi-secret", True)
+
+
+def test_credentials_trusted_publishing_needs_the_id_token_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", None, False)
+
+
+def test_credentials_trusted_publishing_needs_github_actions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ACTIONS_ID_TOKEN_REQUEST_URL", "https://token.example")
+    assert release._credentials(test_pypi=False) == ("PYPI_TOKEN", None, False)
 
 
 ##########################################

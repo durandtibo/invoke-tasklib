@@ -20,6 +20,7 @@ from invoke_tasklib.runner import (
     in_ci,
     in_github_actions,
     run,
+    split_args,
 )
 from invoke_tasklib.tools import tool_path
 
@@ -29,6 +30,26 @@ if TYPE_CHECKING:
 
 NAMESPACE = "release"
 r"""The name of the namespace of the tasks of this module."""
+
+TWINE_REQUIREMENT = "twine>=6.1,<7"
+r"""The version range of ``twine`` that ``release.build --check`` runs.
+
+``uvx`` installs the latest release in this range, so a new major
+version is never run without a change of this constant.
+"""
+
+TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
+r"""The upload endpoint of TestPyPI."""
+
+TEST_PYPI_CHECK_URL = "https://test.pypi.org/simple/"
+r"""The index of TestPyPI, to skip the files already uploaded."""
+
+PUBLISH_CREDENTIAL_VARIABLES: tuple[str, ...] = (
+    "UV_PUBLISH_TOKEN",
+    "UV_PUBLISH_USERNAME",
+    "UV_PUBLISH_PASSWORD",
+)
+r"""The variables from which ``uv publish`` reads its credentials."""
 
 
 def _latest_artifact(directory: Path, pattern: str) -> Path:
@@ -78,6 +99,10 @@ def _build_targets(args: str | None) -> tuple[Path, tuple[str, ...]]:
         ``--wheel`` or ``-w``, the source distribution with ``--sdist``,
         both if none or both are given.
 
+    Raises:
+        Exit: With the code 2 if ``args`` cannot be split, for example
+            because of an unclosed quote.
+
     Example usage:
 
     ```pycon
@@ -89,7 +114,7 @@ def _build_targets(args: str | None) -> tuple[Path, tuple[str, ...]]:
 
     ```
     """
-    words = shlex.split(args or "")
+    words = split_args(args, "--args")
     directory = Path("dist")
     for i, word in enumerate(words):
         if word in {"--out-dir", "-o"} and i + 1 < len(words):
@@ -143,20 +168,6 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
             say(c, "🔍 Checking package metadata with twine...")
             twine = f"uvx --from {shlex.quote(TWINE_REQUIREMENT)} twine check"
             run(c, f"{twine} {shlex.quote(str(directory))}/*")
-
-
-TWINE_REQUIREMENT = "twine>=6.1,<7"
-r"""The version range of ``twine`` that ``release.build --check`` runs.
-
-``uvx`` installs the latest release in this range, so a new major
-version is never run without a change of this constant.
-"""
-
-TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
-r"""The upload endpoint of TestPyPI."""
-
-TEST_PYPI_CHECK_URL = "https://test.pypi.org/simple/"
-r"""The index of TestPyPI, to skip the files already uploaded."""
 
 
 def _project_version(pyproject: Path) -> str | None:
@@ -277,14 +288,6 @@ def _confirm(target: str) -> None:
         raise Exit(msg, code=1)
 
 
-PUBLISH_CREDENTIAL_VARIABLES: tuple[str, ...] = (
-    "UV_PUBLISH_TOKEN",
-    "UV_PUBLISH_USERNAME",
-    "UV_PUBLISH_PASSWORD",
-)
-r"""The variables from which ``uv publish`` reads its credentials."""
-
-
 def _publish_environment(token: str | None) -> dict[str, str]:
     r"""Build the complete environment of ``uv publish``.
 
@@ -320,6 +323,42 @@ def _publish_environment(token: str | None) -> dict[str, str]:
     if token:
         env["UV_PUBLISH_TOKEN"] = token
     return env
+
+
+def _credentials(*, test_pypi: bool) -> tuple[str, str | None, bool]:
+    r"""Find the credentials of a publication in the environment.
+
+    The token is read from ``PYPI_TOKEN`` (from ``TEST_PYPI_TOKEN`` when
+    publishing to TestPyPI, so a PyPI token is never sent to TestPyPI)
+    or, for PyPI only, from ``UV_PUBLISH_TOKEN``. Trusted Publishing
+    applies in GitHub Actions when the job has the ``id-token``
+    permission.
+
+    Args:
+        test_pypi: If True, the target is TestPyPI, else PyPI.
+
+    Returns:
+        A tuple ``(name, token, trusted)``: the name of the variable
+        that holds the token of the target, the token (``None`` if it is
+        not set) and whether Trusted Publishing applies.
+
+    Example usage:
+
+    ```pycon
+    >>> from unittest.mock import patch
+    >>> from invoke_tasklib.release import _credentials
+    >>> with patch.dict("os.environ", {"PYPI_TOKEN": "t"}):
+    ...     _credentials(test_pypi=False)[:2]
+    ('PYPI_TOKEN', 't')
+
+    ```
+    """
+    name = "TEST_PYPI_TOKEN" if test_pypi else "PYPI_TOKEN"
+    token = os.environ.get(name)
+    if not test_pypi:
+        token = token or os.environ.get("UV_PUBLISH_TOKEN")
+    trusted = in_github_actions() and bool(os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL"))
+    return name, token, trusted
 
 
 @task(
@@ -376,11 +415,7 @@ def publish(
             credentials, or if the confirmation is refused.
     """
     target = "TestPyPI" if test_pypi else "PyPI"
-    token_name = "TEST_PYPI_TOKEN" if test_pypi else "PYPI_TOKEN"
-    token = os.environ.get(token_name)
-    if not test_pypi:
-        token = token or os.environ.get("UV_PUBLISH_TOKEN")
-    trusted = in_github_actions() and bool(os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL"))
+    token_name, token, trusted = _credentials(test_pypi=test_pypi)
     if not (token or trusted or dry_run):
         alternative = "" if test_pypi else " (or UV_PUBLISH_TOKEN)"
         msg = (
