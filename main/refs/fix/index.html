@@ -1545,17 +1545,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.fix.STEPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        STEPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.fix.all_" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1763,17 +1752,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.fix.STEPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        STEPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.fix.all_" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1841,44 +1819,6 @@
 
 
 
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.fix.STEPS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.fix.STEPS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.fix.STEPS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">STEPS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"lint"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint" href="../lint/#invoke_tasklib.lint">lint</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint.fix_python" href="../lint/#invoke_tasklib.lint.fix_python">fix_python</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,)),</span>
-    <span class="s2">"format-python"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting" href="../format/#invoke_tasklib.formatting">formatting</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting.fix_python" href="../format/#invoke_tasklib.formatting.fix_python">fix_python</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,)</span>
-    <span class="p">),</span>
-    <span class="s2">"format-docstrings"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting" href="../format/#invoke_tasklib.formatting">formatting</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting.fix_docstrings" href="../format/#invoke_tasklib.formatting.fix_docstrings">fix_docstrings</a></span><span class="p">,</span>
-        <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"docformatter"</span><span class="p">,),</span>
-    <span class="p">),</span>
-    <span class="s2">"shell"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting" href="../format/#invoke_tasklib.formatting">formatting</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting.fix_shell" href="../format/#invoke_tasklib.formatting.fix_shell">fix_shell</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"shfmt"</span><span class="p">,)</span>
-    <span class="p">),</span>
-<span class="p">}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The steps of <code>fix.all</code> (task and programs), by step name.</p>
-<p>To add a step, add its name to <code>FIX_STEPS</code> in <code>config/_constants.py</code>
-(a test checks that the names agree).</p>
-
-    </div>
-
-</div>
 
 
 
