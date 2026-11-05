@@ -408,22 +408,34 @@ completes them). The alternative is to keep `CHECK_STEPS`/`FIX_STEPS` in `config
 make `DEFAULT_*` explicit tuples instead of slices, and export the names from `config`; that keeps
 the editor completion and the early failure at the price of the four-place recipe.
 
+Decision: follow recommendation
+
 **D2. Does `run` keep accepting a string?** _Recommended: no, a `str` raises `TypeError`._ Keeping
 both would keep `_strip_assignments`, the builtins list and the quoting rule by discipline, which is
 the point of F1. The alpha version is the time to break it.
+
+Decision: follow recommendation
 
 **D3. What replaces `command -v python`?** _Recommended: `say(c, shutil.which("python") or "python: not found")`._
 The alternative is to delete the line: `uv python find` right above it prints the interpreter that
 uv would use, which is the useful answer; the `PATH` one is only informative.
 
+Decision: follow recommendation
+
 **D4. Is the worker of `check-isolated` worth keeping?** _Recommended: no (3.5)._ The one reason to
 keep a process boundary would be a `sys.path` that differs from the project's; E5 shows that it does
 not for a project that passes `_check_project_root`.
 
+Decision: follow recommendation
+
 **D5. Underscore the constants, or add an `__all__` and document them?** _Recommended: underscore._
 Nobody asked for a public `clean.DIRS`; a name becomes public when the user guide needs it.
 
+Decision: follow recommendation
+
 **D6. Windows.** Unchanged: a warning, no support.
+
+Decision: a warning, no support.
 
 ## 10. Not covered
 
