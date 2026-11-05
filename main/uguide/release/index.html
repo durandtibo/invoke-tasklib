@@ -1861,6 +1861,9 @@ of <code>&lt;dir&gt;</code> are verified (and checked by <code>--check</code>) i
 <a href="https://twine.readthedocs.io/"><code>twine check</code></a>:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.build<span class="w"> </span>--check
 </code></pre></div>
+<p><code>twine</code> is run with <code>uvx</code> from the version range <code>twine&gt;=6.1,&lt;7</code> (<code>TWINE_REQUIREMENT</code> in
+<code>invoke_tasklib.release</code>), so a new major release is never run without a release of
+<code>invoke-tasklib</code>.</p>
 <h2 id="publishing-to-pypi">Publishing to PyPI<a class="headerlink" href="#publishing-to-pypi" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.publish
 </code></pre></div>

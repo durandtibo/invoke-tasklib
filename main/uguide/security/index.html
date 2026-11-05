@@ -1824,11 +1824,13 @@
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>security.audit
 </code></pre></div>
 <p>This exports <code>uv.lock</code> to a temporary requirements file (<code>uv export --locked</code>) and audits it with
-<code>uvx pip-audit</code> against known vulnerability databases (via
+<code>uvx --from "pip-audit&gt;=2.10,&lt;3" pip-audit</code> against known vulnerability databases (via
 <a href="https://github.com/pypa/advisory-database">PyPI's Advisory Database</a>). It exits non-zero if the lock
 file is out of date or if a vulnerability is found.</p>
 <p>The task does not sync or modify the environment, and the result depends on the lock file, not on
-what was installed last. <code>pip-audit</code> does not have to be a dependency of the project.</p>
+what was installed last. <code>pip-audit</code> does not have to be a dependency of the project. The tool is
+run from the version range <code>pip-audit&gt;=2.10,&lt;3</code> (<code>PIP_AUDIT_REQUIREMENT</code> in <code>invoke_tasklib.security</code>),
+so a new major release is never run without a release of <code>invoke-tasklib</code>.</p>
 <p>Use <code>--args</code> to pass options to <code>pip-audit</code>, for example to accept an advisory:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>security.audit<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--ignore-vuln PYSEC-2024-1"</span>
 </code></pre></div>
