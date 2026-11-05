@@ -434,10 +434,14 @@ cheap moment to say which ones. The alternative is to leave the surface as it is
 everything as public: no work now, but every later cleanup (this one included) is a breaking
 change.
 
+Decision: follow recommendation
+
 **D2. Keep the flat layout and the `NAMESPACE` constants.** _Recommended: keep._ Modules named
 after the tool (`formatting`, `typecheck`, `testing`) and a `NAMESPACE` constant were chosen in
 pull request 324. Renaming again to put the namespace in the module name (`format_`, `types_`) trades one
 workaround for another and breaks imports for no gain.
+
+Decision: follow recommendation
 
 **D3. One exclusion list, git is the policy in a work tree (step 4).** _Recommended._ It keeps
 the documented behaviour (`.gitignore` decides) and removes the dead code. The alternative is to
@@ -445,11 +449,15 @@ make the lists apply in git too: then a project that tracks scripts under `build
 them checked, which is a silent loss. If a project needs a custom exclusion, `--paths` is the
 escape hatch; a config key is not worth adding.
 
+Decision: follow recommendation
+
 **D4. Keep `CHECK_STEPS`/`FIX_STEPS` next to `STEPS`, guarded by a test.** _Recommended: keep._
 `config` must not import the task modules (they import `config`), and the JSON schema enum gives
 an editor completion of the step names. The alternative, validating the names at use time in
 `check.all_`, removes the duplicate list but also the editor help and the early error (P5), and it
 would be the first step toward downstream registration of steps (not covered, section 10).
+
+Decision: follow recommendation
 
 **D5. Skipped steps stay green.** _Recommended: yes, as P10 says._ The alternative is to make a
 missing `tests/unit` an error in `check.all` only (a `skip` becomes a failure when the step is
@@ -458,14 +466,20 @@ a project without functional tests then needs a way to say so, which is a new op
 typo case matters more than the extra option, add the check in `_unit` of `check.py` and nowhere
 else.
 
+Decision: yes
+
 **D6. `pyproject.toml` that does not parse is an error everywhere except `clean` (step 3).**
 _Recommended._ Today `testing` returns the default silently and `release` stops. One policy is
 easier to state; `clean` stays best-effort because it must work on a broken project.
+
+Decision: follow recommendation. I would also suggest to have an explicit error message so the user know where to look at to fix the issue.
 
 **D7. Fix the `ruff` drift in step 1 or pin the lint version in CI.** _Recommended: fix it
 (step 1)._ The lock file already pins `0.17.3`; the two errors and the five formatting
 differences are in code, not in the version. If CI runs another `ruff`, the question is why, not
 the code.
+
+Decision: follow recommendation
 
 ## 10. Not covered
 
