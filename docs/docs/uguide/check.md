@@ -63,8 +63,9 @@ By default the task stops at the first failure, as the CI jobs do; use `--keep-g
 learn about all the problems in one run. A step that fails with an error of the code or of the
 system (for example an `OSError`) is reported like any other failed step, with the type and the
 message of the error as the reason, and the other steps still run. Use the tasks directly (with `--args` and `--paths`) to run only one
-of them, or [`lint.pre-commit`](lint.md) to run the hooks of the project. To leave `check` out of a
-collection, use `make_ns(exclude=["check"])`.
+of them, or [`lint.pre-commit`](lint.md) to run the hooks of the project. The steps come from `tasklib.check.tasks`; `make_ns(exclude=...)` does not remove them, so
+`make_ns(exclude="lint")` hides `lint.*` from `inv --list` but `inv check --only lint` still runs. To
+leave `check` out of a collection, use `make_ns(exclude=["check"])`.
 
 ## See Also
 

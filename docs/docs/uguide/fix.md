@@ -36,6 +36,8 @@ Like `check.all`, the programs of the selected steps are looked up before anythi
 missing ones are reported at once with the exit code 127. With `--keep-going`, only the steps that
 miss a tool are not run; they are reported as failed.
 
+The steps come from `tasklib.fix.tasks`; `make_ns(exclude=...)` does not remove them.
+
 <!-- prettier-ignore -->
 !!! warning
     The steps modify files in place. Commit your work before running them.
