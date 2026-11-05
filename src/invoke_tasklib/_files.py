@@ -59,8 +59,8 @@ enters, at any depth (``find_files``, and ``clean`` for the
 
 In a git work tree ``project_files`` lets git decide, so only the
 directories of tools and environments (``CACHE_DIRS`` and
-``ENVIRONMENT_DIRS``) are left out there: a tracked
-``build/run.sh`` or ``site/index.md`` is returned.
+``ENVIRONMENT_DIRS``) are left out there: a tracked ``build/run.sh`` or
+``site/index.md`` is returned.
 """
 
 _IGNORED_PARTS: frozenset[str] = CACHE_DIRS | ENVIRONMENT_DIRS

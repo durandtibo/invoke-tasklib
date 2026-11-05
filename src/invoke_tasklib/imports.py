@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 NAMESPACE = "imports"
 r"""The name of the namespace of the tasks of this module."""
 
-
 @task(
     help={
         "lazy": "Also follow the imports inside functions (run when called, not on import).",
