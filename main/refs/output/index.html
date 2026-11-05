@@ -1913,9 +1913,10 @@ visible.</p>
 <p>A message never fails a task: if the stream cannot encode a
 character (for example an emoji on an ASCII terminal), the status
 symbols are replaced by the tags <code>[ok]</code>, <code>[fail]</code> and
-<code>[skip]</code> and the other emojis are removed. Set the environment
-variable <code>INVOKE_TASKLIB_ASCII</code> to <code>1</code> to get this ASCII
-output on any stream.</p>
+<code>[skip]</code>, the other emojis are removed and any other character
+the stream cannot encode (an accented letter) becomes <code>?</code>. Set
+the environment variable <code>INVOKE_TASKLIB_ASCII</code> to <code>1</code> to get
+this ASCII output on any stream.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
