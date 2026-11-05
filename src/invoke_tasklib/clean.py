@@ -14,7 +14,7 @@ from invoke.tasks import task
 from invoke_tasklib._coverage import CoverageOutputs, coverage_outputs
 from invoke_tasklib._files import EXCLUDED_DIRS
 from invoke_tasklib._pyproject import read_pyproject
-from invoke_tasklib.config import load_config
+from invoke_tasklib.config import TasklibConfig, load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import build_command, capture
 
@@ -79,9 +79,10 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
             remove nothing.
     """
     say(c, "🧹 Cleaning build artifacts and caches" + (" (dry run)..." if dry_run else "..."))
+    cfg = _try_config(c)
     dirs = [Path(d) for d in DIRS]
-    dirs.extend(_site_dirs(c))
-    outputs = _coverage_outputs(c)
+    dirs.extend(_site_dirs(cfg))
+    outputs = _coverage_outputs(cfg)
     html_dir = Path(outputs.html_dir)
     if html_dir not in dirs:
         dirs.append(html_dir)
@@ -175,39 +176,62 @@ def _find_pycache_dirs(root: Path) -> list[Path]:
     return sorted(found)
 
 
-def _cov_reports(c: Context) -> tuple[str, ...]:
-    r"""Return the coverage reports of the config.
+def _try_config(c: Context) -> TasklibConfig | None:
+    r"""Load the config, or ``None`` if it is not valid.
+
+    ``clean`` has to work on a broken project, so an invalid config
+    (for example there is no ``package.name`` yet) is not an error.
 
     Args:
         c: The invoke context.
 
     Returns:
-        The ``test.cov_reports`` value, or an empty tuple if the config
-        is not valid (for example there is no ``package.name`` yet), so
-        the default places are cleaned.
+        The resolved config, or ``None`` if ``load_config`` exits.
 
     Example usage:
 
     ```pycon
     >>> from invoke.config import Config
     >>> from invoke.context import Context
-    >>> from invoke_tasklib.clean import _cov_reports
-    >>> _cov_reports(Context(config=Config()))
-    ()
+    >>> from invoke_tasklib.clean import _try_config
+    >>> _try_config(Context(config=Config())) is None
+    True
 
     ```
     """
     try:
-        return load_config(c).test.cov_reports
+        return load_config(c)
     except Exit:
-        return ()
+        return None
 
 
-def _coverage_outputs(c: Context) -> CoverageOutputs:
+def _cov_reports(cfg: TasklibConfig | None) -> tuple[str, ...]:
+    r"""Return the coverage reports of the config.
+
+    Args:
+        cfg: The resolved config, or ``None`` if it is not valid.
+
+    Returns:
+        The ``test.cov_reports`` value, or an empty tuple if there is no
+        config, so the default places are cleaned.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.clean import _cov_reports
+    >>> _cov_reports(None)
+    ()
+
+    ```
+    """
+    return () if cfg is None else cfg.test.cov_reports
+
+
+def _coverage_outputs(cfg: TasklibConfig | None) -> CoverageOutputs:
     r"""Return where the coverage reports are written.
 
     Args:
-        c: The invoke context.
+        cfg: The resolved config, or ``None`` if it is not valid.
 
     Returns:
         The places of the reports. A ``pyproject.toml`` that cannot be
@@ -216,10 +240,8 @@ def _coverage_outputs(c: Context) -> CoverageOutputs:
     Example usage:
 
     ```pycon
-    >>> from invoke.config import Config
-    >>> from invoke.context import Context
     >>> from invoke_tasklib.clean import _coverage_outputs
-    >>> _coverage_outputs(Context(config=Config())).html_dir
+    >>> _coverage_outputs(None).html_dir
     'htmlcov'
 
     ```
@@ -228,18 +250,18 @@ def _coverage_outputs(c: Context) -> CoverageOutputs:
         pyproject = read_pyproject()
     except Exit:
         pyproject = {}
-    return coverage_outputs(_cov_reports(c), pyproject)
+    return coverage_outputs(_cov_reports(cfg), pyproject)
 
 
-def _site_dirs(c: Context) -> list[Path]:
+def _site_dirs(cfg: TasklibConfig | None) -> list[Path]:
     r"""Return the directories where MkDocs builds the site.
 
-    The config file is ``paths.docs_config``. If the config is not
-    valid (for example there is no ``package.name`` yet), the
-    ``MKDOCS_CONFIGS`` files are used instead.
+    The config file is ``paths.docs_config``. If there is no config
+    (it is not valid, for example there is no ``package.name`` yet),
+    the ``MKDOCS_CONFIGS`` files are used instead.
 
     Args:
-        c: The invoke context.
+        cfg: The resolved config, or ``None`` if it is not valid.
 
     Returns:
         The ``site_dir`` of each config file that exists (``site`` if
@@ -251,13 +273,11 @@ def _site_dirs(c: Context) -> list[Path]:
     ```pycon
     >>> import os
     >>> import tempfile
-    >>> from invoke.config import Config
-    >>> from invoke.context import Context
     >>> from invoke_tasklib.clean import _site_dirs
     >>> cwd = os.getcwd()
     >>> with tempfile.TemporaryDirectory() as tmp:
     ...     os.chdir(tmp)
-    ...     found = _site_dirs(Context(config=Config()))
+    ...     found = _site_dirs(None)
     ...     os.chdir(cwd)
     ...
     >>> found
@@ -265,10 +285,10 @@ def _site_dirs(c: Context) -> list[Path]:
 
     ```
     """
-    try:
-        configs = [Path(load_config(c).paths.docs_config)]
-    except Exit:
+    if cfg is None:
         configs = [Path(config) for config in MKDOCS_CONFIGS]
+    else:
+        configs = [Path(cfg.paths.docs_config)]
     return [config.parent / _read_site_dir(config) for config in configs if config.is_file()]
 
 
