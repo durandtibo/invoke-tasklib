@@ -15,7 +15,8 @@ versioned documentation with [`mike`](https://github.com/jimporter/mike), on top
 
 All four tasks read `paths.docs_config` from the [resolved config](config.md) (default:
 `docs/mkdocs.yml`). The two publish tasks pass it to `mike` via `--config-file`, and `doc.build` and
-`doc.serve` pass it to `mkdocs`.
+`doc.serve` pass it to `mkdocs`. If the file does not exist, the tasks exit with 2 and name
+`tasklib.paths.docs_config`, before running anything.
 
 ## Publishing Development Docs
 

@@ -10,7 +10,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib._coverage import coverage_outputs
-from invoke_tasklib._files import project_files
+from invoke_tasklib._files import project_files, require_path
 from invoke_tasklib._pyproject import read_pyproject
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say, step
@@ -89,9 +89,15 @@ def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None
         args: Extra arguments passed to pytest.
         paths: The files or directories to run on instead of
             ``paths.src``.
+
+    Raises:
+        Exit: With the code 2 if ``paths`` is not set and
+            ``paths.src`` does not exist.
     """
     cfg = load_config(c)
     src = cfg.paths.src
+    if paths is None:
+        require_path(src, "tasklib.paths.src")
     with step(c, "📚 Running doctests on source code...", "✅ Doctest validation complete"):
         cmd = f"{python_executable()} -m pytest --xdoctest"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))

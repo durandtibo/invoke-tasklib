@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from invoke.exceptions import Exit
 from invoke.runners import Result
 
+from invoke_tasklib import doc, formatting, testing
 from invoke_tasklib._files import (
     _ENVIRONMENT_DIRS,
     _OUTPUT_DIRS,
@@ -13,10 +16,13 @@ from invoke_tasklib._files import (
     _in_git_work_tree,
     find_files,
     project_files,
+    require_path,
 )
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from invoke.context import MockContext
 
 ################################
@@ -240,3 +246,96 @@ def test_excluded_dirs_is_the_union_of_the_two_groups() -> None:
 
 def test_the_two_groups_of_excluded_dirs_do_not_overlap() -> None:
     assert set() == _ENVIRONMENT_DIRS & _OUTPUT_DIRS
+
+
+###################################
+#     Tests for require_path      #
+###################################
+
+
+def test_require_path_accepts_an_existing_directory(tmp_path: Path) -> None:
+    assert require_path(str(tmp_path), "tasklib.paths.src") is None
+
+
+def test_require_path_accepts_an_existing_file(tmp_path: Path) -> None:
+    (tmp_path / "a.yml").write_text("")
+    assert require_path(str(tmp_path / "a.yml"), "tasklib.paths.docs_config", file=True) is None
+
+
+def test_require_path_names_the_path_and_the_key() -> None:
+    with pytest.raises(
+        Exit,
+        match=r"^'no/dir' \(tasklib\.paths\.src\) does not exist: set it in invoke\.yaml$",
+    ):
+        require_path("no/dir", "tasklib.paths.src")
+
+
+def test_require_path_exits_with_code_2() -> None:
+    with pytest.raises(Exit, match=r"does not exist") as info:
+        require_path("no/dir", "tasklib.paths.src")
+    assert info.value.code == 2
+
+
+def test_require_path_rejects_a_directory_when_a_file_is_needed(tmp_path: Path) -> None:
+    with pytest.raises(Exit, match=r"\(tasklib\.paths\.docs_config\) does not exist"):
+        require_path(str(tmp_path), "tasklib.paths.docs_config", file=True)
+
+
+####################################################
+#     Tests for the rule of the missing paths      #
+####################################################
+
+_CONFIG = {"package": {"name": "mypkg"}}
+
+
+@pytest.mark.parametrize(
+    ("task", "key"),
+    [
+        pytest.param(testing.doctest_src, "tasklib.paths.src", id="doctest-src"),
+        pytest.param(formatting.check_docstrings, "tasklib.paths.src", id="check-docstrings"),
+        pytest.param(formatting.fix_docstrings, "tasklib.paths.src", id="fix-docstrings"),
+        pytest.param(doc.build, "tasklib.paths.docs_config", id="doc-build"),
+    ],
+)
+def test_a_missing_path_of_the_task_exits_with_2_and_names_the_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, task: Callable[..., None], key: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(Exit, match=rf"\({re.escape(key)}\) does not exist") as info:
+        task(make_context(_CONFIG))
+    assert info.value.code == 2
+
+
+@pytest.mark.parametrize(
+    "task", [testing.unit, testing.integration, testing.functional], ids=lambda t: t.__name__
+)
+def test_a_missing_optional_directory_is_skipped_with_a_message(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    task: Callable[..., None],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    task(make_context(_CONFIG))
+    assert "⏭️" in capsys.readouterr().out
+
+
+def test_a_missing_benchmarks_directory_exits_with_1(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(Exit, match=r"No 'tests/benchmarks' directory") as info:
+        testing.benchmark(make_context(_CONFIG))
+    assert info.value.code == 1
+
+
+@pytest.mark.parametrize(
+    "task", [testing.doctest_src, formatting.check_docstrings, formatting.fix_docstrings]
+)
+def test_a_path_given_with_paths_is_not_checked_by_the_task(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, task: Callable[..., None]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    c = make_context(_CONFIG)
+    task(c, paths="no/such/dir")
+    assert "no/such/dir" in commands(c)[0]

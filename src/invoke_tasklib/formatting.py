@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from invoke.tasks import task
 
-from invoke_tasklib._files import project_files
+from invoke_tasklib._files import project_files, require_path
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
@@ -48,9 +48,15 @@ def check_docstrings(c: Context, *, args: str | None = None, paths: str | None =
         args: Extra arguments passed to docformatter.
         paths: The files or directories to check instead of
             ``paths.src``.
+
+    Raises:
+        Exit: With the code 2 if ``paths`` is not set and
+            ``paths.src`` does not exist.
     """
     cfg = load_config(c)
     src = cfg.paths.src
+    if paths is None:
+        require_path(src, "tasklib.paths.src")
     with step(c, "📖 Checking docstring formatting...", "✅ Docstring format check passed"):
         cmd = "docformatter --config ./pyproject.toml --check"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
@@ -84,12 +90,18 @@ def fix_docstrings(c: Context, *, args: str | None = None, paths: str | None = N
         paths: The files or directories to format instead of
             ``paths.src``.
 
+    Raises:
+        Exit: With the code 2 if ``paths`` is not set and
+            ``paths.src`` does not exist.
+
     Note:
         This modifies files in place. Ensure your work is committed
         before running this task.
     """
     cfg = load_config(c)
     src = cfg.paths.src
+    if paths is None:
+        require_path(src, "tasklib.paths.src")
     with step(c, "📖 Formatting docstrings...", "✅ Docstring formatting complete"):
         cmd = "docformatter --config ./pyproject.toml --in-place"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))

@@ -1,10 +1,27 @@
-r"""Find the files of the project that a task works on."""
+r"""Find the files of the project that a task works on.
+
+A path of the config that does not exist is handled by one rule:
+
+- A directory that the task may legitimately not have (the unit,
+  integration and functional tests, the shell scripts): the task
+  prints a ``⏭️`` line and exits with 0.
+- A path that the task is about (``paths.src`` for the docstring and
+  doctest tasks, ``paths.docs_config`` for the documentation): the task
+  exits with 2 and the message names the key, see ``require_path``.
+- The only input of a task that produces a measurement
+  (``test.benchmark``): the task exits with 1.
+
+A path given with ``--paths`` is never checked by the task: the tool
+reports it.
+"""
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from invoke.exceptions import Exit
 
 from invoke_tasklib.runner import build_command, capture
 
@@ -149,3 +166,34 @@ def project_files(c: Context, root: Path, suffix: str) -> list[Path]:
     return sorted(
         path for path in found if path.is_file() and not _ENVIRONMENT_DIRS.intersection(path.parts)
     )
+
+
+def require_path(path: str, key: str, *, file: bool = False) -> None:
+    r"""Exit with the code 2 if a path of the config does not exist.
+
+    Args:
+        path: The path, relative to the working directory.
+        key: The config key that sets the path, e.g.
+            ``"tasklib.paths.src"``, named in the message.
+        file: If True, the path must be a file (a directory is
+            rejected too).
+
+    Raises:
+        Exit: If the path does not exist (code 2).
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._files import require_path
+    >>> require_path(".", "tasklib.paths.src")
+    >>> require_path("no/dir", "tasklib.paths.src")
+    Traceback (most recent call last):
+        ...
+    invoke.exceptions.Exit: 'no/dir' (tasklib.paths.src) does not ...
+
+    ```
+    """
+    target = Path(path)
+    if not (target.is_file() if file else target.exists()):
+        msg = f"'{path}' ({key}) does not exist: set it in invoke.yaml"
+        raise Exit(msg, code=2)

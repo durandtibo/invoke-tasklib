@@ -48,7 +48,8 @@ invoke format.fix-shell
 
 `format.check-docstrings` and `format.fix-docstrings` run `docformatter` against `paths.src` from
 the [resolved config](config.md), using the `[tool.docformatter]` section of the consuming
-project's `pyproject.toml` (via `--config ./pyproject.toml`).
+project's `pyproject.toml` (via `--config ./pyproject.toml`). If `paths.src` does not exist (and
+`--paths` is not set), the tasks exit with 2 and name `tasklib.paths.src`, before running anything.
 
 ## Shell Scripts
 

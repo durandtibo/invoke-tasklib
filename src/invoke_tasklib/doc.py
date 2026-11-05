@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import re
 import shlex
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
 from invoke.tasks import task
 
+from invoke_tasklib._files import require_path
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, build_command, capture, run
@@ -98,12 +98,7 @@ def _docs_config(c: Context) -> str:
     ```
     """
     docs_config = load_config(c).paths.docs_config
-    if not Path(docs_config).is_file():
-        msg = (
-            f"'{docs_config}' (tasklib.paths.docs_config) does not exist: "
-            "set the path of the mkdocs config file in invoke.yaml"
-        )
-        raise Exit(msg, code=2)
+    require_path(docs_config, "tasklib.paths.docs_config", file=True)
     return docs_config
 
 
