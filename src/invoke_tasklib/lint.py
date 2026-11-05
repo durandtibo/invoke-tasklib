@@ -1,4 +1,11 @@
-r"""Lint tasks."""
+r"""Lint tasks (``lint.*``).
+
+The Python code is linted with ruff, the text with codespell, and
+``lint.pre-commit`` runs the pre-commit hooks of the project.
+
+Naming convention: ``check_<target>`` tasks are read-only;
+``fix_<target>`` tasks modify files in place.
+"""
 
 from __future__ import annotations
 

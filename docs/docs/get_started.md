@@ -96,6 +96,7 @@ Available tasks:
   format.check-python           Check code format with ruff without modifying
                                 files.
   format.check-shell            Check shell scripts with shellcheck.
+  format.check-shell-format     Check the format of shell scripts with shfmt.
   format.fix-docstrings         Format docstrings in source code with
                                 docformatter.
   format.fix-python             Format code in place with ruff.

@@ -12,8 +12,8 @@ Anything else in these modules starts with an underscore and can change without 
 | Helper                                    | Use it to                                                            |
 | ----------------------------------------- | -------------------------------------------------------------------- |
 | `invoke_tasklib.config.load_config`       | Read the [resolved config](config.md); an invalid one exits cleanly  |
-| `invoke_tasklib.runner.build_command`     | Build a command (a list of words, or a line) with the args and paths |
-| `invoke_tasklib.runner.run`               | Run a command (a list of words, or a line): echo, pty, program check |
+| `invoke_tasklib.runner.build_command`     | Build a command (a list of words) with the args and paths            |
+| `invoke_tasklib.runner.run`               | Run a command (a list of words): echo, pty, program check            |
 | `invoke_tasklib.runner.in_ci`             | Tell whether `CI` is on (`CI=false` and `CI=0` are off)              |
 | `invoke_tasklib.runner.in_github_actions` | Tell whether `GITHUB_ACTIONS` is `true`                              |
 | `invoke_tasklib.runner.capture`           | Run a command and read its output: hidden, not echoed, no pty        |
@@ -55,7 +55,10 @@ def check_complexity(c, *, args=None, paths=None):
     r"""Check the complexity of the code with radon."""
     cfg = load_config(c)
     with step(c, "🔍 Checking the complexity...", "✅ Complexity check passed"):
-        run(c, build_command(["radon", "cc"], args=args, paths=paths, default_paths=[cfg.paths.src]))
+        command = build_command(
+            ["radon", "cc"], args=args, paths=paths, default_paths=[cfg.paths.src]
+        )
+        run(c, command)
 
 
 ns = make_ns()
@@ -64,7 +67,8 @@ ns.add_task(check_complexity)
 
 - **Read the config with `load_config(c)`**, not from `c.config`: it merges the defaults, validates
   the values and exits with a one-line message on an invalid config. The `tasklib` section is
-  available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`, `cfg.check` and `cfg.fix`.
+  available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`, `cfg.types`, `cfg.check` and
+  `cfg.fix`.
 - **A command is a list of words**, never a string: `["radon", "cc", "src"]`. Do not quote anything
   and do not split a string yourself. `build_command(words, args=, paths=, default_paths=)` adds
   the user's `args` and `paths` (and the default paths) to the words; the two options are split like
@@ -73,14 +77,19 @@ ns.add_task(check_complexity)
   line, so a space or a `;` never splits or injects a command. For the same reason a glob (`*.py`),
   `~` or `$HOME` reaches the tool as it is: the shell does not expand it. A string raises a
   `TypeError`.
-- **`run` also** echoes the command, uses a pty only on a terminal, and first checks that
-  the program is on the `PATH` (with an installation hint if it is not). Only the first word of
-  the command is checked, so a command that is a pipeline or a list (`a | b`, `a && b`) needs
-  `run(c, command, check=False)`. Do not call `c.run` directly. For `python -m <module>`, the module is checked only when the command uses the running
+- **`run` also** echoes the command, uses a pty only on a terminal, and first checks that the
+  program is on the `PATH` (with an installation hint if it is not). Only the first word of the
+  command is checked. A command whose program is a shell function or an alias, which is not on the
+  `PATH`, needs `run(c, command, check=False)`; a shell operator (`|`, `&&`, `>`) cannot be used,
+  because each word is quoted: run the two commands one after the other. Do not call `c.run`
+  directly. For `python -m <module>`, the module is checked only when the command uses the running
   interpreter (`python_executable()`, the one that runs `invoke`): for another interpreter or a
   `python` found on the `PATH`, a missing module is reported by Python itself
-  (`No module named ...`), without a hint. Use `python_executable()` in your commands, as the first word
-  of a list: `run(c, [python_executable(), "-m", "pytest"])` (`run` quotes each word of a list).
+  (`No module named ...`), without a hint. Use `python_executable()` in your commands, as the first
+  word of a list: `run(c, [python_executable(), "-m", "pytest"])` (`run` quotes each word of a
+  list).
+- **Read the output with `capture`** when the code needs it: it is `run` with the output hidden,
+  the command not echoed and no pty, so a warning on stderr is never read as data.
 - **Report the step with `step`**: it prints the start message, then the done message, or
   `❌ Failed: <what was being done>` on the error stream (stderr, like the message of an `Exit`) if
   the block raises (the exception is raised again, so the exit code is unchanged). Use `say` for any

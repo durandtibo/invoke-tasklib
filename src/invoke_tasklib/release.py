@@ -1,4 +1,11 @@
-r"""Build and publish tasks (PyPI package)."""
+r"""Build and publish tasks (``release.*``) of the PyPI package.
+
+``release.build`` builds the wheel and the source distribution with ``uv
+build`` and verifies that each one installs and imports.
+``release.publish`` checks the git state, builds, and uploads with ``uv
+publish`` to PyPI or TestPyPI. The credentials are read from the
+environment and never appear on a command line.
+"""
 
 from __future__ import annotations
 
@@ -396,6 +403,9 @@ def publish(
     the chosen token is given, so a token meant for PyPI is never sent
     to TestPyPI. ``dist/`` is cleared by the build, so only the freshly
     built artifacts are uploaded.
+
+    The build is the one of ``release.build``, run with its defaults:
+    ``args`` is given to ``uv publish`` only.
 
     Args:
         c: The invoke context.

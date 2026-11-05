@@ -220,6 +220,31 @@ accepts `shell`. `invoke config.show` prints the resolved values and where each 
 See the [Config reference](https://durandtibo.github.io/invoke-tasklib/uguide/config/)
 for how each path default is derived.
 
+Every key can also be set with an `INVOKE_TASKLIB_<SECTION>_<KEY>` environment variable, for example
+`INVOKE_TASKLIB_PATHS_SRC=lib` or `INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30`, which wins over
+`invoke.yaml`. An invalid value, an unknown key (with the closest valid key suggested) or a wrong
+working directory exits with the code 2 before any command runs. For editor completion, the JSON
+schema of the `tasklib` section is published at
+<https://durandtibo.github.io/invoke-tasklib/schema.json> (`python -m invoke_tasklib.config` prints
+it).
+
+## Conventions
+
+- **Arguments:** the tasks that run a tool take `--args` (extra arguments for the tool, as one
+  string, e.g. `--args "-k foo -x"`) and, for the tasks that work on files, `--paths` (files or
+  directories instead of the default ones). Both are quoted, so a glob or `~` reaches the tool as
+  it is.
+- **Exit codes:** `0` the task passed, or had nothing to do (a `⏭️` line says why); `1` the checked
+  thing failed; `2` invalid usage or config; `127` a tool is missing. A missing program or Python
+  module is reported with the command that installs it.
+- **Composite tasks:** `invoke check` runs the main read-only checks and `invoke fix` the fixers;
+  `--only`, `--skip` and `--keep-going` select the steps and report all the failures at the end.
+- **Dangerous tasks ask first:** `env.create-venv` asks before it clears `.venv` and
+  `release.publish` checks the git state and asks before it uploads (`--yes` skips the question,
+  `--dry-run` publishes nothing). `clean` stays inside the project and keeps what git tracks.
+- **ASCII output:** set `INVOKE_TASKLIB_ASCII=1` to replace the emojis of the messages with
+  `[ok]`, `[fail]` and `[skip]`.
+
 ## Composing a custom subset of tasks
 
 Need a different set of tasks, or a one-off task alongside the shared ones?

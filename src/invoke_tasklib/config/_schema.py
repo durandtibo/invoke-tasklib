@@ -115,9 +115,10 @@ class Option:
     Attributes:
         default: The default value. ``None`` means that the default is
             derived from other values (see ``get_config``), that the
-            key is required, or that the composite task chooses the
-            steps (``check.tasks``, ``fix.tasks``). A default is a
-            tuple for a list.
+            key is required (``package.name``), that the key is not set
+            (``package.python_version``, ``test.cov_fail_under``), or
+            that the composite task chooses the steps (``check.tasks``,
+            ``fix.tasks``). A default is a tuple for a list.
         validate: Check a raw value and return the resolved one. It
             raises ``ValueError`` with a message that names the key.
         json_schema: The JSON schema of the key, without ``default``.

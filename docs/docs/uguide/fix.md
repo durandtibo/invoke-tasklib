@@ -38,6 +38,9 @@ miss a tool are not run; they are reported as failed.
 
 The steps come from `tasklib.fix.tasks`; `make_ns(exclude=...)` does not remove them.
 
+The exit codes are the ones of [`check.all`](check.md#exit-codes): `0` when every step passed, `1`
+when a step failed, `2` for an unknown step or a bad config and `127` for a missing tool.
+
 <!-- prettier-ignore -->
 !!! warning
     The steps modify files in place. Commit your work before running them.

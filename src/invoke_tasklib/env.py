@@ -1,4 +1,12 @@
-r"""Environment and dependency management tasks."""
+r"""Environment and dependency management tasks (``env.*``).
+
+The tasks create and update the virtual environment with ``uv``
+(``create-venv``, ``install``, ``update``), show it (``show-installed-
+packages``, ``show-python-config``) and check the tools that the other
+tasks run (``check-tools``). The dependency groups come from
+``tasklib.groups`` and the Python version from
+``tasklib.package.python_version``.
+"""
 
 from __future__ import annotations
 
@@ -21,8 +29,13 @@ NAMESPACE = "env"
 r"""The name of the namespace of the tasks of this module."""
 
 _PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
+r"""The pre-commit config; ``update`` updates the hooks if it exists."""
+
 _VENV_DIR = ".venv"
+r"""The directory of the virtual environment that ``uv`` creates."""
+
 _LOCK_FILE = "uv.lock"
+r"""The lock file; ``_install`` enforces it if it exists."""
 
 
 def _confirm_clear(directory: str) -> None:
@@ -124,10 +137,10 @@ def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
     It is the body of ``install``, without its failure line. The
     lock file is enforced (``uv sync --locked``) only if the project
     has a ``uv.lock``; without one, ``uv sync`` resolves the
-    dependencies and creates it. A task
-    that installs as one step of a longer job (``create_venv``,
-    ``update``) calls it inside its own ``report_failure`` block, so a
-    failure is reported once, with the title of the outer job.
+    dependencies and creates it. A task that installs as one step of a
+    longer job (``create_venv``, ``update``) calls it inside its own
+    ``report_failure`` block, so a failure is reported once, with the
+    title of the outer job.
 
     Args:
         c: The invoke context.
@@ -195,7 +208,13 @@ def update(c: Context, *, groups: str | None = None) -> None:
 
 @task
 def show_installed_packages(c: Context) -> None:
-    r"""Show the installed packages."""
+    r"""Show the installed packages.
+
+    It runs ``uv pip list``.
+
+    Args:
+        c: The invoke context.
+    """
     say(c, "📦 Listing installed packages...")
     run(c, ["uv", "pip", "list"])
 
@@ -207,6 +226,9 @@ def show_python_config(c: Context) -> None:
     It lists the Python versions that ``uv`` knows, the one it would
     use, and the ``python`` of the ``PATH``. Having no ``python`` on the
     ``PATH`` is not an error of the task.
+
+    Args:
+        c: The invoke context.
     """
     say(c, "🐍 Python configuration:")
     run(c, ["uv", "python", "list", "--only-installed"])

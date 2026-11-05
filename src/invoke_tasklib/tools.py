@@ -56,7 +56,8 @@ class Tool(NamedTuple):
 
     # The pytest options that the tool, a pytest plugin, provides.
     # The package to install is the module name with ``-`` instead of
-    # ``_``.
+    # ``_``. ``check_program`` checks the plugin when a pytest command
+    # uses one of these options.
     plugin_options: tuple[str, ...] = ()
 
 

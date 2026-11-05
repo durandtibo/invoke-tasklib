@@ -339,7 +339,7 @@ def run_composite(
     r"""Run a composite task: select the steps, look up the tools, run.
 
     The steps are the ones of ``configured`` (the steps with
-    ``default=True` if it is ``None``), or of ``only`` if it is set,
+    ``default=True`` if it is ``None``), or of ``only`` if it is set,
     without the ones of ``skip``. The names of all three are checked
     against ``steps`` before anything runs. Before any step is run, the
     tools that the selected steps need are looked up (see
@@ -364,9 +364,9 @@ def run_composite(
 
     Raises:
         Exit: If a name of ``configured``, ``only`` or ``skip`` is
-            unknown (code 2), if
-            a tool of the selected steps is missing (code 127), or if
-            ``keep_going`` is set and a step failed (code 1).
+            unknown (code 2), if a tool of the selected steps is
+            missing (code 127), or if ``keep_going`` is set and a step
+            failed (code 1).
         UnexpectedExit: If a step fails and ``keep_going`` is not set.
     """
     selected = select_steps(

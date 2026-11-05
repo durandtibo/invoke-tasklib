@@ -29,9 +29,10 @@ of `tasks.py`, as in `cd <project root> && inv check.all`, or use the `make` tar
 Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on
 the `PATH` or in the directory of the Python interpreter that runs `invoke` (so `.venv/bin/inv` finds
 the programs of `.venv/bin` without an activation), and exit with code 127 if it is not. The commands
-run with that directory first on their `PATH`. Install the project tools with
-`invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`). Run `invoke env.check-tools` to list every missing
-tool at once; `invoke check` does the same for the steps it is going to run.
+run with that directory first on their `PATH`. Install the project tools with `invoke env.install`
+(the `dev` group has the linters and test tools, the `docs` group has `mike`). Run
+`invoke env.check-tools` to list every missing tool at once; `invoke check` does the same for the
+steps it is going to run.
 
 The hint depends on the program: `uv` and `uvx` point to the installation page of `uv`
 (`env.install` itself needs it), `git`, `shellcheck` and `shfmt` to the system package manager, and
@@ -39,17 +40,19 @@ The hint depends on the program: `uv` and `uvx` point to the installation page o
 `docformatter`, `pre-commit`, `pytest` and its plugins) and of the `docs` group (`mkdocs`, `mike`)
 name their group, for example `uv sync --group docs`.
 
-Only the first word of a command is checked, after the `NAME=value` words that set environment
-variables. A program given by a path (`./run.sh`, `~/bin/tool`) and the shell builtins (`cd`,
-`export`, `test`, `[`, `exec`, `source`, `.`, `:`) are not looked up. The command line is not parsed
-as shell, so a pipeline (`a | b`), a list (`a && b`) or a subshell is not understood: pass
-`check=False` to `run` to run it without the check.
+Only the first word of a command is checked. A program given by a path (`./run.sh`,
+`/usr/bin/tool`, the running interpreter) is not looked up. A command is a list of words, which
+`run` quotes: it is never parsed as a shell line, so a shell builtin, function or alias is not
+found, and a pipeline (`a | b`) or a list (`a && b`) cannot be written. Pass `check=False` to `run`
+to run a program that is not on the `PATH` without the check, see
+[Writing a Custom Task](uguide/custom_tasks.md).
+
 The module of `python -m <module>` is checked too (for example `pytest`), and is reported as
 `The Python module 'pytest' is not installed for ...` instead of Python's own `No module named`.
 
 The pytest plugins of the options are checked as well: `--xdoctest` needs `xdoctest`, `--timeout`
-needs `pytest-timeout`, `--cov*` (also `--no-cov`) needs `pytest-cov` and `--benchmark-*` needs `pytest-benchmark`.
-A missing plugin is reported as `The option --xdoctest needs the pytest plugin 'xdoctest'` with the
+needs `pytest-timeout`, `--cov*` (also `--no-cov`) needs `pytest-cov` and `--benchmark-*` needs
+`pytest-benchmark`. A missing plugin is reported as `The option --xdoctest needs the pytest plugin 'xdoctest'` with the
 command that adds it, instead of pytest's `unrecognized arguments`.
 
 ## `invoke: command not found` after installing
@@ -81,8 +84,8 @@ removed: `from invoke_tasklib import ns` raises an `ImportError`, use `make_ns()
 ## A task fails with "command not found" (`ruff`, `ty`, `shellcheck`, ...)
 
 `invoke-tasklib` tasks are wrappers around external CLI tools — it does not vendor them. Run
-`invoke env.check-tools` to see, in one list, which tools are available and which are missing. Install
-the missing tool, either directly or via your project's dependency groups:
+`invoke env.check-tools` to see, in one list, which tools are available and which are missing.
+Install the missing tool, either directly or via your project's dependency groups:
 
 ```shell
 invoke env.install                  # installs dev deps: ruff, ty, pytest, ...
@@ -122,9 +125,9 @@ See [Custom tasks](uguide/custom_tasks.md).
 ## `release.publish` fails to authenticate
 
 `release.publish` passes the `PYPI_TOKEN` (`TEST_PYPI_TOKEN` with `--test-pypi`, and
-`UV_PUBLISH_TOKEN` without it) environment variable to `uv publish`. Without a token it only works in GitHub Actions with the `id-token: write`
-permission (Trusted Publishing); anywhere else it stops with a clear message. Make sure the
-variable is set (e.g. as a CI secret) before running it:
+`UV_PUBLISH_TOKEN` without it) environment variable to `uv publish`. Without a token it only works
+in GitHub Actions with the `id-token: write` permission (Trusted Publishing); anywhere else it stops
+with a clear message. Make sure the variable is set (e.g. as a CI secret) before running it:
 
 ```shell
 export PYPI_TOKEN=pypi-...

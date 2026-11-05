@@ -5,8 +5,6 @@ publish the package to PyPI using [`uv`](https://docs.astral.sh/uv/).
 
 ## Overview
 
-`release.pypi` was renamed to `release.publish`; the old name is no longer available.
-
 | Task              | Behavior                                                                                    |
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `release.build`   | Builds the package and verifies installation (`--check` also validates metadata with twine) |
@@ -20,10 +18,9 @@ invoke release.build
 
 Runs `uv build`, then verifies the artifacts it produced: the newest wheel and the newest source
 distribution in `dist/` are each installed in an isolated `uv run` environment
-(`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it with `python -I` (isolated mode: the current directory is not on
-`sys.path`, so a package of the source tree in a flat layout cannot hide an artifact that does not
-contain it).
-The task fails if the build did not produce a wheel or a source distribution. With `--wheel` or
+(`uv run --isolated --no-project --with dist/<file>`) and the package is imported from it with
+`python -I` (isolated mode: the current directory is not on `sys.path`, so a package of the source
+tree in a flat layout cannot hide an artifact that does not contain it). The task fails if the build did not produce a wheel or a source distribution. With `--wheel` or
 `--sdist` in `--args`, only that kind is verified, and with `--out-dir <dir>` (or `-o`) the files
 of `<dir>` are verified (and checked by `--check`) instead of `dist/`.
 
@@ -46,20 +43,21 @@ invoke release.publish
 
 Before anything is built, the task checks the git state: the working tree must be clean, `HEAD`
 must be tagged and the tag (without a leading `v`) must be the static `project.version` of
-`pyproject.toml` (a dynamic version is not compared; an invalid `pyproject.toml` stops the task with a message that
-names the file). It then asks for a confirmation, unless
-`--yes` is given or the `CI` environment variable is set to something other than `0` and
-`false`. Finally it builds the package (via
-`release.build`, which clears `dist/` first so stale artifacts are never uploaded) and runs
-`uv publish`.
+`pyproject.toml` (a dynamic version is not compared; an invalid `pyproject.toml` stops the task
+with a message that names the file). It then asks for a confirmation, unless `--yes` is given or the
+`CI` environment variable is set to something other than `0` and `false`. Finally it builds the
+package (via `release.build` with its defaults, which clears `dist/` first so stale artifacts are
+never uploaded) and runs `uv publish`. `--args` is given to `uv publish` only, not to the build.
 
 Credentials, in this order:
 
 - a token in `PYPI_TOKEN` (`TEST_PYPI_TOKEN` with `--test-pypi`, because the two indexes reject
   each other's tokens and a PyPI token must not be sent to TestPyPI) or, without `--test-pypi`, in
-  `UV_PUBLISH_TOKEN` (usually the production token, so it is never used for TestPyPI), handed to `uv publish` through its environment so it never appears on the command line. `uv publish`
-  runs with the environment of the process minus `UV_PUBLISH_TOKEN`, `UV_PUBLISH_USERNAME` and `UV_PUBLISH_PASSWORD`
-  (only the chosen token is added), so a token that the job defines for PyPI is not inherited by a TestPyPI upload;
+  `UV_PUBLISH_TOKEN` (usually the production token, so it is never used for TestPyPI), handed to
+  `uv publish` through its environment so it never appears on the command line. `uv publish` runs
+  with the environment of the process minus `UV_PUBLISH_TOKEN`, `UV_PUBLISH_USERNAME` and
+  `UV_PUBLISH_PASSWORD` (only the chosen token is added), so a token that the job defines for PyPI
+  is not inherited by a TestPyPI upload;
 - [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OpenID Connect), used
   automatically in GitHub Actions with the `id-token: write` permission (`--trusted-publishing
 always`); no token is needed.

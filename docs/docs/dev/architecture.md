@@ -51,6 +51,7 @@ class TasklibConfig:
     paths: PathsConfig
     groups: GroupsConfig
     test: TestConfig
+    types: TypesConfig
     check: CheckConfig
     fix: FixConfig
 ```
@@ -74,7 +75,8 @@ same underlying tool or concern (e.g. most of `testing.py` wraps `pytest`, excep
 Tasks that need project-specific values call `load_config(c)` at the top of the function body;
 tasks that don't (e.g. `lint.check_python`) skip it entirely.
 
-Seven small modules support the task modules:
+Nine small modules support the task modules (three public ones, `runner`, `tools` and `output`,
+and six private ones):
 
 - `runner.py`: `run(c, command)` is the only way a task runs an external command. It checks that
   the program is on the `PATH` (with `tools.check_program`), echoes the command, and
@@ -83,8 +85,8 @@ Seven small modules support the task modules:
   `in_ci()` and `in_github_actions()` are the only readers of `CI` and `GITHUB_ACTIONS`.
   `build_command` builds the list of the words of a command (the words, the split `--args`, the
   paths), `run` is the only place that turns the list into a shell line (`shlex.join`) and it
-  rejects a string, and `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options, and `TOOL_HELP`
-  is the `help` of a task that has both.
+  rejects a string, `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options, and
+  `TOOL_HELP` is the `help` of a task that has both.
 - `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
   a module up for the running interpreter, `check_program` checks the first word of a command (and
   the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
@@ -101,8 +103,8 @@ Seven small modules support the task modules:
   `--keep-going` mode and the final summary of the failures.
 - `_files.py`: `project_files(c, root, suffix)` finds the files with a suffix, with
   `git ls-files` in a git work tree and with `find_files`, a walk in Python (no `find` or `xargs`)
-  that skips the `EXCLUDED_DIRS` of `_files.py` at any depth, otherwise. It is used by the format and test tasks
-  that work on shell scripts and markdown files.
+  that skips the `EXCLUDED_DIRS` of `_files.py` at any depth, otherwise. It is used by the format
+  and test tasks that work on shell scripts and markdown files.
 - `_pyproject.py`: `read_pyproject(path)` reads `pyproject.toml` (`{}` if the file is missing). An
   invalid file exits with `1` and a message that names the file, the line and the column of the
   error. `release` (the `[project] version`) and `_coverage` use it; `clean` ignores the error,
@@ -123,8 +125,8 @@ Seven small modules support the task modules:
 `CACHE_DIRS` (`.pytest_cache`, `.ruff_cache`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`,
 `.benchmarks`, `.coverage_html`), `OUTPUT_DIRS` (`build`, `dist`, `site`, `htmlcov`) and
 `ENVIRONMENT_DIRS` (`.git`, `.venv`, `node_modules`). `clean._DIRS` derives from `CACHE_DIRS` and the
-outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format and test tasks find their files with `_files.project_files`: in a git work
-tree they ask `git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and
+outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format
+and test tasks find their files with `_files.project_files`: in a git work tree they ask `git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and
 a tracked `build/run.sh` is checked (only the caches and the environments are left out);
 outside a work tree they walk the tree and skip every directory of the list. `clean` keeps its own
 walk, because the `__pycache__` directories it removes are ignored by git.
@@ -153,8 +155,8 @@ before any step runs. To add one:
 sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the
 tasks of `include` when it is set. The modules whose names would shadow the standard library or a
 builtin (`format`, `types`, `test`) are named `formatting`, `typecheck` and `testing`; the
-namespace name of each module is its `NAMESPACE` constant (`"format"` in `formatting.py`), which `_MODULES`
-of `__init__.py` reads, not the module name; a project that builds its own collection passes
+namespace name of each module is its `NAMESPACE` constant (`"format"` in `formatting.py`), which
+`_MODULES` of `__init__.py` reads, not the module name; a project that builds its own collection passes
 `name=module.NAMESPACE` to `Collection.from_module`.
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via
@@ -197,7 +199,7 @@ its maintainers (`M1`-`M6`). The last column says what enforces each one; a prop
 | P8  | One source of truth     | A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`_STEPS`, with its order and whether it is a default), a directory policy once (`_files`). Defaults, the JSON schema, the hints and the docs tables derive from them.                                                                                                                                      | tests that compare the tables; `test_clean.py` (every directory of `clean._DIRS` is in `EXCLUDED_DIRS`)           |
 | P9  | Safe by default         | A destructive task stays inside the project, keeps what git tracks, and asks before an irreversible step. A credential never appears in a command line or in the output.                                                                                                                                                                    | `clean._is_inside_project`, `release._check_release_state`, `_publish_environment`; `tests/unit/test_release.py` |
 | P10 | Skips are visible       | A task that has nothing to do prints `⏭️ <reason>` and exits `0`. A task that cannot do its job (a path it needs is missing) exits non-zero and names the key.                                                                                                                                                                              | `_files.require_path`; `tests/unit/test__files.py`, `tests/integration/test_files.py`                            |
-| P11 | Fix converges           | After `fix_<x>` (or `fix.all`) the matching `check_<x>` (or `check.all --only` the same steps) passes, and a second `fix_<x>` changes nothing.                                                                                                                                                                                              | not tested (target state, step 3)                                                                                |
+| P11 | Fix converges           | After `fix_<x>` (or `fix.all`) the matching `check_<x>` (or `check.all --only` the same steps) passes, and a second `fix_<x>` changes nothing.                                                                                                                                                                                              | `tests/integration/test_fix_converges.py`                                                                        |
 | P12 | Composition is explicit | `make_ns(include=, exclude=)` selects the tasks that the command line offers. The steps of `check.all` and `fix.all` come only from `tasklib.check.tasks` and `tasklib.fix.tasks`; excluding a task from the namespace does not remove its step.                                                                                            | `test_init.py` (the selection); not tested: that an excluded task keeps its step                                                                                |
 | M1  | Layers                  | A task module imports only the support modules, never another task module. The two composites (`check`, `fix`) import task modules and `_steps`. `config`, `tools` and `output` import nothing of the package that is above them.                                                                                                           | `test_architecture.py` (layering test)                                                                           |
 | M2  | Public means documented | A name of `config`, `runner`, `tools` or `output` is public only if it is in the `__all__` of its module and in `uguide/custom_tasks.md`. Everything else starts with `_`; a task module has no public name except its tasks and `NAMESPACE`.                                                                                                   | `test_architecture.py`                                                                                           |
@@ -273,8 +275,9 @@ machine.
 Potential areas for enhancement:
 
 1. Additional task modules for other common project needs (e.g. changelog generation).
-2. A task to validate a project's `invoke.yaml` against the config schema ahead of time (the
-   errors of `get_config` are only raised when a task runs).
+2. Validating a project's `invoke.yaml` before a task runs: `config.show` already validates the
+   config and an editor can check it against the published JSON schema, but nothing validates it
+   in CI without running a task.
 
 ## References
 

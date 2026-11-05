@@ -62,10 +62,27 @@ with the missing tool as the reason. Run [`env.check-tools`](env.md) to see ever
 By default the task stops at the first failure, as the CI jobs do; use `--keep-going` locally to
 learn about all the problems in one run. A step that fails with an error of the code or of the
 system (for example an `OSError`) is reported like any other failed step, with the type and the
-message of the error as the reason, and the other steps still run. Use the tasks directly (with `--args` and `--paths`) to run only one
-of them, or [`lint.pre-commit`](lint.md) to run the hooks of the project. The steps come from `tasklib.check.tasks`; `make_ns(exclude=...)` does not remove them, so
-`make_ns(exclude="lint")` hides `lint.*` from `inv --list` but `inv check --only lint` still runs. To
-leave `check` out of a collection, use `make_ns(exclude=["check"])`.
+message of the error as the reason, and the other steps still run.
+
+A step whose directory does not exist (for example the `unit` step of a project without
+`tests/unit` and `tests`) prints a `⏭️` line and counts as passed, see
+[Missing Paths](index.md#missing-paths).
+
+Use the tasks directly (with `--args` and `--paths`) to run only one of them, or
+[`lint.pre-commit`](lint.md) to run the hooks of the project.
+
+The steps come from `tasklib.check.tasks`; `make_ns(exclude=...)` does not remove them, so
+`make_ns(exclude="lint")` hides `lint.*` from `inv --list` but `inv check --only lint` still runs.
+To leave `check` out of a collection, use `make_ns(exclude=["check"])`.
+
+## Exit Codes
+
+| Code | Meaning                                                                       |
+| ---- | ----------------------------------------------------------------------------- |
+| 0    | Every selected step passed (or was skipped)                                   |
+| 1    | A step failed (with `--keep-going`, at the end; the failed steps are listed)  |
+| 2    | An unknown step in `--only`, `--skip` or `tasklib.check.tasks`, or a bad config |
+| 127  | A tool of a selected step is missing, nothing was run                         |
 
 ## See Also
 

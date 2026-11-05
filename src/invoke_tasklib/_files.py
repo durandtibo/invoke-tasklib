@@ -40,17 +40,24 @@ CACHE_DIRS: frozenset[str] = frozenset(
         ".coverage_html",
     }
 )
-# The directories of the caches and reports of the tools: never the
-# files of the project, even when git does not ignore them. ``clean``
-# removes them.
+r"""The directories of the caches and reports of the tools.
+
+They are never the files of the project, even when git does not ignore
+them. ``clean`` removes them.
+"""
 
 OUTPUT_DIRS: frozenset[str] = frozenset({"build", "dist", "site", "htmlcov"})
-# The directories of build outputs: generated, but a project may track
-# files in them.
+r"""The directories of build outputs.
+
+They are generated, but a project may track files in them.
+"""
 
 ENVIRONMENT_DIRS: frozenset[str] = frozenset({".git", ".venv", "node_modules"})
-# The directories of environments: never the files of the project, even
-# when git does not ignore them.
+r"""The directories of environments.
+
+They are never the files of the project, even when git does not ignore
+them.
+"""
 
 EXCLUDED_DIRS: frozenset[str] = CACHE_DIRS | OUTPUT_DIRS | ENVIRONMENT_DIRS
 r"""The names of the directories that a walk of the file tree never
@@ -64,7 +71,7 @@ directories of tools and environments (``CACHE_DIRS`` and
 """
 
 _IGNORED_PARTS: frozenset[str] = CACHE_DIRS | ENVIRONMENT_DIRS
-# What ``project_files`` leaves out of the list of git.
+r"""What ``project_files`` leaves out of the list of git."""
 
 
 def find_files(root: Path, suffix: str) -> list[Path]:

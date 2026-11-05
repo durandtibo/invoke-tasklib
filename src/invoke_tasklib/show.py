@@ -1,4 +1,9 @@
-r"""Tasks that show the config."""
+r"""Task that shows the resolved config (``config.show``).
+
+The task is read-only. It validates the config like every other task,
+then prints the ``tasklib`` section with the origin of each value. It is
+the one task of the ``config`` namespace.
+"""
 
 from __future__ import annotations
 
@@ -23,6 +28,10 @@ NAMESPACE = "config"
 r"""The name of the namespace of the tasks of this module."""
 
 _PLAIN = re.compile(r"[A-Za-z_][A-Za-z0-9_./-]*")
+r"""A string that YAML reads as a plain scalar, so it is not quoted."""
+
+# The plain words that YAML reads as a boolean or as null, so they are
+# quoted.
 _KEYWORDS = frozenset({"true", "false", "null", "yes", "no", "on", "off", "y", "n", "~"})
 
 

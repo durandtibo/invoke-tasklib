@@ -157,16 +157,16 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`pytest-timeout`](https://pypi.org/project/pytest-timeout/)      | `test.unit`, `test.integration`, `test.functional`, `test.all`  |
 | [`pytest-cov`](https://pytest-cov.readthedocs.io/)                | the `--cov` option of the `test.*` tasks                        |
 | [`coverage`](https://coverage.readthedocs.io/)                    | `test.coverage-report`                                          |
-| [`xdoctest`](https://github.com/Erotemic/xdoctest)                | `test.*` (unless `test.xdoctest` is false), `test.doctest-src`  |
+| [`xdoctest`](https://github.com/Erotemic/xdoctest)                | `test.*` (unless `tasklib.test.xdoctest` is false), `test.doctest-src` |
 | [`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/)    | `test.benchmark`                                                |
-| [`uv`](https://docs.astral.sh/uv/)                                | `env.*`, `release.*`                                            |
+| [`uv`](https://docs.astral.sh/uv/)                                | `env.*` (except `env.check-tools`), `release.*`, `security.audit` |
 | [`twine`](https://twine.readthedocs.io/) (via `uvx`)              | `release.build --check`                                         |
 | [`codespell`](https://github.com/codespell-project/codespell)     | `lint.check-spelling`                                           |
 | [`pre-commit`](https://pre-commit.com/)                           | `lint.pre-commit`                                               |
 | [`mkdocs`](https://www.mkdocs.org/)                               | `doc.build`, `doc.serve`                                        |
 | [`mkdocs-material`](https://squidfunk.github.io/mkdocs-material/) | the theme of the docs built by `doc.build`, `doc.serve`         |
 | [`mike`](https://github.com/jimporter/mike)                       | `doc.publish-dev`, `doc.publish-latest`                         |
-| [`git`](https://git-scm.com/)                                     | `doc.publish-latest`, `release.publish`                         |
+| [`git`](https://git-scm.com/)                                     | `doc.publish-latest`, `release.publish`, and the file lookup of the shell and markdown tasks |
 | [`pip-audit`](https://github.com/pypa/pip-audit) (via `uvx`)      | `security.audit`                                                |
 
 Most of these come from your project's own dev/docs dependency groups; see

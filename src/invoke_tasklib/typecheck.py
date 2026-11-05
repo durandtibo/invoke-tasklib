@@ -1,4 +1,9 @@
-r"""Type-checking tasks."""
+r"""Type-checking task (``types.check``).
+
+The module is named ``typecheck`` so that it does not shadow the
+standard library module ``types``; its namespace is ``types``, see
+``NAMESPACE``.
+"""
 
 from __future__ import annotations
 
