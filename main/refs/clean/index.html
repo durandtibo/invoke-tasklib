@@ -1889,10 +1889,12 @@
         <p>Remove build artifacts and caches.</p>
 <p>The removed paths are <code>dist</code>, <code>build</code>, <code>__pycache__</code>,
 <code>.pytest_cache</code>, <code>.coverage</code>, etc., and the HTML coverage
-report (<code>htmlcov</code>, or the <code>directory</code> of
-<code>[tool.coverage.html]</code> in <code>pyproject.toml</code>). The <code>site</code>
-directory is only removed if the project has a MkDocs config file,
-because that is what produces it: the <code>site_dir</code> of
+report and the coverage files, from where they are written:
+the argument of <code>tasklib.test.cov_reports</code> (<code>html:cov_html</code>,
+<code>xml:cov.xml</code>), else the options of <code>[tool.coverage.*]</code> in
+<code>pyproject.toml</code>, else <code>htmlcov</code> and <code>coverage.xml</code>. The
+<code>site</code> directory is only removed if the project has a MkDocs
+config file, because that is what produces it: the <code>site_dir</code> of
 <code>paths.docs_config</code> (relative to the config file, <code>docs/site</code>
 by default), or <code>site</code> if the config is not valid. The
 <code>*.egg-info</code> directories are removed at the root and in <code>src</code>.</p>

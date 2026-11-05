@@ -1026,10 +1026,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ruff-was-not-found-on-the-path" class="md-nav__link">
+  <a href="#ruff-was-not-found-on-the-path-or-next-to-the-python-interpreter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        'ruff' was not found on the PATH
+        'ruff' was not found on the PATH or next to the Python interpreter
       
     </span>
   </a>
@@ -1908,10 +1908,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ruff-was-not-found-on-the-path" class="md-nav__link">
+  <a href="#ruff-was-not-found-on-the-path-or-next-to-the-python-interpreter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        'ruff' was not found on the PATH
+        'ruff' was not found on the PATH or next to the Python interpreter
       
     </span>
   </a>
@@ -2066,11 +2066,12 @@ next to it, but it does not change directory. The tasks use paths relative to th
 place, and a task like <code>test.unit</code> would skip the missing <code>tests/unit</code> directory and pass. A task
 that reads the config now exits with code 2 and this message instead. Run <code>inv</code> from the directory
 of <code>tasks.py</code>, as in <code>cd &lt;project root&gt; &amp;&amp; inv check.all</code>, or use the <code>make</code> targets.</p>
-<h2 id="ruff-was-not-found-on-the-path"><code>'ruff' was not found on the PATH</code><a class="headerlink" href="#ruff-was-not-found-on-the-path" title="Permanent link">&para;</a></h2>
+<h2 id="ruff-was-not-found-on-the-path-or-next-to-the-python-interpreter"><code>'ruff' was not found on the PATH or next to the Python interpreter</code><a class="headerlink" href="#ruff-was-not-found-on-the-path-or-next-to-the-python-interpreter" title="Permanent link">&para;</a></h2>
 <p>Before running a command, the tasks check that its program (<code>ruff</code>, <code>ty</code>, <code>uv</code>, <code>mike</code>, ...) is on
-the <code>PATH</code> and exit with code 127 if it is not. Install the project tools with
-<code>invoke env.install</code> (the <code>dev</code> group has the linters and test tools, the <code>docs</code> group has <code>mike</code>)
-or activate the virtual environment that has them. Run <code>invoke env.check-tools</code> to list every missing
+the <code>PATH</code> or in the directory of the Python interpreter that runs <code>invoke</code> (so <code>.venv/bin/inv</code> finds
+the programs of <code>.venv/bin</code> without an activation), and exit with code 127 if it is not. The commands
+run with that directory first on their <code>PATH</code>. Install the project tools with
+<code>invoke env.install</code> (the <code>dev</code> group has the linters and test tools, the <code>docs</code> group has <code>mike</code>). Run <code>invoke env.check-tools</code> to list every missing
 tool at once; <code>invoke check</code> does the same for the steps it is going to run.</p>
 <p>The hint depends on the program: <code>uv</code> and <code>uvx</code> point to the installation page of <code>uv</code>
 (<code>env.install</code> itself needs it), <code>git</code>, <code>shellcheck</code> and <code>shfmt</code> to the system package manager, and

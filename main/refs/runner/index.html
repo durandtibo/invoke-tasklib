@@ -2664,10 +2664,13 @@ works outside an activated virtual environment.</p>
     <div class="doc doc-contents ">
 
         <p>Run a command, echoing it and using a pty only on a terminal.</p>
-<p>The program of the command must be on the <code>PATH</code>, see
-<code>check_program</code>. Pass <code>check=False</code> to skip that check when the
-caller knows better, for example for a command that is defined by a
-shell function or alias.</p>
+<p>The program of the command must be on the <code>PATH</code> or in the
+directory of the running interpreter, see <code>check_program</code>. The
+command runs with <code>tool_path()</code> as its <code>PATH</code>, so it finds the
+programs of the virtual environment without an activation. Pass
+<code>check=False</code> to skip that check when the caller knows better,
+for example for a command that is defined by a shell function or
+alias.</p>
 <p>All the tasks run their commands through this helper so that they
 behave alike:</p>
 <ul>
@@ -2676,7 +2679,10 @@ behave alike:</p>
 <li>a pseudo-terminal is used (<code>pty=True</code>) only if <code>sys.stdout</code> is
   a terminal or <code>run.pty</code> is set in the Invoke config. A pty keeps
   the colors of the tools but merges stderr into stdout and is not
-  available everywhere (for example Windows or some CI sandboxes).</li>
+  available everywhere (for example Windows or some CI sandboxes);</li>
+<li>the <code>PATH</code> starts with the directory of the running interpreter
+  (see <code>tool_path</code>). An <code>env</code> passed by the caller is added to
+  it, and can set <code>PATH</code> itself.</li>
 </ul>
 
 

@@ -1881,7 +1881,9 @@ publish the package to PyPI using <a href="https://docs.astral.sh/uv/"><code>uv<
 </code></pre></div>
 <p>Runs <code>uv build</code>, then verifies the artifacts it produced: the newest wheel and the newest source
 distribution in <code>dist/</code> are each installed in an isolated <code>uv run</code> environment
-(<code>uv run --isolated --no-project --with dist/&lt;file&gt;</code>) and the package is imported from it.
+(<code>uv run --isolated --no-project --with dist/&lt;file&gt;</code>) and the package is imported from it with <code>python -I</code> (isolated mode: the current directory is not on
+<code>sys.path</code>, so a package of the source tree in a flat layout cannot hide an artifact that does not
+contain it).
 The task fails if the build did not produce a wheel or a source distribution. With <code>--wheel</code> or
 <code>--sdist</code> in <code>--args</code>, only that kind is verified, and with <code>--out-dir &lt;dir&gt;</code> (or <code>-o</code>) the files
 of <code>&lt;dir&gt;</code> are verified (and checked by <code>--check</code>) instead of <code>dist/</code>.</p>
@@ -1906,7 +1908,9 @@ must be tagged and the tag (without a leading <code>v</code>) must be the static
 <ul>
 <li>a token in <code>PYPI_TOKEN</code> (<code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, because the two indexes reject
   each other's tokens and a PyPI token must not be sent to TestPyPI) or, without <code>--test-pypi</code>, in
-  <code>UV_PUBLISH_TOKEN</code> (usually the production token, so it is never used for TestPyPI), handed to <code>uv publish</code> through its environment so it never appears on the command line;</li>
+  <code>UV_PUBLISH_TOKEN</code> (usually the production token, so it is never used for TestPyPI), handed to <code>uv publish</code> through its environment so it never appears on the command line. <code>uv publish</code>
+  runs with the environment of the process minus <code>UV_PUBLISH_TOKEN</code>, <code>UV_PUBLISH_USERNAME</code> and <code>UV_PUBLISH_PASSWORD</code>
+  (only the chosen token is added), so a token that the job defines for PyPI is not inherited by a TestPyPI upload;</li>
 <li><a href="https://docs.pypi.org/trusted-publishers/">PyPI Trusted Publishing</a> (OpenID Connect), used
   automatically in GitHub Actions with the <code>id-token: write</code> permission (<code>--trusted-publishing
 always</code>); no token is needed.</li>

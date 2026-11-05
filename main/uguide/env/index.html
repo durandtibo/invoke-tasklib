@@ -2042,7 +2042,7 @@ the <code>PATH</code>.</p>
 <code>mkdocs</code>, <code>mike</code>) and the Python modules of the interpreter (<code>pytest</code>, <code>coverage</code>, <code>xdoctest</code>,
 <code>pytest_timeout</code>, <code>pytest_cov</code>). Each tool has one line, with its path when it is available:</p>
 <div class="highlight"><pre><span></span><code>✅ ruff: /project/.venv/bin/ruff
-❌ 'shfmt' was not found on the PATH. Install shfmt with your system package manager, ...
+❌ 'shfmt' was not found on the PATH or next to the Python interpreter. Install shfmt with your system package manager, ...
 </code></pre></div>
 <p>All the tools are listed, so one run shows everything that is missing. The task does not read the
 config, so it can be run before <code>invoke.yaml</code> is set up. It exits with the code 127 if a tool is

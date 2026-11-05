@@ -2022,7 +2022,8 @@ was run before.</p>
 </code></pre></div>
 <p>Runs <code>python -m coverage</code> (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (<code>.coverage</code>)
 is currently on disk — the data produced by an earlier <code>--cov</code> run — without re-running the tests.
-The report goes to <code>htmlcov/</code>, or to the <code>directory</code> of <code>[tool.coverage.html]</code> in <code>pyproject.toml</code>.
+The report goes to the directory of the <code>html:&lt;dir&gt;</code> value of <code>test.cov_reports</code> if there is one, else to the
+<code>directory</code> of <code>[tool.coverage.html]</code> in <code>pyproject.toml</code>, else to <code>htmlcov/</code>.
 Pass <code>--open-browser</code> to also open its <code>index.html</code> in your default browser:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.coverage-report<span class="w"> </span>--open-browser
 </code></pre></div>

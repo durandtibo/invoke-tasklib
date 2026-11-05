@@ -1918,6 +1918,9 @@ dependency is not reported at all, because neither is a cycle.</p>
 depends on something that is only initialized as a side effect of importing another module first,
 which is often the symptom of a cycle. It also fails on a missing dependency or a syntax error, and
 it starts one interpreter per module, so it is slow for a package with heavy imports.</p>
+<p>The package that is checked is the one the interpreter finds: the installed (editable) package, or
+the one in the current directory for a flat layout. The task checks the source tree, not a built
+artifact: use <code>release.build</code> to check an artifact (it imports the package in isolated mode).</p>
 <p>The commands are not echoed and their output is hidden. The task prints one line for the discovery,
 one for the check, and then either one <code>✅</code> summary or one <code>❌ &lt;module&gt;: &lt;last line of the traceback&gt;</code>
 line for each module that failed and the exit code 1. Every module is tried, so one run lists all
