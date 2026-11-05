@@ -52,10 +52,10 @@ def test_get_config_defaults() -> None:
         },
         "types": {"checker": "ty"},
         "check": {
-            "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit"),
+            "tasks": None,
             "cov": False,
         },
-        "fix": {"tasks": ("lint", "format-python", "format-docstrings")},
+        "fix": {"tasks": None},
     }
 
 
@@ -543,10 +543,9 @@ def test_get_config_fix_tasks_override() -> None:
     assert cfg.fix.tasks == ("shell", "lint")
 
 
-def test_get_config_rejects_an_unknown_fix_step() -> None:
-    c = _context({"package": {"name": "mypkg"}, "fix": {"tasks": "types"}})
-    with pytest.raises(ValueError, match=r"Unknown fix step \['types'\]"):
-        get_config(c)
+def test_get_config_keeps_an_unknown_fix_step_for_the_composite() -> None:
+    cfg = get_config(_context({"package": {"name": "mypkg"}, "fix": {"tasks": "types"}}))
+    assert cfg.fix.tasks == ("types",)
 
 
 def test_get_config_rejects_an_unknown_fix_key() -> None:

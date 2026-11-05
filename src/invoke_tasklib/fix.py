@@ -9,7 +9,6 @@ from invoke.tasks import task
 from invoke_tasklib import formatting, lint
 from invoke_tasklib._steps import Step, run_composite
 from invoke_tasklib.config import load_config
-from invoke_tasklib.config._constants import FIX_STEPS
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -17,15 +16,16 @@ if TYPE_CHECKING:
 NAMESPACE = "fix"
 r"""The name of the namespace of the tasks of this module."""
 
-# The steps of ``fix.all`` (task and programs), by step name.
-#
-# To add a step, add its name to ``FIX_STEPS`` in
-# ``config/_constants.py`` (a test checks that the names agree).
+# The steps of ``fix.all`` (task, programs and whether it runs by
+# default), by step name. It is the only list of the step names, in the
+# order that converges: the lint fixes come before the formatting. To
+# add a step, add it here, and its programs and install hints to
+# ``TOOLS`` in ``tools.py``.
 _STEPS: dict[str, Step] = {
     "lint": Step(lint.fix_python, programs=("ruff",)),
     "format-python": Step(formatting.fix_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.fix_docstrings, programs=("docformatter",)),
-    "shell": Step(formatting.fix_shell, programs=("shfmt",)),
+    "shell": Step(formatting.fix_shell, programs=("shfmt",), default=False),
 }
 
 
@@ -35,7 +35,7 @@ _STEPS: dict[str, Step] = {
     help={
         "keep_going": "Run every step and report all the failures, instead of stopping.",
         "only": (
-            f"Comma-separated steps to run instead of tasklib.fix.tasks ({', '.join(FIX_STEPS)})."
+            f"Comma-separated steps to run instead of tasklib.fix.tasks ({', '.join(_STEPS)})."
         ),
         "skip": "Comma-separated steps to leave out.",
     },
@@ -81,8 +81,8 @@ def all_(
         c,
         cfg,
         _STEPS,
-        FIX_STEPS,
         cfg.fix.tasks,
+        key="tasklib.fix.tasks",
         only=only,
         skip=skip,
         keep_going=keep_going,

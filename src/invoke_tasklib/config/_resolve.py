@@ -58,8 +58,8 @@ def get_config(c: Context) -> TasklibConfig:
     GroupsConfig(install=('dev',), update=('dev', 'docs'))
     >>> cfg.test.unit_timeout
     10
-    >>> cfg.check.tasks[0]
-    'format-python'
+    >>> cfg.check.tasks is None
+    True
 
     ```
     """

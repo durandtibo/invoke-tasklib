@@ -130,21 +130,20 @@ walk, because the `__pycache__` directories it removes are ignored by git.
 
 ### Adding a step to `check.all` or `fix.all`
 
-A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the programs it looks up on the
-`PATH`, the Python modules it imports). `modules` is a tuple, or a function of the config that
-returns one, for a step whose modules depend on an option (`check._unit_modules`). To add one:
+A step is a `Step(task, programs, modules, default)` of `_steps.py` (the task, the programs it looks up
+on the `PATH`, the Python modules it imports, and whether it runs when `check.tasks` or `fix.tasks`
+is not set). `modules` is a tuple, or a function of the config that returns one, for a step whose
+modules depend on an option (`check._unit_modules`). `_STEPS` is the only list of the step names, in
+the order of the run; the composite checks the names of the config, `--only` and `--skip` against it
+before any step runs. To add one:
 
 1. Write the task in its module, and add `"name": Step(task, programs=..., modules=...)` to
-   `check._STEPS` (or `fix._STEPS`).
-2. Add the name to `CHECK_STEPS` (or `FIX_STEPS`) in `config/_constants.py`: the config must not
-   import the task modules, and a test checks that the names agree with `_STEPS`.
-3. Add each new program or module to `TOOLS` of `tools.py` as a `Tool` with its dependency group
+   `check._STEPS` (or `fix._STEPS`), at the place where it must run. Pass `default=False` if it must
+   not run unless the config or `--only` asks for it.
+2. Add each new program or module to `TOOLS` of `tools.py` as a `Tool` with its dependency group
    (or an install hint), and the pytest options of a plugin: `env.check-tools`, the hints and the
    check of the plugins read it (a test checks that every tool of `_STEPS` is listed).
-4. To run the step by default, put it among the first steps of `CHECK_STEPS` (or `FIX_STEPS`) and
-   extend `DEFAULT_CHECK_STEPS` (or `DEFAULT_FIX_STEPS`) in `config/_constants.py`, which derive the
-   default of `check.tasks` (or `fix.tasks`) in `config/_schema.py`; update the tables of the user
-   guide (`uguide/check.md`, `uguide/fix.md`).
+3. Update the tables of the user guide (`uguide/check.md`, `uguide/fix.md`).
 
 ### 3. The Namespace
 

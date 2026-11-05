@@ -414,22 +414,16 @@ def test_validate_check_tasks_ignores_empty_names() -> None:
     assert _check_tasks("lint,,") == ("lint",)
 
 
+def test_validate_check_tasks_none_is_the_default_steps() -> None:
+    assert _check_tasks(None) is None
+
+
 def test_validate_check_tasks_rejects_an_empty_value() -> None:
     with pytest.raises(ValueError, match=r"must contain at least one step"):
         _check_tasks("")
 
 
-def test_validate_check_tasks_rejects_an_unknown_step() -> None:
-    with pytest.raises(ValueError, match=r"Unknown check step \['lnt'\] in 'tasklib.check.tasks'"):
-        _check_tasks("lnt")
-
-
-def test_validate_check_tasks_lists_the_valid_steps() -> None:
-    with pytest.raises(ValueError, match=r"Valid steps: format-python, format-docstrings, lint"):
-        _check_tasks("lnt")
-
-
-@pytest.mark.parametrize("value", [3, None, ["lint", 3]])
+@pytest.mark.parametrize("value", [3, ["lint", 3]])
 def test_validate_check_tasks_rejects_a_wrong_type(value: object) -> None:
     with pytest.raises(ValueError, match=r"must be a comma-separated string or a list"):
         _check_tasks(value)
@@ -459,24 +453,7 @@ def test_validate_fix_tasks_rejects_an_empty_value() -> None:
         _fix_tasks("")
 
 
-def test_validate_fix_tasks_rejects_an_unknown_step() -> None:
-    with pytest.raises(ValueError, match=r"Unknown fix step \['lnt'\] in 'tasklib.fix.tasks'"):
-        _fix_tasks("lnt")
-
-
-def test_validate_fix_tasks_rejects_a_check_only_step() -> None:
-    with pytest.raises(ValueError, match=r"Unknown fix step \['types'\]"):
-        _fix_tasks("types")
-
-
-def test_validate_fix_tasks_lists_the_valid_steps() -> None:
-    with pytest.raises(
-        ValueError, match=r"Valid steps: lint, format-python, format-docstrings, shell"
-    ):
-        _fix_tasks("lnt")
-
-
-@pytest.mark.parametrize("value", [3, None, ["lint", 3]])
+@pytest.mark.parametrize("value", [3, ["lint", 3]])
 def test_validate_fix_tasks_rejects_a_wrong_type(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.fix\.tasks' must be a comma-separated"):
         _fix_tasks(value)
@@ -487,13 +464,17 @@ def test_validate_fix_tasks_rejects_a_wrong_type(value: object) -> None:
 #####################################
 
 
-def test_validate_steps_accepts_the_valid_steps() -> None:
-    assert _validate_steps("tasklib.fix.tasks", "b,a", ("a", "b")) == ("b", "a")
+def test_validate_steps_accepts_any_name() -> None:
+    assert _validate_steps("tasklib.fix.tasks", "b,a") == ("b", "a")
 
 
-def test_validate_steps_names_the_section() -> None:
-    with pytest.raises(ValueError, match=r"Unknown sec step \['c'\] in 'tasklib.sec.tasks'"):
-        _validate_steps("tasklib.sec.tasks", "c", ("a", "b"))
+def test_validate_steps_none_is_the_default_steps() -> None:
+    assert _validate_steps("tasklib.fix.tasks", None) is None
+
+
+def test_validate_steps_rejects_an_empty_value() -> None:
+    with pytest.raises(ValueError, match=r"'tasklib\.sec\.tasks' must contain at least one step"):
+        _validate_steps("tasklib.sec.tasks", " , ")
 
 
 ##########################################

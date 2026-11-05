@@ -463,45 +463,44 @@ def _validate_cov_reports(path: str, value: object) -> tuple[str, ...]:
     return tuple(names)
 
 
-def _validate_steps(path: str, value: object, valid: tuple[str, ...]) -> tuple[str, ...]:
+def _validate_steps(path: str, value: object) -> tuple[str, ...] | None:
     r"""Validate the ``tasks`` value of a section that lists steps.
 
-    The schema binds ``valid`` with ``partial``, one per section
-    (``check`` and ``fix``).
+    Only the shape is checked here. The names are checked by the
+    composite task (``check.all`` or ``fix.all``), which is the only
+    place that lists the steps.
 
     Args:
         path: The dotted name of the config key, e.g.
-            ``"tasklib.check.tasks"``. The section in it is also what
-            the steps are called in the error message.
-        value: The raw config value: a comma-separated string or a list
-            of step names.
-        valid: The valid step names.
+            ``"tasklib.check.tasks"``.
+        value: The raw config value: ``None`` for the default steps, a
+            comma-separated string or a list of step names.
 
     Returns:
-        The step names, without duplicates, in the order given.
+        ``None`` for the default steps, else the step names, without
+        duplicates, in the order given.
 
     Raises:
-        ValueError: If the value is neither a string nor a list of
-            strings, if it is empty, or if a name is not in ``valid``.
+        ValueError: If the value is neither ``None``, a string nor a
+            list of strings, or if it is empty.
 
     Example usage:
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_steps
     >>> path = "tasklib.fix.tasks"
-    >>> _validate_steps(path, "lint, unit", ("lint", "unit"))
+    >>> _validate_steps(path, "lint, unit")
     ('lint', 'unit')
+    >>> _validate_steps(path, None) is None
+    True
 
     ```
     """
-    section = path.split(".")[1]
+    if value is None:
+        return None
     names = _as_names(path, value)
     if not names:
         msg = f"'{path}' must contain at least one step"
-        raise ValueError(msg)
-    unknown = [name for name in names if name not in valid]
-    if unknown:
-        msg = f"Unknown {section} step {unknown} in '{path}'. Valid steps: {', '.join(valid)}"
         raise ValueError(msg)
     return tuple(names)
 

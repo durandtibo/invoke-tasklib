@@ -69,9 +69,9 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `test.cov_fail_under`      | not set                                                                               |
 | `test.cov_reports`         | `html,xml,term`                                                                       |
 | `types.checker`            | `ty`                                                                                  |
-| `check.tasks`              | `format-python,format-docstrings,lint,types,imports,unit`                             |
+| `check.tasks`              | not set (`format-python,format-docstrings,lint,types,imports,unit`)                   |
 | `check.cov`                | `false`                                                                               |
-| `fix.tasks`                | `lint,format-python,format-docstrings`                                                |
+| `fix.tasks`                | not set (`lint,format-python,format-docstrings`)                                      |
 
 The `test` section sets the per-test timeout in seconds of each test scope, whether `pytest` runs
 with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` if the project does
@@ -93,11 +93,14 @@ value passes no `--cov-report`, so pytest-cov uses its default.
 `check.cov` is a boolean. If true, the `unit` step of `check.all` runs with `--cov`, so
 `test.cov_fail_under` is enforced there too (the coverage reports are generated).
 
-`check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order:
+`check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order. It is
+not set by default (`null` in `config.show`), which means the first six steps below (`format-python`
+to `unit`). The names are checked by `check.all`, before any step runs (exit code 2). The steps are:
 `format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,
 `spelling`, `docs` and `audit`. It must have at least one step and no unknown step.
 
-`fix.tasks` is the same for the steps of `fix.all`: `lint`, `format-python`, `format-docstrings` and
+`fix.tasks` is the same for the steps of `fix.all` (not set means `lint`, `format-python` and
+`format-docstrings`): `lint`, `format-python`, `format-docstrings` and
 `shell`, run in that order (the lint fixes first, so that the formatting has the last word on the
 layout).
 

@@ -13,6 +13,7 @@ from invoke.runners import Result
 from invoke_tasklib import _steps
 from invoke_tasklib._steps import (
     Step,
+    default_steps,
     missing_tools,
     parse_steps,
     preflight_message,
@@ -160,6 +161,18 @@ def test_parse_steps_rejects_an_unknown_step() -> None:
         Exit, match=r"Unknown step \['x'\] in --skip. Valid steps: lint, unit, docs"
     ):
         parse_steps("--skip", "lint,x", _VALID)
+
+
+def test_parse_steps_accepts_a_collection() -> None:
+    assert parse_steps("tasklib.check.tasks", (" lint", "unit", "lint"), _VALID) == [
+        "lint",
+        "unit",
+    ]
+
+
+def test_parse_steps_rejects_an_unknown_name_of_a_collection() -> None:
+    with pytest.raises(Exit, match=r"Unknown step \['x'\] in tasklib\.check\.tasks"):
+        parse_steps("tasklib.check.tasks", ("lint", "x"), _VALID)
 
 
 def test_parse_steps_exits_with_code_2() -> None:
@@ -454,7 +467,7 @@ def _noop(_c: object) -> None:
 
 
 def test_step_has_no_tools_by_default() -> None:
-    assert Step(_noop) == (_noop, (), ())
+    assert Step(_noop) == (_noop, (), (), True)
 
 
 def test_step_keeps_programs_and_modules() -> None:
@@ -506,7 +519,7 @@ def _config(*, xdoctest: bool = True) -> TasklibConfig:
 _STEPS = {
     "lint": Step(_noop, programs=("ruff",)),
     "unit": Step(_noop, modules=("pytest",)),
-    "docs": Step(_noop, programs=("mkdocs",)),
+    "docs": Step(_noop, programs=("mkdocs",), default=False),
 }
 
 
@@ -514,7 +527,7 @@ def _composite(
     calls: list[str],
     *,
     steps: dict[str, Step] | None = None,
-    configured: tuple[str, ...] = ("lint", "unit"),
+    configured: tuple[str, ...] | None = ("lint", "unit"),
     only: str | None = None,
     skip: str | None = None,
     keep_going: bool = False,
@@ -527,8 +540,8 @@ def _composite(
         MockContext(run=True),
         _config(),
         chosen,
-        _VALID,
         configured,
+        key="tasklib.check.tasks",
         only=only,
         skip=skip,
         keep_going=keep_going,
@@ -539,7 +552,7 @@ def _composite(
 
 def _called(
     *,
-    configured: tuple[str, ...] = ("lint", "unit"),
+    configured: tuple[str, ...] | None = ("lint", "unit"),
     only: str | None = None,
     skip: str | None = None,
 ) -> list[str]:
@@ -557,6 +570,34 @@ def _tools_found(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.usefixtures("_tools_found")
 def test_run_composite_runs_the_configured_steps_in_order() -> None:
     assert _called(configured=("unit", "lint")) == ["unit", "lint"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_without_configured_steps_runs_the_default_steps() -> None:
+    assert _called(configured=None) == ["lint", "unit"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_runs_a_configured_step_that_is_not_a_default() -> None:
+    assert _called(configured=("docs",)) == ["docs"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_rejects_an_unknown_configured_step() -> None:
+    with pytest.raises(
+        Exit,
+        match=r"^Unknown step \['nope'\] in tasklib\.check\.tasks\. Valid steps: lint, unit, docs$",
+    ) as info:
+        _composite([], configured=("lint", "nope"))
+    assert info.value.code == 2
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_an_unknown_configured_step_runs_nothing() -> None:
+    calls: list[str] = []
+    with pytest.raises(Exit, match=r"Unknown step"):
+        _composite(calls, configured=("lint", "nope"))
+    assert calls == []
 
 
 @pytest.mark.usefixtures("_tools_found")
@@ -647,3 +688,21 @@ def test_run_composite_keep_going_skips_the_step_with_a_missing_tool(
 def test_run_composite_says_start_then_done(capsys: pytest.CaptureFixture[str]) -> None:
     _composite([])
     assert capsys.readouterr().out == "start\ndone\n"
+
+
+##################################
+#     Tests for default_steps     #
+##################################
+
+
+def test_default_steps_keeps_the_steps_with_default_in_order() -> None:
+    steps = {
+        "a": Step(_noop),
+        "b": Step(_noop, default=False),
+        "c": Step(_noop, default=True),
+    }
+    assert default_steps(steps) == ("a", "c")
+
+
+def test_default_steps_of_no_step_is_empty() -> None:
+    assert default_steps({}) == ()

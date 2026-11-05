@@ -44,6 +44,10 @@ class Step(NamedTuple):
     config that returns them (a step whose modules depend on the
     options), see ``needs``."""
 
+    default: bool = True
+    r"""Whether the step runs when ``tasklib.<composite>.tasks`` is not
+    set, see ``default_steps``."""
+
     def needs(self, cfg: TasklibConfig) -> tuple[tuple[str, ...], tuple[str, ...]]:
         r"""Return the programs and the modules that the step needs.
 
@@ -69,6 +73,28 @@ class Step(NamedTuple):
             programs if isinstance(programs, tuple) else programs(cfg),
             modules if isinstance(modules, tuple) else modules(cfg),
         )
+
+
+def default_steps(steps: Mapping[str, Step]) -> tuple[str, ...]:
+    r"""List the steps that run when the config does not choose them.
+
+    Args:
+        steps: The steps, by name, in the order of the run.
+
+    Returns:
+        The names of the steps with ``default=True``, in order.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._steps import Step, default_steps
+    >>> steps = {"a": Step(print), "b": Step(print, default=False)}
+    >>> default_steps(steps)
+    ('a',)
+
+    ```
+    """
+    return tuple(name for name, step in steps.items() if step.default)
 
 
 def missing_tools(programs: Collection[str], modules: Collection[str]) -> list[tuple[str, str]]:
@@ -134,12 +160,16 @@ def preflight_message(blocked: Mapping[str, list[tuple[str, str]]]) -> str:
     return "\n".join(lines)
 
 
-def parse_steps(option: str, value: str | None, valid: tuple[str, ...]) -> list[str]:
-    r"""Parse the ``--only`` or ``--skip`` option.
+def parse_steps(
+    option: str, value: str | Collection[str] | None, valid: Collection[str]
+) -> list[str]:
+    r"""Parse the ``--only`` or ``--skip`` option, or a configured list.
 
     Args:
-        option: The name of the option, used in the error message.
-        value: A comma-separated list of step names, or ``None``.
+        option: The name of the option or of the config key, used in
+            the error message.
+        value: A comma-separated list of step names, a collection of
+            names, or ``None``.
         valid: The valid step names.
 
     Returns:
@@ -158,10 +188,13 @@ def parse_steps(option: str, value: str | None, valid: tuple[str, ...]) -> list[
     ['lint', 'unit']
     >>> parse_steps("--skip", None, valid)
     []
+    >>> parse_steps("tasklib.check.tasks", ("unit",), valid)
+    ['unit']
 
     ```
     """
-    names = list(dict.fromkeys(n.strip() for n in (value or "").split(",") if n.strip()))
+    given = value.split(",") if isinstance(value, str) else (value or ())
+    names = list(dict.fromkeys(n.strip() for n in given if n.strip()))
     unknown = [n for n in names if n not in valid]
     if unknown:
         msg = f"Unknown step {unknown} in {option}. Valid steps: {', '.join(valid)}"
@@ -173,8 +206,7 @@ def select_steps(configured: tuple[str, ...], only: list[str], skip: list[str]) 
     r"""Select the steps to run.
 
     Args:
-        configured: The steps of the config (``tasklib.check.tasks`` or
-            ``tasklib.fix.tasks``).
+        configured: The steps of the config, or of the defaults.
         only: The steps of ``--only``. If not empty, they replace
             ``configured``.
         skip: The steps of ``--skip``, removed from the selection.
@@ -295,9 +327,9 @@ def run_composite(
     c: Context,
     cfg: TasklibConfig,
     steps: Mapping[str, Step],
-    valid: tuple[str, ...],
-    configured: tuple[str, ...],
+    configured: tuple[str, ...] | None,
     *,
+    key: str,
     only: str | None,
     skip: str | None,
     keep_going: bool,
@@ -306,8 +338,10 @@ def run_composite(
 ) -> None:
     r"""Run a composite task: select the steps, look up the tools, run.
 
-    The steps are the ones of ``configured``, or of ``only`` if it is
-    set, without the ones of ``skip``. Before any step is run, the
+    The steps are the ones of ``configured`` (the steps with
+    ``default=True` if it is ``None``), or of ``only`` if it is set,
+    without the ones of ``skip``. The names of all three are checked
+    against ``steps`` before anything runs. Before any step is run, the
     tools that the selected steps need are looked up (see
     ``Step.needs``) and the missing ones are reported, see
     ``run_steps``.
@@ -315,9 +349,11 @@ def run_composite(
     Args:
         c: The invoke context.
         cfg: The resolved config.
-        steps: The steps, by name.
-        valid: The valid step names, for ``only`` and ``skip``.
-        configured: The steps of the config.
+        steps: The steps, by name, in the order of the run.
+        configured: The steps of the config, or ``None`` for the
+            default steps.
+        key: The config key of ``configured``, e.g.
+            ``"tasklib.check.tasks"``, used in the error message.
         only: Comma-separated steps to run instead of ``configured``.
         skip: Comma-separated steps to leave out.
         keep_going: If True, run all the steps even if one fails.
@@ -327,15 +363,16 @@ def run_composite(
             message written when all the steps passed.
 
     Raises:
-        Exit: If a name of ``only`` or ``skip`` is unknown (code 2), if
+        Exit: If a name of ``configured``, ``only`` or ``skip`` is
+            unknown (code 2), if
             a tool of the selected steps is missing (code 127), or if
             ``keep_going`` is set and a step failed (code 1).
         UnexpectedExit: If a step fails and ``keep_going`` is not set.
     """
     selected = select_steps(
-        configured,
-        parse_steps("--only", only, valid),
-        parse_steps("--skip", skip, valid),
+        tuple(parse_steps(key, configured, steps)) or default_steps(steps),
+        parse_steps("--only", only, steps),
+        parse_steps("--skip", skip, steps),
     )
     blocked = {
         name: missing for name in selected if (missing := missing_tools(*steps[name].needs(cfg)))
