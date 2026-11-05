@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import partial
+
 import pytest
 
 from invoke_tasklib.config import SCHEMA
@@ -51,16 +53,16 @@ def test_as_mapping_rejects_other_types(value: object) -> None:
 
 
 def test_validate_python_version_returns_valid_string() -> None:
-    assert _validate_python_version("3.10") == "3.10"
+    assert _validate_python_version("tasklib.package.python_version", "3.10") == "3.10"
 
 
 def test_validate_python_version_accepts_none() -> None:
-    assert _validate_python_version(None) is None
+    assert _validate_python_version("tasklib.package.python_version", None) is None
 
 
 def test_validate_python_version_rejects_float() -> None:
     with pytest.raises(ValueError, match=r"got 3\.1\."):
-        _validate_python_version(3.1)
+        _validate_python_version("tasklib.package.python_version", 3.1)
 
 
 ###############################
@@ -121,46 +123,46 @@ def test_as_names_rejects_other_values(value: object) -> None:
 
 
 def test_normalize_groups_converts_a_list() -> None:
-    assert _normalize_groups("install", ["dev", "docs"]) == ("dev", "docs")
+    assert _normalize_groups("tasklib.groups.install", ["dev", "docs"]) == ("dev", "docs")
 
 
 def test_normalize_groups_splits_a_string() -> None:
-    assert _normalize_groups("install", "dev") == ("dev",)
+    assert _normalize_groups("tasklib.groups.install", "dev") == ("dev",)
 
 
 def test_normalize_groups_accepts_tuple() -> None:
-    assert _normalize_groups("update", ("dev", "docs")) == ("dev", "docs")
+    assert _normalize_groups("tasklib.groups.update", ("dev", "docs")) == ("dev", "docs")
 
 
 def test_normalize_groups_splits_a_comma_separated_string() -> None:
-    assert _normalize_groups("install", "dev,docs") == ("dev", "docs")
+    assert _normalize_groups("tasklib.groups.install", "dev,docs") == ("dev", "docs")
 
 
 def test_normalize_groups_strips_the_names() -> None:
-    assert _normalize_groups("install", " dev , docs ") == ("dev", "docs")
+    assert _normalize_groups("tasklib.groups.install", " dev , docs ") == ("dev", "docs")
 
 
 def test_normalize_groups_drops_empty_names() -> None:
-    assert _normalize_groups("install", "dev,,docs,") == ("dev", "docs")
+    assert _normalize_groups("tasklib.groups.install", "dev,,docs,") == ("dev", "docs")
 
 
 def test_normalize_groups_of_an_empty_string_is_empty() -> None:
-    assert _normalize_groups("install", "") == ()
+    assert _normalize_groups("tasklib.groups.install", "") == ()
 
 
 def test_normalize_groups_removes_the_duplicates() -> None:
-    assert _normalize_groups("install", "dev,docs,dev") == ("dev", "docs")
+    assert _normalize_groups("tasklib.groups.install", "dev,docs,dev") == ("dev", "docs")
 
 
 def test_normalize_groups_does_not_mutate_a_list() -> None:
     groups = [" dev "]
-    _normalize_groups("install", groups)
+    _normalize_groups("tasklib.groups.install", groups)
     assert groups == [" dev "]
 
 
 def test_normalize_groups_error_names_the_key() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.groups\.update'"):
-        _normalize_groups("update", 3)
+        _normalize_groups("tasklib.groups.update", 3)
 
 
 #################################
@@ -202,32 +204,32 @@ def test_check_keys_suggests_closest_key() -> None:
 
 
 def test_validate_int_accepts_the_minimum() -> None:
-    assert _validate_int("test", "unit_timeout", 1, minimum=1) == 1
+    assert _validate_int("tasklib.test.unit_timeout", 1, minimum=1) == 1
 
 
 def test_validate_int_names_the_section_in_the_error() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.paths\.depth' must be an integer >= 1"):
-        _validate_int("paths", "depth", 0, minimum=1)
+        _validate_int("tasklib.paths.depth", 0, minimum=1)
 
 
 def test_validate_int_rejects_below_the_minimum() -> None:
     with pytest.raises(ValueError, match=r"must be an integer >= 1, got 0"):
-        _validate_int("test", "unit_timeout", 0, minimum=1)
+        _validate_int("tasklib.test.unit_timeout", 0, minimum=1)
 
 
 def test_validate_int_converts_a_string_of_digits() -> None:
-    assert _validate_int("test", "unit_timeout", "30", minimum=1) == 30
+    assert _validate_int("tasklib.test.unit_timeout", "30", minimum=1) == 30
 
 
 def test_validate_int_rejects_a_string_below_the_minimum() -> None:
     with pytest.raises(ValueError, match=r"must be an integer >= 1, got '0'"):
-        _validate_int("test", "unit_timeout", "0", minimum=1)
+        _validate_int("tasklib.test.unit_timeout", "0", minimum=1)
 
 
 @pytest.mark.parametrize("value", [True, 1.5, "ten", "1.5", "", None])
 def test_validate_int_rejects_non_integers(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer"):
-        _validate_int("test", "unit_timeout", value, minimum=0)
+        _validate_int("tasklib.test.unit_timeout", value, minimum=0)
 
 
 ####################################
@@ -237,28 +239,28 @@ def test_validate_int_rejects_non_integers(value: object) -> None:
 
 @pytest.mark.parametrize("value", [True, False])
 def test_validate_bool_accepts_booleans(value: bool) -> None:
-    assert _validate_bool("test", "xdoctest", value) is value
+    assert _validate_bool("tasklib.test.xdoctest", value) is value
 
 
 @pytest.mark.parametrize("value", ["true", "TRUE", "True", "1", "yes", "Yes", "on", "ON"])
 def test_validate_bool_accepts_the_true_spellings(value: str) -> None:
-    assert _validate_bool("test", "xdoctest", value) is True
+    assert _validate_bool("tasklib.test.xdoctest", value) is True
 
 
 @pytest.mark.parametrize("value", ["false", "FALSE", "False", "0", "no", "No", "off", "OFF"])
 def test_validate_bool_accepts_the_false_spellings(value: str) -> None:
-    assert _validate_bool("test", "xdoctest", value) is False
+    assert _validate_bool("tasklib.test.xdoctest", value) is False
 
 
 def test_validate_bool_names_the_section_in_the_error() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.check\.keep_going' must be a boolean"):
-        _validate_bool("check", "keep_going", "maybe")
+        _validate_bool("tasklib.check.keep_going", "maybe")
 
 
 @pytest.mark.parametrize("value", [1, 0, "maybe", "", None])
 def test_validate_bool_rejects_non_booleans(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.xdoctest' must be a boolean"):
-        _validate_bool("test", "xdoctest", value)
+        _validate_bool("tasklib.test.xdoctest", value)
 
 
 ###########################################
@@ -268,13 +270,13 @@ def test_validate_bool_rejects_non_booleans(value: object) -> None:
 
 @pytest.mark.parametrize("value", ["mypkg", "my_pkg", "ns.mypkg"])
 def test_validate_import_name_accepts_module_names(value: str) -> None:
-    assert _validate_import_name(value) == value
+    assert _validate_import_name("tasklib.package.import_name", value) == value
 
 
 @pytest.mark.parametrize("value", ["my-pkg", "", "1pkg", "a..b", "my pkg", 3, None])
 def test_validate_import_name_rejects_invalid_names(value: object) -> None:
     with pytest.raises(ValueError, match=r"must be a Python module name"):
-        _validate_import_name(value)
+        _validate_import_name("tasklib.package.import_name", value)
 
 
 ####################################
@@ -297,18 +299,18 @@ def test_int_from_text_keeps_other_values(value: object) -> None:
 
 
 def test_validate_str_returns_a_non_empty_string() -> None:
-    assert _validate_str("paths", "src", "src/mypkg") == "src/mypkg"
+    assert _validate_str("tasklib.paths.src", "src/mypkg") == "src/mypkg"
 
 
 @pytest.mark.parametrize("value", ["", 5, None, ["a"], True])
 def test_validate_str_rejects_other_values(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.paths\.src' must be a non-empty string, got "):
-        _validate_str("paths", "src", value)
+        _validate_str("tasklib.paths.src", value)
 
 
 def test_validate_str_error_names_the_section_and_the_key() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.package\.name' must be"):
-        _validate_str("package", "name", "")
+        _validate_str("tasklib.package.name", "")
 
 
 ##################################################
@@ -317,16 +319,16 @@ def test_validate_str_error_names_the_section_and_the_key() -> None:
 
 
 def test_validate_int_accepts_the_maximum() -> None:
-    assert _validate_int("test", "cov_fail_under", 100, minimum=0, maximum=100) == 100
+    assert _validate_int("tasklib.test.cov_fail_under", 100, minimum=0, maximum=100) == 100
 
 
 def test_validate_int_rejects_above_the_maximum() -> None:
     with pytest.raises(ValueError, match=r"must be an integer between 0 and 100, got 101"):
-        _validate_int("test", "cov_fail_under", 101, minimum=0, maximum=100)
+        _validate_int("tasklib.test.cov_fail_under", 101, minimum=0, maximum=100)
 
 
 def test_validate_int_without_maximum_has_no_upper_limit() -> None:
-    assert _validate_int("test", "unit_timeout", 10**9, minimum=1) == 10**9
+    assert _validate_int("tasklib.test.unit_timeout", 10**9, minimum=1) == 10**9
 
 
 ###########################################
@@ -335,58 +337,65 @@ def test_validate_int_without_maximum_has_no_upper_limit() -> None:
 
 
 def test_validate_cov_reports_comma_separated_string() -> None:
-    assert _validate_cov_reports("html,xml,term") == ("html", "xml", "term")
+    assert _validate_cov_reports("tasklib.test.cov_reports", "html,xml,term") == (
+        "html",
+        "xml",
+        "term",
+    )
 
 
 def test_validate_cov_reports_list() -> None:
-    assert _validate_cov_reports(["term-missing", "lcov"]) == ("term-missing", "lcov")
+    assert _validate_cov_reports("tasklib.test.cov_reports", ["term-missing", "lcov"]) == (
+        "term-missing",
+        "lcov",
+    )
 
 
 def test_validate_cov_reports_tuple() -> None:
-    assert _validate_cov_reports(("json",)) == ("json",)
+    assert _validate_cov_reports("tasklib.test.cov_reports", ("json",)) == ("json",)
 
 
 def test_validate_cov_reports_strips_spaces() -> None:
-    assert _validate_cov_reports(" html , xml ") == ("html", "xml")
+    assert _validate_cov_reports("tasklib.test.cov_reports", " html , xml ") == ("html", "xml")
 
 
 def test_validate_cov_reports_removes_duplicates_and_keeps_the_order() -> None:
-    assert _validate_cov_reports("xml,html,xml") == ("xml", "html")
+    assert _validate_cov_reports("tasklib.test.cov_reports", "xml,html,xml") == ("xml", "html")
 
 
 @pytest.mark.parametrize("value", ["", ",", " ", []])
 def test_validate_cov_reports_empty_means_no_report_option(value: object) -> None:
-    assert _validate_cov_reports(value) == ()
+    assert _validate_cov_reports("tasklib.test.cov_reports", value) == ()
 
 
 @pytest.mark.parametrize("report", sorted(COV_REPORTS))
 def test_validate_cov_reports_accepts_every_known_report(report: str) -> None:
-    assert _validate_cov_reports(report) == (report,)
+    assert _validate_cov_reports("tasklib.test.cov_reports", report) == (report,)
 
 
 def test_validate_cov_reports_rejects_an_unknown_report() -> None:
     with pytest.raises(ValueError, match=r"Unknown coverage report \['htlm'\]"):
-        _validate_cov_reports("html,htlm")
+        _validate_cov_reports("tasklib.test.cov_reports", "html,htlm")
 
 
 def test_validate_cov_reports_error_lists_the_valid_reports() -> None:
     with pytest.raises(
         ValueError, match=r"Valid reports: annotate, html, json, lcov, term, term-missing, xml"
     ):
-        _validate_cov_reports("nope")
+        _validate_cov_reports("tasklib.test.cov_reports", "nope")
 
 
 @pytest.mark.parametrize("value", [5, None, True, ["html", 5], {"html": 1}])
 def test_validate_cov_reports_rejects_other_types(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.cov_reports' must be a comma-separated"):
-        _validate_cov_reports(value)
+        _validate_cov_reports("tasklib.test.cov_reports", value)
 
 
 ###############################################
 #     Tests for the check.tasks validator     #
 ###############################################
 
-_check_tasks = SCHEMA["check"]["tasks"].validate
+_check_tasks = partial(SCHEMA["check"]["tasks"].validate, "tasklib.check.tasks")
 
 
 def test_validate_check_tasks_comma_separated_string() -> None:
@@ -430,7 +439,7 @@ def test_validate_check_tasks_rejects_a_wrong_type(value: object) -> None:
 #     Tests for the fix.tasks validator     #
 #############################################
 
-_fix_tasks = SCHEMA["fix"]["tasks"].validate
+_fix_tasks = partial(SCHEMA["fix"]["tasks"].validate, "tasklib.fix.tasks")
 
 
 def test_validate_fix_tasks_comma_separated_string() -> None:
@@ -479,12 +488,12 @@ def test_validate_fix_tasks_rejects_a_wrong_type(value: object) -> None:
 
 
 def test_validate_steps_accepts_the_valid_steps() -> None:
-    assert _validate_steps("fix", ("a", "b"), "b,a") == ("b", "a")
+    assert _validate_steps("tasklib.fix.tasks", "b,a", ("a", "b")) == ("b", "a")
 
 
 def test_validate_steps_names_the_section() -> None:
     with pytest.raises(ValueError, match=r"Unknown sec step \['c'\] in 'tasklib.sec.tasks'"):
-        _validate_steps("sec", ("a", "b"), "c")
+        _validate_steps("tasklib.sec.tasks", "c", ("a", "b"))
 
 
 ##########################################
@@ -493,18 +502,18 @@ def test_validate_steps_names_the_section() -> None:
 
 
 def test_validate_cov_fail_under_none_is_not_set() -> None:
-    assert _validate_cov_fail_under(None) is None
+    assert _validate_cov_fail_under("tasklib.test.cov_fail_under", None) is None
 
 
 @pytest.mark.parametrize(("value", "expected"), [(0, 0), (90, 90), (100, 100), ("85", 85)])
 def test_validate_cov_fail_under_accepts_a_percentage(value: object, expected: int) -> None:
-    assert _validate_cov_fail_under(value) == expected
+    assert _validate_cov_fail_under("tasklib.test.cov_fail_under", value) == expected
 
 
 @pytest.mark.parametrize("value", [-1, 101, 1.5, "ninety", True])
 def test_validate_cov_fail_under_rejects_an_invalid_value(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.cov_fail_under' must be an integer"):
-        _validate_cov_fail_under(value)
+        _validate_cov_fail_under("tasklib.test.cov_fail_under", value)
 
 
 @pytest.mark.parametrize(
@@ -520,33 +529,40 @@ def test_validate_cov_fail_under_rejects_an_invalid_value(value: object) -> None
     ],
 )
 def test_validate_cov_reports_accepts_an_argument(value: str) -> None:
-    assert _validate_cov_reports(value) == (value,)
+    assert _validate_cov_reports("tasklib.test.cov_reports", value) == (value,)
 
 
 def test_validate_cov_reports_keeps_the_arguments_in_a_list() -> None:
     value = ["term-missing:skip-covered", "html:cov_html", "xml"]
-    assert _validate_cov_reports(value) == ("term-missing:skip-covered", "html:cov_html", "xml")
+    assert _validate_cov_reports("tasklib.test.cov_reports", value) == (
+        "term-missing:skip-covered",
+        "html:cov_html",
+        "xml",
+    )
 
 
 def test_validate_cov_reports_keeps_two_arguments_of_a_format() -> None:
-    assert _validate_cov_reports("html:a,html:b") == ("html:a", "html:b")
+    assert _validate_cov_reports("tasklib.test.cov_reports", "html:a,html:b") == (
+        "html:a",
+        "html:b",
+    )
 
 
 @pytest.mark.parametrize("value", ["html:", "term-missing:", ":skip-covered", ":"])
 def test_validate_cov_reports_rejects_an_empty_part(value: str) -> None:
     with pytest.raises(ValueError, match=r"Unknown coverage report"):
-        _validate_cov_reports(value)
+        _validate_cov_reports("tasklib.test.cov_reports", value)
 
 
 def test_validate_cov_reports_rejects_an_unknown_format_with_an_argument() -> None:
     with pytest.raises(ValueError, match=r"Unknown coverage report \['htlm:dir'\]"):
-        _validate_cov_reports("htlm:dir")
+        _validate_cov_reports("tasklib.test.cov_reports", "htlm:dir")
 
 
 @pytest.mark.parametrize("value", ["HTML", "term_missing", "html/", "html cov"])
 def test_validate_cov_reports_rejects_a_misspelled_format(value: str) -> None:
     with pytest.raises(ValueError, match=r"Unknown coverage report"):
-        _validate_cov_reports(value)
+        _validate_cov_reports("tasklib.test.cov_reports", value)
 
 
 ####################################
