@@ -31,8 +31,9 @@ def get_config(c: Context) -> TasklibConfig:
 
     Returns:
         A frozen dataclass with the resolved ``package``, ``paths``,
-        ``groups``, ``test``, ``check`` and ``fix`` sections, each a
-        frozen dataclass too, e.g. ``cfg.paths.src``.
+        ``groups``, ``test``, ``types``, ``check`` and ``fix``
+        sections, each a frozen dataclass too, e.g.
+        ``cfg.paths.src``.
 
     Raises:
         ValueError: If the config is invalid: an unknown key, a missing

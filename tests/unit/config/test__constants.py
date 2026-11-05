@@ -37,8 +37,8 @@ def test_default_fix_steps_are_the_first_fix_steps() -> None:
 
 
 def test_default_check_tasks_are_derived_from_the_default_steps() -> None:
-    assert SCHEMA["check"]["tasks"].default == ",".join(DEFAULT_CHECK_STEPS)
+    assert SCHEMA["check"]["tasks"].default == DEFAULT_CHECK_STEPS
 
 
 def test_default_fix_tasks_are_derived_from_the_default_steps() -> None:
-    assert SCHEMA["fix"]["tasks"].default == ",".join(DEFAULT_FIX_STEPS)
+    assert SCHEMA["fix"]["tasks"].default == DEFAULT_FIX_STEPS
