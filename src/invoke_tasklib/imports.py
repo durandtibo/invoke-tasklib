@@ -15,7 +15,10 @@ from invoke_tasklib.runner import capture, python_executable
 
 if TYPE_CHECKING:
     from invoke.context import Context
-    from invoke.runners import Result
+
+
+NAMESPACE = "imports"
+r"""The name of the namespace of the tasks of this module."""
 
 
 @task(
@@ -62,31 +65,29 @@ def check_cycles(c: Context, *, lazy: bool = False, type_checking: bool = False)
     say(c, f"✅ No import cycle in {len(sources)} module(s)")
 
 
-def _failure_reason(result: Result) -> str:
-    r"""Say why a command failed, in one line.
+def _parse_import_each(stdout: str) -> tuple[int, list[tuple[str, str]]]:
+    r"""Read the output of ``python -m invoke_tasklib._discover
+    --import-each``.
 
     Args:
-        result: The result of the failed command.
+        stdout: The first line is the number of modules, then there is
+            a ``<module>\t<reason>`` line for each module that failed.
 
     Returns:
-        The last line of the standard error (the exception of a
-        traceback), or the exit code if there is none.
+        The number of modules, and the ``(module, reason)`` pairs.
 
     Example usage:
 
     ```pycon
-    >>> from invoke.runners import Result
-    >>> from invoke_tasklib.imports import _failure_reason
-    >>> stderr = "Traceback ...\nImportError: x\n"
-    >>> _failure_reason(Result(stderr=stderr, exited=1))
-    'ImportError: x'
-    >>> _failure_reason(Result(exited=3))
-    'exit code 3'
+    >>> from invoke_tasklib.imports import _parse_import_each
+    >>> _parse_import_each("3\na.b\tImportError: x\n")
+    (3, [('a.b', 'ImportError: x')])
 
     ```
     """
-    lines = [line.strip() for line in result.stderr.splitlines() if line.strip()]
-    return lines[-1] if lines else f"exit code {result.exited}"
+    first, *rest = stdout.splitlines() or ["0"]
+    failures = [tuple(line.split("\t", 1)) for line in rest if line]
+    return int(first), [(module, reason) for module, reason in failures]
 
 
 @task
@@ -98,9 +99,13 @@ def check_isolated(c: Context) -> None:
     module that fails to import on its own depends on something that is
     only initialized as a side effect of importing another module first,
     which is the usual symptom of a cyclic import. It also fails on a
-    missing dependency or a syntax error, and it starts one interpreter
-    per module, so it is slow for a package with heavy imports; see
-    ``check_cycles`` for the static check.
+    missing dependency or a syntax error. It starts one interpreter per
+    module, a few at a time, so it is slow for a package with heavy
+    imports; see ``check_cycles`` for the static check.
+
+    One worker (``python -m invoke_tasklib._discover --import-each``)
+    does the discovery and starts the interpreters, so the task runs a
+    single command whatever the size of the package.
 
     The package that is checked is the one that the running
     interpreter finds: the installed (editable) package, or the one in
@@ -123,18 +128,12 @@ def check_isolated(c: Context) -> None:
     name = cfg.package.import_name
     python = python_executable()
     with report_failure(c, "🔍 Checking that each module imports on its own..."):
-        say(c, f"🔍 Discovering modules of {name}...")
-        discover = capture(c, f"{python} -m invoke_tasklib._discover {shlex.quote(name)}")
-        modules = [line for line in discover.stdout.splitlines() if line]
-        say(c, f"🔍 Checking {len(modules)} module(s) one at a time...")
-        failures: list[tuple[str, str]] = []
-        for module in modules:
-            result = capture(c, f"{python} -c {shlex.quote(f'import {module}')}", warn=True)
-            if not result.ok:
-                failures.append((module, _failure_reason(result)))
+        say(c, f"🔍 Importing each module of {name} in its own interpreter...")
+        command = f"{python} -m invoke_tasklib._discover --import-each {shlex.quote(name)}"
+        total, failures = _parse_import_each(capture(c, command).stdout)
         for module, reason in failures:
             say(c, f"❌ {module}: {reason}", err=True)
         if failures:
-            msg = f"{len(failures)} of {len(modules)} module(s) failed to import on their own"
+            msg = f"{len(failures)} of {total} module(s) failed to import on their own"
             raise Exit(msg, code=1)
-    say(c, f"✅ All {len(modules)} module(s) imported on their own")
+    say(c, f"✅ All {total} module(s) imported on their own")

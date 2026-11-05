@@ -207,11 +207,12 @@ def report_failure(c: Context, title: str) -> Generator[None]:
 
 
 @contextmanager
-def step(c: Context, start: str, done: str) -> Generator[None]:
+def step(c: Context, start: str, done: str | None = None) -> Generator[None]:
     r"""Report the start and the end of a step of a task.
 
     The start message is written when the block is entered and the done
-    message when it exits normally. If the block raises, a failure
+    message (if there is one) when it exits normally. If the block
+    raises, a failure
     message (``❌ Failed: <start message without symbol and dots>``) is
     written to the error stream instead and the exception is raised
     again, so that a failed step is visible and not only the output of
@@ -220,7 +221,9 @@ def step(c: Context, start: str, done: str) -> Generator[None]:
     Args:
         c: The invoke context.
         start: The message written when the step starts.
-        done: The message written when the step succeeds.
+        done: The message written when the step succeeds, or ``None``
+            for a step that has none (its work is the last thing the
+            task says).
 
     Yields:
         Nothing.
@@ -243,4 +246,5 @@ def step(c: Context, start: str, done: str) -> Generator[None]:
     say(c, start)
     with report_failure(c, start):
         yield
-    say(c, done)
+    if done is not None:
+        say(c, done)

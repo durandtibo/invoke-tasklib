@@ -58,7 +58,7 @@ nav:
       - refs/check.md
       - refs/fix.md
       - refs/config.md
-      - refs/configuration.md
+      - refs/show.md
       - refs/runner.md
       - refs/tools.md
       - refs/output.md

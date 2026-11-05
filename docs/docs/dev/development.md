@@ -125,7 +125,7 @@ invoke-tasklib/
 │       ├── clean.py          # clean.* tasks
 │       ├── check.py          # check.* tasks
 │       ├── fix.py            # fix.* tasks
-│       └── configuration.py  # config.* tasks
+│       └── show.py           # config.* tasks
 ├── tests/
 │   ├── helpers.py            # `make_context` and `commands`, shared by the tests
 │   ├── unit/                 # Unit tests, one module per source module
@@ -142,8 +142,9 @@ invoke-tasklib/
 
 1. Pick the right module (`formatting.py`, `lint.py`, `imports.py`, `typecheck.py`, `testing.py`,
    `env.py`, `release.py`, `doc.py`, `security.py`, `clean.py`, `check.py`, `fix.py` or
-   `configuration.py`), or create a new one
-   if the task doesn't fit an existing namespace.
+   `show.py`), or create a new one
+   if the task doesn't fit an existing namespace (give it a `NAMESPACE` constant, and add it to
+   `_MODULES` of `__init__.py`).
 2. Follow the `check_<target>`/`fix_<target>` naming convention when applicable (see
    [Format](../uguide/format.md)).
 3. Call `load_config(c)` if the task needs project-specific paths or the package name, rather than

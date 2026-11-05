@@ -14,6 +14,10 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+NAMESPACE = "lint"
+r"""The name of the namespace of the tasks of this module."""
+
+
 @task(
     help={
         "output_format": (

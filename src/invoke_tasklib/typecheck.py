@@ -14,6 +14,10 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+NAMESPACE = "types"
+r"""The name of the namespace of the tasks of this module."""
+
+
 COMMANDS: dict[str, str] = {"ty": "ty check", "pyright": "pyright", "mypy": "mypy"}
 r"""The command of each type checker of ``types.checker``."""
 

@@ -19,6 +19,10 @@ from invoke_tasklib.testing import coverage_outputs
 if TYPE_CHECKING:
     from invoke.context import Context
 
+NAMESPACE = "clean"
+r"""The name of the namespace of the tasks of this module."""
+
+
 DIRS = (
     "build",
     "dist",

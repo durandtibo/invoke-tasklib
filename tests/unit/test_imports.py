@@ -23,7 +23,7 @@ def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "executable", "/venv/bin/python")
 
 
-_DISCOVER_CMD = "/venv/bin/python -m invoke_tasklib._discover mypkg"
+_WORKER_CMD = "/venv/bin/python -m invoke_tasklib._discover --import-each mypkg"
 
 
 ####################################
@@ -31,51 +31,30 @@ _DISCOVER_CMD = "/venv/bin/python -m invoke_tasklib._discover mypkg"
 ####################################
 
 
-def test_check_isolated_discovers_then_imports_each_module() -> None:
+def test_check_isolated_runs_the_worker_once() -> None:
     c = make_context(
         tasklib_config={"package": {"name": "mypkg"}},
-        run={
-            _DISCOVER_CMD: Result(stdout="mypkg\nmypkg.a\nmypkg.sub\nmypkg.sub.b\n"),
-            "/venv/bin/python -c 'import mypkg'": Result(),
-            "/venv/bin/python -c 'import mypkg.a'": Result(),
-            "/venv/bin/python -c 'import mypkg.sub'": Result(),
-            "/venv/bin/python -c 'import mypkg.sub.b'": Result(),
-        },
+        run={_WORKER_CMD: Result(stdout="4\n")},
     )
     imports.check_isolated(c)
-    assert commands(c) == [
-        _DISCOVER_CMD,
-        "/venv/bin/python -c 'import mypkg'",
-        "/venv/bin/python -c 'import mypkg.a'",
-        "/venv/bin/python -c 'import mypkg.sub'",
-        "/venv/bin/python -c 'import mypkg.sub.b'",
-    ]
-
-
-def test_check_isolated_does_not_embed_a_script() -> None:
-    c = make_context(
-        tasklib_config={"package": {"name": "mypkg"}},
-        run={_DISCOVER_CMD: Result(stdout="")},
-    )
-    imports.check_isolated(c)
-    assert commands(c) == [_DISCOVER_CMD]
+    assert commands(c) == [_WORKER_CMD]
 
 
 def test_check_isolated_uses_the_import_name() -> None:
-    cmd = "/venv/bin/python -m invoke_tasklib._discover my_pkg"
+    cmd = "/venv/bin/python -m invoke_tasklib._discover --import-each my_pkg"
     c = make_context(
         tasklib_config={"package": {"name": "my-pkg"}},
-        run={cmd: Result(stdout="")},
+        run={cmd: Result(stdout="1\n")},
     )
     imports.check_isolated(c)
     assert commands(c) == [cmd]
 
 
 def test_check_isolated_uses_the_configured_import_name() -> None:
-    cmd = "/venv/bin/python -m invoke_tasklib._discover other"
+    cmd = "/venv/bin/python -m invoke_tasklib._discover --import-each other"
     c = make_context(
         tasklib_config={"package": {"name": "my-pkg", "import_name": "other"}},
-        run={cmd: Result(stdout="")},
+        run={cmd: Result(stdout="1\n")},
     )
     imports.check_isolated(c)
     assert commands(c) == [cmd]
@@ -84,16 +63,12 @@ def test_check_isolated_uses_the_configured_import_name() -> None:
 def test_check_isolated_reports_progress(capsys: pytest.CaptureFixture[str]) -> None:
     c = make_context(
         tasklib_config={"package": {"name": "mypkg"}},
-        run={
-            _DISCOVER_CMD: Result(stdout="mypkg\n"),
-            "/venv/bin/python -c 'import mypkg'": Result(),
-        },
+        run={_WORKER_CMD: Result(stdout="3\n")},
     )
     imports.check_isolated(c)
     assert capsys.readouterr().out == (
-        "🔍 Discovering modules of mypkg...\n"
-        "🔍 Checking 1 module(s) one at a time...\n"
-        "✅ All 1 module(s) imported on their own\n"
+        "🔍 Importing each module of mypkg in its own interpreter...\n"
+        "✅ All 3 module(s) imported on their own\n"
     )
 
 
@@ -272,13 +247,9 @@ def test_check_isolated_reads_the_modules_without_a_pty_nor_an_echo() -> None:
 def _failing() -> dict[str, Result]:
     r"""Fresh results: ``MockContext`` changes the dict it is given."""
     return {
-        _DISCOVER_CMD: Result(stdout="mypkg\nmypkg.a\nmypkg.b\n"),
-        "/venv/bin/python -c 'import mypkg'": Result(),
-        "/venv/bin/python -c 'import mypkg.a'": Result(
-            stderr="Traceback (most recent call last):\nImportError: cannot import name 'X'\n",
-            exited=1,
-        ),
-        "/venv/bin/python -c 'import mypkg.b'": Result(stderr="SyntaxError: bad\n", exited=1),
+        _WORKER_CMD: Result(
+            stdout="3\nmypkg.a\tImportError: cannot import name 'X'\nmypkg.b\tSyntaxError: bad\n"
+        )
     }
 
 
@@ -295,18 +266,6 @@ def test_check_isolated_failure_exit_code_is_1() -> None:
     assert info.value.code == 1
 
 
-def test_check_isolated_tries_every_module_after_a_failure() -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
-    with pytest.raises(Exit, match=r"failed to import"):
-        imports.check_isolated(c)
-    assert commands(c) == [
-        _DISCOVER_CMD,
-        "/venv/bin/python -c 'import mypkg'",
-        "/venv/bin/python -c 'import mypkg.a'",
-        "/venv/bin/python -c 'import mypkg.b'",
-    ]
-
-
 def test_check_isolated_lists_the_failed_modules_with_their_error(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -320,11 +279,11 @@ def test_check_isolated_lists_the_failed_modules_with_their_error(
     )
 
 
-def test_check_isolated_does_not_echo_the_import_commands() -> None:
+def test_check_isolated_does_not_echo_the_worker() -> None:
     c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
     with pytest.raises(Exit, match=r"failed to import"):
         imports.check_isolated(c)
-    assert [(k["hide"], k["echo"], k["pty"]) for k in run_kwargs(c)] == [(True, False, False)] * 4
+    assert [(k["hide"], k["echo"], k["pty"]) for k in run_kwargs(c)] == [(True, False, False)]
 
 
 def test_check_isolated_does_not_report_success_after_a_failure(
@@ -336,23 +295,29 @@ def test_check_isolated_does_not_report_success_after_a_failure(
     assert "✅" not in capsys.readouterr().out
 
 
-#####################################
-#     Tests for _failure_reason     #
-#####################################
+########################################
+#     Tests for _parse_import_each     #
+########################################
 
 
-def test_failure_reason_is_the_last_line_of_the_traceback() -> None:
-    result = Result(stderr="Traceback:\n  File x\nImportError: no module\n", exited=1)
-    assert imports._failure_reason(result) == "ImportError: no module"
+def test_parse_import_each_without_failure() -> None:
+    assert imports._parse_import_each("5\n") == (5, [])
 
 
-def test_failure_reason_skips_trailing_blank_lines() -> None:
-    assert imports._failure_reason(Result(stderr="Error: x\n\n  \n", exited=1)) == "Error: x"
+def test_parse_import_each_with_failures() -> None:
+    assert imports._parse_import_each("3\na\tImportError: x\nb\tSyntaxError: y\n") == (
+        3,
+        [("a", "ImportError: x"), ("b", "SyntaxError: y")],
+    )
 
 
-def test_failure_reason_without_output_is_the_exit_code() -> None:
-    assert imports._failure_reason(Result(exited=3)) == "exit code 3"
+def test_parse_import_each_keeps_a_tab_of_the_reason() -> None:
+    assert imports._parse_import_each("1\na\tError:\tx\n") == (1, [("a", "Error:\tx")])
 
 
-def test_failure_reason_of_blank_output_is_the_exit_code() -> None:
-    assert imports._failure_reason(Result(stderr=" \n", exited=2)) == "exit code 2"
+def test_parse_import_each_of_an_empty_output_is_no_module() -> None:
+    assert imports._parse_import_each("") == (0, [])
+
+
+def test_parse_import_each_ignores_blank_lines() -> None:
+    assert imports._parse_import_each("1\n\na\tE\n\n") == (1, [("a", "E")])

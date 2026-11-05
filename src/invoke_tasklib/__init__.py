@@ -15,12 +15,14 @@ and an ``invoke.yaml`` at the project root::
 To compose a custom subset of tasks, use the ``exclude`` and
 ``include`` options of ``make_ns``, or import individual task modules
 (the module of the ``test`` tasks is ``testing``, so its collection
-needs the name ``test`` to keep the task names):
+needs the name ``test`` to keep the task names: each task module has
+it in its ``NAMESPACE`` constant):
 
 ```pycon
 >>> from invoke.collection import Collection
 >>> from invoke_tasklib import lint, testing
->>> ns = Collection(lint, Collection.from_module(testing, name="test"))
+>>> test = Collection.from_module(testing, name=testing.NAMESPACE)
+>>> ns = Collection(lint, test)
 >>> sorted(ns.task_names)
 ['lint.check-python', 'lint.check-spelling', 'lint.fix-python',
  'lint.pre-commit', 'test.all', 'test.benchmark',
@@ -42,7 +44,6 @@ from invoke.collection import Collection
 from invoke_tasklib import (
     check,
     clean,
-    configuration,
     doc,
     env,
     fix,
@@ -51,6 +52,7 @@ from invoke_tasklib import (
     lint,
     release,
     security,
+    show,
     testing,
     typecheck,
 )
@@ -63,7 +65,6 @@ __all__ = [
     "__version__",
     "check",
     "clean",
-    "configuration",
     "doc",
     "env",
     "fix",
@@ -73,6 +74,7 @@ __all__ = [
     "make_ns",
     "release",
     "security",
+    "show",
     "testing",
     "typecheck",
 ]
@@ -107,21 +109,25 @@ __version__ = _installed_version()
 r"""The version of the installed ``invoke-tasklib`` distribution."""
 
 _MODULES = {
-    "format": formatting,
-    "lint": lint,
-    "imports": imports,
-    "types": typecheck,
-    "test": testing,
-    "env": env,
-    "release": release,
-    "doc": doc,
-    "security": security,
-    "clean": clean,
-    "check": check,
-    "fix": fix,
-    "config": configuration,
+    module.NAMESPACE: module
+    for module in (
+        formatting,
+        lint,
+        imports,
+        typecheck,
+        testing,
+        env,
+        release,
+        doc,
+        security,
+        clean,
+        check,
+        fix,
+        show,
+    )
 }
-r"""The task modules of the default collection, by namespace name."""
+r"""The task modules of the default collection, by namespace name (the
+``NAMESPACE`` of each module)."""
 
 
 def _matches(name: str, patterns: Iterable[str]) -> bool:

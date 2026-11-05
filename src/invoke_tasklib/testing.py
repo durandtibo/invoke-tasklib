@@ -29,6 +29,10 @@ if TYPE_CHECKING:
 
     from invoke_tasklib.config import TasklibConfig
 
+NAMESPACE = "test"
+r"""The name of the namespace of the tasks of this module."""
+
+
 COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
 MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
@@ -620,8 +624,6 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
     if not paths and not Path(benchmarks).is_dir():
         msg = f"No '{benchmarks}' directory: there is no benchmark to run"
         raise Exit(msg, code=1)
-    with report_failure(c, "⏱️  Running benchmarks..."):
-        say(c, "⏱️  Running benchmarks...")
+    with step(c, "⏱️  Running benchmarks...", "✅ Benchmarks complete"):
         cmd = f"{python_executable()} -m pytest --benchmark-only --benchmark-enable"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
-    say(c, "✅ Benchmarks complete")
