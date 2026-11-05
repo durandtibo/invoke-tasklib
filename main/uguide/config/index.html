@@ -2036,6 +2036,8 @@ invalid config, see below) to read project-specific values from an
 <span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">cov_fail_under</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
 <span class="w">    </span><span class="nt">cov_reports</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html,xml,term</span>
+<span class="w">  </span><span class="nt">types</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">checker</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ty</span>
 <span class="w">  </span><span class="nt">check</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">format-python,format-docstrings,lint,types,imports,unit</span>
 <span class="w">    </span><span class="nt">cov</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
@@ -2130,6 +2132,10 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 <td><code>html,xml,term</code></td>
 </tr>
 <tr>
+<td><code>types.checker</code></td>
+<td><code>ty</code></td>
+</tr>
+<tr>
 <td><code>check.tasks</code></td>
 <td><code>format-python,format-docstrings,lint,types,imports,unit</code></td>
 </tr>
@@ -2155,6 +2161,9 @@ with <code>--cov</code>, <code>cov_fail_under</code> is forwarded as <code>--cov
 can have the argument of pytest-cov after a colon, for example <code>term-missing:skip-covered</code> or
 <code>html:cov_html</code> (the directory or file of the report). The value is quoted in the command. An empty
 value passes no <code>--cov-report</code>, so pytest-cov uses its default.</p>
+<p><code>types.checker</code> is the type checker of <code>types.check</code> and of the <code>types</code> step of <code>check.all</code>: <code>ty</code>
+(default), <code>pyright</code> or <code>mypy</code>. With <code>--complete</code>, <code>types.check</code> also runs <code>pyright</code> after it (unless it is
+<code>pyright</code>). <code>mypy</code> is not installed by <code>env.install</code>: add it to the project dependencies.</p>
 <p><code>check.cov</code> is a boolean. If true, the <code>unit</code> step of <code>check.all</code> runs with <code>--cov</code>, so
 <code>test.cov_fail_under</code> is enforced there too (the coverage reports are generated).</p>
 <p><code>check.tasks</code> is a comma-separated string or a list of the steps of <code>check.all</code>, run in that order:

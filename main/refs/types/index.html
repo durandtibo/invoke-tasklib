@@ -1321,6 +1321,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.typecheck.COMMANDS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COMMANDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.typecheck.NAMESPACE" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1791,6 +1802,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.typecheck.COMMANDS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COMMANDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.typecheck.NAMESPACE" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1874,6 +1896,34 @@
 
 
 
+<h3 id="invoke_tasklib.typecheck.COMMANDS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.typecheck.COMMANDS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.typecheck.COMMANDS" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">COMMANDS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ty"</span><span class="p">:</span> <span class="s2">"ty check"</span><span class="p">,</span>
+    <span class="s2">"pyright"</span><span class="p">:</span> <span class="s2">"pyright"</span><span class="p">,</span>
+    <span class="s2">"mypy"</span><span class="p">:</span> <span class="s2">"mypy"</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The command of each type checker of <code>types.checker</code>.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="invoke_tasklib.typecheck.NAMESPACE" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.typecheck.NAMESPACE</span>
 
@@ -1918,10 +1968,12 @@
     <div class="doc doc-contents ">
 
         <p>Check type hints.</p>
-<p>Two modes are available:</p>
+<p>The checker is <code>tasklib.types.checker</code> (<code>ty</code> by default, or
+<code>pyright</code> or <code>mypy</code>). Two modes are available:</p>
 <ul>
-<li>fast (default): only <code>ty</code> is used.</li>
-<li>complete (<code>--complete</code>): <code>ty</code> and <code>pyright</code> are both used.</li>
+<li>fast (default): only the checker is used.</li>
+<li>complete (<code>--complete</code>): <code>pyright</code> is also run after the
+  checker, unless the checker is <code>pyright</code>.</li>
 </ul>
 
 
@@ -1961,7 +2013,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>True</code>, run <code>pyright</code> after <code>ty</code>.</p>
+                <p>If <code>True</code>, run <code>pyright</code> after the checker.</p>
               </div>
             </td>
             <td>
@@ -1977,7 +2029,8 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Extra arguments passed to <code>ty</code> (not to <code>pyright</code>).</p>
+                <p>Extra arguments passed to the checker (not to the extra
+<code>pyright</code> run).</p>
               </div>
             </td>
             <td>
@@ -1994,10 +2047,7 @@
             <td>
               <div class="doc-md-description">
                 <p>The files or directories to check instead of the
-project default, passed to <code>ty</code> and <code>pyright</code>. Without
-it, <code>ty</code> checks the project and <code>pyright</code> the files of
-its own <code>include</code> setting, so the two tools can look at
-different files.</p>
+project default, passed to the checker and <code>pyright</code>.</p>
               </div>
             </td>
             <td>
@@ -2013,8 +2063,8 @@ different files.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Extra arguments passed to <code>pyright</code> (not to
-<code>ty</code>). They are only used with <code>complete</code>.</p>
+                <p>Extra arguments passed to the extra <code>pyright</code>
+run. They are only used with <code>complete</code>.</p>
               </div>
             </td>
             <td>
