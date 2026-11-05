@@ -41,9 +41,9 @@ def _mkdir(*parts: str) -> Callable[[Path], Path]:
     return make
 
 
-########################
+##########################
 #     Tests for DIRS     #
-########################
+##########################
 
 
 @pytest.mark.parametrize("name", clean.DIRS)
