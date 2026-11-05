@@ -26,8 +26,16 @@ from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _un
 ####################################
 
 
-def test_default_config_has_the_six_sections() -> None:
-    assert sorted(default_config()) == ["check", "fix", "groups", "package", "paths", "test"]
+def test_default_config_has_the_seven_sections() -> None:
+    assert sorted(default_config()) == [
+        "check",
+        "fix",
+        "groups",
+        "package",
+        "paths",
+        "test",
+        "types",
+    ]
 
 
 def test_default_config_is_the_defaults() -> None:
@@ -52,6 +60,7 @@ def test_default_config_is_the_defaults() -> None:
             "cov_fail_under": None,
             "cov_reports": "html,xml,term",
         },
+        "types": {"checker": "ty"},
         "check": {
             "tasks": "format-python,format-docstrings,lint,types,imports,unit",
             "cov": "",
@@ -96,7 +105,7 @@ _SECTION_CLASSES = {
 
 
 def test_schema_sections() -> None:
-    assert list(SCHEMA) == ["package", "paths", "groups", "test", "check", "fix"]
+    assert list(SCHEMA) == ["package", "paths", "groups", "test", "types", "check", "fix"]
 
 
 @pytest.mark.parametrize("section", sorted(_SECTION_CLASSES))
@@ -124,7 +133,7 @@ def test_schema_option_has_a_description(section: str, key: str) -> None:
 @pytest.mark.parametrize(("section", "key"), _OPTIONS)
 def test_schema_option_has_a_json_type(section: str, key: str) -> None:
     schema = SCHEMA[section][key].json_schema
-    assert "type" in schema or "anyOf" in schema
+    assert "type" in schema or "anyOf" in schema or "enum" in schema
 
 
 @pytest.mark.parametrize(("section", "key"), _OPTIONS)

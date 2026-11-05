@@ -636,6 +636,7 @@ def test_tools_programs_in_the_order_of_env_check_tools() -> None:
         "ruff",
         "ty",
         "pyright",
+        "mypy",
         "docformatter",
         "codespell",
         "pre-commit",
@@ -689,6 +690,7 @@ def test_program_hints_are_the_programs_without_a_group() -> None:
     assert sorted(PROGRAM_HINTS) == [
         "codespell",
         "git",
+        "mypy",
         "shellcheck",
         "shfmt",
         "uv",

@@ -18,6 +18,10 @@ COV_REPORTS: frozenset[str] = frozenset(
 r"""The valid values of ``test.cov_reports`` (the formats of ``--cov-
 report`` of pytest-cov)."""
 
+TYPE_CHECKERS: tuple[str, ...] = ("ty", "pyright", "mypy")
+r"""The valid values of ``types.checker``: the type checkers that
+``types.check`` can run."""
+
 CHECK_STEPS: tuple[str, ...] = (
     "format-python",
     "format-docstrings",

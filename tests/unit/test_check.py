@@ -9,8 +9,8 @@ from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import _steps, check, env
-from invoke_tasklib._steps import step_modules
-from invoke_tasklib.config import CHECK_STEPS, load_config
+from invoke_tasklib._steps import step_modules, step_programs
+from invoke_tasklib.config import CHECK_STEPS, get_config, load_config
 from invoke_tasklib.tools import PROGRAM_GROUPS, PROGRAM_HINTS
 from tests.helpers import commands, make_context
 
@@ -512,9 +512,8 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
 
 
 def test_programs_are_checked_by_env_check_tools() -> None:
-    assert {name for step in check.STEPS.values() for name in step.programs} <= set(
-        env.TOOL_PROGRAMS
-    )
+    programs = {name for step in check.STEPS.values() for name in step_programs(step, _cfg())}
+    assert programs <= set(env.TOOL_PROGRAMS)
 
 
 def test_modules_are_checked_by_env_check_tools() -> None:
@@ -524,7 +523,7 @@ def test_modules_are_checked_by_env_check_tools() -> None:
 
 
 def test_programs_of_the_steps_have_an_install_hint() -> None:
-    programs = {name for step in check.STEPS.values() for name in step.programs}
+    programs = {name for step in check.STEPS.values() for name in step_programs(step, _cfg())}
     assert {p for p in programs if p not in PROGRAM_HINTS and p not in PROGRAM_GROUPS} == set()
 
 
@@ -563,3 +562,12 @@ def test_missing_tools_unit_does_not_need_xdoctest_when_it_is_off(
 ) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
     assert check._missing_tools("unit", _cfg(xdoctest=False)) == []
+
+
+def test_types_step_needs_the_configured_checker() -> None:
+    cfg = get_config(make_context({"package": {"name": "p"}, "types": {"checker": "mypy"}}))
+    assert step_programs(check.STEPS["types"], cfg) == ("mypy",)
+
+
+def test_types_step_needs_ty_by_default() -> None:
+    assert step_programs(check.STEPS["types"], _cfg()) == ("ty",)

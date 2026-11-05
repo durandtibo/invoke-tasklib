@@ -33,6 +33,8 @@ tasklib:
     timeout: true
     cov_fail_under: 90
     cov_reports: html,xml,term
+  types:
+    checker: ty
   check:
     tasks: format-python,format-docstrings,lint,types,imports,unit
     cov: false
@@ -66,6 +68,7 @@ defaults are derived from `package.name` or from `paths.tests`.
 | `test.timeout`             | `true`                                                                                |
 | `test.cov_fail_under`      | not set                                                                               |
 | `test.cov_reports`         | `html,xml,term`                                                                       |
+| `types.checker`            | `ty`                                                                                  |
 | `check.tasks`              | `format-python,format-docstrings,lint,types,imports,unit`                             |
 | `check.cov`                | `false`                                                                               |
 | `fix.tasks`                | `lint,format-python,format-docstrings`                                                |
@@ -82,6 +85,10 @@ with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and 
 can have the argument of pytest-cov after a colon, for example `term-missing:skip-covered` or
 `html:cov_html` (the directory or file of the report). The value is quoted in the command. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
+
+`types.checker` is the type checker of `types.check` and of the `types` step of `check.all`: `ty`
+(default), `pyright` or `mypy`. With `--complete`, `types.check` also runs `pyright` after it (unless it is
+`pyright`). `mypy` is not installed by `env.install`: add it to the project dependencies.
 
 `check.cov` is a boolean. If true, the `unit` step of `check.all` runs with `--cov`, so
 `test.cov_fail_under` is enforced there too (the coverage reports are generated).

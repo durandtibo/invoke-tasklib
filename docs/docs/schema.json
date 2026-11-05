@@ -172,6 +172,21 @@
             }
           }
         },
+        "types": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "checker": {
+              "enum": [
+                "ty",
+                "pyright",
+                "mypy"
+              ],
+              "description": "Type checker of types.check and of the types step of check.all.",
+              "default": "ty"
+            }
+          }
+        },
         "check": {
           "type": "object",
           "additionalProperties": false,

@@ -101,6 +101,10 @@ TOOLS: dict[str, Tool] = {
         Tool("ruff", group="dev"),
         Tool("ty", group="dev"),
         Tool("pyright", group="dev"),
+        Tool(
+            "mypy",
+            hint="Add mypy to the dependencies of the project, e.g. `uv add --dev mypy`.",
+        ),
         Tool("docformatter", group="dev"),
         Tool(
             "codespell",

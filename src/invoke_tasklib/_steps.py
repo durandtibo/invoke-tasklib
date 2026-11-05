@@ -55,13 +55,42 @@ class Step(NamedTuple):
     task: Callable[[Context], None]
     r"""The task that runs the step."""
 
-    programs: tuple[str, ...] = ()
-    r"""The programs that the step runs, looked up on the ``PATH``."""
+    programs: tuple[str, ...] | Callable[[TasklibConfig], tuple[str, ...]] = ()
+    r"""The programs that the step runs, looked up on the ``PATH``, or a
+    function of the config that returns them (the ``types`` step runs
+    the configured checker), see ``step_programs``."""
 
     modules: tuple[str, ...] | Callable[[TasklibConfig], tuple[str, ...]] = ()
     r"""The Python modules that the step runs, or a function of the
     config that returns them (a step whose modules depend on the
     options), see ``step_modules``."""
+
+
+def step_programs(step: Step, cfg: TasklibConfig) -> tuple[str, ...]:
+    r"""Return the programs that a step needs.
+
+    Args:
+        step: The step.
+        cfg: The resolved config, given to ``step.programs`` if it is a
+            function.
+
+    Returns:
+        ``step.programs``, or what it returns for ``cfg``.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib._steps import Step, step_programs
+    >>> step_programs(Step(lambda c: None, programs=("ruff",)), None)
+    ('ruff',)
+    >>> step = Step(lambda c: None, programs=lambda cfg: ("a",))
+    >>> step_programs(step, None)
+    ('a',)
+
+    ```
+    """
+    programs = step.programs
+    return programs if isinstance(programs, tuple) else programs(cfg)
 
 
 def step_modules(step: Step, cfg: TasklibConfig) -> tuple[str, ...]:
