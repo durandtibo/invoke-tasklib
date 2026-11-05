@@ -3652,25 +3652,10 @@ the defaults.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>tasklib</code> or one of its sections (<code>package</code>,
-<code>paths</code>, <code>groups</code>, <code>test</code>, <code>check</code> and <code>fix</code>) is
-not a mapping, or if <code>tasklib</code> or a section has an
-unknown key
-(for example a typo such as <code>unit_test</code> for
-<code>unit_tests</code>), or if <code>tasklib.package.name</code> is not set
-or is not a string, or if a <code>tasklib.paths</code> value is not
-a non-empty string, or if <code>tasklib.package.python_version</code>
-is not a string such as <code>"3.10"</code> (an unquoted <code>3.10</code> is
-read by YAML as the float <code>3.1</code>), or if
-<code>tasklib.package.import_name</code> is not a Python module
-name, or if a <code>tasklib.groups</code> value is neither a string
-nor a list of strings, or if a <code>tasklib.test</code> value is
-invalid (a timeout and <code>cov_fail_under</code> must be integers,
-with a timeout &gt; 0 and <code>cov_fail_under</code> between 0 and
-100, <code>cov_reports</code> must be report formats, and
-<code>xdoctest</code> must be a boolean), or if
-<code>tasklib.check.tasks</code> or <code>tasklib.fix.tasks</code> is empty
-or has an unknown step.</p>
+                <p>If the config is invalid: an unknown key, a missing
+<code>tasklib.package.name</code> or a value that is not valid. The
+message names the key. The rules of every key are listed in
+the user guide, see <code>uguide/config.md</code>.</p>
               </div>
             </td>
           </tr>

@@ -2066,7 +2066,8 @@ core design follows these principles:</p>
 </ol>
 <h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
 <h3 id="1-config-resolution">1. Config Resolution<a class="headerlink" href="#1-config-resolution" title="Permanent link">&para;</a></h3>
-<p><code>invoke_tasklib.config.get_config(c)</code> is the single source of truth for project-specific values.
+<p><code>invoke_tasklib.config.get_config(c)</code> (implemented in <code>config/_resolve.py</code> with <code>load_config</code>, and
+re-exported by <code>config/__init__.py</code>) is the single source of truth for project-specific values.
 It:</p>
 <ul>
 <li>Reads the <code>tasklib</code> key from the Invoke config (<code>c.config</code>), which Invoke itself populates from
