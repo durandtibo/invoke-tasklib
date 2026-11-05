@@ -17,8 +17,9 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+# The name of the namespace of the tasks of this module.
 NAMESPACE = "imports"
-r"""The name of the namespace of the tasks of this module."""
+
 
 @task(
     help={
