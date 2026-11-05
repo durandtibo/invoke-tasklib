@@ -8,7 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import env
-from invoke_tasklib.tools import DEFAULT_HINT, PLUGIN_OPTIONS, TOOLS, Tool, hint
+from invoke_tasklib.tools import _DEFAULT_HINT, _PLUGIN_OPTIONS, TOOLS, Tool, hint
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -455,12 +455,12 @@ def test_check_tools_does_not_need_the_config(
 
 
 def test_every_plugin_module_is_checked() -> None:
-    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= set(TOOLS)
+    assert {module for module, _ in _PLUGIN_OPTIONS.values()} <= set(TOOLS)
 
 
 @pytest.mark.parametrize("name", TOOLS)
 def test_every_checked_tool_has_an_explicit_hint(name: str) -> None:
-    assert hint(name) != DEFAULT_HINT
+    assert hint(name) != _DEFAULT_HINT
 
 
 def test_install_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:

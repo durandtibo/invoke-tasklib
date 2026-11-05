@@ -1,9 +1,11 @@
 # Writing a Custom Task
 
 :book: This page shows how to write a task of your own that behaves like the tasks of
-`invoke-tasklib`. The helpers below are the supported public API for that: their signatures are
-documented in the reference pages ([`runner`](../refs/runner.md), [`tools`](../refs/tools.md),
-[`output`](../refs/output.md) and [`config`](../refs/config.md)).
+`invoke-tasklib`. The helpers below are the supported public API for that: they are the names in
+the `__all__` of `runner`, `tools`, `output` and `config` (a test compares this page with them), and
+their signatures are documented in the reference pages ([`runner`](../refs/runner.md),
+[`tools`](../refs/tools.md), [`output`](../refs/output.md) and [`config`](../refs/config.md)).
+Anything else in these modules starts with an underscore and can change without notice.
 
 ## Overview
 
@@ -21,6 +23,20 @@ documented in the reference pages ([`runner`](../refs/runner.md), [`tools`](../r
 | `invoke_tasklib.output.say`               | Print a progress message                                             |
 | `invoke_tasklib.output.step`              | Print the start and the end of a step, and `❌ Failed: ...` on error |
 | `invoke_tasklib.output.report_failure`    | Print `❌ Failed: ...` if a block raises, for a task that uses `say` |
+
+More helpers, for a task that needs less common things:
+
+| Helper                                                                    | Use it to                                                            |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `invoke_tasklib.runner.python_executable`                                 | Get the interpreter that runs Invoke, quoted for a command           |
+| `invoke_tasklib.runner.ARGS_HELP`, `PATHS_HELP`                           | Reuse the `help` text of the `args` and `paths` options              |
+| `invoke_tasklib.tools.hint`, `not_found_message`, `tool_path`             | Say how to install a tool, or find the `PATH` of the tools           |
+| `invoke_tasklib.tools.Tool`, `TOOLS`                                      | Read the table of the programs and modules that the tasks run        |
+| `invoke_tasklib.config.get_config`                                        | Resolve the config and raise `ValueError` (`load_config` exits)      |
+| `invoke_tasklib.config.TasklibConfig`, `PackageConfig`, `PathsConfig`     | Type the resolved config and its sections                            |
+| `invoke_tasklib.config.GroupsConfig`, `TestConfig`, `TypesConfig`         | (the other sections)                                                 |
+| `invoke_tasklib.config.CheckConfig`, `FixConfig`                          | (the other sections)                                                 |
+| `invoke_tasklib.config.SCHEMA`, `Option`, `default_config`, `json_schema` | Read the declaration of the keys, their defaults and the JSON schema |
 
 ## Example
 

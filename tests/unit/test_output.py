@@ -12,8 +12,8 @@ from invoke.runners import Result
 
 from invoke_tasklib import lint
 from invoke_tasklib.output import (
+    _ASCII_ENV_VAR,
     _EMOJI,
-    ASCII_ENV_VAR,
     _failure_title,
     _keep_if_encodable,
     _to_encoding,
@@ -94,7 +94,7 @@ def test_say_replaces_characters_the_stream_cannot_encode() -> None:
 
 
 def test_say_forced_ascii_tags_the_status_symbols(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(ASCII_ENV_VAR, "1")
+    monkeypatch.setenv(_ASCII_ENV_VAR, "1")
     out = StringIO()
     say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
     assert out.getvalue() == "[ok] Done\n"
@@ -104,21 +104,21 @@ def test_say_forced_ascii_tags_the_status_symbols(monkeypatch: pytest.MonkeyPatc
 def test_say_keeps_the_symbols_when_ascii_is_off(
     monkeypatch: pytest.MonkeyPatch, value: str
 ) -> None:
-    monkeypatch.setenv(ASCII_ENV_VAR, value)
+    monkeypatch.setenv(_ASCII_ENV_VAR, value)
     out = StringIO()
     say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
     assert out.getvalue() == "✅ Done\n"
 
 
 def test_say_keeps_the_symbols_when_ascii_is_not_set(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(ASCII_ENV_VAR, raising=False)
+    monkeypatch.delenv(_ASCII_ENV_VAR, raising=False)
     out = StringIO()
     say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Done")
     assert out.getvalue() == "✅ Done\n"
 
 
 def test_say_forced_ascii_replaces_accented_letters(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(ASCII_ENV_VAR, "1")
+    monkeypatch.setenv(_ASCII_ENV_VAR, "1")
     out = StringIO()
     say(Context(config=Config(overrides={"run": {"out_stream": out}})), "✅ Removing café/é.py")
     assert out.getvalue() == "[ok] Removing caf?/?.py\n"  # codespell:ignore caf

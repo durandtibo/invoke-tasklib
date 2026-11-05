@@ -12,8 +12,8 @@ from invoke.exceptions import Exit
 
 from invoke_tasklib.runner import build_command
 from invoke_tasklib.tools import (
-    DEFAULT_HINT,
-    PLUGIN_OPTIONS,
+    _DEFAULT_HINT,
+    _PLUGIN_OPTIONS,
     TOOLS,
     Tool,
     _check_module,
@@ -227,7 +227,7 @@ def test_check_program_unknown_program_uses_the_default_hint(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr("invoke_tasklib.tools.shutil.which", _only())
-    with pytest.raises(Exit, match=re.escape(DEFAULT_HINT)):
+    with pytest.raises(Exit, match=re.escape(_DEFAULT_HINT)):
         check_program("no-such-program --version")
 
 
@@ -299,7 +299,7 @@ def test_check_module_missing_module_uses_the_default_hint(monkeypatch: pytest.M
     monkeypatch.setattr(
         "invoke_tasklib.tools.importlib.util.find_spec", lambda _name, **_kwargs: None
     )
-    with pytest.raises(Exit, match=re.escape(DEFAULT_HINT)):
+    with pytest.raises(Exit, match=re.escape(_DEFAULT_HINT)):
         _check_module(["/venv/bin/python", "-m", "no_such_module_xyz"])
 
 
@@ -326,7 +326,7 @@ def test_hint_program_of_a_group() -> None:
 
 
 def test_hint_unknown_program() -> None:
-    assert hint("no-such-program") == DEFAULT_HINT
+    assert hint("no-such-program") == _DEFAULT_HINT
 
 
 def test_hint_explicit_entry_wins_over_the_group(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -340,14 +340,14 @@ def test_hint_module_of_a_group() -> None:
 
 
 def test_hint_unknown_module() -> None:
-    assert hint("no_such_module") == DEFAULT_HINT
+    assert hint("no_such_module") == _DEFAULT_HINT
 
 
 def test_hint_of_a_tool_without_group_and_hint_is_the_default(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(TOOLS, "bare", Tool("bare"))
-    assert hint("bare") == DEFAULT_HINT
+    assert hint("bare") == _DEFAULT_HINT
 
 
 def test_hint_of_pytest_benchmark_names_its_group() -> None:
@@ -355,12 +355,12 @@ def test_hint_of_pytest_benchmark_names_its_group() -> None:
 
 
 def test_every_plugin_module_has_a_group() -> None:
-    assert {TOOLS[module].group for module, _ in PLUGIN_OPTIONS.values()} == {"dev"}
+    assert {TOOLS[module].group for module, _ in _PLUGIN_OPTIONS.values()} == {"dev"}
 
 
 @pytest.mark.parametrize("program", ["uvx", "git", "pre-commit"])
 def test_hint_is_not_the_default_for_a_program_env_install_cannot_provide(program: str) -> None:
-    assert hint(program) != DEFAULT_HINT
+    assert hint(program) != _DEFAULT_HINT
 
 
 def _missing(*modules: str) -> Callable[[str], object | None]:
@@ -589,7 +589,7 @@ def test_not_found_message_for_a_module_names_the_given_interpreter() -> None:
 
 
 def test_not_found_message_for_an_unknown_program_uses_the_default_hint() -> None:
-    assert not_found_message("zzz").endswith(DEFAULT_HINT)
+    assert not_found_message("zzz").endswith(_DEFAULT_HINT)
 
 
 ##############################
@@ -671,7 +671,7 @@ def test_tool_hints_are_the_tools_without_a_group() -> None:
 
 
 def test_plugin_options_whole_table() -> None:
-    assert PLUGIN_OPTIONS == {
+    assert _PLUGIN_OPTIONS == {
         "--xdoctest": ("xdoctest", "xdoctest"),
         "--timeout": ("pytest_timeout", "pytest-timeout"),
         "--cov": ("pytest_cov", "pytest-cov"),
@@ -688,7 +688,7 @@ def test_plugin_options_whole_table() -> None:
 
 
 def test_plugin_options_are_provided_by_modules() -> None:
-    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= {
+    assert {module for module, _ in _PLUGIN_OPTIONS.values()} <= {
         t.name for t in TOOLS.values() if t.kind == "module"
     }
 
