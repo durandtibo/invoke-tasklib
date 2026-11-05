@@ -1794,8 +1794,9 @@ imports under <code>if TYPE_CHECKING:</code> and the imports inside functions ar
 </tr>
 </tbody>
 </table>
-<p>A syntax error is reported as such (with the module), and a missing optional dependency is not
-reported at all, because neither is a cycle.</p>
+<p>A syntax error is reported as such (with the module). So is a relative import that goes above the
+top-level package (<code>from .. import x</code> in <code>pkg/a.py</code>), which Python rejects too. A missing optional
+dependency is not reported at all, because neither is a cycle.</p>
 <h2 id="checking-that-every-module-imports-on-its-own">Checking that every module imports on its own<a class="headerlink" href="#checking-that-every-module-imports-on-its-own" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>imports.check-isolated
 </code></pre></div>
