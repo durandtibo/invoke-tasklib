@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from typing import TYPE_CHECKING
 
 import pytest
 from invoke.collection import Collection
@@ -8,12 +9,29 @@ from invoke.tasks import Task
 
 import invoke_tasklib
 from invoke_tasklib import (
+    _MODULES,
     _installed_version,
     _matches,
     _warn_if_unsupported_platform,
+    check,
+    clean,
+    doc,
+    env,
+    fix,
+    formatting,
+    imports,
+    lint,
     make_ns,
+    release,
+    security,
+    show,
+    testing,
+    typecheck,
 )
 from invoke_tasklib.config import default_config
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 ns = make_ns()
 
@@ -365,3 +383,63 @@ def test_make_ns_blames_the_caller_on_windows(monkeypatch: pytest.MonkeyPatch) -
     with pytest.warns(RuntimeWarning, match=r"does not support Windows") as record:
         make_ns()
     assert record[0].filename == __file__
+
+
+#########################################
+#     Tests for the NAMESPACE names     #
+#########################################
+
+_TASK_MODULES = [
+    check,
+    clean,
+    doc,
+    env,
+    fix,
+    formatting,
+    imports,
+    lint,
+    release,
+    security,
+    show,
+    testing,
+    typecheck,
+]
+
+
+@pytest.mark.parametrize(
+    ("module", "namespace"),
+    [
+        (check, "check"),
+        (clean, "clean"),
+        (doc, "doc"),
+        (env, "env"),
+        (fix, "fix"),
+        (formatting, "format"),
+        (imports, "imports"),
+        (lint, "lint"),
+        (release, "release"),
+        (security, "security"),
+        (show, "config"),
+        (testing, "test"),
+        (typecheck, "types"),
+    ],
+)
+def test_namespace_of_a_task_module(module: ModuleType, namespace: str) -> None:
+    assert namespace == module.NAMESPACE
+
+
+def test_modules_are_keyed_by_their_namespace() -> None:
+    assert all(namespace == module.NAMESPACE for namespace, module in _MODULES.items())
+
+
+def test_every_task_module_is_registered() -> None:
+    assert set(_MODULES.values()) == set(_TASK_MODULES)
+
+
+def test_namespaces_are_unique() -> None:
+    assert len({module.NAMESPACE for module in _TASK_MODULES}) == len(_TASK_MODULES)
+
+
+def test_from_module_with_the_namespace_keeps_the_task_names() -> None:
+    ns = Collection.from_module(testing, name=testing.NAMESPACE)
+    assert "test.unit" in [f"{ns.name}.{task}" for task in ns.tasks]

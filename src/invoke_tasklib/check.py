@@ -24,6 +24,10 @@ if TYPE_CHECKING:
     from invoke_tasklib.config import TasklibConfig
 
 
+NAMESPACE = "check"
+r"""The name of the namespace of the tasks of this module."""
+
+
 def _unit(c: Context) -> None:
     r"""Run the unit tests, with coverage if ``tasklib.check.cov``.
 

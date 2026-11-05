@@ -17,6 +17,10 @@ from invoke_tasklib.tools import TOOLS, find_tool, not_found_message
 if TYPE_CHECKING:
     from invoke.context import Context
 
+NAMESPACE = "env"
+r"""The name of the namespace of the tasks of this module."""
+
+
 PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
 VENV_DIR = ".venv"
 LOCK_FILE = "uv.lock"

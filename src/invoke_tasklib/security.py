@@ -15,6 +15,10 @@ from invoke_tasklib.runner import ARGS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
+NAMESPACE = "security"
+r"""The name of the namespace of the tasks of this module."""
+
+
 # The version range of ``pip-audit`` that ``security.audit`` runs.
 # ``uvx`` installs the latest release in this range, so a new major
 # version is never run without a change of this constant.

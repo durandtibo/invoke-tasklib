@@ -7,7 +7,7 @@ from invoke.config import Config
 from invoke.context import Context
 from invoke.exceptions import Exit
 
-from invoke_tasklib import configuration
+from invoke_tasklib import show
 from invoke_tasklib.config import Unset, default_config, get_config
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ def _context(tasklib: Mapping[str, object] | None = None) -> Context:
     ],
 )
 def test_format_value(value: object, expected: str) -> None:
-    assert configuration._format_value(value) == expected
+    assert show._format_value(value) == expected
 
 
 #############################
@@ -60,7 +60,7 @@ def test_format_value(value: object, expected: str) -> None:
 #############################
 
 
-_LEVEL_ATTRIBUTES = [attribute for attribute, _ in configuration.LEVELS]
+_LEVEL_ATTRIBUTES = [attribute for attribute, _ in show.LEVELS]
 
 
 # `_origin` reads these private attributes of Invoke with
@@ -77,21 +77,21 @@ def test_levels_of_an_invoke_config_are_dicts(attribute: str) -> None:
 
 
 def test_unknown_internals_of_an_invoke_config_is_empty() -> None:
-    assert configuration._unknown_internals(Config()) == []
+    assert show._unknown_internals(Config()) == []
 
 
 @pytest.mark.parametrize("attribute", [*_LEVEL_ATTRIBUTES, "_project_prefix"])
 def test_unknown_internals_names_a_missing_attribute(attribute: str) -> None:
     config = Config()
     object.__delattr__(config, attribute)
-    assert configuration._unknown_internals(config) == [attribute]
+    assert show._unknown_internals(config) == [attribute]
 
 
 def test_unknown_internals_lists_the_missing_attributes_in_order() -> None:
     config = Config()
     object.__delattr__(config, "_project_prefix")
     object.__delattr__(config, "_env")
-    assert configuration._unknown_internals(config) == ["_env", "_project_prefix"]
+    assert show._unknown_internals(config) == ["_env", "_project_prefix"]
 
 
 def test_show_warns_when_invoke_has_no_origin_attribute(
@@ -99,7 +99,7 @@ def test_show_warns_when_invoke_has_no_origin_attribute(
 ) -> None:
     c = _context(_MINIMAL)
     object.__delattr__(c.config, "_env")
-    configuration.show(c)
+    show.show(c)
     assert capsys.readouterr().err == (
         "⚠️  This version of Invoke has no _env: the origin comments may be wrong, "
         "and the check of the current directory is off\n"
@@ -109,40 +109,40 @@ def test_show_warns_when_invoke_has_no_origin_attribute(
 def test_show_does_not_warn_with_a_complete_invoke_config(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    configuration.show(_context(_MINIMAL))
+    show.show(_context(_MINIMAL))
     assert capsys.readouterr().err == ""
 
 
 def test_origin_of_a_default_value() -> None:
     config = Config(defaults=_BASE_DEFAULTS)
-    assert configuration._origin(config, "paths", "tests", "tests") == "default"
+    assert show._origin(config, "paths", "tests", "tests") == "default"
 
 
 def test_origin_of_a_derived_value() -> None:
     config = Config(defaults=_BASE_DEFAULTS)
-    assert configuration._origin(config, "paths", "src", "src/demo") == "derived"
+    assert show._origin(config, "paths", "src", "src/demo") == "derived"
 
 
 def test_origin_of_an_unset_value_is_default() -> None:
     config = Config(defaults=_BASE_DEFAULTS)
-    assert configuration._origin(config, "test", "cov_fail_under", None) == "default"
+    assert show._origin(config, "test", "cov_fail_under", None) == "default"
 
 
 def test_origin_of_a_placeholder_is_default() -> None:
     config = Config(defaults={"tasklib": {"test": {"xdoctest": Unset()}}})
-    assert configuration._origin(config, "test", "xdoctest", True) == "default"
+    assert show._origin(config, "test", "xdoctest", True) == "default"
 
 
 def test_origin_of_an_override() -> None:
     config = Config(overrides={"tasklib": {"paths": {"src": "lib"}}})
-    assert configuration._origin(config, "paths", "src", "lib") == "override"
+    assert show._origin(config, "paths", "src", "lib") == "override"
 
 
 def test_origin_names_the_environment_variable() -> None:
     config = Config()
     config._set(_env={"tasklib": {"test": {"unit_timeout": 5}}})
     assert (
-        configuration._origin(config, "test", "unit_timeout", 5)
+        show._origin(config, "test", "unit_timeout", 5)
         == "environment variable INVOKE_TASKLIB_TEST_UNIT_TIMEOUT"
     )
 
@@ -150,7 +150,7 @@ def test_origin_names_the_environment_variable() -> None:
 def test_origin_of_the_project_file() -> None:
     config = Config()
     config._set(_project={"tasklib": {"paths": {"src": "lib"}}})
-    assert configuration._origin(config, "paths", "src", "lib") == "project file"
+    assert show._origin(config, "paths", "src", "lib") == "project file"
 
 
 def test_origin_prefers_the_environment_to_the_project_file() -> None:
@@ -158,18 +158,18 @@ def test_origin_prefers_the_environment_to_the_project_file() -> None:
     config._set(
         _project={"tasklib": {"paths": {"src": "a"}}}, _env={"tasklib": {"paths": {"src": "b"}}}
     )
-    assert configuration._origin(config, "paths", "src", "b").startswith("environment variable")
+    assert show._origin(config, "paths", "src", "b").startswith("environment variable")
 
 
 def test_origin_prefers_an_override_to_the_environment() -> None:
     config = Config(overrides={"tasklib": {"paths": {"src": "a"}}})
     config._set(_env={"tasklib": {"paths": {"src": "b"}}})
-    assert configuration._origin(config, "paths", "src", "a") == "override"
+    assert show._origin(config, "paths", "src", "a") == "override"
 
 
 def test_origin_of_a_value_given_as_false_is_not_derived() -> None:
     config = Config(overrides={"tasklib": {"test": {"xdoctest": False}}})
-    assert configuration._origin(config, "test", "xdoctest", False) == "override"
+    assert show._origin(config, "test", "xdoctest", False) == "override"
 
 
 #############################
@@ -179,7 +179,7 @@ def test_origin_of_a_value_given_as_false_is_not_derived() -> None:
 
 def _lines(tasklib: Mapping[str, object]) -> list[str]:
     config = Config(defaults=_BASE_DEFAULTS, overrides={"tasklib": tasklib})
-    return configuration._render(get_config(Context(config=config)), config)
+    return show._render(get_config(Context(config=config)), config)
 
 
 def test_render_the_whole_config() -> None:
@@ -229,7 +229,7 @@ def test_render_derives_the_test_paths_from_the_tests_directory() -> None:
 def test_render_does_not_change_the_config() -> None:
     config = Config(defaults=_BASE_DEFAULTS, overrides={"tasklib": _MINIMAL})
     before = config.tasklib.paths.src
-    configuration._render(get_config(Context(config=config)), config)
+    show._render(get_config(Context(config=config)), config)
     assert config.tasklib.paths.src == before
 
 
@@ -239,7 +239,7 @@ def test_render_does_not_change_the_config() -> None:
 
 
 def test_show_prints_the_lines(capsys: pytest.CaptureFixture[str]) -> None:
-    configuration.show(_context(_MINIMAL))
+    show.show(_context(_MINIMAL))
     assert capsys.readouterr().out.splitlines()[:3] == [
         "tasklib:",
         "  package:",
@@ -248,17 +248,17 @@ def test_show_prints_the_lines(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_show_prints_nothing_else(capsys: pytest.CaptureFixture[str]) -> None:
-    configuration.show(_context(_MINIMAL))
+    show.show(_context(_MINIMAL))
     assert capsys.readouterr().out.splitlines()[-1].startswith("    tasks: [lint, ")
 
 
 def test_show_exits_on_an_invalid_config() -> None:
     with pytest.raises(Exit, match=r"tasklib\.package\.name"):
-        configuration.show(_context())
+        show.show(_context())
 
 
 def test_show_is_the_one_task_of_the_module() -> None:
-    assert configuration.show.__name__ == "show"
+    assert show.show.__name__ == "show"
 
 
 def test_render_an_unset_python_version_is_null() -> None:
@@ -266,4 +266,4 @@ def test_render_an_unset_python_version_is_null() -> None:
 
 
 def test_origin_of_a_default_boolean_registered_as_none() -> None:
-    assert configuration._origin(Config(), "test", "xdoctest", True) == "default"
+    assert show._origin(Config(), "test", "xdoctest", True) == "default"

@@ -13,6 +13,10 @@ if TYPE_CHECKING:
     from invoke.context import Context
 
 
+NAMESPACE = "types"
+r"""The name of the namespace of the tasks of this module."""
+
+
 @task(
     help={
         "complete": "Also run pyright after ty (slower, more thorough).",
