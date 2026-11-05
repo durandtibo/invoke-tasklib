@@ -23,7 +23,7 @@ file is out of date or if a vulnerability is found.
 
 The task does not sync or modify the environment, and the result depends on the lock file, not on
 what was installed last. `pip-audit` does not have to be a dependency of the project. The tool is
-run from the version range `pip-audit>=2.10,<3` (`PIP_AUDIT_REQUIREMENT` in `invoke_tasklib.security`),
+run from the version range `pip-audit>=2.10,<3` (`_PIP_AUDIT_REQUIREMENT` in `invoke_tasklib.security`),
 so a new major release is never run without a release of `invoke-tasklib`.
 
 Use `--args` to pass options to `pip-audit`, for example to accept an advisory:

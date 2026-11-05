@@ -82,7 +82,8 @@ Seven small modules support the task modules:
   reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
   `in_ci()` and `in_github_actions()` are the only readers of `CI` and `GITHUB_ACTIONS`.
   `build_command` builds a command line and quotes the arguments, and
-  `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options.
+  `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options, and `TOOL_HELP`
+  is the `help` of a task that has both.
 - `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
   a module up for the running interpreter, `check_program` checks the first word of a command (and
   the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
@@ -94,7 +95,7 @@ Seven small modules support the task modules:
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.
 - `_steps.py`: the step runner shared by `check.all` and `fix.all` (`run_composite`, called by
-  each of them with its own `STEPS`, valid names and config): the selection of the steps
+  each of them with its own `_STEPS`, valid names and config): the selection of the steps
   (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
   `--keep-going` mode and the final summary of the failures.
 - `_files.py`: `project_files(c, root, suffix)` finds the files with a suffix, with
@@ -120,7 +121,7 @@ Seven small modules support the task modules:
 (`clean`, `format`, `test.doctest-markdown`) never enter. It is the union of three named sets:
 `CACHE_DIRS` (`.pytest_cache`, `.ruff_cache`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`,
 `.benchmarks`, `.coverage_html`), `OUTPUT_DIRS` (`build`, `dist`, `site`, `htmlcov`) and
-`ENVIRONMENT_DIRS` (`.git`, `.venv`, `node_modules`). `clean.DIRS` derives from `CACHE_DIRS` and the
+`ENVIRONMENT_DIRS` (`.git`, `.venv`, `node_modules`). `clean._DIRS` derives from `CACHE_DIRS` and the
 outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format and test tasks find their files with `_files.project_files`: in a git work
 tree they ask `git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and
 a tracked `build/run.sh` is checked (only the caches and the environments are left out);
@@ -134,12 +135,12 @@ A step is a `Step(task, programs, modules)` of `_steps.py` (the task, the progra
 returns one, for a step whose modules depend on an option (`check._unit_modules`). To add one:
 
 1. Write the task in its module, and add `"name": Step(task, programs=..., modules=...)` to
-   `check.STEPS` (or `fix.STEPS`).
+   `check._STEPS` (or `fix._STEPS`).
 2. Add the name to `CHECK_STEPS` (or `FIX_STEPS`) in `config/_constants.py`: the config must not
-   import the task modules, and a test checks that the names agree with `STEPS`.
+   import the task modules, and a test checks that the names agree with `_STEPS`.
 3. Add each new program or module to `TOOLS` of `tools.py` as a `Tool` with its dependency group
    (or an install hint), and the pytest options of a plugin: `env.check-tools`, the hints and the
-   check of the plugins read it (a test checks that every tool of `STEPS` is listed).
+   check of the plugins read it (a test checks that every tool of `_STEPS` is listed).
 4. To run the step by default, put it among the first steps of `CHECK_STEPS` (or `FIX_STEPS`) and
    extend `DEFAULT_CHECK_STEPS` (or `DEFAULT_FIX_STEPS`) in `config/_constants.py`, which derive the
    default of `check.tasks` (or `fix.tasks`) in `config/_schema.py`; update the tables of the user
@@ -170,7 +171,7 @@ checks the rule on the package itself.
 
 ```text
 L5  __init__          make_ns: one Collection per module
-L4  check  fix        composites: run STEPS with the step runner
+L4  check  fix        composites: run _STEPS with the step runner
 L3  formatting lint typecheck testing env release doc security imports clean show
 L2  _steps  _files  _graph  _coverage  _pyproject   private helpers of the tasks
 L1  config/  runner  tools  output     support: the documented helpers
@@ -194,7 +195,7 @@ its maintainers (`M1`-`M5`). The last column says what enforces each one; a prop
 | P5  | Fail before acting      | An unknown key, an invalid value or a wrong working directory exits with `2` before any command runs. The message names the key.                                                                                                                                                                                                            | `config/_validate.py`, `_check_project_root`; `tests/unit/config/`                                               |
 | P6  | Missing tools           | A missing program or Python module is reported with the command that installs it. A composite task reports all the missing tools of its steps at once, and runs nothing.                                                                                                                                                                    | `tools.hint`, `_steps.preflight_message`; `tests/unit/test_check.py`                                             |
 | P7  | Commands are data       | A task builds one command string from the config and the options. Every user value is quoted: a space, `;`, `*`, `~` or `$VAR` reaches the tool unchanged.                                                                                                                                                                                  | `runner.build_command`; `tests/integration/test_quoting.py`; `_commands(c) == [...]` in unit tests               |
-| P8  | One source of truth     | A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`STEPS`), a directory policy once (`_files`). Defaults, the JSON schema, the hints and the docs tables derive from them.                                                                                                                                      | tests that compare the tables; `test_clean.py` (every directory of `clean.DIRS` is in `EXCLUDED_DIRS`)           |
+| P8  | One source of truth     | A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`_STEPS`), a directory policy once (`_files`). Defaults, the JSON schema, the hints and the docs tables derive from them.                                                                                                                                      | tests that compare the tables; `test_clean.py` (every directory of `clean._DIRS` is in `EXCLUDED_DIRS`)           |
 | P9  | Safe by default         | A destructive task stays inside the project, keeps what git tracks, and asks before an irreversible step. A credential never appears in a command line or in the output.                                                                                                                                                                    | `clean._is_inside_project`, `release._check_release_state`, `_publish_environment`; `tests/unit/test_release.py` |
 | P10 | Skips are visible       | A task that has nothing to do prints `⏭️ <reason>` and exits `0`. A task that cannot do its job (a path it needs is missing) exits non-zero and names the key.                                                                                                                                                                              | `_files.require_path`; `tests/unit/test__files.py`, `tests/integration/test_files.py`                            |
 | P11 | Fix converges           | After `fix_<x>` (or `fix.all`) the matching `check_<x>` (or `check.all --only` the same steps) passes, and a second `fix_<x>` changes nothing.                                                                                                                                                                                              | not tested (target state, step 3)                                                                                |
@@ -207,7 +208,7 @@ its maintainers (`M1`-`M5`). The last column says what enforces each one; a prop
 | M6 | Declared equals run | The programs and modules that a `Step` declares are exactly those that its task runs with a check. A tool that a task runs and the step does not declare would be missing from the preflight (P6); one that is declared and not run blocks a step for nothing. | `test_check.py` and `test_fix.py` record the commands of every step |
 
 The tool tables are kept consistent by the same test module: every program and module named by a
-step of `check.STEPS` or `fix.STEPS` is in `tools.TOOLS`, and (M6) is the one that the task of the
+step of `check._STEPS` or `fix._STEPS` is in `tools.TOOLS`, and (M6) is the one that the task of the
 step runs with a check.
 
 ## Data Flow

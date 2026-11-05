@@ -21,7 +21,7 @@ r"""The name of the namespace of the tasks of this module."""
 #
 # To add a step, add its name to ``FIX_STEPS`` in
 # ``config/_constants.py`` (a test checks that the names agree).
-STEPS: dict[str, Step] = {
+_STEPS: dict[str, Step] = {
     "lint": Step(lint.fix_python, programs=("ruff",)),
     "format-python": Step(formatting.fix_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.fix_docstrings, programs=("docformatter",)),
@@ -58,7 +58,7 @@ def all_(
     step is run and the failed ones are listed at the end.
 
     Before any step is run, the programs that the selected steps need
-    (the programs of ``STEPS``) are looked up and all the missing ones
+    (the programs of ``_STEPS``) are looked up and all the missing ones
     are reported at once, with the code 127 and nothing run. With
     ``keep_going``, only the steps that miss a tool are not run: they
     are reported as failed, with the missing tools as the reason.
@@ -80,7 +80,7 @@ def all_(
     run_composite(
         c,
         cfg,
-        STEPS,
+        _STEPS,
         FIX_STEPS,
         cfg.fix.tasks,
         only=only,

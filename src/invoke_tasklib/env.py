@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 NAMESPACE = "env"
 r"""The name of the namespace of the tasks of this module."""
 
-PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
-VENV_DIR = ".venv"
-LOCK_FILE = "uv.lock"
+_PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
+_VENV_DIR = ".venv"
+_LOCK_FILE = "uv.lock"
 
 
 def _confirm_clear(directory: str) -> None:
@@ -81,8 +81,8 @@ def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None
     if dry_run:
         say(c, f"🐍 Would create .venv{with_version} (dry run)")
         return
-    if not yes and Path(VENV_DIR).exists():
-        _confirm_clear(VENV_DIR)
+    if not yes and Path(_VENV_DIR).exists():
+        _confirm_clear(_VENV_DIR)
     start = f"🐍 Creating virtual environment{with_version}..."
     with step(c, start, "✅ Virtual environment created successfully"):
         option = f" --python {python_version}" if python_version else ""
@@ -137,11 +137,11 @@ def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
         optional_deps: If True, install all the optional dependencies
             (extras) of the project.
     """
-    if Path(LOCK_FILE).is_file():
-        say(c, f"📦 Installing from {LOCK_FILE}...")
+    if Path(_LOCK_FILE).is_file():
+        say(c, f"📦 Installing from {_LOCK_FILE}...")
         cmd = ["uv sync --locked"]
     else:
-        say(c, f"📦 No {LOCK_FILE}: resolving the dependencies...")
+        say(c, f"📦 No {_LOCK_FILE}: resolving the dependencies...")
         cmd = ["uv sync"]
     if optional_deps:
         cmd.append("--all-extras")
@@ -183,11 +183,11 @@ def update(c: Context, *, groups: str | None = None) -> None:
         groups = ",".join(load_config(c).groups.update)
     with step(c, "🔄 Updating dependencies...", "✅ Update complete"):
         run(c, "uv lock --upgrade")
-        if Path(PRE_COMMIT_CONFIG).is_file():
+        if Path(_PRE_COMMIT_CONFIG).is_file():
             say(c, "🪝 Updating pre-commit hooks...")
             run(c, "pre-commit autoupdate")
         else:
-            say(c, f"⏭️  No {PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
+            say(c, f"⏭️  No {_PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
         say(c, f"📦 Reinstalling with dependency groups: {groups}...")
         _install(c, groups, optional_deps=True)
 

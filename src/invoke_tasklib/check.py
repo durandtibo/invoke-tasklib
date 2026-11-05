@@ -79,7 +79,7 @@ def _unit_modules(cfg: TasklibConfig) -> tuple[str, ...]:
     )
 
 
-STEPS: dict[str, Step] = {
+_STEPS: dict[str, Step] = {
     "format-python": Step(formatting.check_python, programs=("ruff",)),
     "format-docstrings": Step(formatting.check_docstrings, programs=("docformatter",)),
     "lint": Step(lint.check_python, programs=("ruff",)),
@@ -134,7 +134,7 @@ def all_(
     failed ones are listed at the end.
 
     Before any step is run, the tools that the selected steps need
-    (the programs and modules of ``STEPS``) are looked up and all the
+    (the programs and modules of ``_STEPS``) are looked up and all the
     missing ones are reported at once, with the code 127 and nothing
     run. With ``keep_going``, only the steps that miss a tool are not
     run: they are reported as failed, with the missing tools as the
@@ -157,7 +157,7 @@ def all_(
     run_composite(
         c,
         cfg,
-        STEPS,
+        _STEPS,
         CHECK_STEPS,
         cfg.check.tasks,
         only=only,

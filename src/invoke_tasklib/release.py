@@ -31,20 +31,20 @@ if TYPE_CHECKING:
 NAMESPACE = "release"
 r"""The name of the namespace of the tasks of this module."""
 
-TWINE_REQUIREMENT = "twine>=6.1,<7"
+_TWINE_REQUIREMENT = "twine>=6.1,<7"
 r"""The version range of ``twine`` that ``release.build --check`` runs.
 
 ``uvx`` installs the latest release in this range, so a new major
 version is never run without a change of this constant.
 """
 
-TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
+_TEST_PYPI_PUBLISH_URL = "https://test.pypi.org/legacy/"
 r"""The upload endpoint of TestPyPI."""
 
-TEST_PYPI_CHECK_URL = "https://test.pypi.org/simple/"
+_TEST_PYPI_CHECK_URL = "https://test.pypi.org/simple/"
 r"""The index of TestPyPI, to skip the files already uploaded."""
 
-PUBLISH_CREDENTIAL_VARIABLES: tuple[str, ...] = (
+_PUBLISH_CREDENTIAL_VARIABLES: tuple[str, ...] = (
     "UV_PUBLISH_TOKEN",
     "UV_PUBLISH_USERNAME",
     "UV_PUBLISH_PASSWORD",
@@ -166,7 +166,7 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
             )
         if check:
             say(c, "🔍 Checking package metadata with twine...")
-            twine = f"uvx --from {shlex.quote(TWINE_REQUIREMENT)} twine check"
+            twine = f"uvx --from {shlex.quote(_TWINE_REQUIREMENT)} twine check"
             run(c, f"{twine} {shlex.quote(str(directory))}/*")
 
 
@@ -292,7 +292,7 @@ def _publish_environment(token: str | None) -> dict[str, str]:
     r"""Build the complete environment of ``uv publish``.
 
     The process environment is copied without the variables of
-    ``PUBLISH_CREDENTIAL_VARIABLES``, so a credential that the job
+    ``_PUBLISH_CREDENTIAL_VARIABLES``, so a credential that the job
     defines for another target is never read by ``uv publish`` (for
     example a ``UV_PUBLISH_TOKEN`` for PyPI when the task publishes to
     TestPyPI). The chosen token is then added. The command must be run
@@ -318,7 +318,7 @@ def _publish_environment(token: str | None) -> dict[str, str]:
 
     ```
     """
-    env = {k: v for k, v in os.environ.items() if k not in PUBLISH_CREDENTIAL_VARIABLES}
+    env = {k: v for k, v in os.environ.items() if k not in _PUBLISH_CREDENTIAL_VARIABLES}
     env["PATH"] = tool_path()
     if token:
         env["UV_PUBLISH_TOKEN"] = token
@@ -431,8 +431,8 @@ def publish(
     cmd = ["uv publish"]
     if test_pypi:
         cmd.append(
-            f"--publish-url {shlex.quote(TEST_PYPI_PUBLISH_URL)} "
-            f"--check-url {shlex.quote(TEST_PYPI_CHECK_URL)}"
+            f"--publish-url {shlex.quote(_TEST_PYPI_PUBLISH_URL)} "
+            f"--check-url {shlex.quote(_TEST_PYPI_CHECK_URL)}"
         )
     if dry_run:
         cmd.append("--dry-run")
