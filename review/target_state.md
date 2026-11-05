@@ -419,6 +419,8 @@ the cheap moment to say so. The alternative is to document the few that are usef
 for a project that extends the cleanup) and keep them; that is more text to maintain for names that
 nobody asked for.
 
+Decision: yes
+
 **D2. Composites ignore `make_ns(exclude=...)` (step 2).** _Recommended: keep, state it._ The steps
 of `check.all` are chosen by `tasklib.check.tasks`, which is validated early (P5). Making the
 composite read the namespace would couple `check` to `make_ns` and make the same `invoke.yaml`
@@ -426,25 +428,35 @@ behave differently under two `tasks.py` files. The alternative (the composite sk
 tasks) is about 15 lines, but it silently shortens `check.all`, which is the wrong failure for a
 quality gate.
 
+Decision: follow recommendation
+
 **D3. `default_config()` returns an `Unset` for every key (step 9).** _Recommended: yes._ It removes
 the integer special case and the defaults that nobody reads. The cost is that `c.config.tasklib.*`
 no longer shows the default values; the supported readers are `load_config` and `config.show`. If a
 project is known to read the raw config, keep step 9 out of `0.1.0`; steps 7 and 8 do not depend on
 it.
 
+Decision: follow recommendation
+
 **D4. `release.build` keeps reading `--out-dir`, `--wheel` and `--sdist` from `--args` (step 10).**
 _Recommended: keep, with `split_args`._ The alternative is that `release.build` owns the directory
 (`dist`, or `tasklib.paths.dist`) and refuses `--out-dir` in `--args`. It deletes `_build_targets`
 (20 lines) but adds either a refusal or a config key, and it breaks `uv build` habits. Not worth it.
+
+Decision: follow recommendation
 
 **D5. Keep `INVOKE_TASKLIB_ASCII` an environment variable, not a config key.** _Recommended: keep._
 It is a property of the terminal, not of the project: the same project needs `1` on one machine and
 nothing on another. A config key would live in the committed `invoke.yaml`. Section 3.7 lists it so
 it is a documented exception to "the config is the only input".
 
+Decision: follow recommendation
+
 **D6. Test P11 before deciding anything else about the fixes (step 3).** _Recommended: yes._ This
 is the only step that can find a real defect. If `fix.all` and `check.all` disagree, the fix to the
 task is the first priority and may change the order of the other steps.
+
+Decision: follow recommendation
 
 ## 10. Not covered
 
