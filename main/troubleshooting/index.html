@@ -1053,6 +1053,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-output-has-ok-and-fail-instead-of-emojis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The output has [ok] and [fail] instead of emojis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#releasepublish-fails-to-authenticate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1829,6 +1840,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-output-has-ok-and-fail-instead-of-emojis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The output has [ok] and [fail] instead of emojis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#releasepublish-fails-to-authenticate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1962,6 +1984,12 @@ fetch the tags in CI: <code>git fetch --tags</code>), or skip the tag lookup by 
 <p>A newer version of the docs is already published, so publishing this one would move <code>latest</code>
 backwards. Pass <code>--force</code> if that is what you want.</p>
 <p>See <a href="../uguide/doc/">Doc</a>.</p>
+<h2 id="the-output-has-ok-and-fail-instead-of-emojis">The output has <code>[ok]</code> and <code>[fail]</code> instead of emojis<a class="headerlink" href="#the-output-has-ok-and-fail-instead-of-emojis" title="Permanent link">&para;</a></h2>
+<p>On a terminal that cannot encode them (an ASCII locale, <code>PYTHONIOENCODING=ascii</code>), the progress
+messages use the tags <code>[ok]</code>, <code>[fail]</code> and <code>[skip]</code> and leave the other emojis out. Use a UTF-8
+locale (for example <code>LANG=C.UTF-8</code>) to get the emojis. Set <code>INVOKE_TASKLIB_ASCII=1</code> to get the
+tags on any terminal, for example in a log that is read by a tool.</p>
+<p>See <a href="../uguide/custom_tasks/">Custom tasks</a>.</p>
 <h2 id="releasepublish-fails-to-authenticate"><code>release.publish</code> fails to authenticate<a class="headerlink" href="#releasepublish-fails-to-authenticate" title="Permanent link">&para;</a></h2>
 <p><code>release.publish</code> passes the <code>PYPI_TOKEN</code> (<code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, or
 <code>UV_PUBLISH_TOKEN</code>) environment variable to <code>uv publish</code>. Without a token it only works in GitHub Actions with the <code>id-token: write</code>
