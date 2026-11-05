@@ -1902,7 +1902,7 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 </tr>
 <tr>
 <td><code>package.python_version</code></td>
-<td><code>"3.14"</code></td>
+<td>the <code>.python-version</code> file, else the <code>requires-python</code> lower bound, else <code>"3.14"</code></td>
 </tr>
 <tr>
 <td><code>paths.src</code></td>
@@ -1995,6 +1995,13 @@ non-empty string, and <code>test.cov_fail_under</code> must be between 0 and 100
 <p><code>package.python_version</code> must be a quoted string such as <code>"3.10"</code> or <code>"3.10.4"</code>. YAML reads an
 unquoted <code>3.10</code> as the number <code>3.1</code>, so <code>get_config</code> raises a <code>ValueError</code> for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.</p>
+<p>When the key is not set, the version is read from the project, in this order:</p>
+<ol>
+<li>the first line of the <code>.python-version</code> file, if it is a version such as <code>3.12</code> or <code>3.12.1</code>
+   (an implementation name such as <code>pypy3.10</code> is ignored);</li>
+<li>the lower bound of <code>project.requires-python</code> in <code>pyproject.toml</code> (<code>"&gt;=3.11"</code> gives <code>3.11</code>);</li>
+<li><code>3.14</code>.</li>
+</ol>
 <h2 id="editor-completion-json-schema">Editor Completion (JSON Schema)<a class="headerlink" href="#editor-completion-json-schema" title="Permanent link">&para;</a></h2>
 <p>The keys, the defaults and the descriptions are declared once, in <code>invoke_tasklib.config.SCHEMA</code>
 (one <code>Option</code> per key: default, validation and JSON schema). The defaults, the key checks, the

@@ -1583,6 +1583,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.DEFAULT_PYTHON_VERSION" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFAULT_PYTHON_VERSION
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.config.DEFAULT_TEST" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1958,6 +1969,17 @@
     <span class="md-ellipsis">
       
         DEFAULT_PATHS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.DEFAULT_PYTHON_VERSION" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFAULT_PYTHON_VERSION
       
     </span>
   </a>
@@ -2380,6 +2402,31 @@ report</code> of pytest-cov).</p>
 
 
 
+<h3 id="invoke_tasklib.config.DEFAULT_PYTHON_VERSION" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.config.DEFAULT_PYTHON_VERSION</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#invoke_tasklib.config.DEFAULT_PYTHON_VERSION" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">DEFAULT_PYTHON_VERSION</span> <span class="o">=</span> <span class="s1">'3.14'</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The Python version used when neither <code>.python-version</code> nor the
+<code>requires-python</code> of <code>pyproject.toml</code> gives one.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="invoke_tasklib.config.DEFAULT_TEST" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.config.DEFAULT_TEST</span>
 
@@ -2502,7 +2549,7 @@ project).</p>
   
       dataclass
   " href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="s2">"3.14"</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
             <span class="n"><span title="invoke_tasklib.config._validate_python_version">_validate_python_version</span></span><span class="p">,</span>
             <span class="p">{</span>
                 <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
@@ -2513,7 +2560,7 @@ project).</p>
       module-attribute
   " href="#invoke_tasklib.config.PYTHON_VERSION_PATTERN">PYTHON_VERSION_PATTERN</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.config.PYTHON_VERSION_PATTERN.pattern">pattern</span></span><span class="p">,</span>
             <span class="p">},</span>
-            <span class="s2">"Python version of the virtual environment (quote it in YAML)."</span><span class="p">,</span>
+            <span class="s2">"Python version of the virtual environment (default: from .python-version or requires-python)."</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">},</span>
     <span class="s2">"paths"</span><span class="p">:</span> <span class="p">{</span>
