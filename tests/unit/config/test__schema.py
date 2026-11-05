@@ -153,14 +153,14 @@ def test_schema_option_validation_error_names_the_key(section: str, key: str) ->
 
 def test_defaults_of_a_section() -> None:
     assert _defaults("check") == {
-        "tasks": "format-python,format-docstrings,lint,types,imports,unit",
+        "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit"),
         "cov": False,
     }
 
 
 def test_defaults_returns_a_new_dict() -> None:
     _defaults("groups")["install"] = "changed"
-    assert _defaults("groups")["install"] == "dev"
+    assert _defaults("groups")["install"] == ("dev",)
 
 
 def test_timeout_option() -> None:
@@ -197,15 +197,37 @@ def test_json_schema_groups_section() -> None:
             "install": {
                 **names,
                 "description": "Dependency groups of env.install (comma-separated string or list).",
-                "default": "dev",
+                "default": ["dev"],
             },
             "update": {
                 **names,
                 "description": "Dependency groups of env.update (comma-separated string or list).",
-                "default": "dev,docs",
+                "default": ["dev", "docs"],
             },
         },
     }
+
+
+def test_json_schema_publishes_a_list_default_as_an_array() -> None:
+    test = json_schema()["properties"]["tasklib"]["properties"]["test"]["properties"]
+    assert test["cov_reports"]["default"] == ["html", "xml", "term"]
+
+
+def test_json_schema_publishes_the_default_steps_as_an_array() -> None:
+    check = json_schema()["properties"]["tasklib"]["properties"]["check"]["properties"]
+    assert check["tasks"]["default"] == [
+        "format-python",
+        "format-docstrings",
+        "lint",
+        "types",
+        "imports",
+        "unit",
+    ]
+
+
+def test_json_schema_keeps_a_scalar_default() -> None:
+    check = json_schema()["properties"]["tasklib"]["properties"]["check"]["properties"]
+    assert check["cov"]["default"] is False
 
 
 def test_json_schema_requires_the_package_name() -> None:

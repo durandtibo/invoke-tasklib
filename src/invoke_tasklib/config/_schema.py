@@ -119,8 +119,7 @@ class Option:
     Attributes:
         default: The default value. ``None`` means that the default is
             derived from other values (see ``get_config``) or that the
-            key is required. A default is a string for a list, so that
-            ``INVOKE_TASKLIB_<SECTION>_<KEY>`` can override it.
+            key is required. A default is a tuple for a list.
         validate: Check a raw value and return the resolved one. It
             raises ``ValueError`` with a message that names the key.
         json_schema: The JSON schema of the key, without ``default``.
@@ -226,13 +225,13 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "groups": {
         "install": Option(
-            "dev",
+            ("dev",),
             _normalize_groups,
             _NAMES,
             "Dependency groups of env.install (comma-separated string or list).",
         ),
         "update": Option(
-            "dev,docs",
+            ("dev", "docs"),
             _normalize_groups,
             _NAMES,
             "Dependency groups of env.update (comma-separated string or list).",
@@ -261,7 +260,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
             "Coverage threshold passed to --cov-fail-under.",
         ),
         "cov_reports": Option(
-            "html,xml,term",
+            ("html", "xml", "term"),
             _validate_cov_reports,
             {
                 "anyOf": [
@@ -282,7 +281,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "check": {
         "tasks": Option(
-            ",".join(DEFAULT_CHECK_STEPS),
+            DEFAULT_CHECK_STEPS,
             partial(_validate_steps, valid=CHECK_STEPS),
             {
                 "anyOf": [
@@ -301,7 +300,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "fix": {
         "tasks": Option(
-            ",".join(DEFAULT_FIX_STEPS),
+            DEFAULT_FIX_STEPS,
             partial(_validate_steps, valid=FIX_STEPS),
             {
                 "anyOf": [
@@ -337,7 +336,7 @@ def _defaults(section: str) -> dict[str, object]:
     ```pycon
     >>> from invoke_tasklib.config._schema import _defaults
     >>> _defaults("groups")
-    {'install': 'dev', 'update': 'dev,docs'}
+    {'install': ('dev',), 'update': ('dev', 'docs')}
 
     ```
     """
@@ -427,7 +426,8 @@ def json_schema() -> dict[str, Any]:
         for key, option in options.items():
             entry: dict[str, object] = {**option.json_schema, "description": option.doc}
             if option.default is not None:
-                entry["default"] = option.default
+                default = option.default
+                entry["default"] = list(default) if isinstance(default, tuple) else default
             properties[key] = entry
         sections[section] = {
             "type": "object",
