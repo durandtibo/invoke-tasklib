@@ -39,6 +39,50 @@ def test_check_program_accepts_a_program_on_the_path() -> None:
     assert check_program("ruff check .") is None
 
 
+def test_check_program_accepts_a_list_with_a_program_on_the_path() -> None:
+    assert check_program(["ruff", "check", "."]) is None
+
+
+def test_check_program_missing_program_of_a_list_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    with pytest.raises(Exit, match=r"'ruff' was not found") as info:
+        check_program(["ruff", "--version"])
+    assert info.value.code == 127
+
+
+def test_check_program_skips_an_empty_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    assert check_program([]) is None
+
+
+def test_check_program_skips_a_path_in_a_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    assert check_program(["/path with space/python", "-m", "pytest"]) is None
+
+
+def test_check_program_does_not_take_a_word_of_a_list_for_an_assignment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    with pytest.raises(Exit, match=r"'FOO=1' was not found"):
+        check_program(["FOO=1", "ruff"])
+
+
+def test_check_program_does_not_split_a_word_of_a_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    with pytest.raises(Exit, match=r"'ruff check' was not found"):
+        check_program(["ruff check"])
+
+
+def test_check_program_missing_module_of_a_list_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.sys.executable", "/venv/bin/python")
+    monkeypatch.setattr(
+        "invoke_tasklib.tools.importlib.util.find_spec", lambda _name, **_kwargs: None
+    )
+    with pytest.raises(Exit, match=r"The Python module 'pytest' is not installed"):
+        check_program(["/venv/bin/python", "-m", "pytest", "tests"])
+
+
 def test_check_program_missing_program_exits(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
     with pytest.raises(

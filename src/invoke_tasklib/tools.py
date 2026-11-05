@@ -399,11 +399,13 @@ def find_tool(name: str, *, module: bool = False) -> str | None:
     return shutil.which(name, path=tool_path())
 
 
-def check_program(command: str) -> None:
+def check_program(command: str | Sequence[str]) -> None:
     r"""Check that the program of a command is available.
 
-    Only the first word of the command is checked, after the
-    ``NAME=value`` words that set environment variables. It is not
+    The command is a list of words, or a command line. Only the first
+    word of the command is checked, after the ``NAME=value`` words that
+    set environment variables if it is a command line (a list is a
+    program and its arguments: the first word is the program). It is not
     checked when it is a path (for example the running interpreter, see
     ``python_executable``, or ``~/bin/tool``) or one of
     ``_UNCHECKED_PROGRAMS`` (the shell builtins). For
@@ -419,7 +421,7 @@ def check_program(command: str) -> None:
     unclosed quote) is not checked: the shell reports it.
 
     Args:
-        command: The command line.
+        command: The words of the command, or the command line.
 
     Raises:
         Exit: If the program (or the module) is not found. The message
@@ -430,6 +432,7 @@ def check_program(command: str) -> None:
     ```pycon
     >>> from invoke_tasklib.tools import check_program
     >>> check_program("cd docs")
+    >>> check_program(["cd", "docs"])
     >>> check_program("no-such-program --version")
     Traceback (most recent call last):
         ...
@@ -437,10 +440,13 @@ def check_program(command: str) -> None:
 
     ```
     """
-    try:
-        words = _strip_assignments(shlex.split(command))
-    except ValueError:
-        return
+    if isinstance(command, str):
+        try:
+            words = _strip_assignments(shlex.split(command))
+        except ValueError:
+            return
+    else:
+        words = list(command)
     if not words:
         return
     program = words[0]

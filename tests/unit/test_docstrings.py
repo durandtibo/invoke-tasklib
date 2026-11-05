@@ -11,7 +11,9 @@ SRC = Path(__file__).parents[2] / "src" / "invoke_tasklib"
 def _missing_docstrings(source: str) -> list[str]:
     r"""Return the functions and classes of a module without docstring.
 
-    The private ones are included, which ruff does not report.
+    The private ones are included, which ruff does not report. The
+    stubs decorated with ``overload`` are not (ruff forbids a docstring
+    on them: the implementation has it).
 
     Args:
         source: The source code of a module.
@@ -25,7 +27,23 @@ def _missing_docstrings(source: str) -> list[str]:
         for node in ast.walk(tree)
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
         and ast.get_docstring(node) is None
+        and not _is_overload(node)
     ]
+
+
+def _is_overload(node: ast.AST) -> bool:
+    r"""Tell whether a function is decorated with ``overload``.
+
+    Args:
+        node: A node of the syntax tree.
+
+    Returns:
+        True for a function decorated with ``overload`` or
+        ``typing.overload``.
+    """
+    decorators = getattr(node, "decorator_list", [])
+    names = {d.id if isinstance(d, ast.Name) else getattr(d, "attr", "") for d in decorators}
+    return "overload" in names
 
 
 ######################################
@@ -75,3 +93,15 @@ def test_missing_docstrings_reports_a_nested_function() -> None:
 
 def test_missing_docstrings_ignores_a_module_without_function() -> None:
     assert _missing_docstrings("x = 1\n") == []
+
+
+def test_missing_docstrings_ignores_an_overload_stub() -> None:
+    assert _missing_docstrings("@overload\ndef f(x: int) -> int: ...") == []
+
+
+def test_missing_docstrings_ignores_a_typing_overload_stub() -> None:
+    assert _missing_docstrings("@typing.overload\ndef f(x: int) -> int: ...") == []
+
+
+def test_missing_docstrings_reports_a_function_with_another_decorator() -> None:
+    assert _missing_docstrings("@task\ndef f(x: int) -> int: ...") == ["f"]

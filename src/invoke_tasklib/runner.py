@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import shlex
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, overload
 
 from invoke.exceptions import Exit
 
@@ -68,6 +68,7 @@ TOOL_HELP = {"args": ARGS_HELP, "paths": PATHS_HELP}
 r"""The ``help`` of a task with the ``args`` and ``paths`` options."""
 
 
+@overload
 def build_command(
     program: str,
     *,
@@ -75,12 +76,34 @@ def build_command(
     paths: str | None = None,
     default_paths: Sequence[str] = (),
     args_option: str = "--args",
-) -> str:
-    r"""Build a command line from a program and the options of a task.
+) -> str: ...
+
+
+@overload
+def build_command(
+    program: Sequence[str],
+    *,
+    args: str | None = None,
+    paths: str | None = None,
+    default_paths: Sequence[str] = (),
+    args_option: str = "--args",
+) -> list[str]: ...
+
+
+def build_command(
+    program: str | Sequence[str],
+    *,
+    args: str | None = None,
+    paths: str | None = None,
+    default_paths: Sequence[str] = (),
+    args_option: str = "--args",
+) -> str | list[str]:
+    r"""Build a command from a program and the options of a task.
 
     Args:
-        program: The program and its fixed arguments, e.g.
-            ``"ruff check"``. It is used as it is (not quoted).
+        program: The words of the command, e.g. ``["ruff", "check"]``,
+            or a command line, e.g. ``"ruff check"``, which is used as
+            it is (not quoted).
         args: Extra arguments of the user, as one string that is split
             like a shell does, e.g. ``"-k foo -x"``. They come after the
             fixed arguments.
@@ -95,8 +118,10 @@ def build_command(
             one set of arguments, e.g. ``"--pyright-args"``).
 
     Returns:
-        The command line. The arguments and the paths are quoted when
-        needed, so the shell does not expand a glob, ``~`` or ``$VAR``.
+        The words, the split ``args`` and the paths as a list if
+        ``program`` is a list (``run`` quotes them), else the command
+        line, where the arguments and the paths are quoted when needed,
+        so the shell does not expand a glob, ``~`` or ``$VAR``.
 
     Raises:
         Exit: If ``args`` or ``paths`` cannot be split (for example an
@@ -112,15 +137,41 @@ def build_command(
     'ruff -x src'
     >>> build_command("ruff", paths="*.py")
     "ruff '*.py'"
+    >>> build_command(["ruff", "check"], args="-x", default_paths=["."])
+    ['ruff', 'check', '-x', '.']
 
     ```
     """
-    words = [
-        program,
+    extra = [
         *split_args(args, args_option),
         *(split_args(paths, "--paths") or default_paths),
     ]
-    return " ".join(words[:1] + [shlex.quote(w) for w in words[1:]])
+    if isinstance(program, str):
+        return " ".join([program, *(shlex.quote(w) for w in extra)])
+    return [*program, *extra]
+
+
+def _shell_line(command: str | Sequence[str]) -> str:
+    r"""Return the command line to give to the shell.
+
+    Args:
+        command: A command line, or the words of a command.
+
+    Returns:
+        The command line as it is, or the words quoted and joined.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.runner import _shell_line
+    >>> _shell_line("ls -l")
+    'ls -l'
+    >>> _shell_line(["ls", "a b"])
+    "ls 'a b'"
+
+    ```
+    """
+    return command if isinstance(command, str) else shlex.join(command)
 
 
 def split_args(value: str | None, option: str) -> list[str]:
@@ -157,7 +208,7 @@ def split_args(value: str | None, option: str) -> list[str]:
         raise Exit(msg, code=2) from exc
 
 
-def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Result:
+def run(c: Context, command: str | Sequence[str], *, check: bool = True, **kwargs: Any) -> Result:
     r"""Run a command, echoing it and using a pty only on a terminal.
 
     The program of the command must be on the ``PATH`` or in the
@@ -183,7 +234,8 @@ def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Resul
 
     Args:
         c: The invoke context.
-        command: The command to run.
+        command: The command to run: the words of the command (each
+            one is quoted for the shell), or a command line.
         check: If False, do not check that the program is available.
         **kwargs: Additional keyword arguments passed to ``c.run``. They
             take precedence over the defaults of this helper.
@@ -205,6 +257,9 @@ def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Resul
     >>> _ = run(c, "ls")
     >>> c.run.call_args.kwargs["echo"]
     True
+    >>> _ = run(c, ["ls", "a b"])
+    >>> c.run.call_args.args
+    ("ls 'a b'",)
 
     ```
     """
@@ -213,10 +268,12 @@ def run(c: Context, command: str, *, check: bool = True, **kwargs: Any) -> Resul
     kwargs.setdefault("echo", True)
     kwargs.setdefault("pty", bool(c.config.run.pty) or sys.stdout.isatty())
     kwargs["env"] = {"PATH": tool_path(), **kwargs.get("env", {})}
-    return c.run(command, **kwargs)
+    return c.run(_shell_line(command), **kwargs)
 
 
-def capture(c: Context, command: str, *, warn: bool = False, check: bool = True) -> Result:
+def capture(
+    c: Context, command: str | Sequence[str], *, warn: bool = False, check: bool = True
+) -> Result:
     r"""Run a command whose output the caller reads.
 
     It is ``run`` with the options that a command read by the code
@@ -227,7 +284,7 @@ def capture(c: Context, command: str, *, warn: bool = False, check: bool = True)
 
     Args:
         c: The invoke context.
-        command: The command to run.
+        command: The command to run, see ``run``.
         warn: If True, a command that fails does not raise: look at
             ``result.ok``.
         check: If False, do not check that the program is available,
