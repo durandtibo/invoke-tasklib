@@ -1754,9 +1754,18 @@
   into, so nothing inside them is removed.</li>
 <li>Files: <code>.coverage</code>, <code>.coverage.*</code> (parallel coverage data), <code>coverage.xml</code></li>
 </ul>
+<p>A top-level directory that contains files tracked by git (for example a <code>build/</code> directory with
+scripts that are committed) is kept, and the task says so (<code>⏭️  Keeping build: it contains files
+tracked by git</code>). Outside a git repository, or without <code>git</code>, nothing counts as tracked. The caches
+(<code>__pycache__</code>, <code>*.egg-info</code>) and the files are not looked up.</p>
 <p>Nothing is removed if the corresponding directory or file doesn't exist, so <code>clean</code> is safe to run
 repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a
 directory is removed as a link, and the directory it points to is left untouched.</p>
+<p>To see what would be removed without removing anything, add <code>--dry-run</code> (to <code>clean.all</code> or
+<code>clean.pycache</code>):</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>clean<span class="w"> </span>--dry-run
+</code></pre></div>
+<p>It prints a <code>Would remove &lt;path&gt;</code> line per path instead of <code>Removing &lt;path&gt;</code>.</p>
 <p>To remove only the <code>__pycache__</code> directories:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>clean.pycache
 </code></pre></div>
