@@ -6,8 +6,8 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import _steps, fix
+from invoke_tasklib._steps import default_steps
 from invoke_tasklib.config import get_config, load_config
-from invoke_tasklib.config._constants import FIX_STEPS
 from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, declared_needs, make_context, step_needs_of_commands
 
@@ -116,8 +116,12 @@ def test_all_reports_an_invalid_config() -> None:
         fix.all_(make_context())
 
 
-def test_steps_are_the_valid_steps_of_the_config() -> None:
-    assert tuple(fix._STEPS) == FIX_STEPS
+def test_steps_are_in_the_order_of_the_run() -> None:
+    assert list(fix._STEPS) == ["lint", "format-python", "format-docstrings", "shell"]
+
+
+def test_default_steps() -> None:
+    assert default_steps(fix._STEPS) == ("lint", "format-python", "format-docstrings")
 
 
 def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:

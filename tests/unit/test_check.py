@@ -9,9 +9,8 @@ from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import _steps, check
-from invoke_tasklib._steps import missing_tools
+from invoke_tasklib._steps import default_steps, missing_tools
 from invoke_tasklib.config import get_config, load_config
-from invoke_tasklib.config._constants import CHECK_STEPS
 from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, declared_needs, make_context, step_needs_of_commands
 
@@ -180,7 +179,7 @@ def test_all_with_unknown_step_runs_nothing() -> None:
 
 
 def test_all_reports_an_invalid_config() -> None:
-    with pytest.raises(Exit, match=r"Unknown check step"):
+    with pytest.raises(Exit, match=r"Unknown step \['nope'\] in tasklib\.check\.tasks"):
         check.all_(_context({"tasks": "nope"}))
 
 
@@ -404,8 +403,31 @@ def test_unit_step_is_the_unit_wrapper() -> None:
     assert check._STEPS["unit"].task is check._unit
 
 
-def test_steps_are_the_valid_steps_of_the_config() -> None:
-    assert tuple(check._STEPS) == CHECK_STEPS
+def test_steps_are_in_the_order_of_the_run() -> None:
+    assert list(check._STEPS) == [
+        "format-python",
+        "format-docstrings",
+        "lint",
+        "types",
+        "imports",
+        "unit",
+        "doctest",
+        "shell",
+        "spelling",
+        "docs",
+        "audit",
+    ]
+
+
+def test_default_steps() -> None:
+    assert default_steps(check._STEPS) == (
+        "format-python",
+        "format-docstrings",
+        "lint",
+        "types",
+        "imports",
+        "unit",
+    )
 
 
 ############################################

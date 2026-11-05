@@ -7,11 +7,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, get_type_hints
 
 from invoke_tasklib.config._constants import (
-    CHECK_STEPS,
     COV_REPORTS,
-    DEFAULT_CHECK_STEPS,
-    DEFAULT_FIX_STEPS,
-    FIX_STEPS,
     PYTHON_VERSION_PATTERN,
     TYPE_CHECKERS,
 )
@@ -86,7 +82,7 @@ class TypesConfig:
 class CheckConfig:
     r"""Resolved ``check`` config section."""
 
-    tasks: tuple[str, ...]
+    tasks: tuple[str, ...] | None
     cov: bool
 
 
@@ -94,7 +90,7 @@ class CheckConfig:
 class FixConfig:
     r"""Resolved ``fix`` config section."""
 
-    tasks: tuple[str, ...]
+    tasks: tuple[str, ...] | None
 
 
 @dataclass(frozen=True)
@@ -118,8 +114,10 @@ class Option:
 
     Attributes:
         default: The default value. ``None`` means that the default is
-            derived from other values (see ``get_config``) or that the
-            key is required. A default is a tuple for a list.
+            derived from other values (see ``get_config``), that the
+            key is required, or that the composite task chooses the
+            steps (``check.tasks``, ``fix.tasks``). A default is a
+            tuple for a list.
         validate: Check a raw value and return the resolved one. It
             raises ``ValueError`` with a message that names the key.
         json_schema: The JSON schema of the key, without ``default``.
@@ -281,15 +279,10 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "check": {
         "tasks": Option(
-            DEFAULT_CHECK_STEPS,
-            partial(_validate_steps, valid=CHECK_STEPS),
-            {
-                "anyOf": [
-                    {"type": "string"},
-                    {"type": "array", "items": {"enum": list(CHECK_STEPS)}},
-                ]
-            },
-            "Steps of check.all (comma-separated string or list).",
+            None,
+            _validate_steps,
+            _NAMES,
+            "Steps of check.all (comma-separated string or list); null for the default steps.",
         ),
         "cov": Option(
             False,
@@ -300,15 +293,10 @@ SCHEMA: dict[str, dict[str, Option]] = {
     },
     "fix": {
         "tasks": Option(
-            DEFAULT_FIX_STEPS,
-            partial(_validate_steps, valid=FIX_STEPS),
-            {
-                "anyOf": [
-                    {"type": "string"},
-                    {"type": "array", "items": {"enum": list(FIX_STEPS)}},
-                ]
-            },
-            "Steps of fix.all (comma-separated string or list).",
+            None,
+            _validate_steps,
+            _NAMES,
+            "Steps of fix.all (comma-separated string or list); null for the default steps.",
         ),
     },
 }

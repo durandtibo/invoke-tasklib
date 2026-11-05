@@ -9,7 +9,6 @@ from invoke.tasks import task
 from invoke_tasklib import doc, formatting, imports, lint, security, testing, typecheck
 from invoke_tasklib._steps import Step, run_composite
 from invoke_tasklib.config import load_config
-from invoke_tasklib.config._constants import CHECK_STEPS
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -86,19 +85,18 @@ _STEPS: dict[str, Step] = {
     "types": Step(typecheck.check, programs=lambda cfg: (cfg.types.checker,)),
     "imports": Step(imports.check_cycles),
     "unit": Step(_unit, modules=_unit_modules),
-    "doctest": Step(testing.doctest, modules=("pytest", "xdoctest")),
-    "shell": Step(_shell, programs=("shellcheck", "shfmt")),
-    "spelling": Step(lint.check_spelling, programs=("codespell",)),
-    "docs": Step(doc.build, programs=("mkdocs",)),
-    "audit": Step(security.audit, programs=("uv", "uvx")),
+    "doctest": Step(testing.doctest, modules=("pytest", "xdoctest"), default=False),
+    "shell": Step(_shell, programs=("shellcheck", "shfmt"), default=False),
+    "spelling": Step(lint.check_spelling, programs=("codespell",), default=False),
+    "docs": Step(doc.build, programs=("mkdocs",), default=False),
+    "audit": Step(security.audit, programs=("uv", "uvx"), default=False),
 }
-r"""The steps of ``check.all`` (task, programs and Python modules), by
-step name.
+r"""The steps of ``check.all`` (task, programs, Python modules and
+whether it runs by default), by step name, in the order of the run.
 
-The modules of ``unit`` depend on the config, see ``_unit_modules``. To
-add a step, add its name to ``CHECK_STEPS`` in ``config/_constants.py``
-(a test checks that the names agree), and its programs and install hints
-to ``TOOLS`` in ``tools.py``.
+It is the only list of the step names. The modules of ``unit`` depend on
+the config, see ``_unit_modules``. To add a step, add it here, and its
+programs and install hints to ``TOOLS`` in ``tools.py``.
 """
 
 
@@ -108,8 +106,7 @@ to ``TOOLS`` in ``tools.py``.
     help={
         "keep_going": "Run every step and report all the failures, instead of stopping.",
         "only": (
-            f"Comma-separated steps to run instead of tasklib.check.tasks "
-            f"({', '.join(CHECK_STEPS)})."
+            f"Comma-separated steps to run instead of tasklib.check.tasks ({', '.join(_STEPS)})."
         ),
         "skip": "Comma-separated steps to leave out.",
     },
@@ -158,8 +155,8 @@ def all_(
         c,
         cfg,
         _STEPS,
-        CHECK_STEPS,
         cfg.check.tasks,
+        key="tasklib.check.tasks",
         only=only,
         skip=skip,
         keep_going=keep_going,

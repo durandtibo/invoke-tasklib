@@ -152,10 +152,7 @@ def test_schema_option_validation_error_names_the_key(section: str, key: str) ->
 
 
 def test_defaults_of_a_section() -> None:
-    assert _defaults("check") == {
-        "tasks": ("format-python", "format-docstrings", "lint", "types", "imports", "unit"),
-        "cov": False,
-    }
+    assert _defaults("check") == {"tasks": None, "cov": False}
 
 
 def test_defaults_returns_a_new_dict() -> None:
@@ -213,16 +210,9 @@ def test_json_schema_publishes_a_list_default_as_an_array() -> None:
     assert test["cov_reports"]["default"] == ["html", "xml", "term"]
 
 
-def test_json_schema_publishes_the_default_steps_as_an_array() -> None:
+def test_json_schema_has_no_default_for_the_steps() -> None:
     check = json_schema()["properties"]["tasklib"]["properties"]["check"]["properties"]
-    assert check["tasks"]["default"] == [
-        "format-python",
-        "format-docstrings",
-        "lint",
-        "types",
-        "imports",
-        "unit",
-    ]
+    assert "default" not in check["tasks"]
 
 
 def test_json_schema_keeps_a_scalar_default() -> None:
@@ -259,9 +249,12 @@ def test_json_schema_lists_every_key_of_the_schema() -> None:
     }
 
 
-def test_json_schema_check_steps_are_listed() -> None:
+def test_json_schema_steps_are_names_without_an_enum() -> None:
     sections = json_schema()["properties"]["tasklib"]["properties"]
-    assert "docs" in sections["check"]["properties"]["tasks"]["anyOf"][1]["items"]["enum"]
+    assert sections["check"]["properties"]["tasks"]["anyOf"] == [
+        {"type": "string"},
+        {"type": "array", "items": {"type": "string"}},
+    ]
 
 
 def test_json_schema_is_valid_json() -> None:
