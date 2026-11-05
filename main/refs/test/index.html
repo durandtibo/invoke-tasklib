@@ -1759,6 +1759,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../output/" class="md-nav__link">
         
   
@@ -2122,8 +2150,9 @@ nothing is run.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True, generate coverage reports in HTML, XML, and
-terminal formats. Default is False.</p>
+                <p>If True, generate the coverage reports of
+<code>tasklib.test.cov_reports</code> (<code>html,xml,term</code> by
+default). Default is False.</p>
               </div>
             </td>
             <td>
@@ -2568,6 +2597,7 @@ message that names it.</p>
     <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">cov</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">append</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">paths</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
@@ -2616,8 +2646,27 @@ seconds by default). Nothing is run if the directory does not exist.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True, generate coverage reports, appended to the
-existing coverage data. Default is False.</p>
+                <p>If True, generate the coverage reports of
+<code>tasklib.test.cov_reports</code>. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>append</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True and <code>cov</code> is True, add to the coverage data
+of the previous runs (<code>--cov-append</code>) instead of
+replacing it, e.g. after <code>test.unit --cov</code>. Default is
+False.</p>
               </div>
             </td>
             <td>
@@ -2677,6 +2726,7 @@ this scope.</p>
     <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">cov</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">append</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">paths</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
@@ -2725,8 +2775,27 @@ seconds by default). Nothing is run if the directory does not exist.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True, generate coverage reports, appended to the
-existing coverage data. Default is False.</p>
+                <p>If True, generate the coverage reports of
+<code>tasklib.test.cov_reports</code>. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>append</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True and <code>cov</code> is True, add to the coverage data
+of the previous runs (<code>--cov-append</code>) instead of
+replacing it, e.g. after <code>test.unit --cov</code>. Default is
+False.</p>
               </div>
             </td>
             <td>
@@ -2836,7 +2905,8 @@ instead; if neither exists, nothing is run.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True, generate coverage reports. Default is False.</p>
+                <p>If True, generate the coverage reports of
+<code>tasklib.test.cov_reports</code>. Default is False.</p>
               </div>
             </td>
             <td>

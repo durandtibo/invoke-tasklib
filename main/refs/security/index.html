@@ -1660,6 +1660,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../output/" class="md-nav__link">
         
   
@@ -1837,7 +1865,8 @@
     <div class="doc doc-contents ">
 
         <p>Audit the locked dependencies for known vulnerabilities.</p>
-<p>The dependencies of <code>uv.lock</code> are exported to a temporary
+<p>The dependencies of <code>uv.lock</code>, with all the optional dependencies
+(extras) and all the dependency groups, are exported to a temporary
 requirements file, which is audited with <code>pip-audit</code> (run with
 <code>uvx</code>, so it does not have to be a dependency of the project, in
 the range <code>PIP_AUDIT_REQUIREMENT</code>).

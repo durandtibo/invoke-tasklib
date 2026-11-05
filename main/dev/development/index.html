@@ -1802,6 +1802,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -2135,9 +2163,13 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 ├── src/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `make_ns` and individual task modules
-│       ├── config.py         # Shared config resolution (`get_config`, `load_config`)
-│       ├── runner.py         # Shared command runner (`run`, `build_command`)
+│       ├── config/           # Config resolution (`get_config`, `load_config`, JSON schema)
+│       ├── runner.py         # Command runner (`run`, `capture`, `build_command`)
+│       ├── tools.py          # Tool lookup and install hints (`find_tool`, `check_program`)
 │       ├── output.py         # Progress messages (`say`, `step`)
+│       ├── _steps.py         # Step runner shared by `check.all` and `fix.all`
+│       ├── _files.py         # File lookup of the format and test tasks
+│       ├── _graph.py         # Static import graph of `imports.check-cycles`
 │       ├── _discover.py      # Module discovery run by `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
@@ -2149,8 +2181,11 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 │       ├── doc.py            # doc.* tasks
 │       ├── security.py       # security.* tasks
 │       ├── clean.py          # clean.* tasks
-│       └── check.py          # check.* tasks
+│       ├── check.py          # check.* tasks
+│       ├── fix.py            # fix.* tasks
+│       └── configuration.py  # config.* tasks
 ├── tests/
+│   ├── helpers.py            # `make_context` and `commands`, shared by the tests
 │   ├── unit/                 # Unit tests, one module per source module
 │   └── integration/          # Tests that run the real tools
 ├── review/                   # Review notes of the repository
@@ -2162,7 +2197,8 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 <h2 id="adding-a-new-task">Adding a New Task<a class="headerlink" href="#adding-a-new-task" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Pick the right module (<code>formatting.py</code>, <code>lint.py</code>, <code>imports.py</code>, <code>typecheck.py</code>, <code>testing.py</code>,
-   <code>env.py</code>, <code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code> or <code>check.py</code>), or create a new one
+   <code>env.py</code>, <code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>, <code>fix.py</code> or
+   <code>configuration.py</code>), or create a new one
    if the task doesn't fit an existing namespace.</li>
 <li>Follow the <code>check_&lt;target&gt;</code>/<code>fix_&lt;target&gt;</code> naming convention when applicable (see
    <a href="../../uguide/format/">Format</a>).</li>
@@ -2174,11 +2210,13 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
    summary shown by <code>invoke --list</code>. Give each option a <code>help</code> entry in <code>@task</code>, and add
    <code>--args</code> (<code>ARGS_HELP</code>) and <code>--paths</code> (<code>PATHS_HELP</code>) when the tool accepts extra arguments or
    paths. The docstring is also used by the <a href="../../refs/format/">reference docs</a>.</li>
-<li>Add unit tests using <code>invoke.context.MockContext</code> (see existing tests for the pattern).</li>
+<li>Add unit tests using <code>invoke.context.MockContext</code> (see existing tests for the pattern), and an
+   integration test in <code>tests/integration/</code> for what the unit tests patch.</li>
 <li>If the module is new, register it in <code>src/invoke_tasklib/__init__.py</code> (<code>_MODULES</code> and
    <code>__all__</code>).</li>
 <li>Update the <a href="https://github.com/durandtibo/invoke-tasklib/blob/main/README.md">README</a> task
-   table and the corresponding <a href="../../uguide/format/">user guide</a> page.</li>
+   table, <code>uguide/index.md</code>, <code>docs/index.md</code> and the corresponding
+   <a href="../../uguide/format/">user guide</a> page.</li>
 </ol>
 <h2 id="testing-guidelines">Testing Guidelines<a class="headerlink" href="#testing-guidelines" title="Permanent link">&para;</a></h2>
 <p>Tests use <code>invoke.context.MockContext</code> to capture the shell commands a task would run, without

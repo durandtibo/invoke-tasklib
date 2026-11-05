@@ -1702,6 +1702,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1934,11 +1962,17 @@ invoke<span class="w"> </span>format.fix-shell
 the <a href="../config/">resolved config</a>, using the <code>[tool.docformatter]</code> section of the consuming
 project's <code>pyproject.toml</code> (via <code>--config ./pyproject.toml</code>).</p>
 <h2 id="shell-scripts">Shell Scripts<a class="headerlink" href="#shell-scripts" title="Permanent link">&para;</a></h2>
-<p><code>format.check-shell</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. The
-<code>.git</code>, <code>.venv</code>, <code>.pytest_cache</code>, <code>node_modules</code>, <code>build</code>, <code>dist</code> and <code>site</code> directories are not
-searched, so third-party scripts (for example the activation scripts of a virtual environment) are
-never checked or rewritten. The files are found by a walk in Python (no <code>find</code> or <code>xargs</code>) and given
-to the tool as arguments; if there is no <code>*.sh</code> file, the tool is not run and the task says so.</p>
+<p><code>format.check-shell</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. In a git
+work tree the files are the ones that git lists (<code>git ls-files --cached --others --exclude-standard</code>):
+the tracked files and the untracked files that are not ignored, so the rules of <code>.gitignore</code> are
+followed, like <code>ruff</code>, <code>codespell</code> and <code>pre-commit</code> do, and third-party scripts (for example the
+activation scripts of a virtual environment, whatever its name) are never checked or rewritten as
+long as the environment is ignored. A tracked file is kept, even in a <code>build</code> directory. The
+<code>.git</code>, <code>.venv</code>, <code>.pytest_cache</code> and <code>node_modules</code> directories are always left out.</p>
+<p>Outside a git work tree, or without <code>git</code>, the files are found by a walk in Python (no <code>find</code> or
+<code>xargs</code>) that does not search the <code>.git</code>, <code>.venv</code>, <code>.pytest_cache</code>, <code>node_modules</code>, <code>build</code>, <code>dist</code>
+and <code>site</code> directories. The files are given to the tool as arguments; if there is no <code>*.sh</code> file,
+the tool is not run and the task says so.</p>
 <!-- prettier-ignore -->
 <div class="admonition note">
 <p class="admonition-title">Note</p>

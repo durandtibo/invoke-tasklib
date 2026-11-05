@@ -1691,6 +1691,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1850,8 +1878,8 @@
 <h1 id="writing-a-custom-task">Writing a Custom Task<a class="headerlink" href="#writing-a-custom-task" title="Permanent link">&para;</a></h1>
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page shows how to write a task of your own that behaves like the tasks of
 <code>invoke-tasklib</code>. The helpers below are the supported public API for that: their signatures are
-documented in the reference pages (<a href="../../refs/runner/"><code>runner</code></a>, <a href="../../refs/output/"><code>output</code></a> and
-<a href="../../refs/config/"><code>config</code></a>).</p>
+documented in the reference pages (<a href="../../refs/runner/"><code>runner</code></a>, <a href="../../refs/tools/"><code>tools</code></a>,
+<a href="../../refs/output/"><code>output</code></a> and <a href="../../refs/config/"><code>config</code></a>).</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1874,11 +1902,23 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
 <td>Run a command: echo, pty only on a terminal, program check</td>
 </tr>
 <tr>
-<td><code>invoke_tasklib.runner.check_program</code></td>
-<td>Check that the programs of a command are installed</td>
+<td><code>invoke_tasklib.runner.in_ci</code></td>
+<td>Tell whether <code>CI</code> is on (<code>CI=false</code> and <code>CI=0</code> are off)</td>
 </tr>
 <tr>
-<td><code>invoke_tasklib.runner.find_tool</code></td>
+<td><code>invoke_tasklib.runner.in_github_actions</code></td>
+<td>Tell whether <code>GITHUB_ACTIONS</code> is <code>true</code></td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.runner.capture</code></td>
+<td>Run a command and read its output: hidden, not echoed, no pty</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.tools.check_program</code></td>
+<td>Check that the program of a command is installed</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.tools.find_tool</code></td>
 <td>Find a program on the <code>PATH</code>, or a Python module of the interpreter</td>
 </tr>
 <tr>
@@ -1910,7 +1950,7 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
 
 
 <span class="nd">@task</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="p">{</span><span class="s2">"args"</span><span class="p">:</span> <span class="n">ARGS_HELP</span><span class="p">,</span> <span class="s2">"paths"</span><span class="p">:</span> <span class="n">PATHS_HELP</span><span class="p">})</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_complexity</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_complexity</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check the complexity of the code with radon."""</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">step</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"🔍 Checking the complexity..."</span><span class="p">,</span> <span class="s2">"✅ Complexity check passed"</span><span class="p">):</span>
@@ -1923,14 +1963,15 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
 <ul>
 <li><strong>Read the config with <code>load_config(c)</code></strong>, not from <code>c.config</code>: it merges the defaults, validates
   the values and exits with a one-line message on an invalid config. The <code>tasklib</code> section is
-  available as <code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code> and <code>cfg.check</code>.</li>
+  available as <code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code>, <code>cfg.check</code> and <code>cfg.fix</code>.</li>
 <li><strong>Build the command with <code>build_command</code></strong>: the program is used as it is, and the user's <code>args</code>
   and <code>paths</code> (and the default paths) are split like a shell does and quoted, so a space or a <code>;</code>
   never splits or injects a command. For the same reason a glob (<code>*.py</code>), <code>~</code> or <code>$HOME</code> reaches
   the tool as it is: the shell does not expand it.</li>
 <li><strong>Run it with <code>run</code></strong>: it echoes the command, uses a pty only on a terminal, and first checks that
-  the program is on the <code>PATH</code> (with an installation hint if it is not). Do not call <code>c.run</code>
-  directly. For <code>python -m &lt;module&gt;</code>, the module is checked only when the command uses the running
+  the program is on the <code>PATH</code> (with an installation hint if it is not). Only the first word of
+  the command is checked, so a command that is a pipeline or a list (<code>a | b</code>, <code>a &amp;&amp; b</code>) needs
+  <code>run(c, command, check=False)</code>. Do not call <code>c.run</code> directly. For <code>python -m &lt;module&gt;</code>, the module is checked only when the command uses the running
   interpreter (<code>python_executable()</code>, the one that runs <code>invoke</code>): for another interpreter or a
   <code>python</code> found on the <code>PATH</code>, a missing module is reported by Python itself
   (<code>No module named ...</code>), without a hint. Use <code>python_executable()</code> in your commands.</li>
@@ -1979,6 +2020,7 @@ something else (a CI action, a script) depends on.</p>
 <ul>
 <li><a href="../config/">Config</a>: the <code>tasklib</code> section that <code>load_config</code> resolves.</li>
 <li><a href="../../refs/runner/"><code>invoke_tasklib.runner</code> reference</a></li>
+<li><a href="../../refs/tools/"><code>invoke_tasklib.tools</code> reference</a></li>
 <li><a href="../../refs/output/"><code>invoke_tasklib.output</code> reference</a></li>
 </ul>
 

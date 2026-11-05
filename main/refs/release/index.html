@@ -1704,6 +1704,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../output/" class="md-nav__link">
         
   
@@ -2108,16 +2136,15 @@ clean, that <code>HEAD</code> is tagged and that the tag matches the
 <code>pyproject.toml</code> version (<code>--skip-checks</code> turns it off). Outside
 of CI (<code>CI</code> set to something other than <code>0</code> and <code>false</code>) it
 then asks for a confirmation (<code>--yes</code> turns it off).</p>
-<p>The credentials are either a token, read from <code>PYPI_TOKEN</code> (from
-<code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, so a PyPI token is never
-sent to TestPyPI) or, without <code>--test-pypi</code> only, from
-<code>UV_PUBLISH_TOKEN</code>, which <code>uv publish</code> reads natively. The token
-is passed to <code>uv publish</code> through its
-environment, so it does not appear on the command line; or, in
-GitHub Actions with the
-<code>id-token: write</code> permission, PyPI Trusted Publishing. <code>dist/</code>
-is cleared by the build, so only the freshly built artifacts are
-uploaded.</p>
+<p>The credentials are either a token or, in GitHub Actions with the
+<code>id-token: write</code> permission, PyPI Trusted Publishing. The token
+is read from <code>PYPI_TOKEN</code> (from <code>TEST_PYPI_TOKEN</code> with
+<code>--test-pypi</code>, so a PyPI token is never sent to TestPyPI) or,
+without <code>--test-pypi</code> only, from <code>UV_PUBLISH_TOKEN</code>, which
+<code>uv publish</code> reads natively. It is passed to <code>uv publish</code>
+through its environment, so it does not appear on the command
+line. <code>dist/</code> is cleared by the build, so only the freshly built
+artifacts are uploaded.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

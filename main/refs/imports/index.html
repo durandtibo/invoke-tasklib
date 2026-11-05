@@ -1671,6 +1671,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../output/" class="md-nav__link">
         
   
@@ -1986,6 +2014,10 @@ which is the usual symptom of a cyclic import. It also fails on a
 missing dependency or a syntax error, and it starts one interpreter
 per module, so it is slow for a package with heavy imports; see
 <code>check_cycles</code> for the static check.</p>
+<p>The output is one line per step and one line per module that
+fails, with the last line of its traceback, then the summary. The
+commands are not echoed, so a package of 300 modules does not
+write 300 lines.</p>
 
 
 <p><span class="doc-section-title">Raises:</span></p>
@@ -2004,7 +2036,18 @@ per module, so it is slow for a package with heavy imports; see
             <td>
               <div class="doc-md-description">
                 <p>If the discovery fails (for example the package
-cannot be found) or a module fails to import.</p>
+cannot be found).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="invoke.exceptions.Exit">Exit</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a module fails to import on its own (code 1). Every
+module is tried, and all the failures are listed.</p>
               </div>
             </td>
           </tr>

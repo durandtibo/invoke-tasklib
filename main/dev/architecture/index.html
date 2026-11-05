@@ -1802,6 +1802,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -2131,28 +2159,46 @@ same underlying tool or concern (e.g. most of <code>testing.py</code> wraps <cod
 <code>test.doctest-markdown</code>, which wraps the standard library's <code>doctest</code> module directly).</p>
 <p>Tasks that need project-specific values call <code>load_config(c)</code> at the top of the function body;
 tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
-<p>Five small modules support the task modules:</p>
+<p>Seven small modules support the task modules:</p>
 <ul>
 <li><code>runner.py</code>: <code>run(c, command)</code> is the only way a task runs an external command. It checks that
-  the program is on the <code>PATH</code> (with a hint per program when it is not), echoes the command, and
-  uses a pty only on a terminal. <code>build_command</code> builds a command line and quotes the arguments, and
+  the program is on the <code>PATH</code> (with <code>tools.check_program</code>), echoes the command, and
+  uses a pty only on a terminal. <code>capture(c, command)</code> is <code>run</code> for a command whose output the task
+  reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
+  <code>in_ci()</code> and <code>in_github_actions()</code> are the only readers of <code>CI</code> and <code>GITHUB_ACTIONS</code>.
+  <code>build_command</code> builds a command line and quotes the arguments, and
   <code>ARGS_HELP</code>/<code>PATHS_HELP</code> are the help of the <code>--args</code> and <code>--paths</code> options.</li>
+<li><code>tools.py</code>: finds the tools that the tasks run: <code>find_tool</code> looks a program up on the <code>PATH</code> or
+  a module up for the running interpreter, <code>check_program</code> checks the first word of a command (and
+  the module of <code>python -m &lt;module&gt;</code> and the plugins of the pytest options), and <code>hint</code> and
+  <code>not_found_message</code> say how to install a tool (<code>PROGRAM_HINTS</code>, <code>PROGRAM_GROUPS</code> and
+  <code>MODULE_GROUPS</code>).</li>
 <li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
   step, or a failure message.</li>
 <li><code>_steps.py</code>: the step runner shared by <code>check.all</code> and <code>fix.all</code>: the selection of the steps
   (<code>--only</code>, <code>--skip</code> and the config), the look-up of the missing tools before anything runs, the
   <code>--keep-going</code> mode and the final summary of the failures.</li>
+<li><code>_files.py</code>: <code>project_files(c, root, suffix, excluded)</code> finds the files with a suffix, with
+  <code>git ls-files</code> in a git work tree and with <code>find_files</code>, a walk in Python (no <code>find</code> or <code>xargs</code>)
+  that skips the <code>EXCLUDED_DIRS</code> at any depth, otherwise. It is used by the format and test tasks
+  that work on shell scripts and markdown files.</li>
 <li><code>_graph.py</code>: the static import graph of a package (built with <code>ast</code>, without importing
   anything) and its cycles. It is used by <code>imports.check-cycles</code>.</li>
 <li><code>_discover.py</code>: lists the modules of a package without importing them. It is run in a
   subprocess by <code>imports.check-isolated</code>.</li>
 </ul>
 <p><code>config.EXCLUDED_DIRS</code> lists the directories that the tasks that walk the file tree (<code>clean</code>,
-<code>format</code>, <code>test.doctest-markdown</code>) never enter (<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, ...).</p>
+<code>format</code>, <code>test.doctest-markdown</code>) never enter (<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, ...). The format and
+test tasks find their files with <code>_files.project_files</code>: in a git work tree they ask
+<code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and there is no
+list of directories to maintain (the <code>EXCLUDED_DIRS</code> are still left out); outside a work tree they
+walk the tree and skip the excluded directories. <code>clean</code> keeps its own walk, because the
+<code>__pycache__</code> directories it removes are ignored by git.</p>
 <h3 id="adding-a-step-to-checkall-or-fixall">Adding a step to <code>check.all</code> or <code>fix.all</code><a class="headerlink" href="#adding-a-step-to-checkall-or-fixall" title="Permanent link">&para;</a></h3>
 <p>A step is a <code>Step(task, programs, modules)</code> of <code>_steps.py</code> (the task, the programs it looks up on the
-<code>PATH</code>, the Python modules it imports). To add one:</p>
+<code>PATH</code>, the Python modules it imports). <code>modules</code> is a tuple, or a function of the config that
+returns one, for a step whose modules depend on an option (<code>check._unit_modules</code>). To add one:</p>
 <ol>
 <li>Write the task in its module, and add <code>"name": Step(task, programs=..., modules=...)</code> to
    <code>check.STEPS</code> (or <code>fix.STEPS</code>).</li>
@@ -2160,9 +2206,11 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
    import the task modules, and a test checks that the names agree with <code>STEPS</code>.</li>
 <li>Add the programs and modules to <code>TOOL_PROGRAMS</code> and <code>TOOL_MODULES</code> of <code>env.py</code> (a test checks
    that every tool of <code>STEPS</code> is listed), and their install hints to <code>PROGRAM_HINTS</code> or
-   <code>PROGRAM_GROUPS</code> of <code>runner.py</code> (a test checks that too).</li>
-<li>To run the step by default, add it to the default of <code>check.tasks</code> (or <code>fix.tasks</code>) in
-   <code>config/_schema.py</code>; update the tables of the user guide (<code>uguide/check.md</code>, <code>uguide/fix.md</code>).</li>
+   <code>PROGRAM_GROUPS</code> (or <code>MODULE_GROUPS</code> for a module) of <code>tools.py</code> (a test checks that too).</li>
+<li>To run the step by default, put it among the first steps of <code>CHECK_STEPS</code> (or <code>FIX_STEPS</code>) and
+   extend <code>DEFAULT_CHECK_STEPS</code> (or <code>DEFAULT_FIX_STEPS</code>) in <code>config/_constants.py</code>, which derive the
+   default of <code>check.tasks</code> (or <code>fix.tasks</code>) in <code>config/_schema.py</code>; update the tables of the user
+   guide (<code>uguide/check.md</code>, <code>uguide/fix.md</code>).</li>
 </ol>
 <h3 id="3-the-namespace">3. The Namespace<a class="headerlink" href="#3-the-namespace" title="Permanent link">&para;</a></h3>
 <p><code>invoke_tasklib/__init__.py</code> has <code>make_ns(*, exclude=(), include=None)</code>, which builds a new
@@ -2188,7 +2236,7 @@ load_config(c) resolves package.name and paths.unit_tests
     ↓
 Task builds the pytest command line with build_command (quoted)
     ↓
-runner.run(c, cmd) checks the program, echoes the command and
+runner.run(c, cmd) checks the program (tools.check_program), echoes the command and
 executes it with c.run (pty only on a terminal)
 </code></pre></div>
 <h2 id="design-decisions">Design Decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h2>
@@ -2198,7 +2246,7 @@ guarantees every task sees the same resolved paths (e.g. <code>test.unit</code> 
 <code>package.name</code>).</p>
 <p><strong>Trade-off</strong>: Every task pays the (cheap) cost of re-resolving config on each call, rather than
 resolving it once. This is negligible since <code>load_config</code> does no I/O beyond reading <code>c.config</code> and, for the defaults
-that come from the project, two small files (<code>.python-version</code> and <code>pyproject.toml</code>).</p>
+that come from the project, whether the source directory exists.</p>
 <h3 id="why-check_targetfix_target-naming">Why <code>check_&lt;target&gt;</code>/<code>fix_&lt;target&gt;</code> Naming?<a class="headerlink" href="#why-check_targetfix_target-naming" title="Permanent link">&para;</a></h3>
 <p><strong>Rationale</strong>: Makes the read-only/mutating counterpart of a task discoverable by name alone, and
 lets CI safely run every <code>check_*</code> task without risk of it modifying the working tree.</p>
@@ -2216,7 +2264,8 @@ is loaded, because the <code>invoke.yaml</code> values are only known once Invok
 <code>runner.run</code>) without executing it. This lets tests assert on the exact shell command a task would run, without depending on
 <code>ruff</code>, <code>pytest</code>, <code>uv</code>, etc. being installed or configured in the test environment. The unit
 tests also patch <code>shutil.which</code> (an autouse fixture in <code>tests/unit/conftest.py</code>) so that the check
-of the <code>PATH</code> done by <code>invoke_tasklib.runner.run</code> passes on any machine.</p>
+of the <code>PATH</code> done by <code>invoke_tasklib.tools.check_program</code> (called by <code>runner.run</code>) passes on any
+machine.</p>
 <h2 id="future-directions">Future Directions<a class="headerlink" href="#future-directions" title="Permanent link">&para;</a></h2>
 <p>Potential areas for enhancement:</p>
 <ol>

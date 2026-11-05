@@ -1702,6 +1702,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1921,7 +1949,9 @@ doctests, unit/integration/functional tests, and benchmarks with <code>pytest</c
 </table>
 <p>All test tasks (except <code>test.benchmark</code>, <code>test.doctest</code>, and <code>test.doctest-markdown</code>) run <code>pytest</code>
 with <code>--xdoctest</code> enabled, so doctests embedded in the code under test are also collected. Set
-<code>tasklib.test.xdoctest: false</code> if the project does not have the <code>xdoctest</code> package.</p>
+<code>tasklib.test.xdoctest: false</code> if the project does not have the <code>xdoctest</code> package. The test scopes
+also run with <code>--timeout</code> (the timeout of the scope, see below); set <code>tasklib.test.timeout: false</code>
+if the project does not have the <code>pytest-timeout</code> package.</p>
 <h2 id="running-doctests">Running Doctests<a class="headerlink" href="#running-doctests" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.doctest
 </code></pre></div>
@@ -1934,8 +1964,8 @@ purpose without the plugin. If the <code>xdoctest</code> package is missing, the
 names it; use <code>test.doctest-markdown</code> alone in a project that does not have the package.</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.doctest-markdown
 </code></pre></div>
-<p>Recursively finds every <code>*.md</code> file in the project (skipping <code>.venv</code>, <code>.pytest_cache</code>, <code>.git</code>,
-and <code>node_modules</code>) and runs, for each one:</p>
+<p>Finds every <code>*.md</code> file in the project (see below for the files that are left out) and runs, for
+each one:</p>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>doctest<span class="w"> </span>-o<span class="w"> </span>NORMALIZE_WHITESPACE<span class="w"> </span>-o<span class="w"> </span>ELLIPSIS<span class="w"> </span>-o<span class="w"> </span>REPORT_NDIFF<span class="w"> </span>&lt;file&gt;.md
 </code></pre></div>
 <p>so Python code examples embedded in markdown files (README, docs, ...) stay correct and up to
@@ -1944,7 +1974,11 @@ differences are ignored, and <code>...</code> in expected output matches any tex
 a readable diff when an example's output doesn't match. A markdown file with no <code>&gt;&gt;&gt;</code> doctest
 blocks is still visited but simply reports zero tests, so it always "passes".
 The task reports the number of files it checks: the files of <code>--paths</code> when it is set, otherwise
-every markdown file of the project.</p>
+every markdown file of the project. As for the shell scripts (see <a href="../format/">Format</a>), the files are
+the ones that git lists in a git work tree, so the rules of <code>.gitignore</code> are followed and a package
+named <code>build</code> or <code>site</code> is not skipped; outside a git work tree a walk skips the <code>.git</code>, <code>.venv</code>,
+<code>.pytest_cache</code>, <code>node_modules</code>, <code>build</code>, <code>dist</code>, <code>site</code>, <code>htmlcov</code>, <code>.tox</code>, <code>.nox</code>, <code>.mypy_cache</code>
+and <code>.ruff_cache</code> directories.</p>
 <h2 id="running-tests-by-scope">Running Tests by Scope<a class="headerlink" href="#running-tests-by-scope" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit
 invoke<span class="w"> </span>test.integration
@@ -1966,21 +2000,24 @@ pytest error. <code>test.unit</code> does the same, except that when <code>paths
 <h2 id="coverage">Coverage<a class="headerlink" href="#coverage" title="Permanent link">&para;</a></h2>
 <p>Pass <code>--cov</code> to <code>test.unit</code>, <code>test.integration</code>, <code>test.functional</code>, or <code>test.all</code> to generate
 coverage reports. The formats are the <code>test.cov_reports</code> value of the <a href="../config/">config</a>
-(<code>html,xml,term</code> by default, each one is a <code>--cov-report</code> of pytest-cov; an empty value leaves the
-choice to pytest-cov):</p>
+(<code>html,xml,term</code> by default, each one is a <code>--cov-report</code> of pytest-cov, with an optional argument
+such as <code>term-missing:skip-covered</code> or <code>html:cov_html</code>; an empty value leaves the choice to
+pytest-cov):</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit<span class="w"> </span>--cov
 </code></pre></div>
-<p><code>test.integration --cov</code> and <code>test.functional --cov</code> <strong>append</strong> to any existing coverage data
-(<code>--cov-append</code>), so they compose with a prior <code>test.unit --cov</code> run to build up combined coverage
-across scopes:</p>
+<p>A run with <code>--cov</code> replaces the coverage data of the previous run. <code>test.integration</code> and
+<code>test.functional</code> have an <code>--append</code> option that adds to the existing data (<code>--cov-append</code>), so
+they compose with a prior <code>test.unit --cov</code> run to build up combined coverage across scopes:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit<span class="w"> </span>--cov
-invoke<span class="w"> </span>test.integration<span class="w"> </span>--cov
-invoke<span class="w"> </span>test.functional<span class="w"> </span>--cov
+invoke<span class="w"> </span>test.integration<span class="w"> </span>--cov<span class="w"> </span>--append
+invoke<span class="w"> </span>test.functional<span class="w"> </span>--cov<span class="w"> </span>--append
 </code></pre></div>
+<p>Without <code>--append</code>, <code>invoke test.integration --cov</code> reports only the integration tests, whatever
+a previous run left in <code>.coverage</code>. <code>--append</code> without <code>--cov</code> does nothing.</p>
 <p>If <code>tasklib.test.cov_fail_under</code> is set, it is passed as <code>--cov-fail-under</code> and the task fails when
-the coverage is lower. Since the integration and functional tasks append to the existing data, run
-<code>test.unit --cov</code> first (it replaces the data) or <code>coverage erase</code>, otherwise the result depends on
-what was run before.</p>
+the coverage is lower. With <code>--append</code>, the threshold applies to the combined data: start with
+<code>test.unit --cov</code> (it replaces the data) or <code>coverage erase</code>, otherwise the result depends on what
+was run before.</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.coverage-report
 </code></pre></div>
 <p>Runs <code>python -m coverage</code> (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (<code>.coverage</code>)

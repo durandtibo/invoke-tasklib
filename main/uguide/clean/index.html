@@ -1669,6 +1669,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1831,7 +1859,8 @@
 <p>Removes, if present, at the repository root:</p>
 <ul>
 <li>Directories: <code>build</code>, <code>dist</code>, <code>.pytest_cache</code>, <code>.ruff_cache</code>, <code>.coverage_html</code>, <code>htmlcov</code>,
-  <code>.benchmarks</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>, and the MkDocs output
+  <code>.benchmarks</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>, the HTML coverage directory if <code>[tool.coverage.html] directory</code> of <code>pyproject.toml</code>
+  sets another one, and the MkDocs output
   directory, only if the MkDocs config file exists (what produces it): the <code>site_dir</code> of
   <code>paths.docs_config</code>, relative to the config file (<code>docs/site</code> by default). If the config is not
   valid, <code>site</code> for a <code>mkdocs.yml</code> and <code>docs/site</code> for a <code>docs/mkdocs.yml</code> are used</li>
@@ -1844,6 +1873,9 @@
 scripts that are committed) is kept, and the task says so (<code>⏭️  Keeping build: it contains files
 tracked by git</code>). Outside a git repository, or without <code>git</code>, nothing counts as tracked. The caches
 (<code>__pycache__</code>, <code>*.egg-info</code>) and the files are not looked up.</p>
+<p>A directory outside the project is never removed: if the <code>site_dir</code> of the MkDocs config is an
+absolute path, contains <code>..</code> or points to the project root, the task says <code>⏭️  Not removing ...: it is
+outside the project</code> and goes on.</p>
 <p>Nothing is removed if the corresponding directory or file doesn't exist, so <code>clean</code> is safe to run
 repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a
 directory is removed as a link, and the directory it points to is left untouched.</p>

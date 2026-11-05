@@ -1680,6 +1680,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1889,8 +1917,11 @@ dependency is not reported at all, because neither is a cycle.</p>
 <code>python -c</code> process with the interpreter that runs Invoke. A module that fails to import on its own
 depends on something that is only initialized as a side effect of importing another module first,
 which is often the symptom of a cycle. It also fails on a missing dependency or a syntax error, and
-it starts one interpreter per module, so it is slow for a package with heavy imports (and the
-traceback of the subprocess is shown as it is).</p>
+it starts one interpreter per module, so it is slow for a package with heavy imports.</p>
+<p>The commands are not echoed and their output is hidden. The task prints one line for the discovery,
+one for the check, and then either one <code>✅</code> summary or one <code>❌ &lt;module&gt;: &lt;last line of the traceback&gt;</code>
+line for each module that failed and the exit code 1. Every module is tried, so one run lists all
+the failures.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../config/">Config</a>: where <code>package.name</code> and <code>package.import_name</code> come from.</li>

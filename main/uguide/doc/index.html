@@ -1691,6 +1691,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1891,7 +1919,8 @@ existing <code>main</code> version, so it is not deleted first), then pushes to 
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>doc.publish-latest
 </code></pre></div>
 <p>Determines the version to publish from the highest git release tag (a tag like <code>v1.2.3</code>, read
-with <code>git tag --list 'v[0-9]*'</code>; pre-release tags such as <code>v1.2.0rc1</code> are ignored), truncated to
+with <code>git tag --list 'v[0-9]*'</code>; pre-release tags such as <code>v1.2.0rc1</code> are ignored, but a suffix like <code>v1.2.0-backport</code> is not a
+pre-release), truncated to
 <code>&lt;major&gt;.&lt;minor&gt;</code> (e.g. <code>1.2</code>). It then deploys the current docs under that tag with the <code>latest</code> alias, and sets <code>latest</code> as the
 default version shown to visitors. Pass <code>--no-push</code> to only commit the docs branch locally.</p>
 <p>To publish a specific version without looking at the git tags, pass it explicitly:</p>

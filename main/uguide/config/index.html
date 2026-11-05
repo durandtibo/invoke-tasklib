@@ -988,6 +988,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#working-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working Directory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1746,6 +1757,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1872,6 +1911,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#working-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working Directory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1983,9 +2033,12 @@ invalid config, see below) to read project-specific values from an
 <span class="w">  </span><span class="nt">test</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">unit_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 <span class="w">    </span><span class="nt">xdoctest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">cov_fail_under</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
 <span class="w">    </span><span class="nt">cov_reports</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html,xml,term</span>
 <span class="w">  </span><span class="nt">check</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">format-python,format-docstrings,lint,types,imports,unit</span>
+<span class="w">    </span><span class="nt">cov</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">  </span><span class="nt">fix</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lint,format-python,format-docstrings</span>
 </code></pre></div>
@@ -2010,7 +2063,7 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 </tr>
 <tr>
 <td><code>package.python_version</code></td>
-<td>the <code>.python-version</code> file, else the <code>requires-python</code> lower bound, else <code>"3.14"</code></td>
+<td>not set: <code>uv venv</code> chooses the version</td>
 </tr>
 <tr>
 <td><code>paths.src</code></td>
@@ -2097,8 +2150,10 @@ not have it; <code>test.doctest-src</code> ignores it and always uses the plugin
 not have it; the <code>unit_timeout</code>, <code>integration_timeout</code> and <code>functional_timeout</code> values are then
 unused), and a coverage threshold:
 with <code>--cov</code>, <code>cov_fail_under</code> is forwarded as <code>--cov-fail-under</code>. Timeouts and <code>cov_fail_under</code> are integers, <code>xdoctest</code> is a boolean.
-<code>cov_reports</code> is a comma-separated string or a list of the <code>--cov-report</code> formats of pytest-cov
-(<code>html</code>, <code>xml</code>, <code>json</code>, <code>lcov</code>, <code>annotate</code>, <code>term</code>, <code>term-missing</code>) that <code>--cov</code> generates. An empty
+<code>cov_reports</code> is a comma-separated string or a list of the <code>--cov-report</code> values of pytest-cov
+(<code>html</code>, <code>xml</code>, <code>json</code>, <code>lcov</code>, <code>annotate</code>, <code>term</code>, <code>term-missing</code>) that <code>--cov</code> generates. A value
+can have the argument of pytest-cov after a colon, for example <code>term-missing:skip-covered</code> or
+<code>html:cov_html</code> (the directory or file of the report). The value is quoted in the command. An empty
 value passes no <code>--cov-report</code>, so pytest-cov uses its default.</p>
 <p><code>check.cov</code> is a boolean. If true, the <code>unit</code> step of <code>check.all</code> runs with <code>--cov</code>, so
 <code>test.cov_fail_under</code> is enforced there too (the coverage reports are generated).</p>
@@ -2116,20 +2171,17 @@ name.</p>
 <code>load_config</code>, which turns it into an <code>invoke.exceptions.Exit</code> with the same message and the exit
 code 2 (no traceback).</p>
 <p>Unknown keys in <code>tasklib</code> itself (typically a typo of a section such as <code>path</code>) and in the
-<code>package</code>, <code>paths</code>, <code>groups</code> or <code>test</code> sections (such as <code>paths.unit_test</code>) also raise a
+<code>package</code>, <code>paths</code>, <code>groups</code>, <code>test</code>, <code>check</code> or <code>fix</code> sections (such as <code>paths.unit_test</code>) also raise a
 <code>ValueError</code> that lists the valid keys and suggests the closest one, instead of being silently
 ignored. Each section must be a mapping, <code>package.name</code> and every <code>paths.*</code> value must be a
 non-empty string, and <code>test.cov_fail_under</code> must be between 0 and 100.</p>
 <p><code>package.python_version</code> must be a quoted string such as <code>"3.10"</code> or <code>"3.10.4"</code>. YAML reads an
 unquoted <code>3.10</code> as the number <code>3.1</code>, so <code>get_config</code> raises a <code>ValueError</code> for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.</p>
-<p>When the key is not set, the version is read from the project, in this order:</p>
-<ol>
-<li>the first line of the <code>.python-version</code> file, if it is a version such as <code>3.12</code> or <code>3.12.1</code>
-   (an implementation name such as <code>pypy3.10</code> is ignored);</li>
-<li>the lower bound of <code>project.requires-python</code> in <code>pyproject.toml</code> (<code>"&gt;=3.11"</code> gives <code>3.11</code>);</li>
-<li><code>3.14</code>.</li>
-</ol>
+<p>When the key is not set (<code>null</code> in <code>config.show</code>), <code>env.create-venv</code> does not pass <code>--python</code> and
+<code>uv venv</code> chooses the version: the one of the <code>.python-version</code> file if there is one, else the
+newest interpreter that satisfies <code>project.requires-python</code> of <code>pyproject.toml</code>, else the newest
+one that is available. Set the key to pin the version of the virtual environment.</p>
 <h2 id="showing-the-resolved-config">Showing the Resolved Config<a class="headerlink" href="#showing-the-resolved-config" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>config.show
 </code></pre></div>
@@ -2149,10 +2201,10 @@ answers "which value is used, and why" without reading the code:</p>
 the library, or no value for an optional key), <code>project file</code> (<code>invoke.yaml</code>),
 <code>environment variable INVOKE_TASKLIB_...</code>, <code>system config file</code>, <code>user config file</code>,
 <code>runtime config file</code> or <code>override</code> (set from the command line or by code). <code>derived</code> is a value
-that no source sets, computed from other values or from the project (<code>import_name</code>, <code>src</code>, the test
-paths and the Python version). The config is validated first, so an invalid one stops the task with
-the usual one-line message. The task reads nothing but the config and the two project files of
-<a href="#defaults"><code>package.python_version</code></a>, and changes nothing.</p>
+that no source sets, computed from other values or from the project (<code>import_name</code>, <code>src</code> and the
+test paths). The config is validated first, so an invalid one stops the task with
+the usual one-line message. The task reads nothing but the config and the project directories of
+<a href="#defaults"><code>paths</code></a>, and changes nothing.</p>
 <h2 id="editor-completion-json-schema">Editor Completion (JSON Schema)<a class="headerlink" href="#editor-completion-json-schema" title="Permanent link">&para;</a></h2>
 <p>The keys, the defaults and the descriptions are declared once, in <code>invoke_tasklib.config.SCHEMA</code>
 (one <code>Option</code> per key: default, validation and JSON schema). The defaults, the key checks, the
@@ -2169,16 +2221,26 @@ top of <code>invoke.yaml</code> to get completion and validation of the keys:</p
 </code></pre></div>
 <p>A test checks that the published <code>docs/docs/schema.json</code> equals the schema printed by the command
 (regenerate it with <code>python -m invoke_tasklib.config &gt; docs/docs/schema.json</code>).</p>
+<h2 id="working-directory">Working Directory<a class="headerlink" href="#working-directory" title="Permanent link">&para;</a></h2>
+<p>Run <code>inv</code> from the directory of <code>tasks.py</code> (the project root). Invoke finds <code>tasks.py</code> and
+<code>invoke.yaml</code> in the parents of the current directory, but the tasks use paths relative to the
+current directory, so any task that reads the config exits with code 2 and a message when the
+current directory is another one (see <a href="../../troubleshooting/">Troubleshooting</a>).</p>
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <p>Every key can also be set with an <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code> environment variable, for example
 <code>INVOKE_TASKLIB_PATHS_SRC=lib</code> or <code>INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30</code>. This is handy in CI. It
 works because <code>make_ns</code> registers the defaults of the <code>tasklib</code> section with Invoke,
 which only reads the environment variables of the keys that it knows. The usual Invoke order
 applies: the environment variables win over <code>invoke.yaml</code>.</p>
-<p>Invoke reads an environment variable as a string and converts it to the type of the default value:
-an integer for the timeouts, and, for a boolean such as <code>INVOKE_TASKLIB_TEST_XDOCTEST</code>, <code>0</code> or an
-empty value is false and anything else (including <code>false</code>) is true. <code>test.cov_fail_under</code> accepts a
-string of digits. A collection built by hand (<code>Collection(lint, ...)</code>) has no defaults, so it does
+<p>Invoke reads an environment variable as a string, and tasklib parses it:</p>
+<ul>
+<li>a boolean (<code>INVOKE_TASKLIB_TEST_XDOCTEST</code>, <code>..._TEST_TIMEOUT</code>, <code>..._CHECK_COV</code>) is one of <code>true</code>,
+  <code>false</code>, <code>1</code>, <code>0</code>, <code>yes</code>, <code>no</code>, <code>on</code> and <code>off</code>, in any case. Any other text is an error;</li>
+<li>an integer (the timeouts, <code>test.cov_fail_under</code>) is a string of digits. Any other text is an
+  error.</li>
+</ul>
+<p>An invalid value exits with code 2 and a one-line message, like an invalid <code>invoke.yaml</code>. The same
+spellings work for a string value in <code>invoke.yaml</code>. A collection built by hand (<code>Collection(lint, ...)</code>) has no defaults, so it does
 not read the environment variables unless you call
 <code>ns.configure({"tasklib": invoke_tasklib.config.default_config()})</code>.</p>
 <h2 id="minimal-config">Minimal Config<a class="headerlink" href="#minimal-config" title="Permanent link">&para;</a></h2>
@@ -2220,19 +2282,22 @@ those tasks use, instead of passing <code>--groups</code> on every invocation:</
 </code></pre></div>
 <p>The <code>--groups</code> flag of the tasks stays a comma-separated string (<code>--groups dev,docs</code>).</p>
 <h2 id="using-get_config-in-a-custom-task">Using <code>get_config</code> in a Custom Task<a class="headerlink" href="#using-get_config-in-a-custom-task" title="Permanent link">&para;</a></h2>
-<p><code>get_config</code> returns frozen dataclasses (<code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code>), so the
-values are read as attributes and cannot be modified. It raises a <code>ValueError</code> on an invalid config;
-use <code>load_config</code> in a task to exit with a message instead. <code>get_config</code> is the same function every built-in task uses, so a project-specific task can read
-the same config:</p>
+<p><code>get_config</code> returns frozen dataclasses (<code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code>,
+<code>cfg.check</code> and <code>cfg.fix</code>), so the values are read as attributes and cannot be modified. It raises a
+<code>ValueError</code> on an invalid config. A task uses <code>load_config</code>, which exits with a one-line message
+instead (and also checks that <code>inv</code> runs from the project root), like every built-in task, so a
+project-specific task reads the same config:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">task</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">say</span>
 
 
 <span class="nd">@task</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">my_task</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">get_config</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">package</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">src</span><span class="p">)</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">say</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">package</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
+<p>Use <code>get_config</code> outside a task, where a <code>ValueError</code> is the right error.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../get_started/">Get Started</a>: setting up <code>invoke.yaml</code> in a new project.</li>

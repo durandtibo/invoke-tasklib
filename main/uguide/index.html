@@ -1691,6 +1691,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../refs/output/" class="md-nav__link">
         
   
@@ -2219,9 +2247,10 @@ invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
 </tr>
 </tbody>
 </table>
-<p>The tasks that have no option are the composite tasks (<code>check.all</code>, <code>test.doctest</code>), the tasks
-that run no external tool (<code>clean.*</code>, <code>imports.*</code>) and the tasks with their own options
-(<code>env.*</code>, <code>doc.publish-*</code>).</p>
+<p>The other tasks have no <code>--args</code>: the composite tasks (<code>check.all</code> and <code>fix.all</code> with
+<code>--only</code>, <code>--skip</code> and <code>--keep-going</code>, <code>test.doctest</code>), the tasks that run no external tool
+(<code>clean.*</code>, <code>imports.*</code>, <code>config.show</code>) and the tasks with their own options (<code>env.*</code>,
+<code>doc.publish-*</code>).</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit<span class="w"> </span>--args<span class="w"> </span><span class="s2">"-k foo -x"</span><span class="w"> </span>--paths<span class="w"> </span>tests/unit/test_foo.py
 invoke<span class="w"> </span>lint.check-python<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--select E"</span><span class="w"> </span>--paths<span class="w"> </span><span class="s2">"src/a.py src/b.py"</span>
 invoke<span class="w"> </span>format.check-python<span class="w"> </span>--paths<span class="w"> </span>src/a.py
@@ -2320,7 +2349,7 @@ arguments and the paths are quoted, so they are never interpreted by the shell.<
 </tr>
 <tr>
 <td><a href="https://git-scm.com/"><code>git</code></a></td>
-<td><code>doc.publish-latest</code></td>
+<td><code>doc.publish-latest</code>, <code>release.publish</code></td>
 </tr>
 <tr>
 <td><a href="https://github.com/pypa/pip-audit"><code>pip-audit</code></a> (via <code>uvx</code>)</td>

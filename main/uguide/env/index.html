@@ -1713,6 +1713,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1932,9 +1960,9 @@ inspect a project's Python environment using <a href="https://docs.astral.sh/uv/
 <h2 id="creating-a-virtual-environment">Creating a Virtual Environment<a class="headerlink" href="#creating-a-virtual-environment" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.create-venv
 </code></pre></div>
-<p>Creates (or recreates) a <code>.venv</code> using the <code>package.python_version</code> from the
-<a href="../config/">resolved config</a> (by default the version of <code>.python-version</code> or the lower bound of
-<code>requires-python</code>), and then runs <a href="#installing-dependencies"><code>env.install</code></a> (<code>uv sync --locked</code>), so
+<p>Creates (or recreates) a <code>.venv</code> with <code>uv venv</code>, using the <code>package.python_version</code> from the
+<a href="../config/">resolved config</a> if it is set (<code>--python</code>), and the version that <code>uv</code> chooses otherwise
+(the <code>.python-version</code> file, then <code>requires-python</code>), and then runs <a href="#installing-dependencies"><code>env.install</code></a> (<code>uv sync</code>), so
 the environment has <code>invoke</code> within the bounds of the project and the packages that <code>tasks.py</code>
 imports, such as <code>invoke-tasklib</code>. The task is run with <code>invoke</code>, so <code>invoke</code> must already be
 available (for example through <code>uv tool install invoke</code>) to run it. Use <code>env.install</code> to choose
@@ -1950,8 +1978,10 @@ another environment.</p>
 <h2 id="installing-dependencies">Installing Dependencies<a class="headerlink" href="#installing-dependencies" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install
 </code></pre></div>
-<p>Runs <code>uv sync --locked</code>, which also installs the package itself in editable mode. <code>--locked</code> fails if <code>uv.lock</code>
-is out of date with <code>pyproject.toml</code> instead of silently using it (run <code>uv lock</code> to refresh it).</p>
+<p>Runs <code>uv sync</code>, which also installs the package itself in editable mode. If the project has a <code>uv.lock</code>,
+the task passes <code>--locked</code>, which fails if the lock file is out of date with <code>pyproject.toml</code> instead of
+silently using it (run <code>uv lock</code> to refresh it). Without a <code>uv.lock</code> (common for libraries), the task says
+so, and <code>uv sync</code> resolves the dependencies and creates the file.</p>
 <table>
 <thead>
 <tr>

@@ -1669,6 +1669,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/output/" class="md-nav__link">
         
   
@@ -1901,7 +1929,9 @@ missing ones at once (exit code 127), so a missing <code>ty</code> is not discov
 run. With <code>--keep-going</code>, only the steps that miss a tool are not run: they are reported as failed,
 with the missing tool as the reason. Run <a href="../env/"><code>env.check-tools</code></a> to see every tool of the tasks.</p>
 <p>By default the task stops at the first failure, as the CI jobs do; use <code>--keep-going</code> locally to
-learn about all the problems in one run. Use the tasks directly (with <code>--args</code> and <code>--paths</code>) to run only one
+learn about all the problems in one run. A step that fails with an error of the code or of the
+system (for example an <code>OSError</code>) is reported like any other failed step, with the type and the
+message of the error as the reason, and the other steps still run. Use the tasks directly (with <code>--args</code> and <code>--paths</code>) to run only one
 of them, or <a href="../lint/"><code>lint.pre-commit</code></a> to run the hooks of the project. To leave <code>check</code> out of a
 collection, use <code>make_ns(exclude=["check"])</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>

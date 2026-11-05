@@ -1015,6 +1015,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#inv-must-run-from-the-project-root-where-taskspy-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inv must run from the project root, where tasks.py is: ...
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ruff-was-not-found-on-the-path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1765,6 +1776,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../refs/output/" class="md-nav__link">
         
   
@@ -1851,6 +1890,17 @@
     <span class="md-ellipsis">
       
         'tasklib.package.name' must be set in invoke.yaml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inv-must-run-from-the-project-root-where-taskspy-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inv must run from the project root, where tasks.py is: ...
       
     </span>
   </a>
@@ -2009,6 +2059,13 @@ least:</p>
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_package</span>
 </code></pre></div>
 <p>See <a href="../get_started/">Get Started</a> and <a href="../uguide/config/">Config</a> for the full schema.</p>
+<h2 id="inv-must-run-from-the-project-root-where-taskspy-is"><code>inv must run from the project root, where tasks.py is: ...</code><a class="headerlink" href="#inv-must-run-from-the-project-root-where-taskspy-is" title="Permanent link">&para;</a></h2>
+<p>Invoke looks for <code>tasks.py</code> in the parents of the current directory and loads the <code>invoke.yaml</code>
+next to it, but it does not change directory. The tasks use paths relative to the current directory
+(<code>tests/unit</code>, <code>pyproject.toml</code>, <code>dist</code>, ...), so from a subdirectory they would look in the wrong
+place, and a task like <code>test.unit</code> would skip the missing <code>tests/unit</code> directory and pass. A task
+that reads the config now exits with code 2 and this message instead. Run <code>inv</code> from the directory
+of <code>tasks.py</code>, as in <code>cd &lt;project root&gt; &amp;&amp; inv check.all</code>, or use the <code>make</code> targets.</p>
 <h2 id="ruff-was-not-found-on-the-path"><code>'ruff' was not found on the PATH</code><a class="headerlink" href="#ruff-was-not-found-on-the-path" title="Permanent link">&para;</a></h2>
 <p>Before running a command, the tasks check that its program (<code>ruff</code>, <code>ty</code>, <code>uv</code>, <code>mike</code>, ...) is on
 the <code>PATH</code> and exit with code 127 if it is not. Install the project tools with
@@ -2020,9 +2077,11 @@ tool at once; <code>invoke check</code> does the same for the steps it is going 
 <code>codespell</code> to the project dependencies. The tools of the <code>dev</code> group (<code>ruff</code>, <code>ty</code>, <code>pyright</code>,
 <code>docformatter</code>, <code>pre-commit</code>, <code>pytest</code> and its plugins) and of the <code>docs</code> group (<code>mkdocs</code>, <code>mike</code>)
 name their group, for example <code>uv sync --group docs</code>.</p>
-<p>Every command of a pipeline is checked. The <code>NAME=value</code> words before a program, the shell builtins
-(<code>cd</code>, <code>export</code>, <code>test</code>, <code>[</code>, <code>exec</code>, <code>source</code>, <code>.</code>, <code>:</code>) and the subshells and groups (<code>(...)</code>,
-<code>{ ...; }</code>, <code>$(...)</code>) are not looked up. Pass <code>check=False</code> to <code>run</code> to skip the check of a command.
+<p>Only the first word of a command is checked, after the <code>NAME=value</code> words that set environment
+variables. A program given by a path (<code>./run.sh</code>, <code>~/bin/tool</code>) and the shell builtins (<code>cd</code>,
+<code>export</code>, <code>test</code>, <code>[</code>, <code>exec</code>, <code>source</code>, <code>.</code>, <code>:</code>) are not looked up. The command line is not parsed
+as shell, so a pipeline (<code>a | b</code>), a list (<code>a &amp;&amp; b</code>) or a subshell is not understood: pass
+<code>check=False</code> to <code>run</code> to run it without the check.
 The module of <code>python -m &lt;module&gt;</code> is checked too (for example <code>pytest</code>), and is reported as
 <code>The Python module 'pytest' is not installed for ...</code> instead of Python's own <code>No module named</code>.</p>
 <p>The pytest plugins of the options are checked as well: <code>--xdoctest</code> needs <code>xdoctest</code>, <code>--timeout</code>
@@ -2047,8 +2106,8 @@ always put its console scripts on <code>PATH</code> the way you expect. Make sur
 <span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
 </code></pre></div>
 <p>Invoke discovers tasks from a module-level <code>ns</code> (or <code>namespace</code>) variable in <code>tasks.py</code>; if you
-renamed the variable or wrapped it, Invoke won't find it. (<code>from invoke_tasklib import ns</code> still
-works but is deprecated and warns.)</p>
+renamed the variable or wrapped it, Invoke won't find it. (The pre-built <code>invoke_tasklib.ns</code> was
+removed: <code>from invoke_tasklib import ns</code> raises an <code>ImportError</code>, use <code>make_ns()</code>.)</p>
 <h2 id="a-task-fails-with-command-not-found-ruff-ty-shellcheck">A task fails with "command not found" (<code>ruff</code>, <code>ty</code>, <code>shellcheck</code>, ...)<a class="headerlink" href="#a-task-fails-with-command-not-found-ruff-ty-shellcheck" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Run
 <code>invoke env.check-tools</code> to see, in one list, which tools are available and which are missing. Install
