@@ -2538,6 +2538,31 @@ run each benchmark once in the normal test runs).</p>
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="invoke.exceptions.Exit">Exit</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>With the code 1 if <code>paths.benchmarks</code> does not exist
+and <code>paths</code> is not given. The task is run on purpose, so
+a nightly job does not pass without measuring anything.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
     </div>
 
 </div>
