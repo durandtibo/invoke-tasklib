@@ -4,19 +4,17 @@ import re
 from typing import TYPE_CHECKING
 
 import pytest
-from invoke.config import Config
 from invoke.exceptions import Exit
 
 from invoke_tasklib import clean, testing
-from tests.integration.test_imports import _SubprocessContext
+from tests.integration.helpers import SubprocessContext, subprocess_context
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-def _context(**test: object) -> _SubprocessContext:
-    overrides = {"tasklib": {"package": {"name": "demo"}, "test": {"xdoctest": False, **test}}}
-    return _SubprocessContext(config=Config(overrides=overrides))
+def _context(**test: object) -> SubprocessContext:
+    return subprocess_context({"package": {"name": "demo"}, "test": {"xdoctest": False, **test}})
 
 
 @pytest.fixture

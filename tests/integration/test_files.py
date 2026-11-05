@@ -5,11 +5,10 @@ import sys
 from pathlib import Path
 
 import pytest
-from invoke.config import Config
 
 from invoke_tasklib import formatting, testing
 from invoke_tasklib._files import project_files
-from tests.integration.test_imports import _SubprocessContext
+from tests.integration.helpers import subprocess_context
 from tests.integration.test_release import _git
 
 
@@ -20,12 +19,8 @@ def _touch(root: Path, *names: str) -> None:
         path.write_text("")
 
 
-def _context() -> _SubprocessContext:
-    return _SubprocessContext(config=Config())
-
-
 def _found(suffix: str = ".sh") -> list[str]:
-    return [path.as_posix() for path in project_files(_context(), Path(), suffix)]
+    return [path.as_posix() for path in project_files(subprocess_context(), Path(), suffix)]
 
 
 @pytest.fixture
@@ -104,7 +99,7 @@ def test_project_files_filters_by_suffix(repo: Path) -> None:
 
 def test_project_files_limits_the_search_to_a_directory(repo: Path) -> None:
     _touch(repo, "scripts/a.sh", "other/b.sh")
-    found = project_files(_context(), Path("scripts"), ".sh")
+    found = project_files(subprocess_context(), Path("scripts"), ".sh")
     assert [path.as_posix() for path in found] == ["scripts/a.sh"]
 
 
@@ -127,11 +122,11 @@ def test_project_files_walks_outside_a_git_repository(
 def test_shell_tasks_skip_an_ignored_environment_with_any_name(repo: Path) -> None:
     (repo / ".gitignore").write_text("myenv/\n")
     _touch(repo, "run.sh", "myenv/bin/activate.sh")
-    command = formatting._shell_command(_context(), "shellcheck", None, None)
+    command = formatting._shell_command(subprocess_context(), "shellcheck", None, None)
     assert command == "shellcheck -- run.sh"
 
 
 def test_markdown_doctests_keep_a_package_named_site(repo: Path) -> None:
     _touch(repo, "src/pkg/site/README.md", "README.md")
-    found = testing._find_markdown_files(_context(), Path())
+    found = testing._find_markdown_files(subprocess_context(), Path())
     assert [path.as_posix() for path in found] == ["README.md", "src/pkg/site/README.md"]

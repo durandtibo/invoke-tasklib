@@ -1,44 +1,21 @@
 from __future__ import annotations
 
-import os
-import shlex
-import subprocess
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
-from invoke.config import Config
-from invoke.context import Context
-from invoke.exceptions import Exit, UnexpectedExit
-from invoke.runners import Result
+from invoke.exceptions import Exit
 
 from invoke_tasklib import imports
+from tests.integration.helpers import subprocess_context
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-
-class _SubprocessContext(Context):
-    r"""A context that really runs the commands, not Invoke's runner.
-
-    Invoke's local runner leaves file handles open under pytest, which
-    pytest reports as unraisable warnings in unrelated tests.
-    """
-
-    def run(self, command: str, **kwargs: Any) -> Result:
-        env = kwargs.get("env")
-        if env is not None and not kwargs.get("replace_env"):
-            env = {**os.environ, **env}
-        proc = subprocess.run(  # noqa: S603 (commands are built by the tasks under test)
-            shlex.split(command), capture_output=True, text=True, check=False, env=env
-        )
-        result = Result(stdout=proc.stdout, stderr=proc.stderr, exited=proc.returncode)
-        if proc.returncode and not kwargs.get("warn"):
-            raise UnexpectedExit(result)
-        return result
+    from invoke.context import Context
 
 
 def _context(name: str) -> Context:
-    return _SubprocessContext(config=Config(overrides={"tasklib": {"package": {"name": name}}}))
+    return subprocess_context({"package": {"name": name}})
 
 
 def _write(root: Path, files: dict[str, str]) -> None:
@@ -194,7 +171,7 @@ def test_check_isolated_lists_the_failures_in_the_order_of_the_modules(
 
 def _dotted_context() -> Context:
     package = {"name": "inner-pkg", "import_name": "outerpkg.inner"}
-    return _SubprocessContext(config=Config(overrides={"tasklib": {"package": package}}))
+    return subprocess_context({"package": package})
 
 
 @pytest.fixture
