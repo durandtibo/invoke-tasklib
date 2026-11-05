@@ -1937,7 +1937,8 @@ project's <code>pyproject.toml</code> (via <code>--config ./pyproject.toml</code
 <p><code>format.check-shell</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. The
 <code>.git</code>, <code>.venv</code>, <code>.pytest_cache</code>, <code>node_modules</code>, <code>build</code>, <code>dist</code> and <code>site</code> directories are not
 searched, so third-party scripts (for example the activation scripts of a virtual environment) are
-never checked or rewritten.</p>
+never checked or rewritten. The files are found by a walk in Python (no <code>find</code> or <code>xargs</code>) and given
+to the tool as arguments; if there is no <code>*.sh</code> file, the tool is not run and the task says so.</p>
 <!-- prettier-ignore -->
 <div class="admonition note">
 <p class="admonition-title">Note</p>
