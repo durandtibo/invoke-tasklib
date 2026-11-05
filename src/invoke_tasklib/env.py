@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 NAMESPACE = "env"
 r"""The name of the namespace of the tasks of this module."""
 
-
 PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
 VENV_DIR = ".venv"
 LOCK_FILE = "uv.lock"
@@ -214,8 +213,8 @@ def show_python_config(c: Context) -> None:
 
 
 TOOL_PROGRAMS: tuple[str, ...] = tuple(t.name for t in TOOLS.values() if t.kind == "program")
-r"""The programs that the tasks run, looked up on the ``PATH``
-(derived from ``tools.TOOLS``)."""
+r"""The programs that the tasks run, looked up on the ``PATH`` (derived
+from ``tools.TOOLS``)."""
 
 TOOL_MODULES: tuple[str, ...] = tuple(t.name for t in TOOLS.values() if t.kind == "module")
 r"""The Python modules and pytest plugins that the tasks need (derived

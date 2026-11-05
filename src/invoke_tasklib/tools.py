@@ -52,14 +52,17 @@ class Tool(NamedTuple):
     --group <group>`` installs it."""
 
     hint: str | None = None
-    r"""How to install a tool that no group provides. It replaces the
-    hint built from ``group``."""
+    r"""How to install a tool that no group provides.
+
+    It replaces the hint built from ``group``.
+    """
 
     plugin_options: tuple[str, ...] = ()
-    r"""The pytest options that the tool, a pytest plugin, provides. The
-    package to install is the module name with ``-`` instead of
-    ``_``."""
+    r"""The pytest options that the tool, a pytest plugin, provides.
 
+    The package to install is the module name with ``-`` instead of
+    ``_``.
+    """
 
 _UV_URL = "https://docs.astral.sh/uv/getting-started/installation/"
 

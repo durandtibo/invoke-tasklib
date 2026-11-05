@@ -23,8 +23,8 @@ def _random_graph(size: int) -> dict[str, set[str]]:
 
 
 def _sources(size: int) -> dict[str, str]:
-    r"""Build the sources of ``size`` modules that import three
-    lower-numbered ones."""
+    r"""Build the sources of ``size`` modules that import three lower-
+    numbered ones."""
     return {
         f"pkg.m{i}": "".join(f"import pkg.m{j}\n" for j in _imports(i)) if i else ""
         for i in range(size)

@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 NAMESPACE = "security"
 r"""The name of the namespace of the tasks of this module."""
 
-
 # The version range of ``pip-audit`` that ``security.audit`` runs.
 # ``uvx`` installs the latest release in this range, so a new major
 # version is never run without a change of this constant.

@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 NAMESPACE = "config"
 r"""The name of the namespace of the tasks of this module."""
 
-
 LEVELS: tuple[tuple[str, str], ...] = (
     ("_defaults", "default"),
     ("_collection", "default"),
