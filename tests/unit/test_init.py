@@ -170,6 +170,22 @@ def test_make_ns_exclude_all_tasks_of_a_namespace_removes_it() -> None:
     assert "types" not in make_ns(exclude=["types.check"]).collections
 
 
+def test_make_ns_exclude_a_namespace_keeps_its_step_in_check() -> None:
+    make_ns(exclude="lint")
+    assert "lint" in check.STEPS
+
+
+def test_make_ns_exclude_a_namespace_keeps_its_step_in_fix() -> None:
+    make_ns(exclude="format")
+    assert "format-python" in fix.STEPS
+
+
+def test_make_ns_exclude_a_namespace_keeps_the_steps_of_check() -> None:
+    steps = dict(check.STEPS)
+    make_ns(exclude="lint")
+    assert steps == check.STEPS
+
+
 def test_make_ns_include_a_namespace() -> None:
     assert set(make_ns(include=["lint"]).task_names) == {
         "lint.check-python",
