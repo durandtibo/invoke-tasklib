@@ -2136,9 +2136,9 @@ builtin (<code>format</code>, <code>types</code>, <code>test</code>) are named <
 namespace names come from <code>_MODULES</code>, not from the module names.</p>
 <p>This is what gives consuming projects <code>format.check-python</code>, <code>test.unit</code>, etc. via
 <code>ns = make_ns()</code> in their <code>tasks.py</code>, or a trimmed copy with <code>make_ns(exclude=...)</code>. Each call returns
-a new collection, so a project can add its own tasks without affecting other importers.
-<code>invoke_tasklib.ns</code>, a collection built once and shared by every importer, is deprecated: accessing
-it emits a <code>DeprecationWarning</code>.</p>
+a new collection, so a project can add its own tasks without affecting other importers. (The
+module-level <code>invoke_tasklib.ns</code>, one collection shared by every importer, was removed: use
+<code>ns = make_ns()</code>.)</p>
 <h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
 <p>Here's how a task invocation flows through the system:</p>
 <div class="highlight"><pre><span></span><code>User runs `invoke test.unit --cov`
