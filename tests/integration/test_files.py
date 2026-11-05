@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from invoke_tasklib import formatting, testing
+from invoke_tasklib import formatting
 from invoke_tasklib._files import project_files
 from tests.integration.helpers import subprocess_context
 from tests.integration.test_release import _git
@@ -128,5 +128,5 @@ def test_shell_tasks_skip_an_ignored_environment_with_any_name(repo: Path) -> No
 
 def test_markdown_doctests_keep_a_package_named_site(repo: Path) -> None:
     _touch(repo, "src/pkg/site/README.md", "README.md")
-    found = testing._find_markdown_files(subprocess_context(), Path())
+    found = project_files(subprocess_context(), Path(), ".md")
     assert [path.as_posix() for path in found] == ["README.md", "src/pkg/site/README.md"]

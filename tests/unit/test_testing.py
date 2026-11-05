@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
@@ -11,12 +10,12 @@ from invoke.context import MockContext
 from invoke.exceptions import Exit
 
 from invoke_tasklib import testing as test_tasks
-from invoke_tasklib._files import EXCLUDED_DIRS
 from invoke_tasklib.config import get_config
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
     from _pytest.monkeypatch import MonkeyPatch
 
@@ -750,50 +749,6 @@ def test_unit_with_custom_tests_directory_falls_back_to_it(
     assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 10 spec"]
 
 
-##########################################
-#     Tests for _find_markdown_files     #
-##########################################
-
-
-def test_find_markdown_files_returns_sorted_paths(tmp_path: Path) -> None:
-    _touch(tmp_path, "docs/z.md", "README.md", "docs/a.md")
-    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [
-        tmp_path / "README.md",
-        tmp_path / "docs" / "a.md",
-        tmp_path / "docs" / "z.md",
-    ]
-
-
-def test_find_markdown_files_empty(tmp_path: Path) -> None:
-    assert test_tasks._find_markdown_files(make_context(), tmp_path) == []
-
-
-def test_find_markdown_files_ignores_other_extensions(tmp_path: Path) -> None:
-    _touch(tmp_path, "a.txt", "b.mdx", "c.md.bak", "d.md")
-    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "d.md"]
-
-
-@pytest.mark.parametrize("excluded", sorted(EXCLUDED_DIRS))
-def test_find_markdown_files_does_not_walk_into_excluded_dirs(
-    tmp_path: Path, excluded: str
-) -> None:
-    _touch(tmp_path, f"pkg/{excluded}/a.md", "pkg/b.md")
-    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "pkg" / "b.md"]
-
-
-def test_find_markdown_files_skips_excluded_dirs_at_any_depth(tmp_path: Path) -> None:
-    _touch(tmp_path, "pkg/.venv/a.md", "pkg/b.md")
-    assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "pkg" / "b.md"]
-
-
-def test_find_markdown_files_current_directory_has_no_prefix(
-    tmp_path: Path, monkeypatch: MonkeyPatch
-) -> None:
-    _touch(tmp_path, "README.md")
-    monkeypatch.chdir(tmp_path)
-    assert test_tasks._find_markdown_files(make_context(), Path()) == [Path("README.md")]
-
-
 #######################################
 #     Tests for _directory_exists     #
 #######################################
@@ -824,55 +779,60 @@ def test_directory_exists_is_silent_when_present(
 #################################
 
 
+def _run_pytest(c: MockContext, path: str = ".", **kwargs: Any) -> None:
+    test_tasks._run_pytest(c, get_config(c), path, label="x tests", timeout=1, **kwargs)
+
+
 def test_run_pytest_says_it_starts(capsys: pytest.CaptureFixture[str]) -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1)
+    _run_pytest(c)
     assert capsys.readouterr().out == "🧪 Running x tests...\n✅ X tests complete\n"
 
 
 def test_run_pytest_says_coverage_is_generated(capsys: pytest.CaptureFixture[str]) -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, cov=True)
+    _run_pytest(c, cov=True)
     assert "📊 Coverage reports will be generated\n" in capsys.readouterr().out
 
 
 def test_run_pytest_says_coverage_is_appended(capsys: pytest.CaptureFixture[str]) -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, cov=True, append=True)
+    _run_pytest(c, cov=True, append=True)
     assert "📊 Coverage reports will be generated (appending)\n" in capsys.readouterr().out
 
 
 def test_run_pytest_append_without_cov_is_ignored() -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, append=True)
-    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 1 tests/x"]
+    _run_pytest(c, append=True)
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 1 ."]
 
 
 @pytest.mark.usefixtures("empty_project")
-def test_run_pytest_skip_missing_runs_nothing() -> None:
+def test_run_pytest_runs_nothing_when_the_directory_is_missing() -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1, skip_missing=True)
+    _run_pytest(c, "tests/x")
     assert commands(c) == []
 
 
 @pytest.mark.usefixtures("empty_project")
-def test_run_pytest_without_skip_missing_runs_a_missing_directory() -> None:
+def test_run_pytest_says_the_directory_is_missing(capsys: pytest.CaptureFixture[str]) -> None:
     c = make_context({"package": {"name": "mypkg"}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=1)
-    assert len(commands(c)) == 1
+    _run_pytest(c, "tests/x")
+    assert capsys.readouterr().out == "⏭️  No 'tests/x' directory: skipping x tests\n"
 
 
-def test_run_pytest_uses_the_given_config_without_reading_the_context() -> None:
+@pytest.mark.usefixtures("empty_project")
+def test_run_pytest_runs_the_given_paths_when_the_directory_is_missing() -> None:
+    c = make_context({"package": {"name": "mypkg"}})
+    _run_pytest(c, "tests/x", paths="a.py")
+    assert commands(c) == ["/venv/bin/python -m pytest --xdoctest --timeout 1 a.py"]
+
+
+def test_run_pytest_uses_the_given_config() -> None:
     c = MockContext(config=Config(), run=True)
     cfg = get_config(make_context({"package": {"name": "mypkg"}, "test": {"xdoctest": False}}))
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=5, cfg=cfg)
-    assert commands(c) == ["/venv/bin/python -m pytest --timeout 5 tests/x"]
-
-
-def test_run_pytest_loads_the_config_without_a_given_one() -> None:
-    c = make_context({"package": {"name": "mypkg"}, "test": {"xdoctest": False}})
-    test_tasks._run_pytest(c, "tests/x", label="x tests", timeout=5)
-    assert commands(c) == ["/venv/bin/python -m pytest --timeout 5 tests/x"]
+    test_tasks._run_pytest(c, cfg, ".", label="x tests", timeout=5)
+    assert commands(c) == ["/venv/bin/python -m pytest --timeout 5 ."]
 
 
 @pytest.mark.usefixtures("empty_project")
