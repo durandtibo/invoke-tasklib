@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING
 import pytest
 from invoke.exceptions import Exit
 
-from invoke_tasklib import _steps, env, fix
+from invoke_tasklib import _steps, fix
 from invoke_tasklib.config import FIX_STEPS, get_config
+from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
@@ -114,6 +115,5 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
 
 def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:
     cfg = get_config(_context())
-    assert {name for step in fix.STEPS.values() for name in step.needs(cfg)[0]} <= set(
-        env.TOOL_PROGRAMS
-    )
+    programs = {name for step in fix.STEPS.values() for name in step.needs(cfg)[0]}
+    assert programs <= {n for n, t in TOOLS.items() if t.kind == "program"}

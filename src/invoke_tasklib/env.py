@@ -212,15 +212,6 @@ def show_python_config(c: Context) -> None:
     run(c, "command -v python", warn=True)
 
 
-TOOL_PROGRAMS: tuple[str, ...] = tuple(t.name for t in TOOLS.values() if t.kind == "program")
-r"""The programs that the tasks run, looked up on the ``PATH`` (derived
-from ``tools.TOOLS``)."""
-
-TOOL_MODULES: tuple[str, ...] = tuple(t.name for t in TOOLS.values() if t.kind == "module")
-r"""The Python modules and pytest plugins that the tasks need (derived
-from ``tools.TOOLS``)."""
-
-
 @task
 def check_tools(c: Context) -> None:
     r"""Check which tools of the tasks are available.
@@ -239,15 +230,16 @@ def check_tools(c: Context) -> None:
         Exit: With the code 127 if a tool is missing.
     """
     say(c, "🧰 Checking the tools of the tasks...")
-    lookups = [(name, False) for name in TOOL_PROGRAMS] + [(name, True) for name in TOOL_MODULES]
+    lookups = sorted(TOOLS.values(), key=lambda tool: tool.kind != "program")
     missing: list[str] = []
-    for name, module in lookups:
-        found = find_tool(name, module=module)
+    for tool in lookups:
+        module = tool.kind == "module"
+        found = find_tool(tool.name, module=module)
         if found is not None:
-            say(c, f"✅ {name}: {found}")
+            say(c, f"✅ {tool.name}: {found}")
             continue
-        missing.append(name)
-        say(c, f"❌ {not_found_message(name, module=module)}")
+        missing.append(tool.name)
+        say(c, f"❌ {not_found_message(tool.name, module=module)}")
     if missing:
         msg = f"{len(missing)} of {len(lookups)} tool(s) missing: {', '.join(missing)}"
         raise Exit(msg, code=127)

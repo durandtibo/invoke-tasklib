@@ -13,10 +13,7 @@ from invoke.exceptions import Exit
 from invoke_tasklib.runner import build_command
 from invoke_tasklib.tools import (
     DEFAULT_HINT,
-    MODULE_GROUPS,
     PLUGIN_OPTIONS,
-    PROGRAM_GROUPS,
-    PROGRAM_HINTS,
     TOOLS,
     Tool,
     _check_module,
@@ -211,7 +208,7 @@ def test_check_program_uses_the_hint_of_the_program(
     monkeypatch: pytest.MonkeyPatch, program: str
 ) -> None:
     monkeypatch.setattr("invoke_tasklib.tools.shutil.which", _only())
-    with pytest.raises(Exit, match=re.escape(PROGRAM_HINTS[program])):
+    with pytest.raises(Exit, match=re.escape(hint(program))):
         check_program(f"{program} --version")
 
 
@@ -321,7 +318,7 @@ def test_check_module_missing_module_names_its_group(monkeypatch: pytest.MonkeyP
 
 
 def test_hint_known_program() -> None:
-    assert hint("shfmt") == PROGRAM_HINTS["shfmt"]
+    assert hint("shfmt") == TOOLS["shfmt"].hint
 
 
 def test_hint_program_of_a_group() -> None:
@@ -333,51 +330,32 @@ def test_hint_unknown_program() -> None:
 
 
 def test_hint_explicit_entry_wins_over_the_group(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(PROGRAM_GROUPS, "uv", "dev")
-    assert hint("uv") == PROGRAM_HINTS["uv"]
+    tool = Tool("uv", group="dev", hint="explicit")
+    monkeypatch.setitem(TOOLS, "uv", tool)
+    assert hint("uv") == "explicit"
 
 
 def test_hint_module_of_a_group() -> None:
-    assert hint("pytest", module=True) == "Install it with the 'dev' group: `uv sync --group dev`."
+    assert hint("pytest") == "Install it with the 'dev' group: `uv sync --group dev`."
 
 
 def test_hint_unknown_module() -> None:
-    assert hint("no_such_module", module=True) == DEFAULT_HINT
+    assert hint("no_such_module") == DEFAULT_HINT
 
 
-def test_hint_module_name_is_not_looked_up_as_a_program() -> None:
-    assert hint("pytest") == DEFAULT_HINT
-
-
-def test_hint_program_name_is_not_looked_up_as_a_module() -> None:
-    assert hint("ruff", module=True) == DEFAULT_HINT
-
-
-def test_hint_module_ignores_the_hint_of_a_program(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(PROGRAM_HINTS, "pytest", "program hint")
-    assert hint("pytest", module=True) == "Install it with the 'dev' group: `uv sync --group dev`."
-
-
-def test_hint_module_uses_the_module_groups(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(MODULE_GROUPS, "special", "extra")
-    assert (
-        hint("special", module=True)
-        == "Install it with the 'extra' group: `uv sync --group extra`."
-    )
+def test_hint_of_a_tool_without_group_and_hint_is_the_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(TOOLS, "bare", Tool("bare"))
+    assert hint("bare") == DEFAULT_HINT
 
 
 def test_hint_of_pytest_benchmark_names_its_group() -> None:
-    assert hint("pytest_benchmark", module=True) == (
-        "Install it with the 'dev' group: `uv sync --group dev`."
-    )
+    assert hint("pytest_benchmark") == "Install it with the 'dev' group: `uv sync --group dev`."
 
 
 def test_every_plugin_module_has_a_group() -> None:
-    assert {module for module, _ in PLUGIN_OPTIONS.values()} <= set(MODULE_GROUPS)
-
-
-def test_program_and_module_groups_do_not_share_a_name() -> None:
-    assert set(PROGRAM_GROUPS) & set(MODULE_GROUPS) == set()
+    assert {TOOLS[module].group for module, _ in PLUGIN_OPTIONS.values()} == {"dev"}
 
 
 @pytest.mark.parametrize("program", ["uvx", "git", "pre-commit"])
@@ -594,14 +572,13 @@ def test_not_found_message_for_a_program() -> None:
     assert (
         not_found_message("uv")
         == "'uv' was not found on the PATH or next to the Python interpreter. "
-        f"{PROGRAM_HINTS['uv']}"
+        f"{TOOLS['uv'].hint}"
     )
 
 
 def test_not_found_message_for_a_module_names_the_running_interpreter() -> None:
     assert not_found_message("pytest", module=True) == (
-        f"The Python module 'pytest' is not installed for {sys.executable}. "
-        f"{hint('pytest', module=True)}"
+        f"The Python module 'pytest' is not installed for {sys.executable}. {hint('pytest')}"
     )
 
 
@@ -663,8 +640,8 @@ def test_every_tool_has_a_group_or_a_hint(tool: Tool) -> None:
     assert (tool.group is None) != (tool.hint is None)
 
 
-def test_program_groups_whole_table() -> None:
-    assert PROGRAM_GROUPS == {
+def test_tool_groups_whole_table() -> None:
+    assert {name: tool.group for name, tool in TOOLS.items() if tool.group} == {
         "ruff": "dev",
         "ty": "dev",
         "pyright": "dev",
@@ -672,11 +649,6 @@ def test_program_groups_whole_table() -> None:
         "pre-commit": "dev",
         "mkdocs": "docs",
         "mike": "docs",
-    }
-
-
-def test_module_groups_whole_table() -> None:
-    assert MODULE_GROUPS == {
         "pytest": "dev",
         "coverage": "dev",
         "xdoctest": "dev",
@@ -686,8 +658,8 @@ def test_module_groups_whole_table() -> None:
     }
 
 
-def test_program_hints_are_the_programs_without_a_group() -> None:
-    assert sorted(PROGRAM_HINTS) == [
+def test_tool_hints_are_the_tools_without_a_group() -> None:
+    assert sorted(name for name, tool in TOOLS.items() if tool.hint) == [
         "codespell",
         "git",
         "mypy",

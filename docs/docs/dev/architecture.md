@@ -86,8 +86,8 @@ Seven small modules support the task modules:
   the module of `python -m <module>` and the plugins of the pytest options), and `hint` and
   `not_found_message` say how to install a tool. Every program and module is one `Tool` of
   `tools.TOOLS` (name, kind, dependency group or install hint, pytest options for a plugin);
-  `PROGRAM_HINTS`, `PROGRAM_GROUPS`, `MODULE_GROUPS`, `PLUGIN_OPTIONS` and `env.TOOL_PROGRAMS` /
-  `env.TOOL_MODULES` are derived from it.
+  `hint(name)` is one lookup in it, `PLUGIN_OPTIONS` (option to plugin) is derived from it, and
+  `env.check-tools` loops over it.
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.

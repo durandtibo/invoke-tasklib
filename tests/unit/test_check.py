@@ -8,10 +8,10 @@ import pytest
 from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
-from invoke_tasklib import _steps, check, env
+from invoke_tasklib import _steps, check
 from invoke_tasklib._steps import missing_tools
 from invoke_tasklib.config import CHECK_STEPS, get_config, load_config
-from invoke_tasklib.tools import PROGRAM_GROUPS, PROGRAM_HINTS
+from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
@@ -414,18 +414,18 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
 
 def test_programs_are_checked_by_env_check_tools() -> None:
     programs = {name for step in check.STEPS.values() for name in step.needs(_cfg())[0]}
-    assert programs <= set(env.TOOL_PROGRAMS)
+    assert programs <= {n for n, t in TOOLS.items() if t.kind == "program"}
 
 
 def test_modules_are_checked_by_env_check_tools() -> None:
     cfg = _cfg()
     modules = {name for step in check.STEPS.values() for name in step.needs(cfg)[1]}
-    assert modules <= set(env.TOOL_MODULES)
+    assert modules <= {n for n, t in TOOLS.items() if t.kind == "module"}
 
 
 def test_programs_of_the_steps_have_an_install_hint() -> None:
     programs = {name for step in check.STEPS.values() for name in step.needs(_cfg())[0]}
-    assert {p for p in programs if p not in PROGRAM_HINTS and p not in PROGRAM_GROUPS} == set()
+    assert programs <= set(TOOLS)
 
 
 ###################################
