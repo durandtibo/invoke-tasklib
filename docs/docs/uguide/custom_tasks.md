@@ -29,7 +29,7 @@ More helpers, for a task that needs less common things:
 | Helper                                                                    | Use it to                                                            |
 | ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | `invoke_tasklib.runner.python_executable`                                 | Get the interpreter that runs Invoke, quoted for a command           |
-| `invoke_tasklib.runner.ARGS_HELP`, `PATHS_HELP`                           | Reuse the `help` text of the `args` and `paths` options              |
+| `invoke_tasklib.runner.ARGS_HELP`, `PATHS_HELP`, `TOOL_HELP`              | Reuse the `help` text of the `args` and `paths` options              |
 | `invoke_tasklib.tools.hint`, `not_found_message`, `tool_path`             | Say how to install a tool, or find the `PATH` of the tools           |
 | `invoke_tasklib.tools.Tool`, `TOOLS`                                      | Read the table of the programs and modules that the tasks run        |
 | `invoke_tasklib.config.get_config`                                        | Resolve the config and raise `ValueError` (`load_config` exits)      |
@@ -47,10 +47,10 @@ from invoke.tasks import task
 from invoke_tasklib import make_ns
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import step
-from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
+from invoke_tasklib.runner import TOOL_HELP, build_command, run
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def check_complexity(c, *, args=None, paths=None):
     r"""Check the complexity of the code with radon."""
     cfg = load_config(c)

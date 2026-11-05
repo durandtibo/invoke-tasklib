@@ -13,6 +13,9 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib.runner import (
+    ARGS_HELP,
+    PATHS_HELP,
+    TOOL_HELP,
     build_command,
     capture,
     in_ci,
@@ -373,3 +376,12 @@ def test_in_github_actions_does_not_depend_on_ci(monkeypatch: pytest.MonkeyPatch
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     monkeypatch.setenv("CI", "true")
     assert in_github_actions() is False
+
+
+###############################
+#     Tests for TOOL_HELP     #
+###############################
+
+
+def test_tool_help_is_the_help_of_args_and_paths() -> None:
+    assert TOOL_HELP == {"args": ARGS_HELP, "paths": PATHS_HELP}

@@ -41,18 +41,18 @@ def _mkdir(*parts: str) -> Callable[[Path], Path]:
     return make
 
 
-##########################
-#     Tests for DIRS     #
-##########################
+###########################
+#     Tests for _DIRS     #
+###########################
 
 
-@pytest.mark.parametrize("name", clean.DIRS)
+@pytest.mark.parametrize("name", clean._DIRS)
 def test_dirs_are_walked_over_by_no_task(name: str) -> None:
     assert name in EXCLUDED_DIRS
 
 
 def test_dirs_lists_the_caches_and_the_outputs_that_clean_removes() -> None:
-    assert clean.DIRS == (
+    assert clean._DIRS == (
         ".benchmarks",
         ".coverage_html",
         ".hypothesis",

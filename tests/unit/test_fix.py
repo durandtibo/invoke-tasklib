@@ -117,12 +117,12 @@ def test_all_reports_an_invalid_config() -> None:
 
 
 def test_steps_are_the_valid_steps_of_the_config() -> None:
-    assert tuple(fix.STEPS) == FIX_STEPS
+    assert tuple(fix._STEPS) == FIX_STEPS
 
 
 def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:
     cfg = get_config(_context())
-    programs = {name for step in fix.STEPS.values() for name in step.needs(cfg)[0]}
+    programs = {name for step in fix._STEPS.values() for name in step.needs(cfg)[0]}
     assert programs <= {n for n, t in TOOLS.items() if t.kind == "program"}
 
 
@@ -131,11 +131,11 @@ def test_programs_of_the_steps_are_checked_by_env_check_tools() -> None:
 ###########################################
 
 
-@pytest.mark.parametrize("name", list(fix.STEPS))
+@pytest.mark.parametrize("name", list(fix._STEPS))
 def test_step_declares_the_tools_that_its_task_runs(
     name: str, monkeypatch: pytest.MonkeyPatch, default_project: Path
 ) -> None:
     (default_project / "run.sh").write_text("")
     c = _context()
-    step = fix.STEPS[name]
+    step = fix._STEPS[name]
     assert step_needs_of_commands(step, c, monkeypatch) == declared_needs(step, load_config(c))

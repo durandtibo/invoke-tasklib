@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 __all__ = [
     "ARGS_HELP",
     "PATHS_HELP",
+    "TOOL_HELP",
     "build_command",
     "capture",
     "in_ci",
@@ -62,6 +63,9 @@ PATHS_HELP = (
     "(globs and ~ are passed as they are)."
 )
 r"""Help of the ``--paths`` option of the tasks."""
+
+TOOL_HELP = {"args": ARGS_HELP, "paths": PATHS_HELP}
+r"""The ``help`` of a task with the ``args`` and ``paths`` options."""
 
 
 def build_command(

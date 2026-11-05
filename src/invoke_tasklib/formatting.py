@@ -14,7 +14,7 @@ from invoke.tasks import task
 from invoke_tasklib._files import project_files, require_path
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say, step
-from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
+from invoke_tasklib.runner import TOOL_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 NAMESPACE = "format"
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def check_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check code format with ruff without modifying files.
 
@@ -37,7 +37,7 @@ def check_python(c: Context, *, args: str | None = None, paths: str | None = Non
         run(c, build_command("ruff format --check", args=args, paths=paths, default_paths=["."]))
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def check_docstrings(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check docstring format with docformatter.
 
@@ -62,7 +62,7 @@ def check_docstrings(c: Context, *, args: str | None = None, paths: str | None =
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def fix_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format code in place with ruff.
 
@@ -80,7 +80,7 @@ def fix_python(c: Context, *, args: str | None = None, paths: str | None = None)
         run(c, build_command("ruff format", args=args, paths=paths, default_paths=["."]))
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def fix_docstrings(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format docstrings in source code with docformatter.
 
@@ -163,7 +163,7 @@ def _run_shell_tool(
             run(c, command)
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def check_shell(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check shell scripts with shellcheck.
 
@@ -177,7 +177,7 @@ def check_shell(c: Context, *, args: str | None = None, paths: str | None = None
     _run_shell_tool(c, "shellcheck", args, paths, messages)
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def check_shell_format(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check the format of shell scripts with shfmt.
 
@@ -195,7 +195,7 @@ def check_shell_format(c: Context, *, args: str | None = None, paths: str | None
     _run_shell_tool(c, "shfmt -d", args, paths, messages)
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def fix_shell(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format shell scripts in place with shfmt.
 

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from invoke.tasks import Task
 
 from invoke_tasklib import check, fix
 from invoke_tasklib._graph import import_graph, read_sources
@@ -239,7 +240,7 @@ def test_tool_is_registered_under_its_name(name: str) -> None:
     assert TOOLS[name].name == name
 
 
-@pytest.mark.parametrize("steps", [check.STEPS, fix.STEPS], ids=["check", "fix"])
+@pytest.mark.parametrize("steps", [check._STEPS, fix._STEPS], ids=["check", "fix"])
 def test_every_tool_of_the_steps_is_in_tools(steps: dict) -> None:
     assert _tools_needed(steps) - set(TOOLS) == set()
 
@@ -285,3 +286,14 @@ def test_every_public_name_of_a_support_module_is_in_all(module: str) -> None:
 def test_every_name_of_all_exists(module: str) -> None:
     mod = importlib.import_module(f"{PACKAGE}.{module}")
     assert [name for name in mod.__all__ if not hasattr(mod, name)] == []
+
+
+# The task modules: the layers 3 and 4.
+TASK_MODULES = [name for name, layer in LAYERS.items() if layer in _FLAT_LAYERS]
+
+
+@pytest.mark.parametrize("module", TASK_MODULES)
+def test_a_task_module_has_no_public_name_except_its_tasks_and_namespace(module: str) -> None:
+    mod = importlib.import_module(f"{PACKAGE}.{module}")
+    others = {name for name in _public_names(module) if not isinstance(getattr(mod, name), Task)}
+    assert others == {"NAMESPACE"}

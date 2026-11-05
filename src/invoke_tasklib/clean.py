@@ -24,12 +24,12 @@ if TYPE_CHECKING:
 NAMESPACE = "clean"
 r"""The name of the namespace of the tasks of this module."""
 
-DIRS = tuple(sorted(CACHE_DIRS | {"build", "dist", "htmlcov"}))
-DIR_GLOBS = ("*.egg-info", "src/*.egg-info")
-FILES = (".coverage", "coverage.xml")
-FILE_GLOBS = (".coverage.*",)
-SITE_DIR = "site"
-MKDOCS_CONFIGS = ("mkdocs.yml", "docs/mkdocs.yml")
+_DIRS = tuple(sorted(CACHE_DIRS | {"build", "dist", "htmlcov"}))
+_DIR_GLOBS = ("*.egg-info", "src/*.egg-info")
+_FILES = (".coverage", "coverage.xml")
+_FILE_GLOBS = (".coverage.*",)
+_SITE_DIR = "site"
+_MKDOCS_CONFIGS = ("mkdocs.yml", "docs/mkdocs.yml")
 _SITE_DIR_PATTERN = re.compile(r"^site_dir:[ \t]*(?P<value>[^#\n]*)", re.MULTILINE)
 
 
@@ -68,7 +68,7 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
     """
     say(c, "🧹 Cleaning build artifacts and caches" + (" (dry run)..." if dry_run else "..."))
     cfg = _try_config(c)
-    dirs = [Path(d) for d in DIRS]
+    dirs = [Path(d) for d in _DIRS]
     dirs.extend(_site_dirs(cfg))
     outputs = _coverage_outputs(cfg)
     html_dir = Path(outputs.html_dir)
@@ -76,14 +76,14 @@ def all_(c: Context, *, dry_run: bool = False) -> None:
         dirs.append(html_dir)
     for d in dirs:
         _remove_dir(c, d, dry_run=dry_run, keep_tracked=True)
-    for pattern in DIR_GLOBS:
+    for pattern in _DIR_GLOBS:
         for p in sorted(Path().glob(pattern)):
             _remove_dir(c, p, dry_run=dry_run)
     for p in _find_pycache_dirs(Path()):
         _remove_dir(c, p, dry_run=dry_run)
-    for f in dict.fromkeys((*FILES, *outputs.files)):
+    for f in dict.fromkeys((*_FILES, *outputs.files)):
         _remove_file(c, Path(f), dry_run=dry_run, keep_tracked=True)
-    for pattern in FILE_GLOBS:
+    for pattern in _FILE_GLOBS:
         for p in sorted(Path().glob(pattern)):
             _remove_file(c, p, dry_run=dry_run)
     say(c, _done_message(dry_run=dry_run))
@@ -246,7 +246,7 @@ def _site_dirs(cfg: TasklibConfig | None) -> list[Path]:
 
     The config file is ``paths.docs_config``. If there is no config
     (it is not valid, for example there is no ``package.name`` yet),
-    the ``MKDOCS_CONFIGS`` files are used instead.
+    the ``_MKDOCS_CONFIGS`` files are used instead.
 
     Args:
         cfg: The resolved config, or ``None`` if it is not valid.
@@ -274,7 +274,7 @@ def _site_dirs(cfg: TasklibConfig | None) -> list[Path]:
     ```
     """
     if cfg is None:
-        configs = [Path(config) for config in MKDOCS_CONFIGS]
+        configs = [Path(config) for config in _MKDOCS_CONFIGS]
     else:
         configs = [Path(cfg.paths.docs_config)]
     return [config.parent / _read_site_dir(config) for config in configs if config.is_file()]
@@ -308,7 +308,7 @@ def _read_site_dir(config: Path) -> str:
     """
     match = _SITE_DIR_PATTERN.search(config.read_text(encoding="utf-8"))
     value = match.group("value").strip().strip("'\"") if match else ""
-    return value or SITE_DIR
+    return value or _SITE_DIR
 
 
 def _has_tracked_files(c: Context, path: Path) -> bool:

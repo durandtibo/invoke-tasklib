@@ -172,18 +172,18 @@ def test_make_ns_exclude_all_tasks_of_a_namespace_removes_it() -> None:
 
 def test_make_ns_exclude_a_namespace_keeps_its_step_in_check() -> None:
     make_ns(exclude="lint")
-    assert "lint" in check.STEPS
+    assert "lint" in check._STEPS
 
 
 def test_make_ns_exclude_a_namespace_keeps_its_step_in_fix() -> None:
     make_ns(exclude="format")
-    assert "format-python" in fix.STEPS
+    assert "format-python" in fix._STEPS
 
 
 def test_make_ns_exclude_a_namespace_keeps_the_steps_of_check() -> None:
-    steps = dict(check.STEPS)
+    steps = dict(check._STEPS)
     make_ns(exclude="lint")
-    assert steps == check.STEPS
+    assert steps == check._STEPS
 
 
 def test_make_ns_include_a_namespace() -> None:

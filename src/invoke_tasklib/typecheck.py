@@ -18,7 +18,7 @@ NAMESPACE = "types"
 r"""The name of the namespace of the tasks of this module."""
 
 # The command of each type checker of ``types.checker``.
-COMMANDS: dict[str, str] = {"ty": "ty check", "pyright": "pyright", "mypy": "mypy"}
+_COMMANDS: dict[str, str] = {"ty": "ty check", "pyright": "pyright", "mypy": "mypy"}
 
 
 @task(
@@ -60,7 +60,7 @@ def check(
     """
     checker = load_config(c).types.checker
     with step(c, f"🔬 Checking type hints with {checker}...", "✅ Type check passed"):
-        run(c, build_command(COMMANDS[checker], args=args, paths=paths))
+        run(c, build_command(_COMMANDS[checker], args=args, paths=paths))
         if complete and checker != "pyright":
             say(c, "🔬 Checking type hints with pyright...")
             run(

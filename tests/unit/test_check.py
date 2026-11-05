@@ -265,7 +265,7 @@ def test_all_keep_going_does_not_run_a_step_with_a_missing_tool(
 
 
 def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
-    return missing_tools(*check.STEPS[step].needs(cfg))
+    return missing_tools(*check._STEPS[step].needs(cfg))
 
 
 def _cfg(xdoctest: bool = True, timeout: bool = True) -> TasklibConfig:
@@ -387,25 +387,25 @@ def test_shell_runs_the_lint_then_the_format_check() -> None:
     assert commands(c) == ["shellcheck -- run.sh", "shfmt -d -- run.sh"]
 
 
-###########################
-#     Tests for STEPS     #
-###########################
+############################
+#     Tests for _STEPS     #
+############################
 
 
 def test_shell_step_is_the_shell_wrapper() -> None:
-    assert check.STEPS["shell"].task is check._shell
+    assert check._STEPS["shell"].task is check._shell
 
 
 def test_shell_step_needs_shellcheck_and_shfmt() -> None:
-    assert check.STEPS["shell"].programs == ("shellcheck", "shfmt")
+    assert check._STEPS["shell"].programs == ("shellcheck", "shfmt")
 
 
 def test_unit_step_is_the_unit_wrapper() -> None:
-    assert check.STEPS["unit"].task is check._unit
+    assert check._STEPS["unit"].task is check._unit
 
 
 def test_steps_are_the_valid_steps_of_the_config() -> None:
-    assert tuple(check.STEPS) == CHECK_STEPS
+    assert tuple(check._STEPS) == CHECK_STEPS
 
 
 ############################################
@@ -414,18 +414,18 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
 
 
 def test_programs_are_checked_by_env_check_tools() -> None:
-    programs = {name for step in check.STEPS.values() for name in step.needs(_cfg())[0]}
+    programs = {name for step in check._STEPS.values() for name in step.needs(_cfg())[0]}
     assert programs <= {n for n, t in TOOLS.items() if t.kind == "program"}
 
 
 def test_modules_are_checked_by_env_check_tools() -> None:
     cfg = _cfg()
-    modules = {name for step in check.STEPS.values() for name in step.needs(cfg)[1]}
+    modules = {name for step in check._STEPS.values() for name in step.needs(cfg)[1]}
     assert modules <= {n for n, t in TOOLS.items() if t.kind == "module"}
 
 
 def test_programs_of_the_steps_have_an_install_hint() -> None:
-    programs = {name for step in check.STEPS.values() for name in step.needs(_cfg())[0]}
+    programs = {name for step in check._STEPS.values() for name in step.needs(_cfg())[0]}
     assert programs <= set(TOOLS)
 
 
@@ -451,7 +451,7 @@ def test_unit_modules_with_everything_off() -> None:
 
 
 def test_unit_step_modules_are_the_unit_modules() -> None:
-    assert check.STEPS["unit"].needs(_cfg(timeout=False))[1] == ("pytest", "xdoctest")
+    assert check._STEPS["unit"].needs(_cfg(timeout=False))[1] == ("pytest", "xdoctest")
 
 
 def test_missing_tools_unit_needs_xdoctest(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -468,11 +468,11 @@ def test_missing_tools_unit_does_not_need_xdoctest_when_it_is_off(
 
 def test_types_step_needs_the_configured_checker() -> None:
     cfg = get_config(make_context({"package": {"name": "p"}, "types": {"checker": "mypy"}}))
-    assert check.STEPS["types"].needs(cfg)[0] == ("mypy",)
+    assert check._STEPS["types"].needs(cfg)[0] == ("mypy",)
 
 
 def test_types_step_needs_ty_by_default() -> None:
-    assert check.STEPS["types"].needs(_cfg())[0] == ("ty",)
+    assert check._STEPS["types"].needs(_cfg())[0] == ("ty",)
 
 
 ###########################################
@@ -480,11 +480,11 @@ def test_types_step_needs_ty_by_default() -> None:
 ###########################################
 
 
-@pytest.mark.parametrize("name", list(check.STEPS))
+@pytest.mark.parametrize("name", list(check._STEPS))
 def test_step_declares_the_tools_that_its_task_runs(
     name: str, monkeypatch: pytest.MonkeyPatch, default_project: Path
 ) -> None:
     (default_project / "run.sh").write_text("")
     c = _context()
-    step = check.STEPS[name]
+    step = check._STEPS[name]
     assert step_needs_of_commands(step, c, monkeypatch) == declared_needs(step, load_config(c))

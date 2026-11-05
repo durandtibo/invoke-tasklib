@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.output import step
-from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, in_github_actions, run
+from invoke_tasklib.runner import ARGS_HELP, TOOL_HELP, build_command, in_github_actions, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -24,8 +24,7 @@ NAMESPACE = "lint"
             "Ruff output format. Defaults to 'github' when GITHUB_ACTIONS is 'true', "
             "ruff's own default otherwise."
         ),
-        "args": ARGS_HELP,
-        "paths": PATHS_HELP,
+        **TOOL_HELP,
     }
 )
 def check_python(
@@ -54,7 +53,7 @@ def check_python(
         run(c, build_command(f"ruff check{option}", args=args, paths=paths, default_paths=["."]))
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def fix_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Fix auto-fixable linting issues in place with ruff.
 
@@ -72,7 +71,7 @@ def fix_python(c: Context, *, args: str | None = None, paths: str | None = None)
         run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def check_spelling(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check the spelling with codespell.
 

@@ -16,7 +16,7 @@ from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say, step
 from invoke_tasklib.runner import (
     ARGS_HELP,
-    PATHS_HELP,
+    TOOL_HELP,
     build_command,
     python_executable,
     run,
@@ -31,13 +31,13 @@ if TYPE_CHECKING:
 NAMESPACE = "test"
 r"""The name of the namespace of the tasks of this module."""
 
-COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
+_COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
-APPEND_HELP = (
+_APPEND_HELP = (
     "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
 )
-PYTEST_HELP = {"cov": COV_HELP, "args": ARGS_HELP, "paths": PATHS_HELP}
-APPEND_PYTEST_HELP = {**PYTEST_HELP, "append": APPEND_HELP}
+_PYTEST_HELP = {**TOOL_HELP, "cov": _COV_HELP}
+_APPEND_PYTEST_HELP = {**_PYTEST_HELP, "append": _APPEND_HELP}
 
 
 def _directory_exists(c: Context, path: str, what: str) -> bool:
@@ -75,7 +75,7 @@ def _directory_exists(c: Context, path: str, what: str) -> bool:
     return False
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on source code.
 
@@ -103,7 +103,7 @@ def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on the Python examples of the markdown files.
 
@@ -212,7 +212,7 @@ def _run_pytest(
         run(c, build_command(" ".join(cmd), args=args, paths=paths, default_paths=[path]))
 
 
-@task(name="all", help=PYTEST_HELP)
+@task(name="all", help=_PYTEST_HELP)
 def all_(
     c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
 ) -> None:
@@ -248,7 +248,7 @@ def all_(
     )
 
 
-@task(help=PYTEST_HELP)
+@task(help=_PYTEST_HELP)
 def unit(
     c: Context, *, cov: bool = False, args: str | None = None, paths: str | None = None
 ) -> None:
@@ -284,7 +284,7 @@ def unit(
     )
 
 
-@task(help=APPEND_PYTEST_HELP)
+@task(help=_APPEND_PYTEST_HELP)
 def integration(
     c: Context,
     *,
@@ -324,7 +324,7 @@ def integration(
     )
 
 
-@task(help=APPEND_PYTEST_HELP)
+@task(help=_APPEND_PYTEST_HELP)
 def functional(
     c: Context,
     *,
@@ -394,7 +394,7 @@ def coverage_report(c: Context, *, open_browser: bool = False, args: str | None 
             run(c, f"{python_executable()} -m webbrowser -t {index}")
 
 
-@task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
+@task(help=TOOL_HELP)
 def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run performance benchmarks.
 
