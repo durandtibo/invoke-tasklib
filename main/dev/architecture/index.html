@@ -2066,7 +2066,8 @@ executes it with c.run (pty only on a terminal)
 guarantees every task sees the same resolved paths (e.g. <code>test.unit</code> and <code>types.check</code> agree on
 <code>package.name</code>).</p>
 <p><strong>Trade-off</strong>: Every task pays the (cheap) cost of re-resolving config on each call, rather than
-resolving it once. This is negligible since <code>load_config</code> does no I/O beyond reading <code>c.config</code>.</p>
+resolving it once. This is negligible since <code>load_config</code> does no I/O beyond reading <code>c.config</code> and, for the defaults
+that come from the project, two small files (<code>.python-version</code> and <code>pyproject.toml</code>).</p>
 <h3 id="why-check_targetfix_target-naming">Why <code>check_&lt;target&gt;</code>/<code>fix_&lt;target&gt;</code> Naming?<a class="headerlink" href="#why-check_targetfix_target-naming" title="Permanent link">&para;</a></h3>
 <p><strong>Rationale</strong>: Makes the read-only/mutating counterpart of a task discoverable by name alone, and
 lets CI safely run every <code>check_*</code> task without risk of it modifying the working tree.</p>
