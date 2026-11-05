@@ -1954,9 +1954,12 @@
 
         <p>Build the package and verify the built artifacts.</p>
 <p>The artifacts are checked to be installable. The newest wheel and
-the newest source distribution in <code>dist/</code> are each installed in an
-isolated environment and the package is imported from it, using
-<code>package.import_name</code>.</p>
+the newest source distribution in the output directory (<code>dist/</code>,
+or <code>--out-dir</code> of <code>--args</code>) are each installed in an isolated
+environment and the package is imported from it, using
+<code>package.import_name</code>. Only the kinds that the build produces are
+verified: with <code>--wheel</code> or <code>--sdist</code> in <code>--args</code>, the other
+kind is not.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

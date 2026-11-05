@@ -1854,7 +1854,9 @@ publish the package to PyPI using <a href="https://docs.astral.sh/uv/"><code>uv<
 <p>Runs <code>uv build</code>, then verifies the artifacts it produced: the newest wheel and the newest source
 distribution in <code>dist/</code> are each installed in an isolated <code>uv run</code> environment
 (<code>uv run --isolated --no-project --with dist/&lt;file&gt;</code>) and the package is imported from it.
-The task fails if the build did not produce a wheel or a source distribution.</p>
+The task fails if the build did not produce a wheel or a source distribution. With <code>--wheel</code> or
+<code>--sdist</code> in <code>--args</code>, only that kind is verified, and with <code>--out-dir &lt;dir&gt;</code> (or <code>-o</code>) the files
+of <code>&lt;dir&gt;</code> are verified (and checked by <code>--check</code>) instead of <code>dist/</code>.</p>
 <p>Pass <code>--check</code> to additionally validate the package's PyPI metadata with
 <a href="https://twine.readthedocs.io/"><code>twine check</code></a>:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>release.build<span class="w"> </span>--check

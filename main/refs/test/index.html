@@ -2081,7 +2081,8 @@
 <p>The whole tests directory is run in one pytest call, so the timeout
 of each test is the largest of the three scopes
 (<code>tasklib.test.unit_timeout</code>, <code>integration_timeout</code> and
-<code>functional_timeout</code>).</p>
+<code>functional_timeout</code>). If the tests directory does not exist,
+nothing is run.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2276,7 +2277,9 @@ directory.</p>
 
         <p>Generate an HTML coverage report.</p>
 <p>The report is built from the last recorded coverage data, and the
-terminal summary is printed.</p>
+terminal summary is printed. The report is written to the
+<code>directory</code> of <code>[tool.coverage.html]</code> in <code>pyproject.toml</code>
+(<code>htmlcov</code> by default).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
