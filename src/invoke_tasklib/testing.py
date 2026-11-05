@@ -103,46 +103,6 @@ def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-def _find_markdown_files(c: Context, root: Path) -> list[Path]:
-    r"""Find the markdown files under a root directory.
-
-    In a git work tree the files are the ones that git lists (the
-    rules of ``.gitignore`` are followed), see ``project_files``.
-    Otherwise the directories in ``EXCLUDED_DIRS`` (``.venv``,
-    ``.git``, ``site``, ...) are not walked into, so a virtual
-    environment or a build directory is never traversed.
-
-    Args:
-        c: The invoke context.
-        root: The directory to search.
-
-    Returns:
-        The sorted paths of the ``.md`` files found.
-
-    Example usage:
-
-    ```pycon
-    >>> import tempfile
-    >>> from pathlib import Path
-    >>> from invoke.config import Config
-    >>> from invoke.context import MockContext
-    >>> from invoke_tasklib.testing import _find_markdown_files
-    >>> c = MockContext(config=Config(), run=True)
-    >>> with tempfile.TemporaryDirectory() as tmp:
-    ...     (Path(tmp) / "docs").mkdir()
-    ...     (Path(tmp) / ".venv").mkdir()
-    ...     _ = (Path(tmp) / "docs" / "a.md").write_text("")
-    ...     _ = (Path(tmp) / ".venv" / "b.md").write_text("")
-    ...     found = _find_markdown_files(c, Path(tmp))
-    ...     [p.relative_to(tmp).as_posix() for p in found]
-    ...
-    ['docs/a.md']
-
-    ```
-    """
-    return project_files(c, root, ".md")
-
-
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
 def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on the Python examples of the markdown files.
@@ -154,7 +114,7 @@ def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None =
             file of the project.
     """
     with report_failure(c, "📚 Running doctests on markdown files..."):
-        files = split_args(paths, "--paths") or [str(f) for f in _find_markdown_files(c, Path())]
+        files = split_args(paths, "--paths") or [str(f) for f in project_files(c, Path(), ".md")]
         say(c, f"📚 Found {len(files)} markdown files")
         if files:
             cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
@@ -171,16 +131,15 @@ def doctest(c: Context) -> None:
 
 def _run_pytest(
     c: Context,
+    cfg: TasklibConfig,
     path: str,
     *,
     label: str,
     timeout: int,
     cov: bool = False,
     append: bool = False,
-    skip_missing: bool = False,
     args: str | None = None,
     paths: str | None = None,
-    cfg: TasklibConfig | None = None,
 ) -> None:
     r"""Run pytest on a directory of tests.
 
@@ -192,8 +151,12 @@ def _run_pytest(
     ``pytest-timeout``), and ``--cov-fail-under`` is used with ``cov``
     if ``tasklib.test.cov_fail_under`` is set.
 
+    A message is written and nothing is run when ``path`` is not an
+    existing directory, unless ``paths`` is set.
+
     Args:
         c: The invoke context.
+        cfg: The resolved config.
         path: The directory (or file) of tests.
         label: The name of the scope, used in the messages, e.g.
             ``"unit tests"``.
@@ -204,13 +167,8 @@ def _run_pytest(
             default).
         append: If True and ``cov`` is True, append to the coverage data
             of the previous runs instead of replacing it.
-        skip_missing: If True, a message is written and nothing is run
-            when ``path`` is not an existing directory. It is ignored
-            when ``paths`` is set.
         args: Extra arguments passed to pytest, placed before the paths.
         paths: Paths of the user that replace ``path``.
-        cfg: The resolved config, if the caller already has it. If not
-            set, the config is loaded.
 
     Raises:
         UnexpectedExit: If pytest fails.
@@ -220,11 +178,13 @@ def _run_pytest(
     ```pycon
     >>> from invoke.config import Config
     >>> from invoke.context import MockContext
+    >>> from invoke_tasklib.config import load_config
     >>> from invoke_tasklib.testing import _run_pytest
-    >>> cfg = {"tasklib": {"package": {"name": "mypkg"}}}
-    >>> c = MockContext(config=Config(overrides=cfg), run=True)
+    >>> overrides = {"tasklib": {"package": {"name": "mypkg"}}}
+    >>> c = MockContext(config=Config(overrides=overrides), run=True)
+    >>> cfg = load_config(c)
     >>> _run_pytest(
-    ...     c, "tests/unit", label="unit tests", timeout=10
+    ...     c, cfg, "tests/unit", label="unit tests", timeout=1
     ... )  # doctest: +ELLIPSIS
     🧪 Running unit tests...
     ...
@@ -232,8 +192,7 @@ def _run_pytest(
 
     ```
     """
-    cfg = cfg or load_config(c)
-    if skip_missing and not paths and not _directory_exists(c, path, label):
+    if not paths and not _directory_exists(c, path, label):
         return
     options = cfg.test
     with step(c, f"🧪 Running {label}...", f"✅ {label.capitalize()} complete"):
@@ -279,14 +238,13 @@ def all_(
     timeout = max(options.unit_timeout, options.integration_timeout, options.functional_timeout)
     _run_pytest(
         c,
+        cfg,
         cfg.paths.tests,
         label="all tests",
-        cfg=cfg,
         timeout=timeout,
         cov=cov,
         args=args,
         paths=paths,
-        skip_missing=True,
     )
 
 
@@ -316,14 +274,13 @@ def unit(
         path = cfg.paths.tests
     _run_pytest(
         c,
+        cfg,
         path,
         label="unit tests",
-        cfg=cfg,
         timeout=cfg.test.unit_timeout,
         cov=cov,
         args=args,
         paths=paths,
-        skip_missing=True,
     )
 
 
@@ -356,15 +313,14 @@ def integration(
     cfg = load_config(c)
     _run_pytest(
         c,
+        cfg,
         cfg.paths.integration_tests,
         label="integration tests",
-        cfg=cfg,
         timeout=cfg.test.integration_timeout,
         cov=cov,
         args=args,
         paths=paths,
         append=append,
-        skip_missing=True,
     )
 
 
@@ -397,15 +353,14 @@ def functional(
     cfg = load_config(c)
     _run_pytest(
         c,
+        cfg,
         cfg.paths.functional_tests,
         label="functional tests",
-        cfg=cfg,
         timeout=cfg.test.functional_timeout,
         cov=cov,
         args=args,
         paths=paths,
         append=append,
-        skip_missing=True,
     )
 
 
