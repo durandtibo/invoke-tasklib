@@ -1855,7 +1855,9 @@ and <code>node_modules</code>) and runs, for each one:</p>
 date. <code>NORMALIZE_WHITESPACE</code> and <code>ELLIPSIS</code> make output comparisons more forgiving (whitespace
 differences are ignored, and <code>...</code> in expected output matches any text), and <code>REPORT_NDIFF</code> gives
 a readable diff when an example's output doesn't match. A markdown file with no <code>&gt;&gt;&gt;</code> doctest
-blocks is still visited but simply reports zero tests, so it always "passes".</p>
+blocks is still visited but simply reports zero tests, so it always "passes".
+The task reports the number of files it checks: the files of <code>--paths</code> when it is set, otherwise
+every markdown file of the project.</p>
 <h2 id="running-tests-by-scope">Running Tests by Scope<a class="headerlink" href="#running-tests-by-scope" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit
 invoke<span class="w"> </span>test.integration
