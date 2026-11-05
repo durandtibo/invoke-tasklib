@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import shlex
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from invoke.exceptions import Exit
 from invoke.tasks import task
@@ -21,49 +21,82 @@ if TYPE_CHECKING:
 NAMESPACE = "doc"
 r"""The name of the namespace of the tasks of this module."""
 
-_VERSION_PATTERN = re.compile(r"v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.\d+)*(?P<rest>.*)")
+_VERSION_PATTERN = re.compile(
+    r"v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:\.\d+)*(?P<rest>.*)"
+)
 _PRERELEASE_PATTERN = re.compile(
     r"[-._]?(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?![a-z])", re.IGNORECASE
 )
 
 
-def _parse_release(version: str) -> tuple[str, bool]:
-    r"""Parse a release version into its docs tag and pre-release flag.
+class _Version(NamedTuple):
+    r"""A version of the project, as the docs tasks read it.
+
+    Example usage:
+
+    ```pycon
+    >>> from invoke_tasklib.doc import _Version
+    >>> _Version(1, 2, 3, False)[:2]
+    (1, 2)
+
+    ```
+    """
+
+    major: int
+    r"""The first number."""
+
+    minor: int
+    r"""The second number."""
+
+    patch: int
+    r"""The third number, 0 if there is none."""
+
+    prerelease: bool
+    r"""Whether the version is an alpha, beta, release candidate or
+    development version."""
+
+
+def _parse_version(text: str) -> _Version:
+    r"""Parse a version, or a version tag.
 
     Args:
-        version: A version such as ``"1.2.3"``, ``"v1.2"`` or
-            ``"1.2.0rc1"``.
+        text: A version such as ``"1.2.3"``, ``"v1.2"`` or
+            ``"1.2.0rc1"``. Numbers after the third are ignored.
 
     Returns:
-        A tuple ``(tag, is_prerelease)`` where ``tag`` is
-        ``<major>.<minor>`` and ``is_prerelease`` is ``True`` for alpha,
-        beta, release candidate and development versions. A suffix
-        that only starts like a pre-release keyword (``-backport``,
-        ``-cool``, ``-alpine``) is not a pre-release.
+        The numbers of the version (``patch`` is 0 if missing) and
+        whether it is a pre-release: alpha, beta, release candidate and
+        development versions are. A suffix that only starts like a
+        pre-release keyword (``-backport``, ``-cool``, ``-alpine``) is
+        not a pre-release.
 
     Raises:
-        ValueError: If the version does not start with
+        ValueError: If the text does not start with
             ``<major>.<minor>``.
 
     Example usage:
 
     ```pycon
-    >>> from invoke_tasklib.doc import _parse_release
-    >>> _parse_release("1.2.3")
-    ('1.2', False)
-    >>> _parse_release("1.2.0rc1")
-    ('1.2', True)
-    >>> _parse_release("1.2.0-backport")
-    ('1.2', False)
+    >>> from invoke_tasklib.doc import _parse_version
+    >>> _parse_version("v1.2.3")
+    _Version(major=1, minor=2, patch=3, prerelease=False)
+    >>> _parse_version("1.2.0rc1")
+    _Version(major=1, minor=2, patch=0, prerelease=True)
+    >>> _parse_version("1.2.0-backport").prerelease
+    False
 
     ```
     """
-    match = _VERSION_PATTERN.fullmatch(version.strip())
+    match = _VERSION_PATTERN.fullmatch(text.strip())
     if match is None:
-        msg = f"Cannot parse the version '{version}': expected <major>.<minor>[.<patch>]"
+        msg = f"Cannot parse the version '{text}': expected <major>.<minor>[.<patch>]"
         raise ValueError(msg)
-    is_prerelease = _PRERELEASE_PATTERN.match(match.group("rest")) is not None
-    return f"{match.group('major')}.{match.group('minor')}", is_prerelease
+    return _Version(
+        int(match["major"]),
+        int(match["minor"]),
+        int(match["patch"] or 0),
+        _PRERELEASE_PATTERN.match(match["rest"]) is not None,
+    )
 
 
 def _docs_config(c: Context) -> str:
@@ -140,34 +173,6 @@ def serve(c: Context, *, args: str | None = None) -> None:
     run(c, build_command(cmd, args=args))
 
 
-def _release_key(tag: str) -> tuple[int, int] | None:
-    r"""Return the sort key of a docs version.
-
-    Args:
-        tag: The name of a version of the docs, e.g. ``"1.2"``, or of an
-            alias-like version such as ``"main"``.
-
-    Returns:
-        ``(major, minor)``, or ``None`` if ``tag`` is not a release
-        (``main``, ``dev``, ...).
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.doc import _release_key
-    >>> _release_key("1.10")
-    (1, 10)
-    >>> _release_key("main") is None
-    True
-
-    ```
-    """
-    match = _VERSION_PATTERN.fullmatch(tag)
-    if match is None:
-        return None
-    return int(match.group("major")), int(match.group("minor"))
-
-
 def _last_version_tag(c: Context) -> str | None:
     r"""Return the highest release version tag of the git repository.
 
@@ -201,34 +206,16 @@ def _last_version_tag(c: Context) -> str | None:
     ```
     """
     result = capture(c, "git tag --list 'v[0-9]*'")
-    releases = [
-        tag
-        for tag in result.stdout.split()
-        if _VERSION_PATTERN.fullmatch(tag) is not None and not _parse_release(tag)[1]
-    ]
-    return max(releases, key=_version_key, default=None)
-
-
-def _version_key(tag: str) -> tuple[int, ...]:
-    r"""Return the numbers of a version tag, to compare two tags.
-
-    Args:
-        tag: A tag such as ``"v1.10.0"``.
-
-    Returns:
-        The leading dotted numbers of the tag, e.g. ``(1, 10, 0)``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.doc import _version_key
-    >>> _version_key("v1.10.0")
-    (1, 10, 0)
-
-    ```
-    """
-    numbers = re.match(r"v?(\d+(?:\.\d+)*)", tag)
-    return tuple(int(n) for n in numbers.group(1).split(".")) if numbers else ()
+    releases: dict[str, _Version] = {}
+    for tag in result.stdout.split():
+        try:
+            version = _parse_version(tag)
+        except ValueError:
+            continue
+        if not version.prerelease:
+            releases[tag] = version
+    newest = max(((version[:3], tag) for tag, version in releases.items()), default=None)
+    return None if newest is None else newest[1]
 
 
 def _parse_releases(output: str, command: str) -> list[tuple[int, int]]:
@@ -261,8 +248,14 @@ def _parse_releases(output: str, command: str) -> list[tuple[int, int]]:
     except (ValueError, TypeError, KeyError) as exc:
         msg = f"Cannot read the output of '{command}': {output!r}"
         raise Exit(msg, code=1) from exc
-    keys = (_release_key(version) for version in versions)
-    return [key for key in keys if key is not None]
+    releases: list[tuple[int, int]] = []
+    for version in versions:
+        try:
+            parsed = _parse_version(version)
+        except ValueError:
+            continue
+        releases.append((parsed.major, parsed.minor))
+    return releases
 
 
 def _published_releases(c: Context, docs_config: str) -> list[tuple[int, int]]:
@@ -380,15 +373,15 @@ def publish_latest(
             raise Exit(msg, code=1)
         version = last_tag
     try:
-        tag, is_prerelease = _parse_release(version)
+        parsed = _parse_version(version)
     except ValueError as exc:
         raise Exit(str(exc), code=1) from exc
-    if is_prerelease:
+    if parsed.prerelease:
         say(c, f"⏭️  Skipping the pre-release version {version}: latest docs not published")
         return
+    tag = f"{parsed.major}.{parsed.minor}"
     newest = max(_published_releases(c, docs_config), default=None)
-    key = _release_key(tag)
-    if not force and newest is not None and key is not None and key < newest:
+    if not force and newest is not None and (parsed.major, parsed.minor) < newest:
         msg = (
             f"Refusing to publish {tag} as latest: {newest[0]}.{newest[1]} is already "
             "published. Use --force to publish it anyway."

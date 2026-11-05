@@ -11,7 +11,13 @@ from invoke.exceptions import Exit
 from invoke.runners import Result
 
 from invoke_tasklib import doc
-from invoke_tasklib.doc import _docs_config, _parse_release, _parse_releases, _published_releases
+from invoke_tasklib.doc import (
+    _docs_config,
+    _parse_releases,
+    _parse_version,
+    _published_releases,
+    _Version,
+)
 from tests.helpers import commands, make_context, run_kwargs
 
 if TYPE_CHECKING:
@@ -295,20 +301,16 @@ def test_last_version_tag_with_only_pre_releases_is_none() -> None:
 
 
 @pytest.mark.parametrize(
-    ("tag", "key"),
+    ("tags", "expected"),
     [
-        ("v1.10.0", (1, 10, 0)),
-        ("1.2", (1, 2)),
-        ("v2.0.1.4", (2, 0, 1, 4)),
-        ("v1.2.0rc1", (1, 2, 0)),
+        ("v1.9.5\nv1.10.0\nv1.2.0\n", "v1.10.0"),
+        ("v1.2\nv1.1.5\n", "v1.2"),
+        ("v2.0.1.4\nv2.0.0\n", "v2.0.1.4"),
+        ("v1.2.3\nv1.2.10\nv1.2.9\n", "v1.2.10"),
     ],
 )
-def test_version_key(tag: str, key: tuple[int, ...]) -> None:
-    assert doc._version_key(tag) == key
-
-
-def test_version_key_without_number_is_empty() -> None:
-    assert doc._version_key("latest") == ()
+def test_last_version_tag_orders_by_major_minor_patch(tags: str, expected: str) -> None:
+    assert doc._last_version_tag(_git(tags)) == expected
 
 
 #########################################
@@ -359,17 +361,22 @@ def test_published_releases_quotes_the_docs_config() -> None:
     assert _published_releases(c, "d d/mkdocs.yml") == []
 
 
-##################################
-#     Tests for _release_key     #
-##################################
+######################################
+#     Tests for _parse_releases     #
+######################################
 
 
 @pytest.mark.parametrize(
-    ("tag", "expected"),
-    [("1.2", (1, 2)), ("1.10", (1, 10)), ("v2.0.1", (2, 0)), ("main", None), ("dev", None)],
+    ("output", "expected"),
+    [
+        ('[{"version": "1.2"}, {"version": "1.10"}]', [(1, 2), (1, 10)]),
+        ('[{"version": "v2.0.1"}, {"version": "main"}, {"version": "dev"}]', [(2, 0)]),
+    ],
 )
-def test_release_key(tag: str, expected: tuple[int, int] | None) -> None:
-    assert doc._release_key(tag) == expected
+def test_parse_releases_keeps_the_major_and_the_minor(
+    output: str, expected: list[tuple[int, int]]
+) -> None:
+    assert _parse_releases(output, "mike list --json") == expected
 
 
 ##################################
@@ -385,31 +392,31 @@ def test_push_option_without_push() -> None:
     assert doc._push_option(push=False) == ""
 
 
-####################################
-#     Tests for _parse_release     #
-####################################
+#####################################
+#     Tests for _parse_version     #
+#####################################
 
 
 @pytest.mark.parametrize(
     ("version", "expected"),
     [
-        ("1.2.3", ("1.2", False)),
-        ("1.2", ("1.2", False)),
-        ("v1.2.3", ("1.2", False)),
-        ("10.20.30", ("10.20", False)),
-        ("1.2.3.4", ("1.2", False)),
-        ("1.2.0.post1", ("1.2", False)),
-        (" 1.2.3 ", ("1.2", False)),
-        ("1.2.0-backport", ("1.2", False)),
-        ("1.2.0-cool", ("1.2", False)),
-        ("1.2.0-alpine", ("1.2", False)),
-        ("1.2.0-betamax", ("1.2", False)),
-        ("1.2.0-develop", ("1.2", False)),
-        ("1.2.0-prerelease", ("1.2", False)),
+        ("1.2.3", (1, 2, 3)),
+        ("1.2", (1, 2, 0)),
+        ("v1.2.3", (1, 2, 3)),
+        ("10.20.30", (10, 20, 30)),
+        ("1.2.3.4", (1, 2, 3)),
+        ("1.2.0.post1", (1, 2, 0)),
+        (" 1.2.3 ", (1, 2, 3)),
+        ("1.2.0-backport", (1, 2, 0)),
+        ("1.2.0-cool", (1, 2, 0)),
+        ("1.2.0-alpine", (1, 2, 0)),
+        ("1.2.0-betamax", (1, 2, 0)),
+        ("1.2.0-develop", (1, 2, 0)),
+        ("1.2.0-prerelease", (1, 2, 0)),
     ],
 )
-def test_parse_release_final(version: str, expected: tuple[str, bool]) -> None:
-    assert _parse_release(version) == expected
+def test_parse_version_final(version: str, expected: tuple[int, int, int]) -> None:
+    assert _parse_version(version) == (*expected, False)
 
 
 @pytest.mark.parametrize(
@@ -430,14 +437,18 @@ def test_parse_release_final(version: str, expected: tuple[str, bool]) -> None:
         "1.2.0rc1+local",
     ],
 )
-def test_parse_release_pre_release(version: str) -> None:
-    assert _parse_release(version) == ("1.2", True)
+def test_parse_version_pre_release(version: str) -> None:
+    assert _parse_version(version) == _Version(1, 2, 0, True)
+
+
+def test_parse_version_is_a_named_tuple() -> None:
+    assert _parse_version("v3.4.5") == _Version(major=3, minor=4, patch=5, prerelease=False)
 
 
 @pytest.mark.parametrize("version", ["", "1", "latest", "v", "a.b.c", "x1.2"])
-def test_parse_release_invalid(version: str) -> None:
+def test_parse_version_invalid(version: str) -> None:
     with pytest.raises(ValueError, match=r"Cannot parse the version"):
-        _parse_release(version)
+        _parse_version(version)
 
 
 ###########################
