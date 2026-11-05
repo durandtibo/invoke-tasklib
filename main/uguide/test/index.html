@@ -1844,7 +1844,10 @@ with <code>--xdoctest</code> enabled, so doctests embedded in the code under tes
 <p>Runs both <code>test.doctest-src</code> and <code>test.doctest-markdown</code>.</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.doctest-src
 </code></pre></div>
-<p>Runs doctests against <code>paths.src</code> from the <a href="../config/">resolved config</a>.</p>
+<p>Runs doctests against <code>paths.src</code> from the <a href="../config/">resolved config</a>. It always runs
+<code>pytest --xdoctest</code>: <code>tasklib.test.xdoctest</code> only applies to the test scopes, since the task has no
+purpose without the plugin. If the <code>xdoctest</code> package is missing, the task stops with a message that
+names it; use <code>test.doctest-markdown</code> alone in a project that does not have the package.</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.doctest-markdown
 </code></pre></div>
 <p>Recursively finds every <code>*.md</code> file in the project (skipping <code>.venv</code>, <code>.pytest_cache</code>, <code>.git</code>,
