@@ -2065,6 +2065,10 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 <td><code>true</code></td>
 </tr>
 <tr>
+<td><code>test.timeout</code></td>
+<td><code>true</code></td>
+</tr>
+<tr>
 <td><code>test.cov_fail_under</code></td>
 <td>not set</td>
 </tr>
@@ -2088,7 +2092,10 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 </table>
 <p>The <code>test</code> section sets the per-test timeout in seconds of each test scope, whether <code>pytest</code> runs
 with <code>--xdoctest</code> (it requires the <code>xdoctest</code> package, so set <code>xdoctest: false</code> if the project does
-not have it; <code>test.doctest-src</code> ignores it and always uses the plugin), and a coverage threshold:
+not have it; <code>test.doctest-src</code> ignores it and always uses the plugin), whether it runs with
+<code>--timeout</code> (it requires the <code>pytest-timeout</code> package, so set <code>timeout: false</code> if the project does
+not have it; the <code>unit_timeout</code>, <code>integration_timeout</code> and <code>functional_timeout</code> values are then
+unused), and a coverage threshold:
 with <code>--cov</code>, <code>cov_fail_under</code> is forwarded as <code>--cov-fail-under</code>. Timeouts and <code>cov_fail_under</code> are integers, <code>xdoctest</code> is a boolean.
 <code>cov_reports</code> is a comma-separated string or a list of the <code>--cov-report</code> formats of pytest-cov
 (<code>html</code>, <code>xml</code>, <code>json</code>, <code>lcov</code>, <code>annotate</code>, <code>term</code>, <code>term-missing</code>) that <code>--cov</code> generates. An empty
