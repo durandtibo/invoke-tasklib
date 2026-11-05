@@ -1,4 +1,9 @@
-r"""Import-graph tasks."""
+r"""Import-graph tasks (``imports.*``).
+
+``imports.check-cycles`` reads the import graph statically;
+``imports.check-isolated`` imports every module in its own interpreter.
+Both are read-only.
+"""
 
 from __future__ import annotations
 

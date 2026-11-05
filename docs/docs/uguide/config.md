@@ -42,8 +42,8 @@ tasklib:
     tasks: lint,format-python,format-docstrings
 ```
 
-Only `tasklib.package.name` (the distribution name, as on PyPI) is required. Everything else has a default, and most of the `paths`
-defaults are derived from `package.name` or from `paths.tests`.
+Only `tasklib.package.name` (the distribution name, as on PyPI) is required. Everything else has a
+default, and most of the `paths` defaults are derived from `package.name` or from `paths.tests`.
 
 ## Defaults
 
@@ -78,24 +78,24 @@ with `--xdoctest` (it requires the `xdoctest` package, so set `xdoctest: false` 
 not have it; `test.doctest-src` ignores it and always uses the plugin), whether it runs with
 `--timeout` (it requires the `pytest-timeout` package, so set `timeout: false` if the project does
 not have it; the `unit_timeout`, `integration_timeout` and `functional_timeout` values are then
-unused), and a coverage threshold:
-with `--cov`, `cov_fail_under` is forwarded as `--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` is a boolean.
-`cov_reports` is a comma-separated string or a list of the `--cov-report` values of pytest-cov
+unused), and a coverage threshold: with `--cov`, `cov_fail_under` is forwarded as
+`--cov-fail-under`. Timeouts and `cov_fail_under` are integers, `xdoctest` and `timeout` are
+booleans. `cov_reports` is a comma-separated string or a list of the `--cov-report` values of pytest-cov
 (`html`, `xml`, `json`, `lcov`, `annotate`, `term`, `term-missing`) that `--cov` generates. A value
 can have the argument of pytest-cov after a colon, for example `term-missing:skip-covered` or
 `html:cov_html` (the directory or file of the report). The value is quoted in the command. An empty
 value passes no `--cov-report`, so pytest-cov uses its default.
 
 `types.checker` is the type checker of `types.check` and of the `types` step of `check.all`: `ty`
-(default), `pyright` or `mypy`. With `--complete`, `types.check` also runs `pyright` after it (unless it is
-`pyright`). `mypy` is not installed by `env.install`: add it to the project dependencies.
+(default), `pyright` or `mypy`. With `--complete`, `types.check` also runs `pyright` after it
+(unless it is `pyright`). `mypy` is not installed by `env.install`: add it to the project dependencies.
 
 `check.cov` is a boolean. If true, the `unit` step of `check.all` runs with `--cov`, so
 `test.cov_fail_under` is enforced there too (the coverage reports are generated).
 
-`check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in that order. It is
-not set by default (`null` in `config.show`), which means the first six steps below (`format-python`
-to `unit`). The names are checked by `check.all`, before any step runs (exit code 2). The steps are:
+`check.tasks` is a comma-separated string or a list of the steps of `check.all`, run in the order
+of the list below. It is not set by default (`null` in `config.show`), which means the first six
+steps below (`format-python` to `unit`). The names are checked by `check.all`, before any step runs (exit code 2). The steps are:
 `format-python`, `format-docstrings`, `lint`, `types`, `imports`, `unit`, `doctest`, `shell`,
 `spelling`, `docs` and `audit`. It must have at least one step and no unknown step.
 
@@ -104,8 +104,8 @@ to `unit`). The names are checked by `check.all`, before any step runs (exit cod
 `shell`, run in that order (the lint fixes first, so that the formatting has the last word on the
 layout).
 
-`package.import_name` is the name used to import the package. It is used by `imports.check-cycles`, `imports.check-isolated`,
-`release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
+`package.import_name` is the name used to import the package. It is used by `imports.check-cycles`,
+`imports.check-isolated`, `release.build` (the import check of the built artifacts) and the `--cov` option of the test tasks.
 Set it when it is not the distribution name with `-` replaced by `_`. It must be a Python module
 name, which may be dotted for a package of a namespace package (`company.package`): the tasks that
 read the source of the package (`imports.check-cycles`, `imports.check-isolated`) find it without
@@ -116,12 +116,13 @@ If `tasklib.package.name` is missing, `get_config` raises a `ValueError`; the ta
 code 2 (no traceback).
 
 Unknown keys in `tasklib` itself (typically a typo of a section such as `path`) and in the
-`package`, `paths`, `groups`, `test`, `check` or `fix` sections (such as `paths.unit_test`) also raise a
+`package`, `paths`, `groups`, `test`, `types`, `check` or `fix` sections (such as
+`paths.unit_test`) also raise a
 `ValueError` that lists the valid keys and suggests the closest one, instead of being silently
 ignored. Each section must be a mapping, `package.name` and every `paths.*` value must be a
 non-empty string, and `test.cov_fail_under` must be between 0 and 100. A `null` (`~`) is the same as
-not setting the key only for a key that has no default (`test.cov_fail_under`, `package.python_version`,
-...); for a boolean or an integer (`test.xdoctest`, `test.unit_timeout`, `check.cov`, ...) it is an
+not setting the key only for a key that has no default (`test.cov_fail_under`,
+`package.python_version`, `check.tasks`, `fix.tasks`); for a boolean or an integer (`test.xdoctest`, `test.unit_timeout`, `check.cov`, ...) it is an
 error, like any other invalid value, so write the value or remove the key.
 
 `package.python_version` must be a quoted string such as `"3.10"` or `"3.10.4"`. YAML reads an
@@ -162,8 +163,8 @@ that no source sets, computed from other values or from the project (`import_nam
 test paths). The origins come from private attributes of Invoke (there is no public API for them):
 if a release of Invoke renames one, the task writes a warning on the error stream that names it,
 and the check that `inv` runs from the project root (also based on one of them) writes a
-`RuntimeWarning`, instead of going on silently. The config is validated first, so an invalid one stops the task with
-the usual one-line message. The task reads nothing but the config and the project directories of
+`RuntimeWarning`, instead of going on silently. The config is validated first, so an invalid one
+stops the task with the usual one-line message. The task reads nothing but the config and the project directories of
 [`paths`](#defaults), and changes nothing.
 
 ## Editor Completion (JSON Schema)
@@ -213,8 +214,9 @@ Invoke reads an environment variable as a string, and tasklib parses it:
   error.
 
 An invalid value exits with code 2 and a one-line message, like an invalid `invoke.yaml`. The same
-spellings work for a string value in `invoke.yaml`. A collection built by hand (`Collection(lint, ...)`) has no defaults, so it does
-not read the environment variables unless you call
+spellings work for a string value in `invoke.yaml`. A collection built by hand
+(`Collection(lint, ...)`) has no defaults, so it does not read the environment variables unless you
+call
 `ns.configure({"tasklib": invoke_tasklib.config.default_config()})`.
 `default_config()` holds an empty placeholder for every key, not its default: read the config with
 `load_config` (or see it with `inv config.show`), not from `c.config.tasklib`.
@@ -278,7 +280,7 @@ The `--groups` flag of the tasks stays a comma-separated string (`--groups dev,d
 ## Using `get_config` in a Custom Task
 
 `get_config` returns frozen dataclasses (`cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`,
-`cfg.check` and `cfg.fix`), so the values are read as attributes and cannot be modified. It raises a
+`cfg.types`, `cfg.check` and `cfg.fix`), so the values are read as attributes and cannot be modified. It raises a
 `ValueError` on an invalid config. A task uses `load_config`, which exits with a one-line message
 instead (and also checks that `inv` runs from the project root), like every built-in task, so a
 project-specific task reads the same config:

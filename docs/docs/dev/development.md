@@ -100,21 +100,23 @@ invoke-tasklib/
 ├── .github/                  # GitHub configuration (workflows, etc.)
 ├── dev/                      # Scripts used by the repository itself
 ├── docs/                     # Documentation
-│   ├── docs/                # Documentation source
+│   ├── docs/                 # Documentation source (`uguide/`, `refs/`, `dev/`, `schema.json`)
 │   └── mkdocs.yml            # MkDocs configuration
 ├── src/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `make_ns` and individual task modules
-│       ├── config/           # Config resolution (`get_config`, `load_config`, JSON schema); `_invoke.py` reads the Invoke privates
+│       ├── config/           # Config resolution: `_schema.py` (`SCHEMA`, dataclasses, JSON schema),
+│       │                     # `_validate.py`, `_derive.py`, `_resolve.py` (`get_config`, `load_config`),
+│       │                     # `_invoke.py` (the only reader of the Invoke privates), `__main__.py`
 │       ├── runner.py         # Command runner (`run`, `capture`, `build_command`)
 │       ├── tools.py          # Tool lookup and install hints (`find_tool`, `check_program`)
-│       ├── output.py         # Progress messages (`say`, `step`)
+│       ├── output.py         # Progress messages (`say`, `step`, `report_failure`)
 │       ├── _steps.py         # Step runner shared by `check.all` and `fix.all`
 │       ├── _files.py         # File lookup of the format and test tasks
 │       ├── _pyproject.py     # Reader of `pyproject.toml` (`read_pyproject`)
 │       ├── _coverage.py      # Where the coverage reports are written
 │       ├── _graph.py         # Static import graph of `imports.check-cycles`
-│       ├── _discover.py      # Module discovery used by `imports.check-isolated`
+│       ├── _discover.py      # Module discovery and `import_each` of `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
 │       ├── imports.py        # imports.* tasks
@@ -130,13 +132,13 @@ invoke-tasklib/
 │       └── show.py           # config.* tasks
 ├── tests/
 │   ├── helpers.py            # `make_context` and `commands`, shared by the tests
-│   ├── unit/                 # Unit tests, one module per source module
-│   ├── integration/          # Tests that run the real tools
+│   ├── unit/                 # Unit tests, one module per source module (`config/` for `config/`)
+│   ├── integration/          # Tests that run the real tools (`helpers.py`: `subprocess_context`)
 │   └── benchmarks/           # Benchmarks (`inv test.benchmark`), run once by `pytest tests`
 ├── review/                   # Review notes of the repository
 ├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `make_ns`)
-├── invoke.yaml                # invoke-tasklib's own tasklib config
-├── pyproject.toml             # Project configuration
+├── invoke.yaml               # invoke-tasklib's own tasklib config
+├── pyproject.toml            # Project configuration
 └── README.md
 ```
 
@@ -151,7 +153,7 @@ invoke-tasklib/
    [Format](../uguide/format.md)).
 3. Call `load_config(c)` if the task needs project-specific paths or the package name, rather than
    hardcoding them. Run the external commands with `invoke_tasklib.runner.run` and build them
-   with `build_command` (it quotes the arguments), and print the progress with
+   with `build_command` (a list of words that `run` quotes), and print the progress with
    `invoke_tasklib.output.say`; do not call `c.run` or `print` in a task.
 4. Write a docstring (Google style) describing the task; its first line, one sentence, is the
    summary shown by `invoke --list`. Give each option a `help` entry in `@task`, and add
@@ -164,6 +166,23 @@ invoke-tasklib/
 7. Update the [README](https://github.com/durandtibo/invoke-tasklib/blob/main/README.md) task
    table, `uguide/index.md`, `docs/index.md` and the corresponding
    [user guide](../uguide/format.md) page.
+
+## Conventions
+
+`CLAUDE.md` at the root of the repository is the complete list of the rules for code, tests and
+pull requests. The main ones:
+
+- Every function, public or private, has a Google-style docstring (at most 72 characters wide) and
+  its own unit tests; the coverage of `src/` is 100%. Keep the docstrings and the documentation
+  up to date when the behaviour, the signature or the options of the code change.
+- A test checks one behaviour (one `assert` or one `pytest.raises` with a `match`). A test that
+  patches a collaborator has a matching integration test in `tests/integration/` that runs the real
+  thing.
+- Lint, format and type check before committing: `.venv/bin/ruff check src tests`,
+  `.venv/bin/ruff format src tests` and `.venv/bin/ty check`, then run the tests and the doctests
+  (`.venv/bin/pytest tests -q` and `.venv/bin/inv test.doctest`).
+- One branch and one pull request per logical change, named `<type>/<short-description>` (for
+  example `feat/add-cache-option`), branched from an up to date `main`.
 
 ## Testing Guidelines
 

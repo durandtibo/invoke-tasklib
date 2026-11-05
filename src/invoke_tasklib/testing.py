@@ -1,4 +1,16 @@
-r"""Test and benchmark tasks."""
+r"""Test, doctest, coverage and benchmark tasks (``test.*``).
+
+The tests run with pytest, through the running interpreter (``python -m
+pytest``). The directory of each scope (``unit``, ``integration``,
+``functional`` and ``benchmarks``) comes from the ``tasklib.paths``
+config; a scope whose directory does not exist is skipped with a ``⏭️``
+line, except ``test.benchmark``, which fails. The options of pytest come
+from ``tasklib.test``: the timeout of each scope, ``xdoctest``,
+``timeout``, ``cov_fail_under`` and ``cov_reports``.
+
+The module is named ``testing`` so that it does not shadow the standard
+library package ``test``; its namespace is ``test``, see ``NAMESPACE``.
+"""
 
 from __future__ import annotations
 
@@ -106,6 +118,13 @@ def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None
 def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Run doctests on the Python examples of the markdown files.
 
+    The files are the ``*.md`` files of the project (the files that
+    git tracks, or all the files outside the excluded directories
+    when the project is not a git work tree), or ``paths``. They run
+    with ``python -m doctest`` and the options
+    ``NORMALIZE_WHITESPACE``, ``ELLIPSIS`` and ``REPORT_NDIFF``. A
+    project without markdown file passes.
+
     Args:
         c: The invoke context.
         args: Extra arguments passed to ``python -m doctest``.
@@ -123,7 +142,14 @@ def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None =
 
 @task
 def doctest(c: Context) -> None:
-    r"""Run doctests on both source code and markdown files."""
+    r"""Run doctests on both source code and markdown files.
+
+    It runs ``test.doctest-src`` then ``test.doctest-markdown`` with
+    their defaults, and stops at the first failure.
+
+    Args:
+        c: The invoke context.
+    """
     doctest_src(c)
     doctest_markdown(c)
 

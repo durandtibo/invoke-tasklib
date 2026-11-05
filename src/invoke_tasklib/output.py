@@ -44,7 +44,6 @@ def _keep_if_encodable(match: re.Match[str], encoding: str) -> str:
     Example usage:
 
     ```pycon
-    >>> import re
     >>> from invoke_tasklib.output import _EMOJI, _keep_if_encodable
     >>> match = _EMOJI.search("★ x")
     >>> _keep_if_encodable(match, "cp932")
@@ -174,10 +173,11 @@ def report_failure(c: Context, title: str) -> Generator[None]:
 
     If the block raises, the failure message
     (``❌ Failed: <title without symbol and dots>``) is written to the
-    error stream and the exception is raised again. Nothing is written
-    otherwise: use it in a task that writes its own progress messages
-    with ``say``; use ``step`` for a block with a start and a done
-    message.
+    error stream and the exception is raised again. Only an
+    ``Exception`` is reported: ``KeyboardInterrupt`` goes through.
+    Nothing is written otherwise: use it in a task that writes its own
+    progress messages with ``say``; use ``step`` for a block with a
+    start and a done message.
 
     Args:
         c: The invoke context.
@@ -213,11 +213,11 @@ def step(c: Context, start: str, done: str | None = None) -> Generator[None]:
 
     The start message is written when the block is entered and the done
     message (if there is one) when it exits normally. If the block
-    raises, a failure
-    message (``❌ Failed: <start message without symbol and dots>``) is
+    raises, a failure message
+    (``❌ Failed: <start message without symbol and dots>``) is
     written to the error stream instead and the exception is raised
     again, so that a failed step is visible and not only the output of
-    the tool.
+    the tool (see ``report_failure``).
 
     Args:
         c: The invoke context.

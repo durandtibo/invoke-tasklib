@@ -1,4 +1,8 @@
-r"""Security scanning tasks."""
+r"""Security scanning task (``security.audit``).
+
+The audit is read-only: it exports the lock file to a temporary file and
+never changes the environment or a tracked file.
+"""
 
 from __future__ import annotations
 

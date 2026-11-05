@@ -14,8 +14,8 @@
 invoke types.check
 ```
 
-This runs `ty check`, or the checker of `types.checker` in the [config](config.md): `pyright` or `mypy`
-(`mypy` must be a dependency of the project).
+This runs `ty check`, or the checker of `tasklib.types.checker` in the [config](config.md):
+`pyright` or `mypy` (`mypy` must be a dependency of the project).
 
 Pass `--complete` to also run [pyright](https://microsoft.github.io/pyright/) after the checker (slower,
 more thorough; nothing more if the checker is `pyright`):

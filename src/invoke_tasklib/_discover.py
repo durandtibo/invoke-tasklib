@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from importlib.machinery import ModuleSpec
 
 IGNORED_MODULES = frozenset({"__main__"})
+r"""The modules that the discovery leaves out (``__main__``, which runs
+a program when imported)."""
 
 
 def find_spec(name: str) -> ModuleSpec | None:

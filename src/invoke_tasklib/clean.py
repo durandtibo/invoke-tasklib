@@ -1,4 +1,10 @@
-r"""Cleanup tasks."""
+r"""Cleanup tasks (``clean.*``).
+
+The tasks remove generated files: build outputs, caches, coverage
+reports, the built documentation and the ``__pycache__`` directories. A
+task stays inside the project, keeps what git tracks, and has a ``--dry-
+run`` option that lists what it would remove.
+"""
 
 from __future__ import annotations
 
@@ -25,11 +31,26 @@ NAMESPACE = "clean"
 r"""The name of the namespace of the tasks of this module."""
 
 _DIRS = tuple(sorted(CACHE_DIRS | {"build", "dist", "htmlcov"}))
+r"""The top-level directories that ``clean.all`` removes (the tracked
+ones are kept)."""
+
 _DIR_GLOBS = ("*.egg-info", "src/*.egg-info")
+r"""The patterns of the directories that ``clean.all`` removes."""
+
 _FILES = (".coverage", "coverage.xml")
+r"""The files that ``clean.all`` removes (the tracked ones are kept)."""
+
 _FILE_GLOBS = (".coverage.*",)
+r"""The patterns of the files that ``clean.all`` removes."""
+
 _SITE_DIR = "site"
+r"""The default directory of the built documentation."""
+
 _MKDOCS_CONFIGS = ("mkdocs.yml", "docs/mkdocs.yml")
+r"""The places of a MkDocs config file, used if the config is not
+valid."""
+
+# The ``site_dir`` line of a MkDocs config file.
 _SITE_DIR_PATTERN = re.compile(r"^site_dir:[ \t]*(?P<value>[^#\n]*)", re.MULTILINE)
 
 

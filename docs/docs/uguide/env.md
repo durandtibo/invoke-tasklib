@@ -22,8 +22,8 @@ invoke env.create-venv
 
 Creates (or recreates) a `.venv` with `uv venv`, using the `package.python_version` from the
 [resolved config](config.md) if it is set (`--python`), and the version that `uv` chooses otherwise
-(the `.python-version` file, then `requires-python`), and then runs [`env.install`](#installing-dependencies) (`uv sync`), so
-the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
+(the `.python-version` file, then `requires-python`), and then runs
+[`env.install`](#installing-dependencies) (`uv sync`), so the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
 imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
 available (for example through `uv tool install invoke`) to run it. Use `env.install` to choose
 the dependency groups.
@@ -41,10 +41,11 @@ the dependency groups.
 invoke env.install
 ```
 
-Runs `uv sync`, which also installs the package itself in editable mode. If the project has a `uv.lock`,
-the task passes `--locked`, which fails if the lock file is out of date with `pyproject.toml` instead of
-silently using it (run `uv lock` to refresh it). Without a `uv.lock` (common for libraries), the task says
-so, and `uv sync` resolves the dependencies and creates the file.
+Runs `uv sync`, which also installs the package itself in editable mode. If the project has a
+`uv.lock`, the task passes `--locked`, which fails if the lock file is out of date with
+`pyproject.toml` instead of silently using it (run `uv lock` to refresh it). Without a `uv.lock`
+(common for libraries), the task says so, and `uv sync` resolves the dependencies and creates the
+file.
 
 | Flag              | Default                          | Adds to `uv sync`                               |
 | ----------------- | -------------------------------- | ----------------------------------------------- |
@@ -73,8 +74,9 @@ invoke env.update
 ```
 
 Runs `uv lock --upgrade`, updates the pre-commit hooks (`pre-commit autoupdate`, only if the
-project has a `.pre-commit-config.yaml` file), and reinstalls the project with the groups from `--groups` (default:
-the [resolved config](config.md)'s `groups.update`, `"dev,docs"` unless overridden).
+project has a `.pre-commit-config.yaml` file; otherwise a `⏭️` line says so), and reinstalls the
+project with the groups from `--groups` (default: the [resolved config](config.md)'s
+`groups.update`, `"dev,docs"` unless overridden).
 
 ```shell
 invoke env.update --groups dev,docs,test
@@ -103,9 +105,10 @@ invoke env.check-tools
 ```
 
 `env.check-tools` gives a single view of the tools that the tasks run: the programs (`uv`, `uvx`,
-`git`, `ruff`, `ty`, `pyright`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`,
+`git`, `ruff`, `ty`, `pyright`, `mypy`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`,
 `mkdocs`, `mike`) and the Python modules of the interpreter (`pytest`, `coverage`, `xdoctest`,
-`pytest_timeout`, `pytest_cov`, `pytest_benchmark`). Each tool has one line, with its path when it is available:
+`pytest_timeout`, `pytest_cov`, `pytest_benchmark`). Each tool has one line, with its path when it
+is available:
 
 ```text
 ✅ ruff: /project/.venv/bin/ruff

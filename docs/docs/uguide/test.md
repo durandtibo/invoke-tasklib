@@ -61,9 +61,9 @@ blocks is still visited but simply reports zero tests, so it always "passes".
 The task reports the number of files it checks: the files of `--paths` when it is set, otherwise
 every markdown file of the project. As for the shell scripts (see [Format](format.md)), the files are
 the ones that git lists in a git work tree, so the rules of `.gitignore` are followed and a package
-named `build` or `site` is not skipped; outside a git work tree a walk skips the `.git`, `.venv`,
-`.pytest_cache`, `node_modules`, `build`, `dist`, `site`, `htmlcov`, `.tox`, `.nox`, `.mypy_cache`
-and `.ruff_cache` directories.
+named `build` or `site` is not skipped; outside a git work tree a walk skips the directories of the
+environments and of the caches of the tools, and `build`, `dist`, `site` and `htmlcov` (the
+complete list is in [Format](format.md#shell-scripts)).
 
 ## Running Tests by Scope
 
@@ -124,10 +124,11 @@ was run before.
 invoke test.coverage-report
 ```
 
-Runs `python -m coverage` (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (`.coverage`)
-is currently on disk — the data produced by an earlier `--cov` run — without re-running the tests.
-The report goes to the directory of the `html:<dir>` value of `test.cov_reports` if there is one, else to the
-`directory` of `[tool.coverage.html]` in `pyproject.toml`, else to `htmlcov/`.
+Runs `python -m coverage` (the interpreter of the tests) to regenerate the HTML report and prints
+the terminal summary from whatever coverage data (`.coverage`) is currently on disk — the data
+produced by an earlier `--cov` run — without re-running the tests. The report goes to the directory
+of the `html:<dir>` value of `test.cov_reports` if there is one, else to the `directory` of
+`[tool.coverage.html]` in `pyproject.toml`, else to `htmlcov/`.
 Pass `--open-browser` to also open its `index.html` in your default browser:
 
 ```shell
@@ -140,11 +141,12 @@ invoke test.coverage-report --open-browser
 invoke test.benchmark
 ```
 
-Runs `pytest --benchmark-only --benchmark-enable` against `paths.benchmarks` (`--benchmark-enable` measures even if
-the pytest config has `--benchmark-disable` in `addopts`, which this repository uses so that a normal test run
-executes each benchmark once). This requires
-[`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task fails with the exit code 1 if `paths.benchmarks` does not exist
-(and `--paths` is not given): it is run on purpose, so a scheduled job does not pass without measuring.
+Runs `pytest --benchmark-only --benchmark-enable` against `paths.benchmarks` (`--benchmark-enable`
+measures even if the pytest config has `--benchmark-disable` in `addopts`, which this repository
+uses so that a normal test run executes each benchmark once). This requires
+[`pytest-benchmark`](https://pytest-benchmark.readthedocs.io/) to be installed. The task fails with
+the exit code 1 if `paths.benchmarks` does not exist (and `--paths` is not given): it is run on
+purpose, so a scheduled job does not pass without measuring.
 
 `test.benchmark`, `test.doctest-src` and `test.doctest-markdown` take `--args` and `--paths`, and
 `test.coverage-report` takes `--args` (for example `--fail-under=90`).

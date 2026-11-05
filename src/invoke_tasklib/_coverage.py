@@ -18,12 +18,12 @@ class CoverageOutputs(NamedTuple):
     r"""The files of the XML, JSON and LCOV reports requested."""
 
 
-# The default file of the reports that write a file, by format.
 COVERAGE_FILE_REPORTS: dict[str, str] = {
     "xml": "coverage.xml",
     "json": "coverage.json",
     "lcov": "coverage.lcov",
 }
+r"""The default file of the reports that write a file, by format."""
 
 
 def _coverage_option(section: str, key: str, pyproject: Mapping[str, Any]) -> str | None:

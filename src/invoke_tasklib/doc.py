@@ -1,4 +1,12 @@
-r"""Documentation build and publishing tasks (mkdocs and mike)."""
+r"""Documentation build and publishing tasks (``doc.*``).
+
+``doc.build`` and ``doc.serve`` run mkdocs on the config file of
+``tasklib.paths.docs_config``; ``doc.publish-dev`` and ``doc.publish-
+latest`` deploy the versioned documentation with mike. A project without
+documentation can use all the other tasks: only these tasks read
+``paths.docs_config``, and they exit with the code 2 when the file does
+not exist.
+"""
 
 from __future__ import annotations
 
@@ -23,9 +31,14 @@ r"""The name of the namespace of the tasks of this module."""
 _VERSION_PATTERN = re.compile(
     r"v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:\.\d+)*(?P<rest>.*)"
 )
+r"""A version or a version tag: ``<major>.<minor>[.<patch>]``, an
+optional leading ``v``, and a suffix (``rest``)."""
+
 _PRERELEASE_PATTERN = re.compile(
     r"[-._]?(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?![a-z])", re.IGNORECASE
 )
+r"""The start of the suffix of a pre-release version (``rc1``,
+``-dev``)."""
 
 
 class _Version(NamedTuple):

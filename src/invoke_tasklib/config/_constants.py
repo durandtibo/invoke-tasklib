@@ -11,8 +11,8 @@ r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 COV_REPORTS: frozenset[str] = frozenset(
     {"html", "xml", "json", "lcov", "annotate", "term", "term-missing"}
 )
-r"""The valid values of ``test.cov_reports`` (the formats of ``--cov-
-report`` of pytest-cov)."""
+r"""The valid formats of ``test.cov_reports`` (the formats of the
+``--cov-report`` option of pytest-cov)."""
 
 TYPE_CHECKERS: tuple[str, ...] = ("ty", "pyright", "mypy")
 r"""The valid values of ``types.checker``: the type checkers that

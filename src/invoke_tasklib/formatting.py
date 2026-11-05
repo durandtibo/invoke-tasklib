@@ -1,7 +1,15 @@
-r"""Code and docstring formatting tasks.
+r"""Code, docstring and shell script formatting tasks (``format.*``).
+
+The Python code is formatted with ruff, the docstrings with docformatter
+and the shell scripts with shellcheck and shfmt.
 
 Naming convention: ``check_<target>`` tasks are read-only (they fail
 without modifying files); ``fix_<target>`` tasks modify files in place.
+Every ``fix_<target>`` has a matching ``check_<target>`` (the lint of
+the shell scripts, ``check_shell``, has no fixer).
+
+The module is named ``formatting`` so that it does not shadow the
+``format`` builtin; its namespace is ``format``, see ``NAMESPACE``.
 """
 
 from __future__ import annotations
@@ -177,6 +185,11 @@ def _run_shell_tool(
 def check_shell(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check shell scripts with shellcheck.
 
+    The scripts are the ``*.sh`` files of the project (the files that
+    git tracks, or all the files outside the excluded directories
+    when the project is not a git work tree). If there is none, the
+    task prints a ``⏭️`` line and succeeds. The files are not modified.
+
     Args:
         c: The invoke context.
         args: Extra arguments passed to shellcheck.
@@ -193,7 +206,8 @@ def check_shell_format(c: Context, *, args: str | None = None, paths: str | None
 
     It is the read-only counterpart of ``format.fix-shell``: ``shfmt
     -d`` prints a diff and fails if a script would be reformatted,
-    but never changes a file.
+    but never changes a file. Like ``format.check-shell``, it skips
+    (and succeeds) when the project has no ``*.sh`` file.
 
     Args:
         c: The invoke context.
@@ -208,6 +222,10 @@ def check_shell_format(c: Context, *, args: str | None = None, paths: str | None
 @task(help=TOOL_HELP)
 def fix_shell(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Format shell scripts in place with shfmt.
+
+    It runs ``shfmt -l -w`` on the ``*.sh`` files of the project, so
+    it lists the files that it rewrites. It skips (and succeeds) when
+    there is no script.
 
     Args:
         c: The invoke context.

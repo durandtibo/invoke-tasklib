@@ -132,8 +132,9 @@ def _check_keys(section: str, user: Mapping[str, object], valid: Iterable[str]) 
 
     Args:
         section: The name of the section (``package``, ``paths``,
-            ``groups`` or ``test``), used in the error message. An
-            empty string stands for the ``tasklib`` section itself.
+            ``groups``, ``test``, ``types``, ``check`` or ``fix``),
+            used in the error message. An empty string stands for the
+            ``tasklib`` section itself.
         user: The user values of the section.
         valid: The valid keys of the section.
 
@@ -331,7 +332,9 @@ def _validate_int(path: str, value: object, *, minimum: int, maximum: int | None
 
 
 def _validate_str(path: str, value: object) -> str:
-    r"""Validate a string value of the ``package`` or ``paths`` section.
+    r"""Validate a non-empty string value of the config.
+
+    It checks ``package.name`` and the keys of the ``paths`` section.
 
     Args:
         path: The dotted name of the config key, used in the error

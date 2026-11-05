@@ -40,6 +40,7 @@ project imports one namespace and gets a consistent set of `invoke` commands.
 - [Get Started](get_started.md)
 - [User Guide](uguide/index.md)
 - [Config](uguide/config.md)
+- [Writing a Custom Task](uguide/custom_tasks.md)
 - [Troubleshooting](troubleshooting.md)
 
 ## Why invoke-tasklib?
@@ -70,7 +71,27 @@ tasklib:
     name: my_package
 ```
 
-See the [user guide](uguide/config.md) for the full config schema.
+See the [user guide](uguide/config.md) for the full config schema. Every key can also be set with
+an `INVOKE_TASKLIB_<SECTION>_<KEY>` environment variable (for example `INVOKE_TASKLIB_PATHS_SRC`),
+and an editor can check the file against the [JSON schema](schema.json).
+
+A project that needs fewer tasks, or tasks of its own, builds the namespace with
+`make_ns(exclude=[...])` or `make_ns(include=[...])`, see
+[Writing a Custom Task](uguide/custom_tasks.md).
+
+## Conventions of the Tasks
+
+- **`check_<target>` never modifies a file and `fix_<target>` does.** `check.all` runs the
+  read-only checks of the project and `fix.all` the fixers; the [Check](uguide/check.md) and
+  [Fix](uguide/fix.md) pages list their steps.
+- **Every tool is looked up before it runs.** A missing program or Python module is reported with
+  the command that installs it (exit code `127`), and a composite task reports all the missing
+  tools of its steps at once.
+- **Exit codes:** `0` the task passed, or had nothing to do (a `⏭️` line says why); `1` the checked
+  thing failed; `2` invalid usage or config (the message names the key); `127` a tool is missing.
+- **Extra arguments:** the tasks that run a tool take `--args` and, for the tasks that work on
+  files, `--paths`, see
+  [Passing Arguments to the Tools](uguide/index.md#passing-arguments-to-the-tools).
 
 ## Features
 
