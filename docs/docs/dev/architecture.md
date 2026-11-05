@@ -180,16 +180,16 @@ No import breaks the rule; the test fails if one appears.
 These are the properties that the package guarantees to a project that uses it. The last column
 says what enforces each one.
 
-| #   | Property               | Statement                                                                                                                  | Enforced by                                                 |
-| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| P1  | One entry point        | The config is read with `load_config`, a command runs through `runner.run` or `capture`, a message goes through `output`.  | `test_architecture.py` (AST scan of `src/`)                 |
-| P2  | Read-only is read-only | `check_<x>`, `check.all`, `test.*`, `types.check`, `imports.*`, `security.audit` and `config.show` change no tracked file. | `tests/integration/test_read_only.py`                       |
-| P4  | Exit codes             | `0` pass or nothing to do, `1` the checked thing failed, `2` invalid usage or config, `127` a tool or module is missing.   | `tests/integration/test_exit_codes.py`                      |
-| P5  | Fail before acting     | An unknown key, an invalid value or a wrong working directory exits with `2` before any command runs.                      | `config/_validate.py`; `tests/unit/config/`                 |
-| P7  | Commands are data      | A task builds one command string from the config and the options, and every user value is quoted.                          | `runner.build_command`; `tests/integration/test_quoting.py` |
-| M1  | Layers                 | See the previous section.                                                                                                  | `test_architecture.py`                                      |
-| M2  | Public means documented | A name of `config`, `runner`, `tools` or `output` is public only if it is in the `__all__` of its module and in `uguide/custom_tasks.md`. Everything else starts with `_`. | `test_architecture.py` |
-| M3  | Every function tested  | Every function, private ones included, has a docstring and a unit test. Coverage is 100%.                                  | `test_docstrings.py`, `--cov-fail-under=100`                |
+| #   | Property                | Statement                                                                                                                                                                  | Enforced by                                                 |
+| --- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| P1  | One entry point         | The config is read with `load_config`, a command runs through `runner.run` or `capture`, a message goes through `output`.                                                  | `test_architecture.py` (AST scan of `src/`)                 |
+| P2  | Read-only is read-only  | `check_<x>`, `check.all`, `test.*`, `types.check`, `imports.*`, `security.audit` and `config.show` change no tracked file.                                                 | `tests/integration/test_read_only.py`                       |
+| P4  | Exit codes              | `0` pass or nothing to do, `1` the checked thing failed, `2` invalid usage or config, `127` a tool or module is missing.                                                   | `tests/integration/test_exit_codes.py`                      |
+| P5  | Fail before acting      | An unknown key, an invalid value or a wrong working directory exits with `2` before any command runs.                                                                      | `config/_validate.py`; `tests/unit/config/`                 |
+| P7  | Commands are data       | A task builds one command string from the config and the options, and every user value is quoted.                                                                          | `runner.build_command`; `tests/integration/test_quoting.py` |
+| M1  | Layers                  | See the previous section.                                                                                                                                                  | `test_architecture.py`                                      |
+| M2  | Public means documented | A name of `config`, `runner`, `tools` or `output` is public only if it is in the `__all__` of its module and in `uguide/custom_tasks.md`. Everything else starts with `_`. | `test_architecture.py`                                      |
+| M3  | Every function tested   | Every function, private ones included, has a docstring and a unit test. Coverage is 100%.                                                                                  | `test_docstrings.py`, `--cov-fail-under=100`                |
 
 The tool tables are kept consistent by the same test module: every program and module named by a
 step of `check.STEPS` or `fix.STEPS` is in `tools.TOOLS`.

@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 NAMESPACE = "format"
 r"""The name of the namespace of the tasks of this module."""
 
-
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
 def check_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
     r"""Check code format with ruff without modifying files.

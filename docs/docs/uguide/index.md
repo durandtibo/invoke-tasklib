@@ -131,11 +131,11 @@ arguments and the paths are quoted, so they are never interpreted by the shell.
 
 One rule says what a task does when a path of the [config](config.md) does not exist:
 
-| Kind of path                                                            | When it is missing                                       | Examples                                                                     |
-| ----------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| A directory the task may legitimately not have                          | `⏭️` message naming the directory, exit code `0`         | `paths.unit_tests`, `paths.integration_tests`, `paths.functional_tests`      |
-| A path the task is about                                                | Exit code `2`, the message names the key                 | `paths.src` (`test.doctest-src`, `format.*-docstrings`), `paths.docs_config` |
-| The only input of a task that produces a measurement                    | Exit code `1`                                            | `paths.benchmarks` (`test.benchmark`)                                        |
+| Kind of path                                         | When it is missing                               | Examples                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| A directory the task may legitimately not have       | `⏭️` message naming the directory, exit code `0` | `paths.unit_tests`, `paths.integration_tests`, `paths.functional_tests`      |
+| A path the task is about                             | Exit code `2`, the message names the key         | `paths.src` (`test.doctest-src`, `format.*-docstrings`), `paths.docs_config` |
+| The only input of a task that produces a measurement | Exit code `1`                                    | `paths.benchmarks` (`test.benchmark`)                                        |
 
 A path given with `--paths` is never checked by the task: the tool reports it. In `check.all` a
 skipped directory is a skipped step, not a failure.
