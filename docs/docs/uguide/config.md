@@ -213,6 +213,8 @@ An invalid value exits with code 2 and a one-line message, like an invalid `invo
 spellings work for a string value in `invoke.yaml`. A collection built by hand (`Collection(lint, ...)`) has no defaults, so it does
 not read the environment variables unless you call
 `ns.configure({"tasklib": invoke_tasklib.config.default_config()})`.
+`default_config()` holds an empty placeholder for every key, not its default: read the config with
+`load_config` (or see it with `inv config.show`), not from `c.config.tasklib`.
 
 ## Minimal Config
 

@@ -352,16 +352,17 @@ def default_config() -> dict[str, dict[str, object]]:
     environment variables, for example ``INVOKE_TASKLIB_PATHS_SRC``.
     Invoke only reads an environment variable for a key that exists in
     the defaults. Invoke casts the variable to the type of the default,
-    and it reads any text but ``0`` as true for a boolean, so the
-    booleans and the integers are registered with an ``Unset``: the text
-    is kept and parsed by the validation. The real defaults stay in
-    ``SCHEMA``.
+    and it reads any text but ``0`` as true for a boolean, so every key
+    is registered with an ``Unset``, which is a string: the text is
+    kept and parsed by the validation. The real defaults stay in
+    ``SCHEMA``, where ``get_config`` and the JSON schema read them.
+    Read the config with ``load_config``, not from ``c.config``: it
+    holds an ``Unset`` for a key that no source sets.
 
     Returns:
         A new dict with the ``package``, ``paths``, ``groups``,
-        ``test``, ``check`` and ``fix`` sections, each with the default
-        of every key of ``SCHEMA``, except that a boolean or an integer
-        is an ``Unset``.
+        ``test``, ``types``, ``check`` and ``fix`` sections, with an
+        ``Unset`` for every key of ``SCHEMA``.
 
     Example usage:
 
@@ -370,26 +371,21 @@ def default_config() -> dict[str, dict[str, object]]:
     >>> sorted(default_config())
     ['check', 'fix', 'groups', 'package', 'paths', 'test', 'types']
     >>> default_config()["groups"]
-    {'install': 'dev', 'update': 'dev,docs'}
-    >>> default_config()["test"]["xdoctest"] == ""
-    True
+    {'install': '', 'update': ''}
 
     ```
     """
-    return {
-        section: {key: _untyped(option.default) for key, option in options.items()}
-        for section, options in SCHEMA.items()
-    }
+    return {section: {key: Unset() for key in options} for section, options in SCHEMA.items()}
 
 
 class Unset(str):
-    r"""The placeholder of a boolean or an integer that no source sets.
+    r"""The placeholder of a key that no source sets.
 
-    It is registered as the default of such a key, instead of ``None``,
-    so a ``null`` that a user writes in ``invoke.yaml`` can be told
-    from "not set". It is a ``str``, so Invoke does not cast the text
-    of an environment variable to the type of the default: the text is
-    kept and parsed by the validation.
+    It is registered as the default of every key, instead of the real
+    default, so a ``null`` that a user writes in ``invoke.yaml`` can be
+    told from "not set". It is a ``str``, so Invoke does not cast the
+    text of an environment variable to the type of the default: the
+    text is kept and parsed by the validation.
 
     Example usage:
 
@@ -402,31 +398,6 @@ class Unset(str):
     """
 
     __slots__ = ()
-
-
-def _untyped(default: object) -> object:
-    r"""Hide the type of a default from Invoke.
-
-    Args:
-        default: The default value of a key.
-
-    Returns:
-        An ``Unset`` if the default is a boolean or an integer, so that
-        Invoke does not cast an environment variable to that type,
-        else ``default`` unchanged.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.config._schema import _untyped
-    >>> type(_untyped(True)).__name__
-    'Unset'
-    >>> _untyped("tests")
-    'tests'
-
-    ```
-    """
-    return Unset() if isinstance(default, int) else default
 
 
 def json_schema() -> dict[str, Any]:
