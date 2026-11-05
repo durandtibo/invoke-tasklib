@@ -81,8 +81,9 @@ Seven small modules support the task modules:
   uses a pty only on a terminal. `capture(c, command)` is `run` for a command whose output the task
   reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
   `in_ci()` and `in_github_actions()` are the only readers of `CI` and `GITHUB_ACTIONS`.
-  `build_command` builds a command line and quotes the arguments, and
-  `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options, and `TOOL_HELP`
+  `build_command` builds the list of the words of a command (the words, the split `--args`, the
+  paths), `run` is the only place that turns the list into a shell line (`shlex.join`) and it
+  rejects a string, and `ARGS_HELP`/`PATHS_HELP` are the help of the `--args` and `--paths` options, and `TOOL_HELP`
   is the `help` of a task that has both.
 - `tools.py`: finds the tools that the tasks run: `find_tool` looks a program up on the `PATH` or
   a module up for the running interpreter, `check_program` checks the first word of a command (and
@@ -192,7 +193,7 @@ its maintainers (`M1`-`M5`). The last column says what enforces each one; a prop
 | P4  | Exit codes              | `0` pass, or nothing to do (a `⏭️` line says why); `1` the checked thing failed; `2` invalid usage or config; `127` a tool or module is missing. The failure line is `❌ Failed: <what>` on stderr. With `--keep-going`, every step runs and every failure of an `Exception` is listed in the summary.                                                                                                                                   | `tests/integration/test_exit_codes.py`                                                                           |
 | P5  | Fail before acting      | An unknown key, an invalid value or a wrong working directory exits with `2` before any command runs. The message names the key.                                                                                                                                                                                                            | `config/_validate.py`, `_check_project_root`; `tests/unit/config/`                                               |
 | P6  | Missing tools           | A missing program or Python module is reported with the command that installs it. A composite task reports all the missing tools of its steps at once, and runs nothing.                                                                                                                                                                    | `tools.hint`, `_steps.preflight_message`; `tests/unit/test_check.py`                                             |
-| P7  | Commands are data       | A task builds one command string from the config and the options. Every user value is quoted: a space, `;`, `*`, `~` or `$VAR` reaches the tool unchanged.                                                                                                                                                                                  | `runner.build_command`; `tests/integration/test_quoting.py`; `_commands(c) == [...]` in unit tests               |
+| P7  | Commands are data       | A task builds a command as a list of words; `runner.run` is the only place that turns it into a shell line (`shlex.join`) and it rejects a string. A space, `;`, `*`, `~` or `$VAR` in a user value reaches the tool unchanged.                                                                                                             | `test_architecture.py` (no `shlex.quote` or `shlex.split` outside `runner.py`); `tests/integration/test_quoting.py` |
 | P8  | One source of truth     | A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`_STEPS`), a directory policy once (`_files`). Defaults, the JSON schema, the hints and the docs tables derive from them.                                                                                                                                      | tests that compare the tables; `test_clean.py` (every directory of `clean._DIRS` is in `EXCLUDED_DIRS`)           |
 | P9  | Safe by default         | A destructive task stays inside the project, keeps what git tracks, and asks before an irreversible step. A credential never appears in a command line or in the output.                                                                                                                                                                    | `clean._is_inside_project`, `release._check_release_state`, `_publish_environment`; `tests/unit/test_release.py` |
 | P10 | Skips are visible       | A task that has nothing to do prints `⏭️ <reason>` and exits `0`. A task that cannot do its job (a path it needs is missing) exits non-zero and names the key.                                                                                                                                                                              | `_files.require_path`; `tests/unit/test__files.py`, `tests/integration/test_files.py`                            |
@@ -222,10 +223,10 @@ test.unit(c, cov=True) is called
     ↓
 load_config(c) resolves package.name and paths.unit_tests
     ↓
-Task builds the pytest command line with build_command (quoted)
+Task builds the pytest command, a list of words, with build_command
     ↓
-runner.run(c, cmd) checks the program (tools.check_program), echoes the command and
-executes it with c.run (pty only on a terminal)
+runner.run(c, cmd) checks the program (tools.check_program), quotes the words (shlex.join),
+echoes the command and executes it with c.run (pty only on a terminal)
 ```
 
 ## Design Decisions

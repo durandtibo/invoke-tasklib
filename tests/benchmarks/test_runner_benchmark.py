@@ -13,5 +13,5 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("count", [100, 10_000])
 def test_build_command_with_many_paths(benchmark: BenchmarkFixture, count: int) -> None:
     paths = " ".join(f"src/pkg/module_{i}.py" for i in range(count))
-    command = benchmark(build_command, "ruff check", paths=paths)
-    assert command.count(" ") == count + 1
+    command = benchmark(build_command, ["ruff", "check"], paths=paths)
+    assert len(command) == count + 2

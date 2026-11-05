@@ -55,7 +55,7 @@ def check_complexity(c, *, args=None, paths=None):
     r"""Check the complexity of the code with radon."""
     cfg = load_config(c)
     with step(c, "🔍 Checking the complexity...", "✅ Complexity check passed"):
-        run(c, build_command("radon cc", args=args, paths=paths, default_paths=[cfg.paths.src]))
+        run(c, build_command(["radon", "cc"], args=args, paths=paths, default_paths=[cfg.paths.src]))
 
 
 ns = make_ns()
@@ -65,11 +65,15 @@ ns.add_task(check_complexity)
 - **Read the config with `load_config(c)`**, not from `c.config`: it merges the defaults, validates
   the values and exits with a one-line message on an invalid config. The `tasklib` section is
   available as `cfg.package`, `cfg.paths`, `cfg.groups`, `cfg.test`, `cfg.check` and `cfg.fix`.
-- **Build the command with `build_command`**: the program is used as it is, and the user's `args`
-  and `paths` (and the default paths) are split like a shell does and quoted, so a space or a `;`
-  never splits or injects a command. For the same reason a glob (`*.py`), `~` or `$HOME` reaches
-  the tool as it is: the shell does not expand it.
-- **Run it with `run`**: it echoes the command, uses a pty only on a terminal, and first checks that
+- **A command is a list of words**, never a string: `["radon", "cc", "src"]`. Do not quote anything
+  and do not split a string yourself. `build_command(words, args=, paths=, default_paths=)` adds
+  the user's `args` and `paths` (and the default paths) to the words; the two options are split like
+  a shell does, each word stays one word.
+- **Run it with `run`**: `run` quotes each word (`shlex.join`) in the only place that builds the shell
+  line, so a space or a `;` never splits or injects a command. For the same reason a glob (`*.py`),
+  `~` or `$HOME` reaches the tool as it is: the shell does not expand it. A string raises a
+  `TypeError`.
+- **`run` also** echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the `PATH` (with an installation hint if it is not). Only the first word of
   the command is checked, so a command that is a pipeline or a list (`a | b`, `a && b`) needs
   `run(c, command, check=False)`. Do not call `c.run` directly. For `python -m <module>`, the module is checked only when the command uses the running
@@ -91,8 +95,8 @@ importers.
 
 ```pycon
 >>> from invoke_tasklib.runner import build_command
->>> build_command("radon cc", args="-s", paths="a.py 'my dir'", default_paths=["src"])
-"radon cc -s a.py 'my dir'"
+>>> build_command(["radon", "cc"], args="-s", paths="a.py 'my dir'", default_paths=["src"])
+['radon', 'cc', '-s', 'a.py', 'my dir']
 
 ```
 
@@ -127,9 +131,9 @@ something else (a CI action, a script) depends on.
 >>> from invoke.context import MockContext
 >>> from invoke_tasklib.runner import run
 >>> c = MockContext(config=Config(), run=True)
->>> _ = run(c, "ls")
+>>> _ = run(c, ["ls", "my dir"])
 >>> c.run.call_args.args[0]
-'ls'
+"ls 'my dir'"
 
 ```
 

@@ -8,11 +8,7 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import make_ns
-from invoke_tasklib.tools import (
-    _UNCHECKED_PROGRAMS,
-    TOOLS,
-    _strip_assignments,
-)
+from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
@@ -54,7 +50,7 @@ def _programs_of(task: Task) -> set[str]:
     c = make_context({"package": {"name": "mypkg"}})
     with contextlib.suppress(Exit):
         task(c)
-    words = (_strip_assignments(shlex.split(command)) for command in commands(c))
+    words = (shlex.split(command) for command in commands(c))
     programs = {w[0] for w in words if w}
     return {p for p in programs if "/" not in p}
 
@@ -66,5 +62,5 @@ def _programs_of(task: Task) -> set[str]:
 
 @pytest.mark.parametrize("name", sorted(_TASKS))
 def test_every_program_of_a_task_has_an_install_hint(name: str) -> None:
-    known = set(TOOLS) | _UNCHECKED_PROGRAMS
+    known = set(TOOLS)
     assert _programs_of(_TASKS[name]) - known == set()

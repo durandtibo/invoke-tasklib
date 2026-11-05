@@ -100,6 +100,17 @@ def _is_c_run(node: ast.expr) -> bool:
     )
 
 
+def _is_shlex_quote_or_split(node: ast.expr) -> bool:
+    r"""Tell if a call is ``shlex.quote()`` or ``shlex.split()``."""
+    func = node.func if isinstance(node, ast.Call) else None
+    return (
+        isinstance(func, ast.Attribute)
+        and func.attr in {"quote", "split"}
+        and isinstance(func.value, ast.Name)
+        and func.value.id == "shlex"
+    )
+
+
 def _is_print(node: ast.expr) -> bool:
     r"""Tell if a call is ``print(...)``."""
     return (
@@ -174,6 +185,26 @@ def _tools_needed(steps: dict) -> set[str]:
 
 def test_no_task_calls_c_run_outside_the_runner() -> None:
     assert _locations(("runner.py",), _is_c_run) == []
+
+
+def test_no_module_quotes_or_splits_a_command_outside_the_runner() -> None:
+    assert _locations(("runner.py",), _is_shlex_quote_or_split) == []
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("shlex.quote(x)", True),
+        ("shlex.split(x)", True),
+        ("shlex.join(x)", False),
+        ("quote(x)", False),
+        ("other.quote(x)", False),
+        ("shlex.quote", False),
+    ],
+)
+def test_is_shlex_quote_or_split(source: str, expected: bool) -> None:
+    node = ast.parse(source, mode="eval").body
+    assert _is_shlex_quote_or_split(node) is expected
 
 
 def test_no_module_calls_print_outside_the_output_module() -> None:
