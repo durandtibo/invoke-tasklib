@@ -11,6 +11,7 @@ from invoke.context import MockContext
 from invoke.exceptions import Exit
 
 from invoke_tasklib import testing as test_tasks
+from invoke_tasklib._files import EXCLUDED_DIRS
 from invoke_tasklib.config import get_config
 from tests.helpers import commands, make_context
 
@@ -766,7 +767,7 @@ def test_find_markdown_files_ignores_other_extensions(tmp_path: Path) -> None:
     assert test_tasks._find_markdown_files(make_context(), tmp_path) == [tmp_path / "d.md"]
 
 
-@pytest.mark.parametrize("excluded", sorted(test_tasks.MARKDOWN_EXCLUDED_DIRS))
+@pytest.mark.parametrize("excluded", sorted(EXCLUDED_DIRS))
 def test_find_markdown_files_does_not_walk_into_excluded_dirs(
     tmp_path: Path, excluded: str
 ) -> None:

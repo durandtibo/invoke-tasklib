@@ -12,7 +12,7 @@ from invoke.tasks import task
 from invoke_tasklib._coverage import coverage_outputs
 from invoke_tasklib._files import project_files
 from invoke_tasklib._pyproject import read_pyproject
-from invoke_tasklib.config import EXCLUDED_DIRS, load_config
+from invoke_tasklib.config import load_config
 from invoke_tasklib.output import report_failure, say, step
 from invoke_tasklib.runner import (
     ARGS_HELP,
@@ -33,23 +33,6 @@ r"""The name of the namespace of the tasks of this module."""
 
 COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
-MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
-    "build",
-    "dist",
-    "site",
-    "htmlcov",
-    ".tox",
-    ".nox",
-    ".mypy_cache",
-    ".ruff_cache",
-}
-r"""Directories that the walk skips when looking for markdown files
-outside a git work tree.
-
-In a git work tree git decides which files are checked (a tracked
-``site/index.md`` is checked), see ``project_files``.
-"""
-
 APPEND_HELP = (
     "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
 )
@@ -119,7 +102,7 @@ def _find_markdown_files(c: Context, root: Path) -> list[Path]:
 
     In a git work tree the files are the ones that git lists (the
     rules of ``.gitignore`` are followed), see ``project_files``.
-    Otherwise the directories in ``MARKDOWN_EXCLUDED_DIRS`` (``.venv``,
+    Otherwise the directories in ``EXCLUDED_DIRS`` (``.venv``,
     ``.git``, ``site``, ...) are not walked into, so a virtual
     environment or a build directory is never traversed.
 
@@ -151,7 +134,7 @@ def _find_markdown_files(c: Context, root: Path) -> list[Path]:
 
     ```
     """
-    return project_files(c, root, ".md", MARKDOWN_EXCLUDED_DIRS)
+    return project_files(c, root, ".md")
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})

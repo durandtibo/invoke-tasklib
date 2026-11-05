@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import re
 
-EXCLUDED_DIRS: frozenset[str] = frozenset({".venv", ".pytest_cache", ".git", "node_modules"})
-r"""Directories that the tasks never walk into (not owned by the
-project)."""
-
 PYTHON_VERSION_PATTERN = re.compile(r"\d+\.\d+(\.\d+)?")
 r"""Pattern of a valid ``package.python_version`` (``3.10`` or
 ``3.10.4``)."""

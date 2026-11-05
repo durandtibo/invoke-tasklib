@@ -6,7 +6,14 @@ from typing import TYPE_CHECKING
 import pytest
 from invoke.runners import Result
 
-from invoke_tasklib._files import _in_git_work_tree, find_files, project_files
+from invoke_tasklib._files import (
+    _ENVIRONMENT_DIRS,
+    _OUTPUT_DIRS,
+    EXCLUDED_DIRS,
+    _in_git_work_tree,
+    find_files,
+    project_files,
+)
 from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
@@ -52,14 +59,10 @@ def test_find_files_skips_excluded_dirs_at_any_depth(tmp_path: Path) -> None:
     assert find_files(tmp_path, ".sh") == [tmp_path / "pkg" / "b.sh"]
 
 
-def test_find_files_uses_the_given_excluded_dirs(tmp_path: Path) -> None:
-    _touch(tmp_path, "build/a.sh", ".venv/b.sh")
-    assert find_files(tmp_path, ".sh", {"build"}) == [tmp_path / ".venv" / "b.sh"]
-
-
-def test_find_files_without_excluded_dirs_walks_everything(tmp_path: Path) -> None:
-    _touch(tmp_path, ".venv/a.sh")
-    assert find_files(tmp_path, ".sh", ()) == [tmp_path / ".venv" / "a.sh"]
+@pytest.mark.parametrize("excluded", sorted(EXCLUDED_DIRS))
+def test_find_files_does_not_walk_into_an_excluded_dir(tmp_path: Path, excluded: str) -> None:
+    _touch(tmp_path, f"pkg/{excluded}/a.sh", "pkg/b.sh")
+    assert find_files(tmp_path, ".sh") == [tmp_path / "pkg" / "b.sh"]
 
 
 def test_find_files_current_directory_has_no_prefix(
@@ -68,12 +71,6 @@ def test_find_files_current_directory_has_no_prefix(
     _touch(tmp_path, "a.sh")
     monkeypatch.chdir(tmp_path)
     assert find_files(Path(), ".sh") == [Path("a.sh")]
-
-
-def test_find_files_does_not_modify_the_excluded_set(tmp_path: Path) -> None:
-    excluded = {"build"}
-    find_files(tmp_path, ".sh", excluded)
-    assert excluded == {"build"}
 
 
 #######################################
@@ -213,8 +210,33 @@ def test_project_files_limits_the_pattern_to_a_root_directory(
 
 
 @pytest.mark.usefixtures("repo")
-def test_project_files_uses_the_given_excluded_dirs_for_the_walk(repo: Path) -> None:
-    _touch(repo, "build/a.sh", ".venv/b.sh")
-    assert project_files(_git_context("", exited=1), Path(), ".sh", {"build"}) == [
-        Path(".venv/b.sh")
-    ]
+def test_project_files_skips_the_output_directories_in_the_walk(repo: Path) -> None:
+    _touch(repo, "build/a.sh", "site/b.sh", "c.sh")
+    assert project_files(_git_context("", exited=1), Path(), ".sh") == [Path("c.sh")]
+
+
+@pytest.mark.parametrize("name", sorted(_ENVIRONMENT_DIRS))
+def test_project_files_leaves_out_an_environment_directory_that_git_lists(
+    repo: Path, name: str
+) -> None:
+    _touch(repo, "a.sh", f"{name}/b.sh")
+    assert project_files(_git_context(f"a.sh\0{name}/b.sh\0"), Path(), ".sh") == [Path("a.sh")]
+
+
+@pytest.mark.parametrize("name", sorted(_OUTPUT_DIRS))
+def test_project_files_keeps_an_output_directory_that_git_lists(repo: Path, name: str) -> None:
+    _touch(repo, f"{name}/a.sh")
+    assert project_files(_git_context(f"{name}/a.sh\0"), Path(), ".sh") == [Path(f"{name}/a.sh")]
+
+
+#####################################
+#     Tests for EXCLUDED_DIRS       #
+#####################################
+
+
+def test_excluded_dirs_is_the_union_of_the_two_groups() -> None:
+    assert EXCLUDED_DIRS == _ENVIRONMENT_DIRS | _OUTPUT_DIRS
+
+
+def test_the_two_groups_of_excluded_dirs_do_not_overlap() -> None:
+    assert set() == _ENVIRONMENT_DIRS & _OUTPUT_DIRS

@@ -6,27 +6,43 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from invoke_tasklib.config import EXCLUDED_DIRS
 from invoke_tasklib.runner import build_command, capture
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
-
     from invoke.context import Context
 
+_ENVIRONMENT_DIRS: frozenset[str] = frozenset(
+    {".git", ".venv", "node_modules", ".pytest_cache", ".tox", ".nox", ".mypy_cache", ".ruff_cache"}
+)
+# The directories of tools and environments: never the files of the
+# project, even when git does not ignore them.
 
-def find_files(root: Path, suffix: str, excluded: Collection[str] = EXCLUDED_DIRS) -> list[Path]:
+_OUTPUT_DIRS: frozenset[str] = frozenset({"build", "dist", "site", "htmlcov"})
+# The directories of build outputs: generated, but a project may track
+# files in them.
+
+EXCLUDED_DIRS: frozenset[str] = _ENVIRONMENT_DIRS | _OUTPUT_DIRS
+r"""The names of the directories that a walk of the file tree never
+enters, at any depth (``find_files``, and ``clean`` for the
+``__pycache__`` directories).
+
+In a git work tree ``project_files`` lets git decide, so only the
+directories of tools and environments are left out there: a tracked
+``build/run.sh`` or ``site/index.md`` is returned.
+"""
+
+
+def find_files(root: Path, suffix: str) -> list[Path]:
     r"""Find the files with a suffix under a root directory.
 
-    The directories named in ``excluded`` (``.venv``, ``.git``, ...) are
-    not walked into, at any depth, so a virtual environment or a build
-    directory is never traversed. It needs no shell, ``find`` or
-    ``xargs``.
+    The directories in ``EXCLUDED_DIRS`` (``.venv``, ``.git``,
+    ``build``, ...) are not walked into, at any depth, so a virtual
+    environment or a build directory is never traversed. It needs no
+    shell, ``find`` or ``xargs``.
 
     Args:
         root: The directory to search.
         suffix: The end of the file names, e.g. ``".md"``.
-        excluded: The names of the directories to skip.
 
     Returns:
         The sorted paths of the files found. They start with ``root``,
@@ -51,7 +67,7 @@ def find_files(root: Path, suffix: str, excluded: Collection[str] = EXCLUDED_DIR
     """
     found: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in excluded]
+        dirnames[:] = [d for d in dirnames if d not in EXCLUDED_DIRS]
         found.extend(Path(dirpath) / name for name in filenames if name.endswith(suffix))
     return sorted(found)
 
@@ -85,9 +101,7 @@ def _in_git_work_tree(root: Path) -> bool:
     return any((directory / ".git").exists() for directory in (start, *start.parents))
 
 
-def project_files(
-    c: Context, root: Path, suffix: str, excluded: Collection[str] = EXCLUDED_DIRS
-) -> list[Path]:
+def project_files(c: Context, root: Path, suffix: str) -> list[Path]:
     r"""Find the files of the project with a suffix under a directory.
 
     In a git work tree the files are the ones that git lists: the
@@ -95,16 +109,16 @@ def project_files(
     rules of ``.gitignore`` are followed (like ``ruff``, ``codespell``
     and ``pre-commit`` do) and there is no list of directories to
     maintain. A tracked file that was deleted is left out, and so is a
-    file in a directory named in ``EXCLUDED_DIRS`` (a virtual
-    environment that is not ignored). Outside a git work tree, or
-    without ``git``, the files are found by a walk, see ``find_files``,
-    which skips the directories named in ``excluded``.
+    file in the directory of a tool or an environment (``.venv``,
+    ``node_modules``, ...) that is not ignored. A tracked file in
+    ``build`` or ``site`` is kept. Outside a git work tree, or without
+    ``git``, the files are found by a walk, see ``find_files``, which
+    skips every directory of ``EXCLUDED_DIRS``.
 
     Args:
         c: The invoke context.
         root: The directory to search.
         suffix: The end of the file names, e.g. ``".md"``.
-        excluded: The names of the directories that the walk skips.
 
     Returns:
         The sorted paths of the files found. They start with ``root``,
@@ -123,15 +137,15 @@ def project_files(
     ```
     """
     if not _in_git_work_tree(root):
-        return find_files(root, suffix, excluded)
+        return find_files(root, suffix)
     pattern = f"*{suffix}" if root == Path() else f"{root.as_posix()}/*{suffix}"
     command = build_command(
         "git ls-files -z --cached --others --exclude-standard --", default_paths=[pattern]
     )
     result = capture(c, command, warn=True, check=False)
     if not result.ok:
-        return find_files(root, suffix, excluded)
+        return find_files(root, suffix)
     found = (Path(name) for name in result.stdout.split("\0") if name)
     return sorted(
-        path for path in found if path.is_file() and not EXCLUDED_DIRS.intersection(path.parts)
+        path for path in found if path.is_file() and not _ENVIRONMENT_DIRS.intersection(path.parts)
     )
