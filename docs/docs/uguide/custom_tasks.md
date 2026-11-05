@@ -28,7 +28,7 @@ More helpers, for a task that needs less common things:
 
 | Helper                                                                    | Use it to                                                            |
 | ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `invoke_tasklib.runner.python_executable`                                 | Get the interpreter that runs Invoke, quoted for a command           |
+| `invoke_tasklib.runner.python_executable`                                 | Get the interpreter that runs Invoke, as a word of a command         |
 | `invoke_tasklib.runner.ARGS_HELP`, `PATHS_HELP`, `TOOL_HELP`              | Reuse the `help` text of the `args` and `paths` options              |
 | `invoke_tasklib.tools.hint`, `not_found_message`, `tool_path`             | Say how to install a tool, or find the `PATH` of the tools           |
 | `invoke_tasklib.tools.Tool`, `TOOLS`                                      | Read the table of the programs and modules that the tasks run        |
@@ -75,7 +75,8 @@ ns.add_task(check_complexity)
   `run(c, command, check=False)`. Do not call `c.run` directly. For `python -m <module>`, the module is checked only when the command uses the running
   interpreter (`python_executable()`, the one that runs `invoke`): for another interpreter or a
   `python` found on the `PATH`, a missing module is reported by Python itself
-  (`No module named ...`), without a hint. Use `python_executable()` in your commands.
+  (`No module named ...`), without a hint. Use `python_executable()` in your commands, as the first word
+  of a list: `run(c, [python_executable(), "-m", "pytest"])` (`run` quotes each word of a list).
 - **Report the step with `step`**: it prints the start message, then the done message, or
   `❌ Failed: <what was being done>` on the error stream (stderr, like the message of an `Exit`) if
   the block raises (the exception is raised again, so the exit code is unchanged). Use `say` for any

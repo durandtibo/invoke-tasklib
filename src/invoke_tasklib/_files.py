@@ -175,7 +175,8 @@ def project_files(c: Context, root: Path, suffix: str) -> list[Path]:
         return find_files(root, suffix)
     pattern = f"*{suffix}" if root == Path() else f"{root.as_posix()}/*{suffix}"
     command = build_command(
-        "git ls-files -z --cached --others --exclude-standard --", default_paths=[pattern]
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--"],
+        default_paths=[pattern],
     )
     result = capture(c, command, warn=True, check=False)
     if not result.ok:

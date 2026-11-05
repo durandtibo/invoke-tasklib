@@ -122,8 +122,8 @@ def test_project_files_walks_outside_a_git_repository(
 def test_shell_tasks_skip_an_ignored_environment_with_any_name(repo: Path) -> None:
     (repo / ".gitignore").write_text("myenv/\n")
     _touch(repo, "run.sh", "myenv/bin/activate.sh")
-    command = formatting._shell_command(subprocess_context(), "shellcheck", None, None)
-    assert command == "shellcheck -- run.sh"
+    command = formatting._shell_command(subprocess_context(), ["shellcheck"], None, None)
+    assert command == ["shellcheck", "--", "run.sh"]
 
 
 def test_markdown_doctests_keep_a_package_named_site(repo: Path) -> None:

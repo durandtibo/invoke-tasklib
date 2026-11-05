@@ -324,7 +324,7 @@ def _has_tracked_files(c: Context, path: Path) -> bool:
     Returns:
         ``True`` if ``git ls-files`` lists at least one file under it.
     """
-    cmd = build_command("git ls-files --", default_paths=[str(path)])
+    cmd = build_command(["git", "ls-files", "--"], default_paths=[str(path)])
     result = capture(c, cmd, warn=True, check=False)
     return bool(result.ok and result.stdout.strip())
 
