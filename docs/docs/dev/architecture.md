@@ -91,7 +91,8 @@ Seven small modules support the task modules:
 - `output.py`: `say(c, message)` prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the `step` context manager prints the start and done messages of a
   step, or a failure message.
-- `_steps.py`: the step runner shared by `check.all` and `fix.all`: the selection of the steps
+- `_steps.py`: the step runner shared by `check.all` and `fix.all` (`run_composite`, called by
+  each of them with its own `STEPS`, valid names and config): the selection of the steps
   (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
   `--keep-going` mode and the final summary of the failures.
 - `_files.py`: `project_files(c, root, suffix)` finds the files with a suffix, with

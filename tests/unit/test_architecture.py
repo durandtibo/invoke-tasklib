@@ -8,7 +8,6 @@ import pytest
 
 from invoke_tasklib import check, fix
 from invoke_tasklib._graph import import_graph, read_sources
-from invoke_tasklib._steps import step_modules, step_programs
 from invoke_tasklib.config import load_config
 from invoke_tasklib.tools import TOOLS
 from tests.helpers import make_context
@@ -141,7 +140,7 @@ def _tools_needed(steps: dict) -> set[str]:
     cfg = load_config(make_context({"package": {"name": "mypkg"}}))
     names: set[str] = set()
     for step in steps.values():
-        names.update(step_programs(step, cfg), step_modules(step, cfg))
+        names.update(*step.needs(cfg))
     return names
 
 

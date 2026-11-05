@@ -15,11 +15,10 @@ from invoke_tasklib._steps import (
     missing_tools,
     parse_steps,
     preflight_message,
+    run_composite,
     run_step,
     run_steps,
     select_steps,
-    step_modules,
-    tasks_of,
 )
 from invoke_tasklib.config import load_config
 from tests.helpers import make_context
@@ -451,22 +450,35 @@ def test_step_keeps_programs_and_modules() -> None:
 
 
 ##############################
-#     Tests for tasks_of     #
+#     Tests for Step.needs   #
 ##############################
 
 
-def test_tasks_of_returns_the_task_of_each_step() -> None:
-    other = Mock()
-    assert tasks_of({"a": Step(_noop), "b": Step(other)}) == {"a": _noop, "b": other}
+def test_needs_returns_the_programs_and_the_modules_as_they_are() -> None:
+    step = Step(_noop, programs=("ruff",), modules=("pytest", "xdoctest"))
+    assert step.needs(_config()) == (("ruff",), ("pytest", "xdoctest"))
 
 
-def test_tasks_of_no_step_is_empty() -> None:
-    assert tasks_of({}) == {}
+def test_needs_of_a_step_without_tools_is_empty() -> None:
+    assert Step(_noop).needs(_config()) == ((), ())
 
 
-###################################
-#     Tests for step_modules      #
-###################################
+def test_needs_calls_the_modules_function_with_the_config() -> None:
+    step = Step(_noop, modules=lambda cfg: ("xdoctest",) if cfg.test.xdoctest else ())
+    assert step.needs(_config(xdoctest=False)) == ((), ())
+
+
+def test_needs_calls_the_programs_function_with_the_config() -> None:
+    step = Step(_noop, programs=lambda cfg: (cfg.types.checker,))
+    assert step.needs(_config()) == (("ty",), ())
+
+
+def test_needs_calls_a_function_each_time() -> None:
+    calls = Mock(return_value=("a",))
+    step = Step(_noop, modules=calls)
+    step.needs(_config())
+    step.needs(_config())
+    assert calls.call_count == 2
 
 
 def _config(*, xdoctest: bool = True) -> TasklibConfig:
@@ -474,23 +486,151 @@ def _config(*, xdoctest: bool = True) -> TasklibConfig:
     return load_config(make_context(tasklib))
 
 
-def test_step_modules_returns_a_tuple_as_it_is() -> None:
-    step = Step(lambda _c: None, modules=("pytest", "xdoctest"))
-    assert step_modules(step, _config()) == ("pytest", "xdoctest")
+###################################
+#     Tests for run_composite     #
+###################################
+
+_STEPS = {
+    "lint": Step(_noop, programs=("ruff",)),
+    "unit": Step(_noop, modules=("pytest",)),
+    "docs": Step(_noop, programs=("mkdocs",)),
+}
 
 
-def test_step_modules_of_a_step_without_modules_is_empty() -> None:
-    assert step_modules(Step(lambda _c: None), _config()) == ()
+def _composite(
+    calls: list[str],
+    *,
+    steps: dict[str, Step] | None = None,
+    configured: tuple[str, ...] = ("lint", "unit"),
+    only: str | None = None,
+    skip: str | None = None,
+    keep_going: bool = False,
+    failing: tuple[str, ...] = (),
+) -> None:
+    r"""Run ``run_composite``, recording the calls in ``calls``."""
+    tasks = _tasks(calls, *failing)
+    chosen = {name: step._replace(task=tasks[name]) for name, step in (steps or _STEPS).items()}
+    run_composite(
+        MockContext(run=True),
+        _config(),
+        chosen,
+        _VALID,
+        configured,
+        only=only,
+        skip=skip,
+        keep_going=keep_going,
+        label="check(s)",
+        messages=_MESSAGES,
+    )
 
 
-def test_step_modules_calls_a_function_with_the_config() -> None:
-    step = Step(lambda _c: None, modules=lambda cfg: ("xdoctest",) if cfg.test.xdoctest else ())
-    assert step_modules(step, _config(xdoctest=False)) == ()
+def _called(
+    *,
+    configured: tuple[str, ...] = ("lint", "unit"),
+    only: str | None = None,
+    skip: str | None = None,
+) -> list[str]:
+    r"""Run ``_composite`` and return the steps called."""
+    calls: list[str] = []
+    _composite(calls, configured=configured, only=only, skip=skip)
+    return calls
 
 
-def test_step_modules_calls_a_function_each_time() -> None:
-    calls = Mock(return_value=("a",))
-    step = Step(lambda _c: None, modules=calls)
-    step_modules(step, _config())
-    step_modules(step, _config())
-    assert calls.call_count == 2
+@pytest.fixture
+def _tools_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff", "mkdocs", "pytest"))
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_runs_the_configured_steps_in_order() -> None:
+    assert _called(configured=("unit", "lint")) == ["unit", "lint"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_only_replaces_the_configured_steps() -> None:
+    assert _called(only="docs") == ["docs"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_only_keeps_the_order_given() -> None:
+    assert _called(only="unit,lint") == ["unit", "lint"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_skip_removes_a_step() -> None:
+    assert _called(skip="unit") == ["lint"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_skip_is_applied_to_only() -> None:
+    assert _called(only="lint,unit", skip="lint") == ["unit"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_rejects_an_unknown_only_step() -> None:
+    with pytest.raises(Exit, match=r"Unknown step \['nope'\] in --only") as info:
+        _composite([], only="nope")
+    assert info.value.code == 2
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_rejects_an_unknown_skip_step() -> None:
+    with pytest.raises(Exit, match=r"Unknown step \['nope'\] in --skip"):
+        _composite([], skip="nope")
+
+
+def test_run_composite_a_missing_tool_runs_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest"))
+    calls: list[str] = []
+    with pytest.raises(Exit, match=r"1 tool\(s\) missing"):
+        _composite(calls)
+    assert calls == []
+
+
+def test_run_composite_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available())
+    with pytest.raises(Exit, match=r"missing") as info:
+        _composite([])
+    assert info.value.code == 127
+
+
+def test_run_composite_lists_a_tool_shared_by_steps_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("pytest"))
+    shared = {"lint": Step(_noop, programs=("ruff",)), "docs": Step(_noop, programs=("ruff",))}
+    with pytest.raises(Exit) as info:
+        _composite([], steps=shared, configured=("lint", "docs"))
+    assert str(info.value) == (
+        "1 tool(s) missing for the selected steps:\n"
+        "  'ruff' was not found on the PATH or next to the Python interpreter. "
+        "Install it with the 'dev' group: `uv sync --group dev`. (needed by: lint, docs)"
+    )
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_does_not_look_up_the_tools_of_skipped_steps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
+    assert _called(skip="unit") == ["lint"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_keep_going_runs_every_step_after_a_failure() -> None:
+    with pytest.raises(Exit, match=r"1 of 2 check\(s\) failed: lint"):
+        _composite([], keep_going=True, failing=("lint",))
+
+
+def test_run_composite_keep_going_skips_the_step_with_a_missing_tool(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
+    calls: list[str] = []
+    with pytest.raises(Exit, match=r"1 of 2 check\(s\) failed: unit"):
+        _composite(calls, keep_going=True)
+    assert calls == ["lint"]
+
+
+@pytest.mark.usefixtures("_tools_found")
+def test_run_composite_says_start_then_done(capsys: pytest.CaptureFixture[str]) -> None:
+    _composite([])
+    assert capsys.readouterr().out == "start\ndone\n"

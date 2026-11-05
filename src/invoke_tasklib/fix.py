@@ -7,15 +7,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib import formatting, lint
-from invoke_tasklib._steps import (
-    Step,
-    missing_tools,
-    parse_steps,
-    run_steps,
-    select_steps,
-    step_programs,
-    tasks_of,
-)
+from invoke_tasklib._steps import Step, run_composite
 from invoke_tasklib.config import FIX_STEPS, load_config
 
 if TYPE_CHECKING:
@@ -84,21 +76,14 @@ def all_(
         UnexpectedExit: If a step fails and ``keep_going`` is not set.
     """
     cfg = load_config(c)
-    steps = select_steps(
-        cfg.fix.tasks,
-        parse_steps("--only", only, FIX_STEPS),
-        parse_steps("--skip", skip, FIX_STEPS),
-    )
-    blocked = {
-        step: missing
-        for step in steps
-        if (missing := missing_tools(step_programs(STEPS[step], cfg), ()))
-    }
-    run_steps(
+    run_composite(
         c,
-        steps,
-        tasks_of(STEPS),
-        blocked,
+        cfg,
+        STEPS,
+        FIX_STEPS,
+        cfg.fix.tasks,
+        only=only,
+        skip=skip,
         keep_going=keep_going,
         label="fix(es)",
         messages=("🔧 Running all the fixes...", "✅ All fixes applied"),
