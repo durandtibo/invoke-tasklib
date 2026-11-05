@@ -23,7 +23,8 @@ core design follows these principles:
 ### 1. Config Resolution
 
 `invoke_tasklib.config.get_config(c)` (implemented in `config/_resolve.py` with `load_config`, and
-re-exported by `config/__init__.py`) is the single source of truth for project-specific values.
+re-exported by `config/__init__.py`; the private attributes of the Invoke config are read in
+`config/_invoke.py` only) is the single source of truth for project-specific values.
 It:
 
 - Reads the `tasklib` key from the Invoke config (`c.config`), which Invoke itself populates from
@@ -201,7 +202,7 @@ its maintainers (`M1`-`M5`). The last column says what enforces each one; a prop
 | M2  | Public means documented | A name of `config`, `runner`, `tools` or `output` is public only if it is in the `__all__` of its module and in `uguide/custom_tasks.md`. Everything else starts with `_`. (The task modules are not covered yet: target state, step 11.)               | `test_architecture.py`                                                                                                   |
 | M3  | Every function tested   | Every function, private ones included, has a docstring, a unit test and, if the unit test patches a collaborator, an integration test. Coverage is 100% (lines and branches). A function has no parameter that every caller passes with the same value. | `test_docstrings.py`, `--cov-fail-under=100`; the last sentence is a review rule                                         |
 | M4  | Cheap to import         | `import invoke_tasklib` stays below 100 ms; `make_ns()` does no I/O.                                                                                                                                                                                    | `tests/benchmarks/test_init_benchmark.py`, nightly `ci-benchmark.yaml`                                                   |
-| M5  | Invoke internals apart  | The private attributes of `invoke.config.Config` are read in one module, `config/_invoke.py`, which warns when one is missing. No other module calls `getattr` or `hasattr` on a config for a name that starts with `_`.                                | not tested (target state, step 7)                                                                                        |
+| M5  | Invoke internals apart  | The private attributes of `invoke.config.Config` are read in one module, `config/_invoke.py`, which warns when one is missing. No other module calls `getattr` or `hasattr` on a config for a name that starts with `_`.                                | `test_architecture.py` (AST scan of `src/` for `getattr`/`hasattr` of a private name)                                    |
 
 The tool tables are kept consistent by the same test module: every program and module named by a
 step of `check.STEPS` or `fix.STEPS` is in `tools.TOOLS`.

@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib.config import SCHEMA, load_config
-from invoke_tasklib.config._resolve import PROJECT_PREFIX_ATTRIBUTE
-from invoke_tasklib.config._schema import Unset
+from invoke_tasklib.config._invoke import ENV_LABEL, is_unset, levels, missing_internals
 from invoke_tasklib.output import say
 
 if TYPE_CHECKING:
@@ -22,22 +21,6 @@ if TYPE_CHECKING:
 
 NAMESPACE = "config"
 r"""The name of the namespace of the tasks of this module."""
-
-LEVELS: tuple[tuple[str, str], ...] = (
-    ("_defaults", "default"),
-    ("_collection", "default"),
-    ("_system", "system config file"),
-    ("_user", "user config file"),
-    ("_project", "project file"),
-    ("_env", "environment variable"),
-    ("_runtime", "runtime config file"),
-    ("_overrides", "override"),
-    ("_modifications", "override"),
-)
-r"""The sources of the config, from the lowest to the highest priority:
-
-the attribute of the invoke config and its label.
-"""
 
 _PLAIN = re.compile(r"[A-Za-z_][A-Za-z0-9_./-]*")
 _KEYWORDS = frozenset({"true", "false", "null", "yes", "no", "on", "off", "y", "n", "~"})
@@ -57,7 +40,7 @@ def show(c: Context) -> None:
     Args:
         c: The invoke context.
     """
-    unknown = _unknown_internals(c.config)
+    unknown = missing_internals(c.config)
     if unknown:
         say(
             c,
@@ -67,38 +50,6 @@ def show(c: Context) -> None:
         )
     for line in _render(load_config(c), c.config):
         say(c, line)
-
-
-def _unknown_internals(config: Config) -> list[str]:
-    r"""List the private attributes of Invoke that this module reads and
-    that the config does not have.
-
-    ``_origin`` and ``_check_project_root`` read them with
-    ``getattr(..., None)`` because Invoke has no public API for them. If
-    a release of Invoke renames one, they would go on without an error:
-    this tells it.
-
-    Args:
-        config: The invoke config.
-
-    Returns:
-        The names of the missing attributes, in the order of ``LEVELS``,
-        then ``_project_prefix``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke.config import Config
-    >>> from invoke_tasklib.show import _unknown_internals
-    >>> _unknown_internals(Config())
-    []
-    >>> _unknown_internals(object())[-1]
-    '_project_prefix'
-
-    ```
-    """
-    names = [attribute for attribute, _ in LEVELS] + [PROJECT_PREFIX_ATTRIBUTE]
-    return [name for name in names if not hasattr(config, name)]
 
 
 def _format_value(value: object) -> str:
@@ -149,7 +100,7 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
 
     Returns:
         The label of the source with the highest priority that sets a
-        value for the key (see ``LEVELS``), with the name of the
+        value for the key (see ``levels``), with the name of the
         variable for an environment variable. If no source sets a
         value, ``"default"`` when the key has a default or the resolved
         value is ``None``, and ``"derived"`` when the value is computed.
@@ -172,11 +123,10 @@ def _origin(config: Config, section: str, key: str, value: object) -> str:
 
     ```
     """
-    for attribute, label in reversed(LEVELS):
-        level = getattr(config, attribute, None)
-        given = level.get("tasklib", {}).get(section, {}).get(key) if level else None
-        if given is not None and not isinstance(given, Unset):
-            if attribute == "_env":
+    for _, label, level in levels(config):
+        given = level.get("tasklib", {}).get(section, {}).get(key)
+        if given is not None and not is_unset(given):
+            if label == ENV_LABEL:
                 return f"{label} INVOKE_TASKLIB_{section.upper()}_{key.upper()}"
             return label
     has_default = SCHEMA[section][key].default is not None
