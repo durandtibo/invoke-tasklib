@@ -2124,7 +2124,7 @@
   </span>
 
 <a href="#invoke_tasklib.runner.PATHS_HELP" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">PATHS_HELP</span> <span class="o">=</span> <span class="s2">"Files or directories to run on, as one string, instead of the default."</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">PATHS_HELP</span> <span class="o">=</span> <span class="s2">"Files or directories to run on, as one string, instead of the default (globs and ~ are passed as they are)."</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2363,7 +2363,10 @@ fixed arguments.</p>
             <td>
               <div class="doc-md-description">
                 <p>Paths of the user, as one string that is split like a
-shell does. They replace <code>default_paths</code>.</p>
+shell does. They replace <code>default_paths</code>. A glob (<code>*</code>)
+or <code>~</code> is quoted, so the tool receives it as it is: it
+is up to the tool to expand a glob, and <code>~</code> is never
+expanded.</p>
               </div>
             </td>
             <td>
@@ -2433,7 +2436,7 @@ one set of arguments, e.g. <code>"--pyright-args"</code>).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>needed.</p>
+                <p>needed, so the shell does not expand a glob, <code>~</code> or <code>$VAR</code>.</p>
               </div>
             </td>
           </tr>
@@ -2469,6 +2472,8 @@ unclosed quote).</p>
 <span class="go">'ruff check .'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s2">"-x"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"src"</span><span class="p">)</span>
 <span class="go">'ruff -x src'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"*.py"</span><span class="p">)</span>
+<span class="go">"ruff '*.py'"</span>
 </code></pre></div>
 
 
@@ -2491,12 +2496,14 @@ unclosed quote).</p>
 
         <p>Check that the programs of a command are available.</p>
 <p>Every command of a pipeline (<code>a | b</code>, <code>a &amp;&amp; b</code>) is checked, and
-the command run by <code>xargs</code> is checked instead of <code>xargs</code>. A
-program is not checked when it is an absolute path (for example the
-running interpreter, see <code>python_executable</code>) or one of
+the command run by <code>xargs</code>, <code>env</code>, <code>sudo</code>, <code>time</code> or
+<code>nice</code> is checked instead of the wrapper. A program is not
+checked when it is a path (for example the running interpreter, see
+<code>python_executable</code>, or <code>~/bin/tool</code>) or one of
 <code>UNCHECKED_PROGRAMS</code> (the shell builtins). The <code>NAME=value</code>
 words before a program are ignored, and so is a command that starts
-a subshell, a group or a substitution (<code>(</code>, <code>{</code>, <code>$(</code>). For
+a subshell, a group, a substitution (<code>(</code>, <code>{</code>, <code>$(</code>) or a
+reserved word of the shell (<code>if</code>, <code>for</code>, <code>!</code>, ...). For
 <code>python -m &lt;module&gt;</code> with the running interpreter, the module is
 checked, and so are the plugins of the pytest options (see
 <code>PLUGIN_OPTIONS</code>).</p>

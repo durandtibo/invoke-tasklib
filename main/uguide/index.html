@@ -2135,7 +2135,8 @@ invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
 <li><code>--paths</code> runs the tool on these files or directories instead of the default ones (the
   project for <code>ruff</code>, <code>paths.src</code> for <code>docformatter</code> and the source doctests, the scope directory
   for <code>pytest</code>, every <code>*.sh</code> file for <code>shellcheck</code> and <code>shfmt</code>, every markdown file for the
-  markdown doctests).</li>
+  markdown doctests). The value is quoted, so a glob (<code>src/*.py</code>) or <code>~</code> reaches the tool as it
+  is: only a tool that expands globs itself (like <code>ruff</code>) handles them.</li>
 </ul>
 <table>
 <thead>

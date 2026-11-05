@@ -2922,7 +2922,18 @@ the formatting, which has the last word on the layout.</p>
                 <span class="p">]</span>
             <span class="p">},</span>
             <span class="s2">"Steps of check.all (comma-separated string or list)."</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">"cov"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.config.Option
+
+
+  
+      dataclass
+   (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
+            <span class="kc">False</span><span class="p">,</span>
+            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span> <span class="s2">"check"</span><span class="p">,</span> <span class="s2">"cov"</span><span class="p">),</span>
+            <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"boolean"</span><span class="p">},</span>
+            <span class="s2">"Run the unit step of check.all with --cov, so cov_fail_under is enforced."</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">},</span>
     <span class="s2">"fix"</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">"tasks"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.config.Option

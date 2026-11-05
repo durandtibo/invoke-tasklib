@@ -1919,7 +1919,7 @@
     <span class="s2">"lint"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint" href="../lint/#invoke_tasklib.lint">lint</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint.check_python" href="../lint/#invoke_tasklib.lint.check_python">check_python</a></span><span class="p">,</span>
     <span class="s2">"types"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.typecheck" href="../types/#invoke_tasklib.typecheck">typecheck</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.typecheck.check" href="../types/#invoke_tasklib.typecheck.check">check</a></span><span class="p">,</span>
     <span class="s2">"imports"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.imports" href="../imports/#invoke_tasklib.imports">imports</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.imports.check_cycles" href="../imports/#invoke_tasklib.imports.check_cycles">check_cycles</a></span><span class="p">,</span>
-    <span class="s2">"unit"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.testing" href="../test/#invoke_tasklib.testing">testing</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.testing.unit" href="../test/#invoke_tasklib.testing.unit">unit</a></span><span class="p">,</span>
+    <span class="s2">"unit"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.check._unit">_unit</span></span><span class="p">,</span>
     <span class="s2">"doctest"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.testing" href="../test/#invoke_tasklib.testing">testing</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.testing.doctest" href="../test/#invoke_tasklib.testing.doctest">doctest</a></span><span class="p">,</span>
     <span class="s2">"shell"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting" href="../format/#invoke_tasklib.formatting">formatting</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting.check_shell" href="../format/#invoke_tasklib.formatting.check_shell">check_shell</a></span><span class="p">,</span>
     <span class="s2">"spelling"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint" href="../lint/#invoke_tasklib.lint">lint</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint.check_spelling" href="../lint/#invoke_tasklib.lint.check_spelling">check_spelling</a></span><span class="p">,</span>
@@ -1963,9 +1963,11 @@
 <code>format-python</code>, <code>format-docstrings</code>, <code>lint</code>, <code>types</code>,
 <code>imports</code> and <code>unit</code>), run in that order. The other steps are
 <code>doctest</code>, <code>shell</code>, <code>spelling</code>, <code>docs</code> and <code>audit</code>. None
-of them modifies a file. By default the first failure stops the
-task; with <code>keep_going</code> every step is run and the failed ones are
-listed at the end.</p>
+of them modifies a file (except the coverage reports of <code>unit</code>
+with <code>tasklib.check.cov</code>, which also enforces
+<code>tasklib.test.cov_fail_under</code>). By default the first failure
+stops the task; with <code>keep_going</code> every step is run and the
+failed ones are listed at the end.</p>
 <p>Before any step is run, the tools that the selected steps need
 (<code>PROGRAMS</code> and <code>MODULES</code>) are looked up and all the missing
 ones are reported at once, with the code 127 and nothing run. With

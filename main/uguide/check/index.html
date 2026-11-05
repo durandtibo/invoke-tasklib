@@ -1867,7 +1867,9 @@ set because they need more tools (<code>shellcheck</code>, <code>codespell</code
 <span class="w">  </span><span class="nt">check</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">format-python</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">lint</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">types</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">unit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">doctest</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">docs</span><span class="p p-Indicator">]</span>
 </code></pre></div>
-<p>None of them modifies a file.</p>
+<p>None of them modifies a file. The exception is the <code>unit</code> step with <code>tasklib.check.cov: true</code>: it
+runs <code>test.unit --cov</code>, which generates the coverage reports and enforces <code>tasklib.test.cov_fail_under</code>
+(without it <code>check</code> never checks the threshold).</p>
 <table>
 <thead>
 <tr>

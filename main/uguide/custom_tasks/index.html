@@ -1914,7 +1914,8 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
   available as <code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code> and <code>cfg.check</code>.</li>
 <li><strong>Build the command with <code>build_command</code></strong>: the program is used as it is, and the user's <code>args</code>
   and <code>paths</code> (and the default paths) are split like a shell does and quoted, so a space or a <code>;</code>
-  never splits or injects a command.</li>
+  never splits or injects a command. For the same reason a glob (<code>*.py</code>), <code>~</code> or <code>$HOME</code> reaches
+  the tool as it is: the shell does not expand it.</li>
 <li><strong>Run it with <code>run</code></strong>: it echoes the command, uses a pty only on a terminal, and first checks that
   the program is on the <code>PATH</code> (with an installation hint if it is not). Do not call <code>c.run</code>
   directly. For <code>python -m &lt;module&gt;</code>, the module is checked only when the command uses the running
