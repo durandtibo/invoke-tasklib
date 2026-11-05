@@ -10,9 +10,10 @@ from invoke.runners import Result
 
 from invoke_tasklib import doc, formatting, testing
 from invoke_tasklib._files import (
-    _ENVIRONMENT_DIRS,
-    _OUTPUT_DIRS,
+    CACHE_DIRS,
+    ENVIRONMENT_DIRS,
     EXCLUDED_DIRS,
+    OUTPUT_DIRS,
     _in_git_work_tree,
     find_files,
     project_files,
@@ -221,7 +222,7 @@ def test_project_files_skips_the_output_directories_in_the_walk(repo: Path) -> N
     assert project_files(_git_context("", exited=1), Path(), ".sh") == [Path("c.sh")]
 
 
-@pytest.mark.parametrize("name", sorted(_ENVIRONMENT_DIRS))
+@pytest.mark.parametrize("name", sorted(CACHE_DIRS | ENVIRONMENT_DIRS))
 def test_project_files_leaves_out_an_environment_directory_that_git_lists(
     repo: Path, name: str
 ) -> None:
@@ -229,7 +230,7 @@ def test_project_files_leaves_out_an_environment_directory_that_git_lists(
     assert project_files(_git_context(f"a.sh\0{name}/b.sh\0"), Path(), ".sh") == [Path("a.sh")]
 
 
-@pytest.mark.parametrize("name", sorted(_OUTPUT_DIRS))
+@pytest.mark.parametrize("name", sorted(OUTPUT_DIRS))
 def test_project_files_keeps_an_output_directory_that_git_lists(repo: Path, name: str) -> None:
     _touch(repo, f"{name}/a.sh")
     assert project_files(_git_context(f"{name}/a.sh\0"), Path(), ".sh") == [Path(f"{name}/a.sh")]
@@ -240,12 +241,22 @@ def test_project_files_keeps_an_output_directory_that_git_lists(repo: Path, name
 #####################################
 
 
-def test_excluded_dirs_is_the_union_of_the_two_groups() -> None:
-    assert EXCLUDED_DIRS == _ENVIRONMENT_DIRS | _OUTPUT_DIRS
+def test_excluded_dirs_is_the_union_of_the_three_groups() -> None:
+    assert EXCLUDED_DIRS == CACHE_DIRS | OUTPUT_DIRS | ENVIRONMENT_DIRS
 
 
-def test_the_two_groups_of_excluded_dirs_do_not_overlap() -> None:
-    assert set() == _ENVIRONMENT_DIRS & _OUTPUT_DIRS
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        (CACHE_DIRS, OUTPUT_DIRS),
+        (CACHE_DIRS, ENVIRONMENT_DIRS),
+        (OUTPUT_DIRS, ENVIRONMENT_DIRS),
+    ],
+)
+def test_the_groups_of_excluded_dirs_do_not_overlap(
+    first: frozenset[str], second: frozenset[str]
+) -> None:
+    assert set() == first & second
 
 
 ###################################
