@@ -156,8 +156,7 @@ r"""Every program and module that the tasks run, by name.
 
 It is the one place to edit to add a tool: ``hint``,
 ``not_found_message``, ``env.check-tools`` and the check of the pytest
-plugins read it. Names are unique across the programs and the
-modules.
+plugins read it. Names are unique across the programs and the modules.
 """
 
 _DEFAULT_HINT = (
