@@ -20,6 +20,7 @@ r"""The name of the namespace of the tasks of this module."""
 COMMANDS: dict[str, str] = {"ty": "ty check", "pyright": "pyright", "mypy": "mypy"}
 r"""The command of each type checker of ``types.checker``."""
 
+
 @task(
     help={
         "complete": "Also run pyright after the checker (slower, more thorough).",
