@@ -1666,6 +1666,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.output.report_failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        report_failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.output.say" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1783,6 +1794,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.output.report_failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        report_failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.output.say" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1888,6 +1910,112 @@
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="invoke_tasklib.output.report_failure" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">invoke_tasklib.output.report_failure</span>
+
+
+<a href="#invoke_tasklib.output.report_failure" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">report_failure</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="collections.abc.Generator">Generator</span></span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Report a failure of a block of a task.</p>
+<p>If the block raises, the failure message
+(<code>❌ Failed: &lt;title without symbol and dots&gt;</code>) is written to the
+error stream and the exception is raised again. Nothing is written
+otherwise: use it in a task that writes its own progress messages
+with <code>say</code>; use <code>step</code> for a block with a start and a done
+message.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>title</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>What was being done, e.g.
+<code>"📦 Installing project dependencies..."</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Yields:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="collections.abc.Generator">Generator</span>[None]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Nothing.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">report_failure</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">report_failure</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"🎨 Checking..."</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">pass</span>
+<span class="gp">...</span>
+</code></pre></div>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
