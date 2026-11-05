@@ -438,6 +438,7 @@ COVERAGE_FILE_REPORTS: dict[str, str] = {
 }
 r"""The default file of the reports that write a file, by format."""
 
+
 def _coverage_option(section: str, key: str, pyproject: Path) -> str | None:
     r"""Read a string option of ``[tool.coverage.<section>]``.
 
