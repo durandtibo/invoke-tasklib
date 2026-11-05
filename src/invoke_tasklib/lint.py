@@ -2,7 +2,6 @@ r"""Lint tasks."""
 
 from __future__ import annotations
 
-import shlex
 from typing import TYPE_CHECKING
 
 from invoke.tasks import task
@@ -49,8 +48,11 @@ def check_python(
     if output_format is None and in_github_actions():
         output_format = "github"
     with step(c, "🔍 Checking code linting with ruff...", "✅ Linting check passed"):
-        option = f" --output-format={shlex.quote(output_format)}" if output_format else ""
-        run(c, build_command(f"ruff check{option}", args=args, paths=paths, default_paths=["."]))
+        option = [f"--output-format={output_format}"] if output_format else []
+        run(
+            c,
+            build_command(["ruff", "check", *option], args=args, paths=paths, default_paths=["."]),
+        )
 
 
 @task(help=TOOL_HELP)
@@ -68,7 +70,10 @@ def fix_python(c: Context, *, args: str | None = None, paths: str | None = None)
         before running this task.
     """
     with step(c, "🔧 Fixing linting issues with ruff...", "✅ Linting fix complete"):
-        run(c, build_command("ruff check --fix", args=args, paths=paths, default_paths=["."]))
+        run(
+            c,
+            build_command(["ruff", "check", "--fix"], args=args, paths=paths, default_paths=["."]),
+        )
 
 
 @task(help=TOOL_HELP)
@@ -85,7 +90,7 @@ def check_spelling(c: Context, *, args: str | None = None, paths: str | None = N
             project (``.``).
     """
     with step(c, "🔤 Checking spelling with codespell...", "✅ Spelling check passed"):
-        run(c, build_command("codespell", args=args, paths=paths, default_paths=["."]))
+        run(c, build_command(["codespell"], args=args, paths=paths, default_paths=["."]))
 
 
 @task(help={"args": ARGS_HELP})
@@ -101,4 +106,4 @@ def pre_commit(c: Context, *, args: str | None = None) -> None:
         The hooks may modify files in place.
     """
     with step(c, "🪝 Running the pre-commit hooks...", "✅ Pre-commit hooks passed"):
-        run(c, build_command("pre-commit run --all-files", args=args))
+        run(c, build_command(["pre-commit", "run", "--all-files"], args=args))

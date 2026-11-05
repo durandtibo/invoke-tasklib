@@ -17,6 +17,8 @@ from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import TOOL_HELP, build_command, run
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from invoke.context import Context
 
 # The name of the namespace of the tasks of this module.
@@ -34,7 +36,12 @@ def check_python(c: Context, *, args: str | None = None, paths: str | None = Non
             project (``.``).
     """
     with step(c, "🎨 Checking code format with ruff...", "✅ Code format check passed"):
-        run(c, build_command("ruff format --check", args=args, paths=paths, default_paths=["."]))
+        run(
+            c,
+            build_command(
+                ["ruff", "format", "--check"], args=args, paths=paths, default_paths=["."]
+            ),
+        )
 
 
 @task(help=TOOL_HELP)
@@ -58,7 +65,7 @@ def check_docstrings(c: Context, *, args: str | None = None, paths: str | None =
     if paths is None:
         require_path(src, "tasklib.paths.src")
     with step(c, "📖 Checking docstring formatting...", "✅ Docstring format check passed"):
-        cmd = "docformatter --config ./pyproject.toml --check"
+        cmd = ["docformatter", "--config", "./pyproject.toml", "--check"]
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
@@ -77,7 +84,7 @@ def fix_python(c: Context, *, args: str | None = None, paths: str | None = None)
         before running this task.
     """
     with step(c, "🎨 Formatting code with ruff...", "✅ Code formatting complete"):
-        run(c, build_command("ruff format", args=args, paths=paths, default_paths=["."]))
+        run(c, build_command(["ruff", "format"], args=args, paths=paths, default_paths=["."]))
 
 
 @task(help=TOOL_HELP)
@@ -103,24 +110,27 @@ def fix_docstrings(c: Context, *, args: str | None = None, paths: str | None = N
     if paths is None:
         require_path(src, "tasklib.paths.src")
     with step(c, "📖 Formatting docstrings...", "✅ Docstring formatting complete"):
-        cmd = "docformatter --config ./pyproject.toml --in-place"
+        cmd = ["docformatter", "--config", "./pyproject.toml", "--in-place"]
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
-def _shell_command(c: Context, tool: str, args: str | None, paths: str | None) -> str | None:
+def _shell_command(
+    c: Context, tool: Sequence[str], args: str | None, paths: str | None
+) -> list[str] | None:
     r"""Build the command of a shell script tool.
 
     Args:
         c: The invoke context.
-        tool: The program and its fixed options, e.g. ``"shellcheck"``.
+        tool: The program and its fixed options, e.g.
+            ``["shellcheck"]``.
         args: Extra arguments of the user, placed before ``--``.
         paths: Scripts of the user. If not set, the ``*.sh`` files
             of the project are used (see ``project_files``; outside a
             git work tree, the walk skips ``EXCLUDED_DIRS``).
 
     Returns:
-        The command line, or ``None`` if there is no script to run the
-        tool on.
+        The words of the command, or ``None`` if there is no script to
+        run the tool on.
 
     Example usage:
 
@@ -129,28 +139,28 @@ def _shell_command(c: Context, tool: str, args: str | None, paths: str | None) -
     >>> from invoke.context import MockContext
     >>> from invoke_tasklib.formatting import _shell_command
     >>> c = MockContext(config=Config(), run=True)
-    >>> _shell_command(c, "shellcheck", "-x", "a.sh")
-    'shellcheck -x -- a.sh'
+    >>> _shell_command(c, ["shellcheck"], "-x", "a.sh")
+    ['shellcheck', '-x', '--', 'a.sh']
 
     ```
     """
-    base = build_command(tool, args=args)
+    base = [*build_command(tool, args=args), "--"]
     if paths:
-        return build_command(f"{base} --", paths=paths)
+        return build_command(base, paths=paths)
     scripts = [path.as_posix() for path in project_files(c, Path(), ".sh")]
     if not scripts:
         return None
-    return build_command(f"{base} --", default_paths=scripts)
+    return build_command(base, default_paths=scripts)
 
 
 def _run_shell_tool(
-    c: Context, tool: str, args: str | None, paths: str | None, messages: tuple[str, str]
+    c: Context, tool: Sequence[str], args: str | None, paths: str | None, messages: tuple[str, str]
 ) -> None:
     r"""Run a shell script tool, or say that there is no script.
 
     Args:
         c: The invoke context.
-        tool: The program and its fixed options.
+        tool: The words of the program and its fixed options.
         args: Extra arguments of the user.
         paths: Scripts of the user.
         messages: The start and done messages of the step.
@@ -174,7 +184,7 @@ def check_shell(c: Context, *, args: str | None = None, paths: str | None = None
             the project.
     """
     messages = ("🐚 Running shellcheck on shell scripts...", "✅ Shellcheck passed")
-    _run_shell_tool(c, "shellcheck", args, paths, messages)
+    _run_shell_tool(c, ["shellcheck"], args, paths, messages)
 
 
 @task(help=TOOL_HELP)
@@ -192,7 +202,7 @@ def check_shell_format(c: Context, *, args: str | None = None, paths: str | None
             the project.
     """
     messages = ("🔎 Running shfmt on shell scripts...", "✅ Shell format is correct")
-    _run_shell_tool(c, "shfmt -d", args, paths, messages)
+    _run_shell_tool(c, ["shfmt", "-d"], args, paths, messages)
 
 
 @task(help=TOOL_HELP)
@@ -210,4 +220,4 @@ def fix_shell(c: Context, *, args: str | None = None, paths: str | None = None) 
         before running this task.
     """
     messages = ("🔧 Running shfmt to format shell scripts...", "✅ Shell formatting complete")
-    _run_shell_tool(c, "shfmt -l -w", args, paths, messages)
+    _run_shell_tool(c, ["shfmt", "-l", "-w"], args, paths, messages)

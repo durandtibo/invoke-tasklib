@@ -35,9 +35,18 @@ def test_python_executable_returns_running_interpreter() -> None:
     assert python_executable() == sys.executable
 
 
-def test_python_executable_quotes_path_with_space(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_python_executable_does_not_quote_a_path_with_space(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(sys, "executable", "/my env/bin/python")
-    assert python_executable() == "'/my env/bin/python'"
+    assert python_executable() == "/my env/bin/python"
+
+
+def test_run_quotes_a_python_executable_with_a_space(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "executable", "/my env/bin/python")
+    c = _context()
+    run(c, [python_executable(), "-m", "pytest"], check=False)
+    assert _run_mock(c).call_args.args == ("'/my env/bin/python' -m pytest",)
 
 
 #########################

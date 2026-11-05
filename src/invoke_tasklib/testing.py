@@ -2,7 +2,6 @@ r"""Test and benchmark tasks."""
 
 from __future__ import annotations
 
-import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -32,7 +31,7 @@ NAMESPACE = "test"
 r"""The name of the namespace of the tasks of this module."""
 
 _COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
-_DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
+_DOCTEST_OPTIONS = ["-o", "NORMALIZE_WHITESPACE", "-o", "ELLIPSIS", "-o", "REPORT_NDIFF"]
 _APPEND_HELP = (
     "With --cov, add to the existing coverage data (--cov-append) instead of replacing it."
 )
@@ -99,7 +98,7 @@ def doctest_src(c: Context, *, args: str | None = None, paths: str | None = None
     if paths is None:
         require_path(src, "tasklib.paths.src")
     with step(c, "📚 Running doctests on source code...", "✅ Doctest validation complete"):
-        cmd = f"{python_executable()} -m pytest --xdoctest"
+        cmd = [python_executable(), "-m", "pytest", "--xdoctest"]
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[src]))
 
 
@@ -117,7 +116,7 @@ def doctest_markdown(c: Context, *, args: str | None = None, paths: str | None =
         files = split_args(paths, "--paths") or [str(f) for f in project_files(c, Path(), ".md")]
         say(c, f"📚 Found {len(files)} markdown files")
         if files:
-            cmd = f"{python_executable()} -m doctest {_DOCTEST_OPTIONS}"
+            cmd = [python_executable(), "-m", "doctest", *_DOCTEST_OPTIONS]
             run(c, build_command(cmd, args=args, paths=paths, default_paths=files))
     say(c, f"✅ All {len(files)} markdown files have been checked")
 
@@ -196,20 +195,21 @@ def _run_pytest(
         return
     options = cfg.test
     with step(c, f"🧪 Running {label}...", f"✅ {label.capitalize()} complete"):
-        cmd = [f"{python_executable()} -m pytest"]
+        cmd = [python_executable(), "-m", "pytest"]
         if options.xdoctest:
             cmd.append("--xdoctest")
         if options.timeout:
-            cmd.append(f"--timeout {timeout}")
+            cmd.extend(["--timeout", str(timeout)])
         if cov:
-            cmd.extend(f"--cov-report {shlex.quote(report)}" for report in options.cov_reports)
+            for report in options.cov_reports:
+                cmd.extend(["--cov-report", report])
             if append:
                 cmd.append("--cov-append")
             cmd.append(f"--cov={cfg.package.import_name}")
             if options.cov_fail_under is not None:
                 cmd.append(f"--cov-fail-under={options.cov_fail_under}")
             say(c, "📊 Coverage reports will be generated" + (" (appending)" if append else ""))
-        run(c, build_command(" ".join(cmd), args=args, paths=paths, default_paths=[path]))
+        run(c, build_command(cmd, args=args, paths=paths, default_paths=[path]))
 
 
 @task(name="all", help=_PYTEST_HELP)
@@ -386,12 +386,11 @@ def coverage_report(c: Context, *, open_browser: bool = False, args: str | None 
     with step(
         c, "📊 Generating coverage report...", f"✅ Coverage report generated in {directory}/"
     ):
-        run(c, f"{python_executable()} -m coverage html -d {shlex.quote(directory)}")
-        run(c, build_command(f"{python_executable()} -m coverage report", args=args))
+        run(c, [python_executable(), "-m", "coverage", "html", "-d", directory])
+        run(c, build_command([python_executable(), "-m", "coverage", "report"], args=args))
         if open_browser:
             say(c, "🌐 Opening coverage report in the browser...")
-            index = shlex.quote(f"{directory}/index.html")
-            run(c, f"{python_executable()} -m webbrowser -t {index}")
+            run(c, [python_executable(), "-m", "webbrowser", "-t", f"{directory}/index.html"])
 
 
 @task(help=TOOL_HELP)
@@ -420,5 +419,5 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
         msg = f"No '{benchmarks}' directory: there is no benchmark to run"
         raise Exit(msg, code=1)
     with step(c, "⏱️  Running benchmarks...", "✅ Benchmarks complete"):
-        cmd = f"{python_executable()} -m pytest --benchmark-only --benchmark-enable"
+        cmd = [python_executable(), "-m", "pytest", "--benchmark-only", "--benchmark-enable"]
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))

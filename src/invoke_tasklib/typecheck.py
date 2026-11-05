@@ -18,7 +18,7 @@ NAMESPACE = "types"
 r"""The name of the namespace of the tasks of this module."""
 
 # The command of each type checker of ``types.checker``.
-_COMMANDS: dict[str, str] = {"ty": "ty check", "pyright": "pyright", "mypy": "mypy"}
+_COMMANDS: dict[str, list[str]] = {"ty": ["ty", "check"], "pyright": ["pyright"], "mypy": ["mypy"]}
 
 
 @task(
@@ -66,6 +66,6 @@ def check(
             run(
                 c,
                 build_command(
-                    "pyright", args=pyright_args, paths=paths, args_option="--pyright-args"
+                    ["pyright"], args=pyright_args, paths=paths, args_option="--pyright-args"
                 ),
             )

@@ -81,7 +81,11 @@ def step_needs_of_commands(
     """
     checked: list[list[str]] = []
     monkeypatch.setattr(
-        runner, "check_program", lambda command: checked.append(shlex.split(command))
+        runner,
+        "check_program",
+        lambda command: checked.append(
+            shlex.split(command) if isinstance(command, str) else list(command)
+        ),
     )
     step.task(c)
     modules = {words[2] for words in checked if words[:2] == [sys.executable, "-m"]}

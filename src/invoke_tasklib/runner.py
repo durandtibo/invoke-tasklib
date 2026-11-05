@@ -32,7 +32,7 @@ __all__ = [
 
 
 def python_executable() -> str:
-    r"""Return the shell-quoted path of the running Python interpreter.
+    r"""Return the path of the running Python interpreter.
 
     Tasks that run Python code or a Python module use this interpreter
     instead of the ``python`` found on the ``PATH``: the interpreter
@@ -40,7 +40,8 @@ def python_executable() -> str:
     works outside an activated virtual environment.
 
     Returns:
-        The path of ``sys.executable``, quoted for the shell.
+        The path of ``sys.executable``, as it is: ``run`` quotes it
+        with the other words of the command.
 
     Example usage:
 
@@ -52,7 +53,7 @@ def python_executable() -> str:
 
     ```
     """
-    return shlex.quote(sys.executable)
+    return sys.executable
 
 
 ARGS_HELP = 'Extra arguments for the tool, as one string, e.g. "-k foo -x".'

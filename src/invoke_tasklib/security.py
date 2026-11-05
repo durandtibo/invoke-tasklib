@@ -2,7 +2,6 @@ r"""Security scanning tasks."""
 
 from __future__ import annotations
 
-import shlex
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -54,12 +53,8 @@ def audit(c: Context, *, args: str | None = None) -> None:
         ),
         tempfile.TemporaryDirectory() as tmp,
     ):
-        requirements = shlex.quote(str(Path(tmp) / "requirements.txt"))
-        run(
-            c,
-            "uv export --locked --no-emit-project --no-hashes --all-extras --all-groups "
-            f"--quiet -o {requirements}",
-        )
-        tool = shlex.quote(_PIP_AUDIT_REQUIREMENT)
-        cmd = f"uvx --from {tool} pip-audit -r {requirements} --no-deps --disable-pip"
-        run(c, build_command(cmd, args=args))
+        requirements = str(Path(tmp) / "requirements.txt")
+        export = ["uv", "export", "--locked", "--no-emit-project", "--no-hashes"]
+        run(c, [*export, "--all-extras", "--all-groups", "--quiet", "-o", requirements])
+        cmd = ["uvx", "--from", _PIP_AUDIT_REQUIREMENT, "pip-audit", "-r", requirements]
+        run(c, build_command([*cmd, "--no-deps", "--disable-pip"], args=args))
