@@ -80,8 +80,8 @@ def test_discover_modules_unknown_package() -> None:
 
 @pytest.fixture
 def namespace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    r"""A package ``outerpkg`` whose code fails if it is imported,
-    with the subpackage ``outerpkg.inner``."""
+    r"""A package ``outerpkg`` whose code fails if it is imported, with
+    the subpackage ``outerpkg.inner``."""
     root = tmp_path / "outerpkg"
     (root / "inner").mkdir(parents=True)
     (root / "__init__.py").write_text("raise RuntimeError('imported')\n")

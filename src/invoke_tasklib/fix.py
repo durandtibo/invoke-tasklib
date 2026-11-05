@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 NAMESPACE = "fix"
 r"""The name of the namespace of the tasks of this module."""
 
-
 # The steps of ``fix.all`` (task and programs), by step name.
 #
 # To add a step, add its name to ``FIX_STEPS`` in

@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 NAMESPACE = "doc"
 r"""The name of the namespace of the tasks of this module."""
 
-
 _VERSION_PATTERN = re.compile(r"v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.\d+)*(?P<rest>.*)")
 _PRERELEASE_PATTERN = re.compile(
     r"[-._]?(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?![a-z])", re.IGNORECASE

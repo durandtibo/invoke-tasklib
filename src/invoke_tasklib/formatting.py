@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 NAMESPACE = "format"
 r"""The name of the namespace of the tasks of this module."""
 
-
 # Directories that the walk skips when looking for shell scripts
 # outside a git work tree. In a work tree git decides (a tracked
 # ``build/run.sh`` is checked), see ``project_files``.

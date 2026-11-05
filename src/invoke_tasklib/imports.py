@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 NAMESPACE = "imports"
 r"""The name of the namespace of the tasks of this module."""
 
-
 @task(
     help={
         "lazy": "Also follow the imports inside functions (run when called, not on import).",
@@ -66,8 +65,8 @@ def check_cycles(c: Context, *, lazy: bool = False, type_checking: bool = False)
 
 
 def _parse_import_each(stdout: str) -> tuple[int, list[tuple[str, str]]]:
-    r"""Read the output of ``python -m invoke_tasklib._discover
-    --import-each``.
+    r"""Read the output of ``python -m invoke_tasklib._discover --import-
+    each``.
 
     Args:
         stdout: The first line is the number of modules, then there is

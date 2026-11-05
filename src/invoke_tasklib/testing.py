@@ -32,7 +32,6 @@ if TYPE_CHECKING:
 NAMESPACE = "test"
 r"""The name of the namespace of the tasks of this module."""
 
-
 COV_HELP = "Generate coverage reports (the formats of tasklib.test.cov_reports)."
 _DOCTEST_OPTIONS = "-o NORMALIZE_WHITESPACE -o ELLIPSIS -o REPORT_NDIFF"
 MARKDOWN_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {
@@ -438,7 +437,6 @@ COVERAGE_FILE_REPORTS: dict[str, str] = {
     "lcov": "coverage.lcov",
 }
 r"""The default file of the reports that write a file, by format."""
-
 
 def _coverage_option(section: str, key: str, pyproject: Path) -> str | None:
     r"""Read a string option of ``[tool.coverage.<section>]``.
