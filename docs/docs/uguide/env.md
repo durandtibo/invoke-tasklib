@@ -93,8 +93,8 @@ invoke env.show-python-config
 ```
 
 `env.show-python-config` prints the installed Python versions known to `uv`, the interpreter `uv`
-would select, and the interpreter currently on `PATH`. It does not fail when no `python` is on
-the `PATH`.
+would select, and the interpreter currently on `PATH` (`python: not found` when there is none, which
+is not an error).
 
 ## Checking the Tools
 

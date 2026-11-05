@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import shlex
 from typing import TYPE_CHECKING, NamedTuple
 
 from invoke.exceptions import Exit
@@ -152,7 +151,7 @@ def build(c: Context, *, args: str | None = None) -> None:
     """
     docs_config = _docs_config(c)
     with step(c, "📚 Building the documentation...", "✅ Documentation built"):
-        cmd = f"mkdocs build --strict --config-file {shlex.quote(docs_config)}"
+        cmd = ["mkdocs", "build", "--strict", "--config-file", docs_config]
         run(c, build_command(cmd, args=args))
 
 
@@ -169,7 +168,7 @@ def serve(c: Context, *, args: str | None = None) -> None:
     """
     docs_config = _docs_config(c)
     say(c, "📚 Serving the documentation...")
-    cmd = f"mkdocs serve --config-file {shlex.quote(docs_config)}"
+    cmd = ["mkdocs", "serve", "--config-file", docs_config]
     run(c, build_command(cmd, args=args))
 
 
@@ -205,7 +204,7 @@ def _last_version_tag(c: Context) -> str | None:
 
     ```
     """
-    result = capture(c, "git tag --list 'v[0-9]*'")
+    result = capture(c, ["git", "tag", "--list", "v[0-9]*"])
     releases: dict[str, _Version] = {}
     for tag in result.stdout.split():
         try:
@@ -273,32 +272,31 @@ def _published_releases(c: Context, docs_config: str) -> list[tuple[int, int]]:
         Exit: If the output of ``mike list --json`` is not valid JSON.
         UnexpectedExit: If ``mike`` fails.
     """
-    command = f"mike list --config-file {shlex.quote(docs_config)} --json"
-    result = capture(c, command)
-    return _parse_releases(result.stdout, command)
+    result = capture(c, ["mike", "list", "--config-file", docs_config, "--json"])
+    return _parse_releases(result.stdout, "mike list --json")
 
 
-def _push_option(push: bool) -> str:
+def _push_option(push: bool) -> list[str]:
     r"""Return the ``--push`` option of mike, if the docs are pushed.
 
     Args:
         push: Whether the docs branch is pushed.
 
     Returns:
-        ``" --push"`` (with a leading space) or an empty string.
+        ``["--push"]`` or an empty list.
 
     Example usage:
 
     ```pycon
     >>> from invoke_tasklib.doc import _push_option
     >>> _push_option(True)
-    ' --push'
+    ['--push']
     >>> _push_option(False)
-    ''
+    []
 
     ```
     """
-    return " --push" if push else ""
+    return ["--push"] if push else []
 
 
 @task(help={"push": "Push the docs branch (default). Use --no-push to only commit it locally."})
@@ -314,16 +312,13 @@ def publish_dev(c: Context, *, push: bool = True) -> None:
         push: If True, the docs branch is pushed. Use ``--no-push`` to
             commit it locally only.
     """
-    docs_config = shlex.quote(_docs_config(c))
+    docs_config = _docs_config(c)
     with step(
         c, "📚 Publishing development documentation...", "✅ Development documentation published"
     ):
         say(c, "🚀 Deploying 'main' and 'dev' aliases...")
-        run(
-            c,
-            f"mike deploy --config-file {docs_config}{_push_option(push)}"
-            " --update-aliases main dev",
-        )
+        deploy = ["mike", "deploy", "--config-file", docs_config, *_push_option(push)]
+        run(c, [*deploy, "--update-aliases", "main", "dev"])
 
 
 @task(
@@ -387,13 +382,11 @@ def publish_latest(
             "published. Use --force to publish it anyway."
         )
         raise Exit(msg, code=1)
-    config_file = shlex.quote(docs_config)
+    config = ["--config-file", docs_config]
     push_option = _push_option(push)
     with step(c, "📚 Publishing latest documentation...", "✅ Latest documentation published"):
         say(c, f"📌 Using version tag: {tag}")
         say(c, f"🚀 Deploying '{tag}' and 'latest' aliases...")
-        run(
-            c, f"mike deploy --config-file {config_file}{push_option} --update-aliases {tag} latest"
-        )
+        run(c, ["mike", "deploy", *config, *push_option, "--update-aliases", tag, "latest"])
         say(c, "🎯 Setting 'latest' as default...")
-        run(c, f"mike set-default --config-file {config_file}{push_option} --allow-empty latest")
+        run(c, ["mike", "set-default", *config, *push_option, "--allow-empty", "latest"])

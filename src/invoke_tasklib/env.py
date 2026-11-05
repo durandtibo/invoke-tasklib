@@ -2,8 +2,8 @@ r"""Environment and dependency management tasks."""
 
 from __future__ import annotations
 
-import shlex
 from pathlib import Path
+from shutil import which
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
@@ -85,8 +85,8 @@ def create_venv(c: Context, *, yes: bool = False, dry_run: bool = False) -> None
         _confirm_clear(_VENV_DIR)
     start = f"🐍 Creating virtual environment{with_version}..."
     with step(c, start, "✅ Virtual environment created successfully"):
-        option = f" --python {python_version}" if python_version else ""
-        run(c, f"uv venv{option} --clear")
+        option = ["--python", python_version] if python_version else []
+        run(c, ["uv", "venv", *option, "--clear"])
         _install(c, ",".join(cfg.groups.install), optional_deps=True)
 
 
@@ -139,15 +139,16 @@ def _install(c: Context, groups: str, *, optional_deps: bool) -> None:
     """
     if Path(_LOCK_FILE).is_file():
         say(c, f"📦 Installing from {_LOCK_FILE}...")
-        cmd = ["uv sync --locked"]
+        cmd = ["uv", "sync", "--locked"]
     else:
         say(c, f"📦 No {_LOCK_FILE}: resolving the dependencies...")
-        cmd = ["uv sync"]
+        cmd = ["uv", "sync"]
     if optional_deps:
         cmd.append("--all-extras")
     names = dict.fromkeys(filter(None, (g.strip() for g in groups.split(","))))
-    cmd.extend(f"--group {shlex.quote(group)}" for group in names)
-    run(c, " ".join(cmd))
+    for group in names:
+        cmd.extend(["--group", group])
+    run(c, cmd)
     say(c, "✅ Installation complete")
 
 
@@ -182,10 +183,10 @@ def update(c: Context, *, groups: str | None = None) -> None:
     if groups is None:
         groups = ",".join(load_config(c).groups.update)
     with step(c, "🔄 Updating dependencies...", "✅ Update complete"):
-        run(c, "uv lock --upgrade")
+        run(c, ["uv", "lock", "--upgrade"])
         if Path(_PRE_COMMIT_CONFIG).is_file():
             say(c, "🪝 Updating pre-commit hooks...")
-            run(c, "pre-commit autoupdate")
+            run(c, ["pre-commit", "autoupdate"])
         else:
             say(c, f"⏭️  No {_PRE_COMMIT_CONFIG} file: skipping the pre-commit hooks")
         say(c, f"📦 Reinstalling with dependency groups: {groups}...")
@@ -196,20 +197,21 @@ def update(c: Context, *, groups: str | None = None) -> None:
 def show_installed_packages(c: Context) -> None:
     r"""Show the installed packages."""
     say(c, "📦 Listing installed packages...")
-    run(c, "uv pip list")
+    run(c, ["uv", "pip", "list"])
 
 
 @task
 def show_python_config(c: Context) -> None:
     r"""Show the python configuration.
 
-    ``command -v python`` is allowed to fail: it exits with 1 when no
-    ``python`` is on the ``PATH``, which is not an error of the task.
+    It lists the Python versions that ``uv`` knows, the one it would
+    use, and the ``python`` of the ``PATH``. Having no ``python`` on the
+    ``PATH`` is not an error of the task.
     """
     say(c, "🐍 Python configuration:")
-    run(c, "uv python list --only-installed")
-    run(c, "uv python find")
-    run(c, "command -v python", warn=True)
+    run(c, ["uv", "python", "list", "--only-installed"])
+    run(c, ["uv", "python", "find"])
+    say(c, which("python") or "python: not found")
 
 
 @task
