@@ -387,6 +387,24 @@ the others branch from `main`.
 | 12   | **Tidy the tests (F12).** `_context = partial(make_context, ...)` in the 8 modules; no behaviour change. Can run at any time.                                                                                                                                                                                                                                          | no                                     |
 | 13   | **Release `0.1.0`.** Notes list the breaking rows (3, 4, 6, 7, 8, 9, 11) with the replacement for each name.                                                                                                                                                                                                                                                           | —                                      |
 
+**Status.** Steps 1-12 are done; step 13 (the release) is not started.
+
+| Step | Pull request                                    | State                                 |
+| ---- | ----------------------------------------------- | ------------------------------------- |
+| 1    | #334                                            | merged                                |
+| 2    | #335                                            | merged                                |
+| 3    | #339                                            | open                                  |
+| 4    | #340 (stacked on 3)                             | open                                  |
+| 5    | #341 (stacked on 4)                             | open                                  |
+| 6    | #342 (stacked on 5)                             | open                                  |
+| 7    | #344 (stacked on 6)                             | open                                  |
+| 8    | #345 (stacked on 7)                             | open                                  |
+| 9    | #346 (stacked on 8)                             | open                                  |
+| 10   | #347 (stacked on 9)                             | open                                  |
+| 11   | #348 (stacked on 10)                            | open                                  |
+| 12   | #349 (stacked on 11)                            | open                                  |
+| 13   | -                                               | not started (needs a decision to ship) |
+
 Order: 1 and 2 first (they fix the baseline and add the guards that protect the others). 3 then 4. 5, 6, 7 are independent of each other. 8 and 9 follow 4 (they use the new `_files`). 10 and 12
 are free. 11 comes after 6 and 7, which remove the names it would otherwise have to make private.
 Update the changelog or status table with the pull request number in each step.
