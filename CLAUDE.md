@@ -39,7 +39,8 @@
 - The source is in `src/invoke_tasklib/`: one module per task namespace (`formatting.py`,
   `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
   `imports.py`, `clean.py`, `check.py`, `fix.py`, `show.py`), plus `config/` (config
-  resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`, `_resolve.py` with
+  resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`, `_invoke.py` (the only reader of the private
+  attributes of the Invoke config), `_resolve.py` with
   `get_config` and `load_config`, `__init__.py` that re-exports them, and `__main__.py` that
   prints the JSON schema), `runner.py` (the command runner), `tools.py` (tool lookup and install
   hints) and `output.py` (progress messages). Six private modules support the tasks: `_steps.py`

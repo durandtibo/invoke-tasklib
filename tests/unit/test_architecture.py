@@ -116,6 +116,25 @@ def _is_c_config(node: ast.expr) -> bool:
     )
 
 
+def _is_private_attribute_lookup(node: ast.expr) -> bool:
+    r"""Tell if a call is ``getattr`` or ``hasattr`` of a private name.
+
+    The name is a string that starts with ``_``, or the constant
+    ``PROJECT_PREFIX_ATTRIBUTE`` of ``config/_invoke.py``.
+    """
+    if not (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in {"getattr", "hasattr"}
+        and len(node.args) >= 2
+    ):
+        return False
+    name = node.args[1]
+    if isinstance(name, ast.Name):
+        return name.id == "PROJECT_PREFIX_ATTRIBUTE"
+    return isinstance(name, ast.Constant) and str(name.value).startswith("_")
+
+
 def _group(module: str) -> str:
     r"""Map a dotted module name to its name in ``LAYERS``."""
     parts = module.split(".")
@@ -163,6 +182,37 @@ def test_no_module_calls_print_outside_the_output_module() -> None:
 def test_no_task_reads_c_config_directly() -> None:
     found = _locations(("runner.py", "output.py", "config", *RAW_CONFIG_MODULES), _is_c_config)
     assert found == []
+
+
+###########################################
+#     Tests for M5 (Invoke internals)     #
+###########################################
+
+
+def test_only_the_invoke_module_reads_private_attributes_of_a_config() -> None:
+    assert _locations(("config/_invoke.py",), _is_private_attribute_lookup) == []
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "getattr(config, '_env')",
+        "hasattr(config, '_project_prefix', 1)",
+        "getattr(config, PROJECT_PREFIX_ATTRIBUTE)",
+    ],
+)
+def test_the_scan_of_private_attributes_finds_a_lookup(source: str) -> None:
+    node = ast.parse(source, mode="eval").body
+    assert _is_private_attribute_lookup(node) is True
+
+
+@pytest.mark.parametrize(
+    "source",
+    ["getattr(stream, 'encoding', None)", "getattr(config, name)", "len('_x')", "getattr(x)"],
+)
+def test_the_scan_of_private_attributes_ignores_other_calls(source: str) -> None:
+    node = ast.parse(source, mode="eval").body
+    assert _is_private_attribute_lookup(node) is False
 
 
 #####################################

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from invoke.config import Config
@@ -9,8 +9,12 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib.config import SCHEMA, get_config, load_config
-from invoke_tasklib.config._resolve import PROJECT_PREFIX_ATTRIBUTE, _check_project_root
+from invoke_tasklib.config._invoke import PROJECT_PREFIX_ATTRIBUTE
+from invoke_tasklib.config._resolve import _check_project_root
 from invoke_tasklib.config._schema import Unset, _defaults
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _context(tasklib_config: object = None) -> Context:
@@ -598,14 +602,6 @@ def test_check_project_root_does_not_warn_without_location(
     monkeypatch.chdir(tmp_path)
     _check_project_root(_located_context(None))
     assert len(recwarn) == 0
-
-
-def test_project_prefix_attribute_exists_on_an_invoke_config() -> None:
-    assert hasattr(Config(), PROJECT_PREFIX_ATTRIBUTE)
-
-
-def test_project_prefix_attribute_holds_the_project_location(tmp_path: Path) -> None:
-    assert Path(getattr(Config(project_location=tmp_path), PROJECT_PREFIX_ATTRIBUTE)) == tmp_path
 
 
 def test_check_project_root_accepts_a_context_without_location(
