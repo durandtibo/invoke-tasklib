@@ -28,25 +28,43 @@ from invoke_tasklib.runner import build_command, capture
 if TYPE_CHECKING:
     from invoke.context import Context
 
-_ENVIRONMENT_DIRS: frozenset[str] = frozenset(
-    {".git", ".venv", "node_modules", ".pytest_cache", ".tox", ".nox", ".mypy_cache", ".ruff_cache"}
+CACHE_DIRS: frozenset[str] = frozenset(
+    {
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+        ".tox",
+        ".nox",
+        ".hypothesis",
+        ".benchmarks",
+        ".coverage_html",
+    }
 )
-# The directories of tools and environments: never the files of the
-# project, even when git does not ignore them.
+# The directories of the caches and reports of the tools: never the
+# files of the project, even when git does not ignore them. ``clean``
+# removes them.
 
-_OUTPUT_DIRS: frozenset[str] = frozenset({"build", "dist", "site", "htmlcov"})
+OUTPUT_DIRS: frozenset[str] = frozenset({"build", "dist", "site", "htmlcov"})
 # The directories of build outputs: generated, but a project may track
 # files in them.
 
-EXCLUDED_DIRS: frozenset[str] = _ENVIRONMENT_DIRS | _OUTPUT_DIRS
+ENVIRONMENT_DIRS: frozenset[str] = frozenset({".git", ".venv", "node_modules"})
+# The directories of environments: never the files of the project, even
+# when git does not ignore them.
+
+EXCLUDED_DIRS: frozenset[str] = CACHE_DIRS | OUTPUT_DIRS | ENVIRONMENT_DIRS
 r"""The names of the directories that a walk of the file tree never
 enters, at any depth (``find_files``, and ``clean`` for the
 ``__pycache__`` directories).
 
 In a git work tree ``project_files`` lets git decide, so only the
-directories of tools and environments are left out there: a tracked
+directories of tools and environments (``CACHE_DIRS`` and
+``ENVIRONMENT_DIRS``) are left out there: a tracked
 ``build/run.sh`` or ``site/index.md`` is returned.
 """
+
+_IGNORED_PARTS: frozenset[str] = CACHE_DIRS | ENVIRONMENT_DIRS
+# What ``project_files`` leaves out of the list of git.
 
 
 def find_files(root: Path, suffix: str) -> list[Path]:
@@ -164,7 +182,7 @@ def project_files(c: Context, root: Path, suffix: str) -> list[Path]:
         return find_files(root, suffix)
     found = (Path(name) for name in result.stdout.split("\0") if name)
     return sorted(
-        path for path in found if path.is_file() and not _ENVIRONMENT_DIRS.intersection(path.parts)
+        path for path in found if path.is_file() and not _IGNORED_PARTS.intersection(path.parts)
     )
 
 

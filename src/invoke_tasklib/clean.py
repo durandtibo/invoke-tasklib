@@ -12,7 +12,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib._coverage import CoverageOutputs, coverage_outputs
-from invoke_tasklib._files import EXCLUDED_DIRS
+from invoke_tasklib._files import CACHE_DIRS, EXCLUDED_DIRS
 from invoke_tasklib._pyproject import read_pyproject
 from invoke_tasklib.config import TasklibConfig, load_config
 from invoke_tasklib.output import say
@@ -24,19 +24,7 @@ if TYPE_CHECKING:
 NAMESPACE = "clean"
 r"""The name of the namespace of the tasks of this module."""
 
-DIRS = (
-    "build",
-    "dist",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".coverage_html",
-    "htmlcov",
-    ".benchmarks",
-    ".mypy_cache",
-    ".tox",
-    ".nox",
-    ".hypothesis",
-)
+DIRS = tuple(sorted(CACHE_DIRS | {"build", "dist", "htmlcov"}))
 DIR_GLOBS = ("*.egg-info", "src/*.egg-info")
 FILES = (".coverage", "coverage.xml")
 FILE_GLOBS = (".coverage.*",)

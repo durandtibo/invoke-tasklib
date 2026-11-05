@@ -8,6 +8,7 @@ import pytest
 from invoke.runners import Result
 
 from invoke_tasklib import clean
+from invoke_tasklib._files import EXCLUDED_DIRS
 from invoke_tasklib.config import TasklibConfig, get_config, load_config
 from tests.helpers import commands, make_context, run_kwargs
 
@@ -38,6 +39,32 @@ def _mkdir(*parts: str) -> Callable[[Path], Path]:
         return path
 
     return make
+
+
+##########################
+#     Tests for DIRS     #
+##########################
+
+
+@pytest.mark.parametrize("name", clean.DIRS)
+def test_dirs_are_walked_over_by_no_task(name: str) -> None:
+    assert name in EXCLUDED_DIRS
+
+
+def test_dirs_lists_the_caches_and_the_outputs_that_clean_removes() -> None:
+    assert clean.DIRS == (
+        ".benchmarks",
+        ".coverage_html",
+        ".hypothesis",
+        ".mypy_cache",
+        ".nox",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        "build",
+        "dist",
+        "htmlcov",
+    )
 
 
 #########################

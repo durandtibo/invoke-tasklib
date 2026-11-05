@@ -117,11 +117,13 @@ Seven small modules support the task modules:
   subprocess by `imports.check-isolated`.
 
 `_files.EXCLUDED_DIRS` is the one list of the directories that the tasks that walk the file tree
-(`clean`, `format`, `test.doctest-markdown`) never enter: the directories of tools and environments
-(`.venv`, `.git`, `node_modules`, the caches) and the build outputs (`build`, `dist`, `site`,
-`htmlcov`). The format and test tasks find their files with `_files.project_files`: in a git work
+(`clean`, `format`, `test.doctest-markdown`) never enter. It is the union of three named sets:
+`CACHE_DIRS` (`.pytest_cache`, `.ruff_cache`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`,
+`.benchmarks`, `.coverage_html`), `OUTPUT_DIRS` (`build`, `dist`, `site`, `htmlcov`) and
+`ENVIRONMENT_DIRS` (`.git`, `.venv`, `node_modules`). `clean.DIRS` derives from `CACHE_DIRS` and the
+outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format and test tasks find their files with `_files.project_files`: in a git work
 tree they ask `git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and
-a tracked `build/run.sh` is checked (only the directories of tools and environments are left out);
+a tracked `build/run.sh` is checked (only the caches and the environments are left out);
 outside a work tree they walk the tree and skip every directory of the list. `clean` keeps its own
 walk, because the `__pycache__` directories it removes are ignored by git.
 
@@ -192,7 +194,7 @@ its maintainers (`M1`-`M5`). The last column says what enforces each one; a prop
 | P5  | Fail before acting      | An unknown key, an invalid value or a wrong working directory exits with `2` before any command runs. The message names the key.                                                                                                                        | `config/_validate.py`, `_check_project_root`; `tests/unit/config/`                                                       |
 | P6  | Missing tools           | A missing program or Python module is reported with the command that installs it. A composite task reports all the missing tools of its steps at once, and runs nothing.                                                                                | `tools.hint`, `_steps.preflight_message`; `tests/unit/test_check.py`                                                     |
 | P7  | Commands are data       | A task builds one command string from the config and the options. Every user value is quoted: a space, `;`, `*`, `~` or `$VAR` reaches the tool unchanged.                                                                                              | `runner.build_command`; `tests/integration/test_quoting.py`; `_commands(c) == [...]` in unit tests                       |
-| P8  | One source of truth     | A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`STEPS`), a directory policy once (`_files`). Defaults, the JSON schema, the hints and the docs tables derive from them.                                                  | tests that compare the tables; not tested: the directory lists of `clean` (target state, step 6)                         |
+| P8  | One source of truth     | A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`STEPS`), a directory policy once (`_files`). Defaults, the JSON schema, the hints and the docs tables derive from them.                                                  | tests that compare the tables; `test_clean.py` (every directory of `clean.DIRS` is in `EXCLUDED_DIRS`)                  |
 | P9  | Safe by default         | A destructive task stays inside the project, keeps what git tracks, and asks before an irreversible step. A credential never appears in a command line or in the output.                                                                                | `clean._is_inside_project`, `release._check_release_state`, `_publish_environment`; `tests/unit/test_release.py`         |
 | P10 | Skips are visible       | A task that has nothing to do prints `⏭️ <reason>` and exits `0`. A task that cannot do its job (a path it needs is missing) exits non-zero and names the key.                                                                                          | `_files.require_path`; `tests/unit/test__files.py`, `tests/integration/test_files.py`                                    |
 | P11 | Fix converges           | After `fix_<x>` (or `fix.all`) the matching `check_<x>` (or `check.all --only` the same steps) passes, and a second `fix_<x>` changes nothing.                                                                                                          | not tested (target state, step 3)                                                                                        |
