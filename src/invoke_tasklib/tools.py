@@ -64,7 +64,6 @@ class Tool(NamedTuple):
     ``_``.
     """
 
-
 _UV_URL = "https://docs.astral.sh/uv/getting-started/installation/"
 
 
