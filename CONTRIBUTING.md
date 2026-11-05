@@ -182,6 +182,8 @@ We actively welcome your pull requests.
 - **Update documentation:** If you change APIs or add features
 - **Follow code style:** Run pre-commit hooks before committing
 - **Link related issues:** Reference any related issues in your PR description
+- **Do not commit backup files:** on macOS, `sed -i` needs an argument for the backup suffix; use
+  `sed -i '' ...` so that no `file-e` is left behind
 - **Keep up to date with `main`:** If your PR conflicts with `main`, merge `origin/main` into your
   branch instead of rebasing and force-pushing
 

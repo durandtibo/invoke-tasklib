@@ -375,7 +375,7 @@ needs row 3; rows 7-10 are stacked and need row 2 (the test protects the refacto
 | 8    | Convert `formatting`, `lint`, `typecheck`, `security`, `testing`, `_files`, `clean`, `imports` to lists (no `shlex.quote`).                                                                                   | no                               | F1     | #379 |
 | 9    | Convert `env`, `release`, `doc`; replace `command -v python` by `shutil.which` (D3).                                                                                                                          | no (output of one line)          | F1     | #380 |
 | 10   | Remove the string path: `run` raises `TypeError`, delete `_strip_assignments`, `_ASSIGNMENT`, `_UNCHECKED_PROGRAMS`; P7 AST test; update `custom_tasks.md`, `architecture.md`.                                | yes                              | F1     | #381 |
-| 11   | `git rm review/target_state.md-e`; the status column of this table gets the pull request numbers; `architecture.md` properties match section 1.                                                               | no                               | F9     |     |
+| 11   | `git rm review/target_state.md-e`; the status column of this table gets the pull request numbers; `architecture.md` properties match section 1.                                                               | no                               | F9     | #382 |
 
 ## 8. Tests and gates
 
