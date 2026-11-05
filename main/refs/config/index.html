@@ -1793,6 +1793,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.Unset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.config.default_config" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2257,6 +2268,17 @@
     <span class="md-ellipsis">
       
         TestConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.config.Unset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unset
       
     </span>
   </a>
@@ -3427,6 +3449,64 @@ raises <code>ValueError</code> with a message that names the key.</p>
 
 </div>
 
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="invoke_tasklib.config.Unset" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">invoke_tasklib.config.Unset</span>
+
+
+<a href="#invoke_tasklib.config.Unset" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="str">str</span></code></p>
+
+
+
+        <p>The placeholder of a boolean or an integer that no source sets.</p>
+<p>It is registered as the default of such a key, instead of <code>None</code>,
+so a <code>null</code> that a user writes in <code>invoke.yaml</code> can be told
+from "not set". It is a <code>str</code>, so Invoke does not cast the text
+of an environment variable to the type of the default: the text is
+kept and parsed by the validation.</p>
+<p>Example usage:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.config._schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">Unset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">isinstance</span><span class="p">(</span><span class="n">Unset</span><span class="p">(),</span> <span class="nb">str</span><span class="p">)</span>
+<span class="go">True</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -3448,8 +3528,8 @@ environment variables, for example <code>INVOKE_TASKLIB_PATHS_SRC</code>.
 Invoke only reads an environment variable for a key that exists in
 the defaults. Invoke casts the variable to the type of the default,
 and it reads any text but <code>0</code> as true for a boolean, so the
-booleans and the integers are registered with <code>None</code>: the text is
-kept and parsed by the validation. The real defaults stay in
+booleans and the integers are registered with an <code>Unset</code>: the text
+is kept and parsed by the validation. The real defaults stay in
 <code>SCHEMA</code>.</p>
 
 
@@ -3498,7 +3578,7 @@ kept and parsed by the validation. The real defaults stay in
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>None</code>.</p>
+                <p>an <code>Unset</code>.</p>
               </div>
             </td>
           </tr>
@@ -3510,7 +3590,7 @@ kept and parsed by the validation. The real defaults stay in
 <span class="go">['check', 'fix', 'groups', 'package', 'paths', 'test']</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">default_config</span><span class="p">()[</span><span class="s2">"groups"</span><span class="p">]</span>
 <span class="go">{'install': 'dev', 'update': 'dev,docs'}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">default_config</span><span class="p">()[</span><span class="s2">"test"</span><span class="p">][</span><span class="s2">"xdoctest"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_config</span><span class="p">()[</span><span class="s2">"test"</span><span class="p">][</span><span class="s2">"xdoctest"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span>
 <span class="go">True</span>
 </code></pre></div>
 

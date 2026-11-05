@@ -1899,7 +1899,8 @@ of <code>&lt;dir&gt;</code> are verified (and checked by <code>--check</code>) i
 </code></pre></div>
 <p>Before anything is built, the task checks the git state: the working tree must be clean, <code>HEAD</code>
 must be tagged and the tag (without a leading <code>v</code>) must be the static <code>project.version</code> of
-<code>pyproject.toml</code> (a dynamic version is not compared). It then asks for a confirmation, unless
+<code>pyproject.toml</code> (a dynamic version is not compared; an invalid <code>pyproject.toml</code> stops the task with a message that
+names the file). It then asks for a confirmation, unless
 <code>--yes</code> is given or the <code>CI</code> environment variable is set to something other than <code>0</code> and
 <code>false</code>. Finally it builds the package (via
 <code>release.build</code>, which clears <code>dist/</code> first so stale artifacts are never uploaded) and runs

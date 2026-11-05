@@ -2166,7 +2166,9 @@ layout).</p>
 <p><code>package.import_name</code> is the name used to import the package. It is used by <code>imports.check-cycles</code>, <code>imports.check-isolated</code>,
 <code>release.build</code> (the import check of the built artifacts) and the <code>--cov</code> option of the test tasks.
 Set it when it is not the distribution name with <code>-</code> replaced by <code>_</code>. It must be a Python module
-name.</p>
+name, which may be dotted for a package of a namespace package (<code>company.package</code>): the tasks that
+read the source of the package (<code>imports.check-cycles</code>, <code>imports.check-isolated</code>) find it without
+importing <code>company</code>.</p>
 <p>If <code>tasklib.package.name</code> is missing, <code>get_config</code> raises a <code>ValueError</code>; the tasks use
 <code>load_config</code>, which turns it into an <code>invoke.exceptions.Exit</code> with the same message and the exit
 code 2 (no traceback).</p>
@@ -2174,7 +2176,10 @@ code 2 (no traceback).</p>
 <code>package</code>, <code>paths</code>, <code>groups</code>, <code>test</code>, <code>check</code> or <code>fix</code> sections (such as <code>paths.unit_test</code>) also raise a
 <code>ValueError</code> that lists the valid keys and suggests the closest one, instead of being silently
 ignored. Each section must be a mapping, <code>package.name</code> and every <code>paths.*</code> value must be a
-non-empty string, and <code>test.cov_fail_under</code> must be between 0 and 100.</p>
+non-empty string, and <code>test.cov_fail_under</code> must be between 0 and 100. A <code>null</code> (<code>~</code>) is the same as
+not setting the key only for a key that has no default (<code>test.cov_fail_under</code>, <code>package.python_version</code>,
+...); for a boolean or an integer (<code>test.xdoctest</code>, <code>test.unit_timeout</code>, <code>check.cov</code>, ...) it is an
+error, like any other invalid value, so write the value or remove the key.</p>
 <p><code>package.python_version</code> must be a quoted string such as <code>"3.10"</code> or <code>"3.10.4"</code>. YAML reads an
 unquoted <code>3.10</code> as the number <code>3.1</code>, so <code>get_config</code> raises a <code>ValueError</code> for any non-string or
 malformed value instead of silently creating a virtual environment with the wrong Python.</p>
