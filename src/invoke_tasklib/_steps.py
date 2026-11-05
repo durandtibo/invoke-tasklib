@@ -58,88 +58,38 @@ class Step(NamedTuple):
     programs: tuple[str, ...] | Callable[[TasklibConfig], tuple[str, ...]] = ()
     r"""The programs that the step runs, looked up on the ``PATH``, or a
     function of the config that returns them (the ``types`` step runs
-    the configured checker), see ``step_programs``."""
+    the configured checker), see ``needs``."""
 
     modules: tuple[str, ...] | Callable[[TasklibConfig], tuple[str, ...]] = ()
     r"""The Python modules that the step runs, or a function of the
     config that returns them (a step whose modules depend on the
-    options), see ``step_modules``."""
+    options), see ``needs``."""
 
+    def needs(self, cfg: TasklibConfig) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        r"""Return the programs and the modules that the step needs.
 
-def step_programs(step: Step, cfg: TasklibConfig) -> tuple[str, ...]:
-    r"""Return the programs that a step needs.
+        Args:
+            cfg: The resolved config, given to ``programs`` and
+                ``modules`` if they are functions.
 
-    Args:
-        step: The step.
-        cfg: The resolved config, given to ``step.programs`` if it is a
-            function.
+        Returns:
+            The ``(programs, modules)`` of the step, as tuples.
 
-    Returns:
-        ``step.programs``, or what it returns for ``cfg``.
+        Example usage:
 
-    Example usage:
+        ```pycon
+        >>> from invoke_tasklib._steps import Step
+        >>> step = Step(print, ("ruff",), lambda cfg: ("pytest",))
+        >>> step.needs(None)
+        (('ruff',), ('pytest',))
 
-    ```pycon
-    >>> from invoke_tasklib._steps import Step, step_programs
-    >>> step_programs(Step(lambda c: None, programs=("ruff",)), None)
-    ('ruff',)
-    >>> step = Step(lambda c: None, programs=lambda cfg: ("a",))
-    >>> step_programs(step, None)
-    ('a',)
-
-    ```
-    """
-    programs = step.programs
-    return programs if isinstance(programs, tuple) else programs(cfg)
-
-
-def step_modules(step: Step, cfg: TasklibConfig) -> tuple[str, ...]:
-    r"""Return the Python modules that a step needs.
-
-    Args:
-        step: The step.
-        cfg: The resolved config, given to ``step.modules`` if it is a
-            function.
-
-    Returns:
-        ``step.modules``, or what it returns for ``cfg``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib._steps import Step, step_modules
-    >>> step_modules(Step(lambda c: None, modules=("pytest",)), None)
-    ('pytest',)
-    >>> step = Step(lambda c: None, modules=lambda cfg: ("a",))
-    >>> step_modules(step, None)
-    ('a',)
-
-    ```
-    """
-    modules = step.modules
-    return modules if isinstance(modules, tuple) else modules(cfg)
-
-
-def tasks_of(steps: Mapping[str, Step]) -> dict[str, Callable[[Context], None]]:
-    r"""Return the task of each step.
-
-    Args:
-        steps: The steps, by name.
-
-    Returns:
-        The task of each step, by step name, for ``run_steps``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib._steps import Step, tasks_of
-    >>> task = lambda c: None
-    >>> tasks_of({"lint": Step(task)}) == {"lint": task}
-    True
-
-    ```
-    """
-    return {name: step.task for name, step in steps.items()}
+        ```
+        """
+        programs, modules = self.programs, self.modules
+        return (
+            programs if isinstance(programs, tuple) else programs(cfg),
+            modules if isinstance(modules, tuple) else modules(cfg),
+        )
 
 
 def missing_tools(programs: Collection[str], modules: Collection[str]) -> list[tuple[str, str]]:
@@ -360,3 +310,63 @@ def run_steps(
         msg = f"{len(failed)} of {len(steps)} {label} failed: {', '.join(failed)}"
         raise Exit(msg, code=1)
     say(c, done)
+
+
+def run_composite(
+    c: Context,
+    cfg: TasklibConfig,
+    steps: Mapping[str, Step],
+    valid: tuple[str, ...],
+    configured: tuple[str, ...],
+    *,
+    only: str | None,
+    skip: str | None,
+    keep_going: bool,
+    label: str,
+    messages: tuple[str, str],
+) -> None:
+    r"""Run a composite task: select the steps, look up the tools, run.
+
+    The steps are the ones of ``configured``, or of ``only`` if it is
+    set, without the ones of ``skip``. Before any step is run, the
+    tools that the selected steps need are looked up (see
+    ``Step.needs``) and the missing ones are reported, see
+    ``run_steps``.
+
+    Args:
+        c: The invoke context.
+        cfg: The resolved config.
+        steps: The steps, by name.
+        valid: The valid step names, for ``only`` and ``skip``.
+        configured: The steps of the config.
+        only: Comma-separated steps to run instead of ``configured``.
+        skip: Comma-separated steps to leave out.
+        keep_going: If True, run all the steps even if one fails.
+        label: What the steps are called in the final message, e.g.
+            ``"check(s)"``.
+        messages: The message written before the first step and the
+            message written when all the steps passed.
+
+    Raises:
+        Exit: If a name of ``only`` or ``skip`` is unknown (code 2), if
+            a tool of the selected steps is missing (code 127), or if
+            ``keep_going`` is set and a step failed (code 1).
+        UnexpectedExit: If a step fails and ``keep_going`` is not set.
+    """
+    selected = select_steps(
+        configured,
+        parse_steps("--only", only, valid),
+        parse_steps("--skip", skip, valid),
+    )
+    blocked = {
+        name: missing for name in selected if (missing := missing_tools(*steps[name].needs(cfg)))
+    }
+    run_steps(
+        c,
+        selected,
+        {name: step.task for name, step in steps.items()},
+        blocked,
+        keep_going=keep_going,
+        label=label,
+        messages=messages,
+    )

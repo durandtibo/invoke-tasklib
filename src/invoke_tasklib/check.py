@@ -7,16 +7,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib import doc, formatting, imports, lint, security, testing, typecheck
-from invoke_tasklib._steps import (
-    Step,
-    missing_tools,
-    parse_steps,
-    run_steps,
-    select_steps,
-    step_modules,
-    step_programs,
-    tasks_of,
-)
+from invoke_tasklib._steps import Step, run_composite
 from invoke_tasklib.config import CHECK_STEPS, load_config
 
 if TYPE_CHECKING:
@@ -110,37 +101,6 @@ add a step, add its name to ``CHECK_STEPS`` in ``config/_constants.py``
 """
 
 
-def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
-    r"""List the tools of a step that are not available.
-
-    Args:
-        step: The name of the step.
-        cfg: The resolved config.
-
-    Returns:
-        A ``(tool, reason)`` pair for each program of a step that
-        is not on the ``PATH`` and each module of a step that is
-        not installed, in that order. The reason says how to install it.
-        The modules of a step can depend on the config, see
-        ``Step.modules``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke.config import Config
-    >>> from invoke.context import MockContext
-    >>> from invoke_tasklib.check import _missing_tools
-    >>> from invoke_tasklib.config import load_config
-    >>> cfg = {"tasklib": {"package": {"name": "p"}}}
-    >>> c = MockContext(config=Config(overrides=cfg))
-    >>> _missing_tools("imports", load_config(c))
-    []
-
-    ```
-    """
-    return missing_tools(step_programs(STEPS[step], cfg), step_modules(STEPS[step], cfg))
-
-
 @task(
     name="all",
     default=True,
@@ -193,17 +153,14 @@ def all_(
         UnexpectedExit: If a step fails and ``keep_going`` is not set.
     """
     cfg = load_config(c)
-    steps = select_steps(
-        cfg.check.tasks,
-        parse_steps("--only", only, CHECK_STEPS),
-        parse_steps("--skip", skip, CHECK_STEPS),
-    )
-    blocked = {step: missing for step in steps if (missing := _missing_tools(step, cfg))}
-    run_steps(
+    run_composite(
         c,
-        steps,
-        tasks_of(STEPS),
-        blocked,
+        cfg,
+        STEPS,
+        CHECK_STEPS,
+        cfg.check.tasks,
+        only=only,
+        skip=skip,
         keep_going=keep_going,
         label="check(s)",
         messages=("🔎 Running all the checks...", "✅ All checks passed"),

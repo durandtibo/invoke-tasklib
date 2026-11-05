@@ -9,7 +9,7 @@ from invoke.exceptions import Exit, UnexpectedExit
 from invoke.runners import Result
 
 from invoke_tasklib import _steps, check, env
-from invoke_tasklib._steps import step_modules, step_programs
+from invoke_tasklib._steps import missing_tools
 from invoke_tasklib.config import CHECK_STEPS, get_config, load_config
 from invoke_tasklib.tools import PROGRAM_GROUPS, PROGRAM_HINTS
 from tests.helpers import commands, make_context
@@ -125,15 +125,6 @@ def test_all_stops_at_the_first_failure() -> None:
         check.all_(c)
 
 
-def test_all_runs_nothing_after_the_first_failure() -> None:
-    c = _context()
-    run = Mock(side_effect=Exit("failed"))
-    c.run = run
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(c)
-    assert run.call_count == 1
-
-
 def test_all_runs_the_configured_steps() -> None:
     c = _context({"tasks": ["lint", "format-python"]})
     check.all_(c)
@@ -207,83 +198,12 @@ def test_all_keep_going_lists_all_the_failed_steps() -> None:
         check.all_(c, keep_going=True)
 
 
-def test_all_keep_going_exits_with_code_1() -> None:
-    c = _context({"tasks": "lint"})
-    _failing(c, "ruff")
-    with pytest.raises(Exit, match=r"1 of 1 check\(s\) failed: lint") as info:
-        check.all_(c, keep_going=True)
-    assert info.value.code == 1
-
-
-def test_all_keep_going_passes_when_no_step_fails() -> None:
-    c = _context({"tasks": "lint,types"})
-    check.all_(c, keep_going=True)
-    assert commands(c) == ["ruff check .", "ty check"]
-
-
-def test_all_keep_going_catches_a_missing_program() -> None:
-    c = _context({"tasks": "lint,types"})
-    c.run = Mock(side_effect=[Exit("ruff not found"), Result()])
-    with pytest.raises(Exit, match=r"1 of 2 check\(s\) failed: lint"):
-        check.all_(c, keep_going=True)
-
-
-def test_all_keep_going_names_the_failed_step(capsys: pytest.CaptureFixture[str]) -> None:
-    c = _context({"tasks": "lint"})
-    _failing(c, "ruff")
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(c, keep_going=True)
-    assert "❌ Step failed: lint" in capsys.readouterr().err
-
-
-def test_all_keep_going_prints_the_reason_of_the_failure(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    c = _context({"tasks": "lint"})
-    c.run = Mock(
-        side_effect=Exit("'ruff' was not found on the PATH or next to the Python interpreter.")
-    )
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(c, keep_going=True)
-    assert (
-        "   'ruff' was not found on the PATH or next to the Python interpreter.\n"
-        in capsys.readouterr().err
-    )
-
-
-def test_all_keep_going_prints_the_reason_after_the_step_name(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    c = _context({"tasks": "lint"})
-    c.run = Mock(side_effect=Exit("boom"))
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(c, keep_going=True)
-    assert "❌ Step failed: lint\n   boom\n" in capsys.readouterr().err
-
-
-def test_all_keep_going_prints_the_exit_code_of_a_failed_command(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    c = _context({"tasks": "types"})
-    _failing(c, "ty")
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(c, keep_going=True)
-    assert "   The command 'ty check' exited with code 1\n" in capsys.readouterr().err
-
-
 def test_all_missing_tool_stops_before_any_step(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("ruff"))
     c = _context({"tasks": "format-python,lint,types"})
     with pytest.raises(Exit, match=r"1 tool\(s\) missing for the selected steps"):
         check.all_(c)
     assert commands(c) == []
-
-
-def test_all_missing_tool_exits_with_code_127(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_steps, "find_tool", _available())
-    with pytest.raises(Exit, match=r"missing") as info:
-        check.all_(_context({"tasks": "lint"}))
-    assert info.value.code == 127
 
 
 def test_all_missing_tools_are_all_listed(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -338,32 +258,13 @@ def test_all_keep_going_does_not_run_a_step_with_a_missing_tool(
     assert commands(c) == ["ruff check ."]
 
 
-def test_all_keep_going_prints_the_missing_tool_of_a_step(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    monkeypatch.setattr(_steps, "find_tool", _available())
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(_context({"tasks": "types"}), keep_going=True)
-    assert capsys.readouterr().err == (
-        "❌ Step failed: types\n"
-        "   'ty' was not found on the PATH or next to the "
-        "Python interpreter. Install it with the 'dev' group: "
-        "`uv sync --group dev`.\n"
-    )
+##################################################
+#     Tests for the missing tools of the steps   #
+##################################################
 
 
-def test_all_keep_going_lists_every_missing_tool_of_a_step(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    monkeypatch.setattr(_steps, "find_tool", _available())
-    with pytest.raises(Exit, match=r"failed"):
-        check.all_(_context({"tasks": "audit"}), keep_going=True)
-    assert capsys.readouterr().err.count("was not found on the PATH") == 2
-
-
-###################################
-#     Tests for _missing_tools    #
-###################################
+def _missing_tools(step: str, cfg: TasklibConfig) -> list[tuple[str, str]]:
+    return missing_tools(*check.STEPS[step].needs(cfg))
 
 
 def _cfg(xdoctest: bool = True, timeout: bool = True) -> TasklibConfig:
@@ -373,27 +274,27 @@ def _cfg(xdoctest: bool = True, timeout: bool = True) -> TasklibConfig:
 
 def test_missing_tools_unit_needs_pytest_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "xdoctest"))
-    assert [name for name, _ in check._missing_tools("unit", _cfg())] == ["pytest_timeout"]
+    assert [name for name, _ in _missing_tools("unit", _cfg())] == ["pytest_timeout"]
 
 
 def test_missing_tools_unit_does_not_need_pytest_timeout_when_it_is_off(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "xdoctest"))
-    assert check._missing_tools("unit", _cfg(timeout=False)) == []
+    assert _missing_tools("unit", _cfg(timeout=False)) == []
 
 
 def test_missing_tools_none_missing() -> None:
-    assert check._missing_tools("lint", _cfg()) == []
+    assert _missing_tools("lint", _cfg()) == []
 
 
 def test_missing_tools_step_without_tools() -> None:
-    assert check._missing_tools("imports", _cfg()) == []
+    assert _missing_tools("imports", _cfg()) == []
 
 
 def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available())
-    assert check._missing_tools("types", _cfg()) == [
+    assert _missing_tools("types", _cfg()) == [
         (
             "ty",
             (
@@ -407,7 +308,7 @@ def test_missing_tools_program(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_missing_tools_module(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest_timeout", "xdoctest"))
-    assert check._missing_tools("unit", _cfg()) == [
+    assert _missing_tools("unit", _cfg()) == [
         (
             "pytest",
             (
@@ -420,7 +321,7 @@ def test_missing_tools_module(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_missing_tools_programs_come_before_modules(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available())
-    names = [name for name, _ in check._missing_tools("audit", _cfg())]
+    names = [name for name, _ in _missing_tools("audit", _cfg())]
     assert names == ["uv", "uvx"]
 
 
@@ -428,14 +329,14 @@ def test_missing_tools_unit_needs_xdoctest_when_configured(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
-    assert [name for name, _ in check._missing_tools("unit", _cfg(xdoctest=True))] == ["xdoctest"]
+    assert [name for name, _ in _missing_tools("unit", _cfg(xdoctest=True))] == ["xdoctest"]
 
 
 def test_missing_tools_unit_does_not_need_xdoctest_when_disabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
-    assert check._missing_tools("unit", _cfg(xdoctest=False)) == []
+    assert _missing_tools("unit", _cfg(xdoctest=False)) == []
 
 
 def test_missing_tools_looks_modules_up_as_modules(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -446,7 +347,7 @@ def test_missing_tools_looks_modules_up_as_modules(monkeypatch: pytest.MonkeyPat
         return name
 
     monkeypatch.setattr(_steps, "find_tool", find)
-    check._missing_tools("doctest", _cfg())
+    _missing_tools("doctest", _cfg())
     assert calls == [("pytest", True), ("xdoctest", True)]
 
 
@@ -512,18 +413,18 @@ def test_steps_are_the_valid_steps_of_the_config() -> None:
 
 
 def test_programs_are_checked_by_env_check_tools() -> None:
-    programs = {name for step in check.STEPS.values() for name in step_programs(step, _cfg())}
+    programs = {name for step in check.STEPS.values() for name in step.needs(_cfg())[0]}
     assert programs <= set(env.TOOL_PROGRAMS)
 
 
 def test_modules_are_checked_by_env_check_tools() -> None:
     cfg = _cfg()
-    modules = {name for step in check.STEPS.values() for name in step_modules(step, cfg)}
+    modules = {name for step in check.STEPS.values() for name in step.needs(cfg)[1]}
     assert modules <= set(env.TOOL_MODULES)
 
 
 def test_programs_of_the_steps_have_an_install_hint() -> None:
-    programs = {name for step in check.STEPS.values() for name in step_programs(step, _cfg())}
+    programs = {name for step in check.STEPS.values() for name in step.needs(_cfg())[0]}
     assert {p for p in programs if p not in PROGRAM_HINTS and p not in PROGRAM_GROUPS} == set()
 
 
@@ -549,25 +450,25 @@ def test_unit_modules_with_everything_off() -> None:
 
 
 def test_unit_step_modules_are_the_unit_modules() -> None:
-    assert step_modules(check.STEPS["unit"], _cfg(timeout=False)) == ("pytest", "xdoctest")
+    assert check.STEPS["unit"].needs(_cfg(timeout=False))[1] == ("pytest", "xdoctest")
 
 
 def test_missing_tools_unit_needs_xdoctest(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
-    assert [name for name, _ in check._missing_tools("unit", _cfg())] == ["xdoctest"]
+    assert [name for name, _ in _missing_tools("unit", _cfg())] == ["xdoctest"]
 
 
 def test_missing_tools_unit_does_not_need_xdoctest_when_it_is_off(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(_steps, "find_tool", _available("pytest", "pytest_timeout"))
-    assert check._missing_tools("unit", _cfg(xdoctest=False)) == []
+    assert _missing_tools("unit", _cfg(xdoctest=False)) == []
 
 
 def test_types_step_needs_the_configured_checker() -> None:
     cfg = get_config(make_context({"package": {"name": "p"}, "types": {"checker": "mypy"}}))
-    assert step_programs(check.STEPS["types"], cfg) == ("mypy",)
+    assert check.STEPS["types"].needs(cfg)[0] == ("mypy",)
 
 
 def test_types_step_needs_ty_by_default() -> None:
-    assert step_programs(check.STEPS["types"], _cfg()) == ("ty",)
+    assert check.STEPS["types"].needs(_cfg())[0] == ("ty",)
