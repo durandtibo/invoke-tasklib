@@ -6,7 +6,8 @@ import pytest
 from invoke.exceptions import Exit
 
 from invoke_tasklib import _steps, fix
-from invoke_tasklib.config import FIX_STEPS, get_config
+from invoke_tasklib.config import get_config
+from invoke_tasklib.config._constants import FIX_STEPS
 from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, make_context
 

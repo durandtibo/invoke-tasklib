@@ -8,7 +8,8 @@ from invoke.context import Context
 from invoke.exceptions import Exit
 
 from invoke_tasklib import show
-from invoke_tasklib.config import Unset, default_config, get_config
+from invoke_tasklib.config import default_config, get_config
+from invoke_tasklib.config._schema import Unset
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

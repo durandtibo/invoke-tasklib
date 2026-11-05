@@ -10,7 +10,8 @@ from invoke.runners import Result
 
 from invoke_tasklib import _steps, check
 from invoke_tasklib._steps import missing_tools
-from invoke_tasklib.config import CHECK_STEPS, get_config, load_config
+from invoke_tasklib.config import get_config, load_config
+from invoke_tasklib.config._constants import CHECK_STEPS
 from invoke_tasklib.tools import TOOLS
 from tests.helpers import commands, make_context
 

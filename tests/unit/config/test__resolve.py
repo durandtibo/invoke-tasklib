@@ -8,15 +8,9 @@ from invoke.config import Config
 from invoke.context import Context
 from invoke.exceptions import Exit
 
-from invoke_tasklib.config import (
-    PROJECT_PREFIX_ATTRIBUTE,
-    SCHEMA,
-    Unset,
-    get_config,
-    load_config,
-)
-from invoke_tasklib.config._resolve import _check_project_root
-from invoke_tasklib.config._schema import _defaults
+from invoke_tasklib.config import SCHEMA, get_config, load_config
+from invoke_tasklib.config._resolve import PROJECT_PREFIX_ATTRIBUTE, _check_project_root
+from invoke_tasklib.config._schema import Unset, _defaults
 
 
 def _context(tasklib_config: object = None) -> Context:

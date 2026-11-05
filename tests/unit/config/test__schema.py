@@ -8,8 +8,6 @@ import pytest
 
 from invoke_tasklib import config as config_module
 from invoke_tasklib.config import (
-    DEFAULT_PATHS,
-    DEFAULT_TEST,
     SCHEMA,
     CheckConfig,
     GroupsConfig,
@@ -17,13 +15,41 @@ from invoke_tasklib.config import (
     PathsConfig,
     default_config,
     json_schema,
-    main,
 )
-from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _untyped
+from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _untyped, main
 
 ####################################
 #     Tests for default_config     #
 ####################################
+
+
+def test_default_config_whole_output() -> None:
+    # The booleans and the integers are an ``Unset``, which equals "".
+    assert default_config() == {
+        "package": {"name": None, "import_name": None, "python_version": None},
+        "paths": {
+            "src": None,
+            "tests": "tests",
+            "unit_tests": None,
+            "integration_tests": None,
+            "functional_tests": None,
+            "benchmarks": None,
+            "docs_config": "docs/mkdocs.yml",
+        },
+        "groups": {"install": "dev", "update": "dev,docs"},
+        "test": {
+            "unit_timeout": "",
+            "integration_timeout": "",
+            "functional_timeout": "",
+            "xdoctest": "",
+            "timeout": "",
+            "cov_fail_under": None,
+            "cov_reports": "html,xml,term",
+        },
+        "types": {"checker": "ty"},
+        "check": {"tasks": "format-python,format-docstrings,lint,types,imports,unit", "cov": ""},
+        "fix": {"tasks": "lint,format-python,format-docstrings"},
+    }
 
 
 def test_default_config_has_the_seven_sections() -> None:
@@ -79,12 +105,12 @@ def test_default_config_registers_a_placeholder_for_an_integer() -> None:
 
 def test_default_config_does_not_change_the_schema_defaults() -> None:
     default_config()
-    assert DEFAULT_TEST["xdoctest"] is True
+    assert SCHEMA["test"]["xdoctest"].default is True
 
 
 def test_default_config_returns_new_dicts() -> None:
     default_config()["paths"]["src"] = "changed"
-    assert DEFAULT_PATHS["src"] is None
+    assert SCHEMA["paths"]["src"].default is None
 
 
 def test_default_config_is_deterministic() -> None:
@@ -140,10 +166,6 @@ def test_schema_option_has_a_json_type(section: str, key: str) -> None:
 def test_schema_option_validation_error_names_the_key(section: str, key: str) -> None:
     with pytest.raises(ValueError, match=rf"tasklib\.{section}\.{key}"):
         SCHEMA[section][key].validate(object())
-
-
-def test_schema_default_dicts_are_derived_from_the_schema() -> None:
-    assert {k: o.default for k, o in SCHEMA["test"].items()} == DEFAULT_TEST
 
 
 def test_defaults_of_a_section() -> None:

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from invoke_tasklib.config import COV_REPORTS
+from invoke_tasklib.config import SCHEMA
+from invoke_tasklib.config._constants import COV_REPORTS
 from invoke_tasklib.config._validate import (
     _as_mapping,
     _as_names,
@@ -11,10 +12,8 @@ from invoke_tasklib.config._validate import (
     _is_cov_report,
     _normalize_groups,
     _validate_bool,
-    _validate_check_tasks,
     _validate_cov_fail_under,
     _validate_cov_reports,
-    _validate_fix_tasks,
     _validate_import_name,
     _validate_int,
     _validate_python_version,
@@ -383,91 +382,95 @@ def test_validate_cov_reports_rejects_other_types(value: object) -> None:
         _validate_cov_reports(value)
 
 
-###########################################
-#     Tests for _validate_check_tasks     #
-###########################################
+###############################################
+#     Tests for the check.tasks validator     #
+###############################################
+
+_check_tasks = SCHEMA["check"]["tasks"].validate
 
 
 def test_validate_check_tasks_comma_separated_string() -> None:
-    assert _validate_check_tasks("lint, unit") == ("lint", "unit")
+    assert _check_tasks("lint, unit") == ("lint", "unit")
 
 
 def test_validate_check_tasks_list() -> None:
-    assert _validate_check_tasks(["types", "docs"]) == ("types", "docs")
+    assert _check_tasks(["types", "docs"]) == ("types", "docs")
 
 
 def test_validate_check_tasks_removes_duplicates_keeping_the_order() -> None:
-    assert _validate_check_tasks("unit,lint,unit") == ("unit", "lint")
+    assert _check_tasks("unit,lint,unit") == ("unit", "lint")
 
 
 def test_validate_check_tasks_ignores_empty_names() -> None:
-    assert _validate_check_tasks("lint,,") == ("lint",)
+    assert _check_tasks("lint,,") == ("lint",)
 
 
 def test_validate_check_tasks_rejects_an_empty_value() -> None:
     with pytest.raises(ValueError, match=r"must contain at least one step"):
-        _validate_check_tasks("")
+        _check_tasks("")
 
 
 def test_validate_check_tasks_rejects_an_unknown_step() -> None:
     with pytest.raises(ValueError, match=r"Unknown check step \['lnt'\] in 'tasklib.check.tasks'"):
-        _validate_check_tasks("lnt")
+        _check_tasks("lnt")
 
 
 def test_validate_check_tasks_lists_the_valid_steps() -> None:
     with pytest.raises(ValueError, match=r"Valid steps: format-python, format-docstrings, lint"):
-        _validate_check_tasks("lnt")
+        _check_tasks("lnt")
 
 
 @pytest.mark.parametrize("value", [3, None, ["lint", 3]])
 def test_validate_check_tasks_rejects_a_wrong_type(value: object) -> None:
     with pytest.raises(ValueError, match=r"must be a comma-separated string or a list"):
-        _validate_check_tasks(value)
+        _check_tasks(value)
 
 
-#########################################
-#     Tests for _validate_fix_tasks     #
-#########################################
+#############################################
+#     Tests for the fix.tasks validator     #
+#############################################
+
+_fix_tasks = SCHEMA["fix"]["tasks"].validate
 
 
 def test_validate_fix_tasks_comma_separated_string() -> None:
-    assert _validate_fix_tasks("lint, format-python") == ("lint", "format-python")
+    assert _fix_tasks("lint, format-python") == ("lint", "format-python")
 
 
 def test_validate_fix_tasks_list() -> None:
-    assert _validate_fix_tasks(["shell", "lint"]) == ("shell", "lint")
+    assert _fix_tasks(["shell", "lint"]) == ("shell", "lint")
 
 
 def test_validate_fix_tasks_removes_duplicates_keeping_the_order() -> None:
-    assert _validate_fix_tasks("shell,lint,shell") == ("shell", "lint")
+    assert _fix_tasks("shell,lint,shell") == ("shell", "lint")
 
 
 def test_validate_fix_tasks_rejects_an_empty_value() -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.fix\.tasks' must contain at least one step"):
-        _validate_fix_tasks("")
+        _fix_tasks("")
 
 
 def test_validate_fix_tasks_rejects_an_unknown_step() -> None:
     with pytest.raises(ValueError, match=r"Unknown fix step \['lnt'\] in 'tasklib.fix.tasks'"):
-        _validate_fix_tasks("lnt")
+        _fix_tasks("lnt")
 
 
 def test_validate_fix_tasks_rejects_a_check_only_step() -> None:
     with pytest.raises(ValueError, match=r"Unknown fix step \['types'\]"):
-        _validate_fix_tasks("types")
+        _fix_tasks("types")
 
 
 def test_validate_fix_tasks_lists_the_valid_steps() -> None:
     with pytest.raises(
         ValueError, match=r"Valid steps: lint, format-python, format-docstrings, shell"
     ):
-        _validate_fix_tasks("lnt")
+        _fix_tasks("lnt")
 
 
 @pytest.mark.parametrize("value", [3, None, ["lint", 3]])
 def test_validate_fix_tasks_rejects_a_wrong_type(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.fix\.tasks' must be a comma-separated"):
-        _validate_fix_tasks(value)
+        _fix_tasks(value)
 
 
 #####################################
@@ -476,12 +479,12 @@ def test_validate_fix_tasks_rejects_a_wrong_type(value: object) -> None:
 
 
 def test_validate_steps_accepts_the_valid_steps() -> None:
-    assert _validate_steps("fix", "fix", ("a", "b"), "b,a") == ("b", "a")
+    assert _validate_steps("fix", ("a", "b"), "b,a") == ("b", "a")
 
 
-def test_validate_steps_names_the_section_and_the_noun() -> None:
-    with pytest.raises(ValueError, match=r"Unknown thing step \['c'\] in 'tasklib.sec.tasks'"):
-        _validate_steps("sec", "thing", ("a", "b"), "c")
+def test_validate_steps_names_the_section() -> None:
+    with pytest.raises(ValueError, match=r"Unknown sec step \['c'\] in 'tasklib.sec.tasks'"):
+        _validate_steps("sec", ("a", "b"), "c")
 
 
 ##########################################

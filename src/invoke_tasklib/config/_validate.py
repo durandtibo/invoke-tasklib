@@ -7,9 +7,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from invoke_tasklib.config._constants import (
-    CHECK_STEPS,
     COV_REPORTS,
-    FIX_STEPS,
     PYTHON_VERSION_PATTERN,
     TYPE_CHECKERS,
 )
@@ -459,15 +457,15 @@ def _validate_cov_reports(value: object) -> tuple[str, ...]:
     return tuple(names)
 
 
-def _validate_steps(
-    section: str, noun: str, valid: tuple[str, ...], value: object
-) -> tuple[str, ...]:
+def _validate_steps(section: str, valid: tuple[str, ...], value: object) -> tuple[str, ...]:
     r"""Validate the ``tasks`` value of a section that lists steps.
 
+    The schema binds the first two arguments with ``partial``, one per
+    section (``check`` and ``fix``).
+
     Args:
-        section: The name of the config section, e.g. ``"check"``.
-        noun: What the steps are called in the error message, e.g.
-            ``"check"``.
+        section: The name of the config section, e.g. ``"check"``. It
+            is also what the steps are called in the error message.
         valid: The valid step names.
         value: The raw config value: a comma-separated string or a list
             of step names.
@@ -483,7 +481,7 @@ def _validate_steps(
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_steps
-    >>> _validate_steps("fix", "fix", ("lint", "unit"), "lint, unit")
+    >>> _validate_steps("fix", ("lint", "unit"), "lint, unit")
     ('lint', 'unit')
 
     ```
@@ -495,67 +493,9 @@ def _validate_steps(
         raise ValueError(msg)
     unknown = [name for name in names if name not in valid]
     if unknown:
-        msg = f"Unknown {noun} step {unknown} in '{key_path}'. Valid steps: {', '.join(valid)}"
+        msg = f"Unknown {section} step {unknown} in '{key_path}'. Valid steps: {', '.join(valid)}"
         raise ValueError(msg)
     return tuple(names)
-
-
-def _validate_check_tasks(value: object) -> tuple[str, ...]:
-    r"""Validate the ``check.tasks`` config value.
-
-    Args:
-        value: The raw config value: a comma-separated string or a list
-            of step names.
-
-    Returns:
-        The step names, without duplicates, in the order given.
-
-    Raises:
-        ValueError: If the value is neither a string nor a list of
-            strings, if it is empty, or if a name is not one of
-            ``CHECK_STEPS``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.config._validate import (
-    ...     _validate_check_tasks,
-    ... )
-    >>> _validate_check_tasks("lint, unit")
-    ('lint', 'unit')
-    >>> _validate_check_tasks(["types"])
-    ('types',)
-
-    ```
-    """
-    return _validate_steps("check", "check", CHECK_STEPS, value)
-
-
-def _validate_fix_tasks(value: object) -> tuple[str, ...]:
-    r"""Validate the ``fix.tasks`` config value.
-
-    Args:
-        value: The raw config value: a comma-separated string or a list
-            of step names.
-
-    Returns:
-        The step names, without duplicates, in the order given.
-
-    Raises:
-        ValueError: If the value is neither a string nor a list of
-            strings, if it is empty, or if a name is not one of
-            ``FIX_STEPS``.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.config._validate import _validate_fix_tasks
-    >>> _validate_fix_tasks("lint, format-python")
-    ('lint', 'format-python')
-
-    ```
-    """
-    return _validate_steps("fix", "fix", FIX_STEPS, value)
 
 
 def _validate_cov_fail_under(value: object) -> int | None:
