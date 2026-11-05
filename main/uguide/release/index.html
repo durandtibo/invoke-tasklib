@@ -1786,8 +1786,9 @@ must be tagged and the tag (without a leading <code>v</code>) must be the static
 <code>uv publish</code>.</p>
 <p>Credentials, in this order:</p>
 <ul>
-<li>a token in <code>PYPI_TOKEN</code> (or <code>UV_PUBLISH_TOKEN</code>), handed to <code>uv publish</code> through its environment
-  so it never appears on the command line;</li>
+<li>a token in <code>PYPI_TOKEN</code> (<code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, because the two indexes reject
+  each other's tokens and a PyPI token must not be sent to TestPyPI) or in <code>UV_PUBLISH_TOKEN</code>,
+  handed to <code>uv publish</code> through its environment so it never appears on the command line;</li>
 <li><a href="https://docs.pypi.org/trusted-publishers/">PyPI Trusted Publishing</a> (OpenID Connect), used
   automatically in GitHub Actions with the <code>id-token: write</code> permission (<code>--trusted-publishing
 always</code>); no token is needed.</li>
