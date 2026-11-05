@@ -57,12 +57,11 @@ class Tool(NamedTuple):
     It replaces the hint built from ``group``.
     """
 
+    # The pytest options that the tool, a pytest plugin, provides.
+    # The package to install is the module name with ``-`` instead of
+    # ``_``.
     plugin_options: tuple[str, ...] = ()
-    r"""The pytest options that the tool, a pytest plugin, provides.
 
-    The package to install is the module name with ``-`` instead of
-    ``_``.
-    """
 
 _UV_URL = "https://docs.astral.sh/uv/getting-started/installation/"
 

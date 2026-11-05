@@ -205,13 +205,10 @@ async def _try_import(module: str, slots: asyncio.Semaphore) -> str | None:
 
     ```
     """
-
+    command = (sys.executable, "-c", _IMPORT_CODE, module)
     async with slots:
         proc = await asyncio.create_subprocess_exec(
-            sys.executable,
-            "-c",
-            _IMPORT_CODE,
-            module,
+            *command,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,
         )
