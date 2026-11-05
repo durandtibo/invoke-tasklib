@@ -78,12 +78,15 @@ def get_config(c: Context) -> TasklibConfig:
     if not package["name"]:
         msg = "'tasklib.package.name' must be set in invoke.yaml"
         raise ValueError(msg)
-    package["name"] = _validate_str("package", "name", package["name"])
+    package["name"] = _validate_str("tasklib.package.name", package["name"])
     _derive_defaults(merged)
 
     resolved = {
         section: _SECTION_CLASSES[section](
-            **{key: option.validate(merged[section][key]) for key, option in options.items()}
+            **{
+                key: option.validate(f"tasklib.{section}.{key}", merged[section][key])
+                for key, option in options.items()
+            }
         )
         for section, options in SCHEMA.items()
     }

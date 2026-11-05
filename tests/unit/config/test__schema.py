@@ -16,7 +16,7 @@ from invoke_tasklib.config import (
     default_config,
     json_schema,
 )
-from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _untyped, main
+from invoke_tasklib.config._schema import Unset, _defaults, _path, _timeout, _untyped
 
 ####################################
 #     Tests for default_config     #
@@ -148,7 +148,7 @@ _OPTIONS_WITH_DEFAULT = [(s, k) for s, k in _OPTIONS if SCHEMA[s][k].default is 
 @pytest.mark.parametrize(("section", "key"), _OPTIONS_WITH_DEFAULT)
 def test_schema_default_is_valid(section: str, key: str) -> None:
     option = SCHEMA[section][key]
-    assert option.validate(option.default) is not None
+    assert option.validate(f"tasklib.{section}.{key}", option.default) is not None
 
 
 @pytest.mark.parametrize(("section", "key"), _OPTIONS)
@@ -165,7 +165,7 @@ def test_schema_option_has_a_json_type(section: str, key: str) -> None:
 @pytest.mark.parametrize(("section", "key"), _OPTIONS)
 def test_schema_option_validation_error_names_the_key(section: str, key: str) -> None:
     with pytest.raises(ValueError, match=rf"tasklib\.{section}\.{key}"):
-        SCHEMA[section][key].validate(object())
+        SCHEMA[section][key].validate(f"tasklib.{section}.{key}", object())
 
 
 def test_defaults_of_a_section() -> None:
@@ -181,23 +181,23 @@ def test_defaults_returns_a_new_dict() -> None:
 
 
 def test_timeout_option() -> None:
-    option = _timeout("unit_timeout", 10, "Timeout.")
+    option = _timeout(10, "Timeout.")
     assert (option.default, option.json_schema) == (10, {"type": "integer", "minimum": 1})
 
 
 def test_timeout_option_rejects_zero() -> None:
     with pytest.raises(ValueError, match=r"'tasklib.test.unit_timeout' must be an integer >= 1"):
-        _timeout("unit_timeout", 10, "Timeout.").validate(0)
+        _timeout(10, "Timeout.").validate("tasklib.test.unit_timeout", 0)
 
 
 def test_path_option() -> None:
-    option = _path("src", None, "Source.")
+    option = _path(None, "Source.")
     assert (option.default, option.doc) == (None, "Source.")
 
 
 def test_path_option_rejects_an_empty_string() -> None:
     with pytest.raises(ValueError, match=r"'tasklib.paths.src' must be a non-empty string"):
-        _path("src", None, "Source.").validate("")
+        _path(None, "Source.").validate("tasklib.paths.src", "")
 
 
 #################################
@@ -265,31 +265,6 @@ def test_json_schema_is_valid_json() -> None:
 
 def test_json_schema_is_deterministic() -> None:
     assert json_schema() == json_schema()
-
-
-###########################
-#     Tests for main      #
-###########################
-
-
-def test_main_returns_0() -> None:
-    assert main([]) == 0
-
-
-def test_main_prints_the_schema(capsys: pytest.CaptureFixture[str]) -> None:
-    main([])
-    assert json.loads(capsys.readouterr().out) == json_schema()
-
-
-def test_main_rejects_arguments() -> None:
-    assert main(["--bad"]) == 2
-
-
-def test_main_prints_the_usage_when_it_rejects_arguments(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    main(["--bad"])
-    assert capsys.readouterr().out == "usage: python -m invoke_tasklib.config\n"
 
 
 ########################################

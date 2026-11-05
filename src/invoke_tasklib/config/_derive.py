@@ -72,7 +72,9 @@ def _derive_defaults(merged: dict[str, dict[str, object]]) -> None:
     if package["import_name"] is None:
         package["import_name"] = str(package["name"]).replace("-", "_")
     if paths["src"] is None:
-        paths["src"] = _default_src(_validate_import_name(package["import_name"]))
+        paths["src"] = _default_src(
+            _validate_import_name("tasklib.package.import_name", package["import_name"])
+        )
     for key, scope in TEST_SCOPES.items():
         if paths[key] is None:
             paths[key] = f"{paths['tests']}/{scope}"

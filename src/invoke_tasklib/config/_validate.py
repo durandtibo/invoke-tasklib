@@ -16,10 +16,12 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
-def _validate_checker(value: object) -> str:
+def _validate_checker(path: str, value: object) -> str:
     r"""Validate the ``types.checker`` config value.
 
     Args:
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.types.checker"``.
         value: The raw config value.
 
     Returns:
@@ -32,18 +34,18 @@ def _validate_checker(value: object) -> str:
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_checker
-    >>> _validate_checker("mypy")
+    >>> _validate_checker("tasklib.types.checker", "mypy")
     'mypy'
 
     ```
     """
     if value not in TYPE_CHECKERS:
-        msg = f"'tasklib.types.checker' must be one of {', '.join(TYPE_CHECKERS)}, got {value!r}"
+        msg = f"'{path}' must be one of {', '.join(TYPE_CHECKERS)}, got {value!r}"
         raise ValueError(msg)
     return str(value)
 
 
-def _validate_python_version(value: object) -> str | None:
+def _validate_python_version(path: str, value: object) -> str | None:
     r"""Validate the ``package.python_version`` config value.
 
     YAML reads an unquoted ``3.10`` as the float ``3.1``, which would
@@ -51,6 +53,8 @@ def _validate_python_version(value: object) -> str | None:
     such as ``"3.10"`` or ``"3.10.4"`` are accepted.
 
     Args:
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.package.python_version"``.
         value: The raw config value, or ``None`` if it is not set.
 
     Returns:
@@ -67,9 +71,10 @@ def _validate_python_version(value: object) -> str | None:
     >>> from invoke_tasklib.config._validate import (
     ...     _validate_python_version,
     ... )
-    >>> _validate_python_version("3.10")
+    >>> path = "tasklib.package.python_version"
+    >>> _validate_python_version(path, "3.10")
     '3.10'
-    >>> _validate_python_version(None) is None
+    >>> _validate_python_version(path, None) is None
     True
 
     ```
@@ -78,7 +83,7 @@ def _validate_python_version(value: object) -> str | None:
         return None
     if not isinstance(value, str) or not PYTHON_VERSION_PATTERN.fullmatch(value):
         msg = (
-            f'\'tasklib.package.python_version\' must be a string like "3.10" or "3.10.4", '
+            f'\'{path}\' must be a string like "3.10" or "3.10.4", '
             f"got {value!r}. Quote the value in invoke.yaml: YAML reads an unquoted 3.10 "
             "as the number 3.1."
         )
@@ -205,11 +210,12 @@ def _as_names(key_path: str, value: object) -> list[str]:
     return list(dict.fromkeys(name.strip() for name in names if name.strip()))
 
 
-def _normalize_groups(key: str, value: object) -> tuple[str, ...]:
+def _normalize_groups(path: str, value: object) -> tuple[str, ...]:
     r"""Normalize a ``groups`` config value to a tuple of names.
 
     Args:
-        key: The name of the config key, used in the error message.
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.groups.install"``.
         value: The raw config value: a comma-separated string or a list
             of group names.
 
@@ -225,20 +231,22 @@ def _normalize_groups(key: str, value: object) -> tuple[str, ...]:
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _normalize_groups
-    >>> _normalize_groups("install", ["dev", "docs"])
+    >>> _normalize_groups("tasklib.groups.install", ["dev", "docs"])
     ('dev', 'docs')
-    >>> _normalize_groups("install", "dev, docs")
+    >>> _normalize_groups("tasklib.groups.install", "dev, docs")
     ('dev', 'docs')
 
     ```
     """
-    return tuple(_as_names(f"tasklib.groups.{key}", value))
+    return tuple(_as_names(path, value))
 
 
-def _validate_import_name(value: object) -> str:
+def _validate_import_name(path: str, value: object) -> str:
     r"""Validate the ``package.import_name`` config value.
 
     Args:
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.package.import_name"``.
         value: The raw config value.
 
     Returns:
@@ -254,16 +262,14 @@ def _validate_import_name(value: object) -> str:
     >>> from invoke_tasklib.config._validate import (
     ...     _validate_import_name,
     ... )
-    >>> _validate_import_name("my_package")
+    >>> path = "tasklib.package.import_name"
+    >>> _validate_import_name(path, "my_package")
     'my_package'
 
     ```
     """
     if not isinstance(value, str) or not all(part.isidentifier() for part in value.split(".")):
-        msg = (
-            "'tasklib.package.import_name' must be a Python module name such as "
-            f'"my_package", got {value!r}'
-        )
+        msg = f"'{path}' must be a Python module name such as \"my_package\", got {value!r}"
         raise ValueError(msg)
     return value
 
@@ -281,15 +287,12 @@ _BOOL_TEXT: dict[str, bool] = {
 r"""The spellings of a boolean in an environment variable."""
 
 
-def _validate_int(
-    section: str, key: str, value: object, *, minimum: int, maximum: int | None = None
-) -> int:
+def _validate_int(path: str, value: object, *, minimum: int, maximum: int | None = None) -> int:
     r"""Validate an integer value of a config section.
 
     Args:
-        section: The name of the config section, used in the error
-            message.
-        key: The name of the config key, used in the error message.
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.test.unit_timeout"``.
         value: The raw config value: an integer or a string of digits
             (an environment variable).
         minimum: The smallest valid value.
@@ -307,9 +310,9 @@ def _validate_int(
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_int
-    >>> _validate_int("test", "unit_timeout", 10, minimum=1)
+    >>> _validate_int("tasklib.test.unit_timeout", 10, minimum=1)
     10
-    >>> _validate_int("test", "unit_timeout", "10", minimum=1)
+    >>> _validate_int("tasklib.test.unit_timeout", "10", minimum=1)
     10
 
     ```
@@ -322,18 +325,17 @@ def _validate_int(
         or (maximum is not None and number > maximum)
     ):
         bounds = f">= {minimum}" if maximum is None else f"between {minimum} and {maximum}"
-        msg = f"'tasklib.{section}.{key}' must be an integer {bounds}, got {value!r}"
+        msg = f"'{path}' must be an integer {bounds}, got {value!r}"
         raise ValueError(msg)
     return number
 
 
-def _validate_str(section: str, key: str, value: object) -> str:
+def _validate_str(path: str, value: object) -> str:
     r"""Validate a string value of the ``package`` or ``paths`` section.
 
     Args:
-        section: The name of the config section, used in the error
-            message.
-        key: The name of the config key, used in the error message.
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.paths.src"``.
         value: The raw config value.
 
     Returns:
@@ -346,13 +348,13 @@ def _validate_str(section: str, key: str, value: object) -> str:
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_str
-    >>> _validate_str("paths", "src", "src/mypkg")
+    >>> _validate_str("tasklib.paths.src", "src/mypkg")
     'src/mypkg'
 
     ```
     """
     if not isinstance(value, str) or not value:
-        msg = f"'tasklib.{section}.{key}' must be a non-empty string, got {value!r}"
+        msg = f"'{path}' must be a non-empty string, got {value!r}"
         raise ValueError(msg)
     return value
 
@@ -413,10 +415,12 @@ def _is_cov_report(name: str) -> bool:
     return report in COV_REPORTS and (not colon or bool(argument))
 
 
-def _validate_cov_reports(value: object) -> tuple[str, ...]:
+def _validate_cov_reports(path: str, value: object) -> tuple[str, ...]:
     r"""Validate the ``test.cov_reports`` config value.
 
     Args:
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.test.cov_reports"``.
         value: The raw config value: a comma-separated string or a list
             of ``--cov-report`` values. A value is a format of
             ``COV_REPORTS`` with an optional ``:<argument>``, as in
@@ -437,38 +441,41 @@ def _validate_cov_reports(value: object) -> tuple[str, ...]:
     >>> from invoke_tasklib.config._validate import (
     ...     _validate_cov_reports,
     ... )
-    >>> _validate_cov_reports("html, term")
+    >>> _validate_cov_reports("tasklib.test.cov_reports", "html, term")
     ('html', 'term')
-    >>> _validate_cov_reports(["xml"])
+    >>> _validate_cov_reports("tasklib.test.cov_reports", ["xml"])
     ('xml',)
-    >>> _validate_cov_reports("term-missing:skip-covered")
+    >>> _validate_cov_reports(
+    ...     "tasklib.test.cov_reports", "term-missing:skip-covered"
+    ... )
     ('term-missing:skip-covered',)
 
     ```
     """
-    names = _as_names("tasklib.test.cov_reports", value)
+    names = _as_names(path, value)
     unknown = [name for name in names if not _is_cov_report(name)]
     if unknown:
         msg = (
-            f"Unknown coverage report {unknown} in 'tasklib.test.cov_reports'. "
+            f"Unknown coverage report {unknown} in '{path}'. "
             f"Valid reports: {', '.join(sorted(COV_REPORTS))}"
         )
         raise ValueError(msg)
     return tuple(names)
 
 
-def _validate_steps(section: str, valid: tuple[str, ...], value: object) -> tuple[str, ...]:
+def _validate_steps(path: str, value: object, valid: tuple[str, ...]) -> tuple[str, ...]:
     r"""Validate the ``tasks`` value of a section that lists steps.
 
-    The schema binds the first two arguments with ``partial``, one per
-    section (``check`` and ``fix``).
+    The schema binds ``valid`` with ``partial``, one per section
+    (``check`` and ``fix``).
 
     Args:
-        section: The name of the config section, e.g. ``"check"``. It
-            is also what the steps are called in the error message.
-        valid: The valid step names.
+        path: The dotted name of the config key, e.g.
+            ``"tasklib.check.tasks"``. The section in it is also what
+            the steps are called in the error message.
         value: The raw config value: a comma-separated string or a list
             of step names.
+        valid: The valid step names.
 
     Returns:
         The step names, without duplicates, in the order given.
@@ -481,27 +488,30 @@ def _validate_steps(section: str, valid: tuple[str, ...], value: object) -> tupl
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_steps
-    >>> _validate_steps("fix", ("lint", "unit"), "lint, unit")
+    >>> path = "tasklib.fix.tasks"
+    >>> _validate_steps(path, "lint, unit", ("lint", "unit"))
     ('lint', 'unit')
 
     ```
     """
-    key_path = f"tasklib.{section}.tasks"
-    names = _as_names(key_path, value)
+    section = path.split(".")[1]
+    names = _as_names(path, value)
     if not names:
-        msg = f"'{key_path}' must contain at least one step"
+        msg = f"'{path}' must contain at least one step"
         raise ValueError(msg)
     unknown = [name for name in names if name not in valid]
     if unknown:
-        msg = f"Unknown {section} step {unknown} in '{key_path}'. Valid steps: {', '.join(valid)}"
+        msg = f"Unknown {section} step {unknown} in '{path}'. Valid steps: {', '.join(valid)}"
         raise ValueError(msg)
     return tuple(names)
 
 
-def _validate_cov_fail_under(value: object) -> int | None:
+def _validate_cov_fail_under(path: str, value: object) -> int | None:
     r"""Validate the ``test.cov_fail_under`` config value.
 
     Args:
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.test.cov_fail_under"``.
         value: The raw config value: ``None``, an integer, or a string
             of digits (an environment variable).
 
@@ -517,25 +527,25 @@ def _validate_cov_fail_under(value: object) -> int | None:
     >>> from invoke_tasklib.config._validate import (
     ...     _validate_cov_fail_under,
     ... )
-    >>> _validate_cov_fail_under("90")
+    >>> path = "tasklib.test.cov_fail_under"
+    >>> _validate_cov_fail_under(path, "90")
     90
-    >>> _validate_cov_fail_under(None) is None
+    >>> _validate_cov_fail_under(path, None) is None
     True
 
     ```
     """
     if value is None:
         return None
-    return _validate_int("test", "cov_fail_under", value, minimum=0, maximum=100)
+    return _validate_int(path, value, minimum=0, maximum=100)
 
 
-def _validate_bool(section: str, key: str, value: object) -> bool:
+def _validate_bool(path: str, value: object) -> bool:
     r"""Validate a boolean value of a config section.
 
     Args:
-        section: The name of the config section, used in the error
-            message.
-        key: The name of the config key, used in the error message.
+        path: The dotted name of the config key, used in the error
+            message, e.g. ``"tasklib.test.xdoctest"``.
         value: The raw config value: a boolean or a string (an
             environment variable) that is one of ``true``, ``false``,
             ``1``, ``0``, ``yes``, ``no``, ``on`` and ``off``, in any
@@ -552,9 +562,9 @@ def _validate_bool(section: str, key: str, value: object) -> bool:
 
     ```pycon
     >>> from invoke_tasklib.config._validate import _validate_bool
-    >>> _validate_bool("test", "xdoctest", False)
+    >>> _validate_bool("tasklib.test.xdoctest", False)
     False
-    >>> _validate_bool("test", "xdoctest", "no")
+    >>> _validate_bool("tasklib.test.xdoctest", "no")
     False
 
     ```
@@ -562,6 +572,6 @@ def _validate_bool(section: str, key: str, value: object) -> bool:
     if isinstance(value, str):
         value = _BOOL_TEXT.get(value.lower(), value)
     if value is not True and value is not False:
-        msg = f"'tasklib.{section}.{key}' must be a boolean (true or false), got {value!r}"
+        msg = f"'{path}' must be a boolean (true or false), got {value!r}"
         raise ValueError(msg)
     return value
