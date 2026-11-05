@@ -16,7 +16,9 @@ invoke imports.check-cycles
 ```
 
 The import graph of `package.import_name` (from the [resolved config](config.md)) is built from the
-source files with `ast`: nothing is imported, so the result is deterministic, does not depend on the
+source files of `paths.src` with `ast`, so the package does not have to be installed. If the
+directory does not exist, the task reads the installed package instead; if there is none, it exits
+with 1 and names the directory and the `tasklib.paths.src` key. Nothing is imported, so the result is deterministic, does not depend on the
 order of the imports, and needs no subprocess. `import a.b` is an edge to `a.b`, `from a import b`
 is an edge to `a.b` if it is a module (else to `a`), and relative imports are resolved. Imports of
 other packages are not edges. The strongly connected components of the graph are the cycles; each
@@ -53,8 +55,8 @@ which is often the symptom of a cycle. It also fails on a missing dependency or 
 It starts one interpreter per module, so it is slower than `imports.check-cycles` for a package
 with heavy imports; up to 8 interpreters run at the same time.
 
-The package that is checked is the one the interpreter finds: the installed (editable) package, or
-the one in the current directory for a flat layout. The task checks the source tree, not a built
+Unlike `imports.check-cycles`, the package that is checked is the one the interpreter finds: the
+installed (editable) package, or the one in the current directory for a flat layout. The task checks the source tree, not a built
 artifact: use `release.build` to check an artifact (it imports the package in isolated mode).
 
 One worker command (`python -m invoke_tasklib._discover --import-each <package>`) does the discovery

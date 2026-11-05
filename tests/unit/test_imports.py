@@ -221,6 +221,27 @@ def test_check_cycles_reports_a_missing_package() -> None:
         imports.check_cycles(make_context({"package": {"name": "cyc_missing"}}))
 
 
+def test_check_cycles_reads_the_directory_of_paths_src(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "src" / "cyc_src").mkdir(parents=True)
+    (tmp_path / "src" / "cyc_src" / "__init__.py").write_text("")
+    monkeypatch.chdir(tmp_path)
+    imports.check_cycles(make_context({"package": {"name": "cyc_src"}}))
+    assert "✅ No import cycle in 1 module(s)" in capsys.readouterr().out
+
+
+def test_check_cycles_missing_package_names_paths_src() -> None:
+    with pytest.raises(
+        Exit,
+        match=(
+            r"No module named 'cyc_missing': not found in 'src/cyc_missing' "
+            r"\(tasklib\.paths\.src\) and not installed"
+        ),
+    ):
+        imports.check_cycles(make_context({"package": {"name": "cyc_missing"}}))
+
+
 def test_check_cycles_uses_the_configured_import_name(
     make_package: _Maker, capsys: pytest.CaptureFixture[str]
 ) -> None:

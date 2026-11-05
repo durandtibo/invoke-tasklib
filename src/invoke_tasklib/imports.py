@@ -3,6 +3,7 @@ r"""Import-graph tasks."""
 from __future__ import annotations
 
 import shlex
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
@@ -31,7 +32,9 @@ def check_cycles(c: Context, *, lazy: bool = False, type_checking: bool = False)
     r"""Check for cyclic imports with a static import graph.
 
     The import graph of the package is built from the source files
-    with ``ast``, without importing anything, and each cycle is
+    of ``tasklib.paths.src`` with ``ast``, without importing anything
+    (the package does not have to be installed; if the directory does
+    not exist, the installed package is read), and each cycle is
     printed as a path (``a -> b -> a``). Imports under ``if
     TYPE_CHECKING:`` and inside functions never run when a module is
     imported, so they are ignored unless asked. A syntax error or a
@@ -44,16 +47,20 @@ def check_cycles(c: Context, *, lazy: bool = False, type_checking: bool = False)
             TYPE_CHECKING:``.
 
     Raises:
-        Exit: If the package cannot be found, a module cannot be
-            parsed, or an import cycle is found.
+        Exit: If the package is neither in ``tasklib.paths.src`` nor
+            installed, a module cannot be parsed, or an import cycle is
+            found.
     """
-    name = load_config(c).package.import_name
+    cfg = load_config(c)
+    name = cfg.package.import_name
+    src = Path(cfg.paths.src)
     say(c, f"🔍 Building the import graph of {name}...")
     try:
-        sources, packages = read_sources(name)
+        sources, packages = read_sources(name, src=src)
         graph = import_graph(sources, packages, lazy=lazy, type_checking=type_checking)
     except ModuleNotFoundError as exc:
-        raise Exit(str(exc), code=1) from exc
+        msg = f"{exc}: not found in '{src}' (tasklib.paths.src) and not installed"
+        raise Exit(msg, code=1) from exc
     except SyntaxError as exc:
         msg = f"Cannot parse module {exc.filename}: {exc.msg} (line {exc.lineno})"
         raise Exit(msg, code=1) from exc
