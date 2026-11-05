@@ -2030,7 +2030,9 @@ Pass <code>--open-browser</code> to also open its <code>index.html</code> in you
 <h2 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.benchmark
 </code></pre></div>
-<p>Runs <code>pytest --benchmark-only</code> against <code>paths.benchmarks</code>. This requires
+<p>Runs <code>pytest --benchmark-only --benchmark-enable</code> against <code>paths.benchmarks</code> (<code>--benchmark-enable</code> measures even if
+the pytest config has <code>--benchmark-disable</code> in <code>addopts</code>, which this repository uses so that a normal test run
+executes each benchmark once). This requires
 <a href="https://pytest-benchmark.readthedocs.io/"><code>pytest-benchmark</code></a> to be installed. The task is skipped
 with a message if <code>paths.benchmarks</code> does not exist.</p>
 <p><code>test.benchmark</code>, <code>test.doctest-src</code> and <code>test.doctest-markdown</code> take <code>--args</code> and <code>--paths</code>, and

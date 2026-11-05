@@ -2228,7 +2228,10 @@
 
     <div class="doc doc-contents ">
 
-        <p>Directories whose markdown files are never checked.</p>
+        <p>Directories that the walk skips when looking for markdown files
+outside a git work tree.</p>
+<p>In a git work tree git decides which files are checked (a tracked
+<code>site/index.md</code> is checked), see <code>project_files</code>.</p>
 
     </div>
 
@@ -2465,6 +2468,10 @@ directory.</p>
     <div class="doc doc-contents ">
 
         <p>Run performance benchmarks.</p>
+<p>The command is <code>pytest --benchmark-only --benchmark-enable</code>:
+<code>--benchmark-enable</code> turns the benchmarks on even if the pytest
+config disables them (<code>--benchmark-disable</code> in <code>addopts</code>, to
+run each benchmark once in the normal test runs).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
