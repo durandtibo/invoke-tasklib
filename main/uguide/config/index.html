@@ -938,6 +938,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#showing-the-resolved-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Showing the Resolved Config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#editor-completion-json-schema" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1623,6 +1634,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../refs/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../refs/runner/" class="md-nav__link">
         
   
@@ -1748,6 +1787,17 @@
     <span class="md-ellipsis">
       
         Defaults
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#showing-the-resolved-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Showing the Resolved Config
       
     </span>
   </a>
@@ -2002,6 +2052,29 @@ malformed value instead of silently creating a virtual environment with the wron
 <li>the lower bound of <code>project.requires-python</code> in <code>pyproject.toml</code> (<code>"&gt;=3.11"</code> gives <code>3.11</code>);</li>
 <li><code>3.14</code>.</li>
 </ol>
+<h2 id="showing-the-resolved-config">Showing the Resolved Config<a class="headerlink" href="#showing-the-resolved-config" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>config.show
+</code></pre></div>
+<p>Prints the <code>tasklib</code> section as the tasks see it, with every key and a comment with its origin. It
+answers "which value is used, and why" without reading the code:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">tasklib</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">package</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo</span><span class="w"> </span><span class="c1"># project file</span>
+<span class="w">    </span><span class="nt">import_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo</span><span class="w"> </span><span class="c1"># derived</span>
+<span class="w">  </span><span class="nt">paths</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lib</span><span class="w"> </span><span class="c1"># project file</span>
+<span class="w">    </span><span class="nt">tests</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zz</span><span class="w"> </span><span class="c1"># environment variable INVOKE_TASKLIB_PATHS_TESTS</span>
+<span class="w">    </span><span class="nt">unit_tests</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zz/unit</span><span class="w"> </span><span class="c1"># derived</span>
+<span class="w">    </span><span class="nt">docs_config</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs/mkdocs.yml</span><span class="w"> </span><span class="c1"># default</span>
+</code></pre></div>
+<p>The origin is the source with the highest priority that sets the key: <code>default</code> (the default of
+the library, or no value for an optional key), <code>project file</code> (<code>invoke.yaml</code>),
+<code>environment variable INVOKE_TASKLIB_...</code>, <code>system config file</code>, <code>user config file</code>,
+<code>runtime config file</code> or <code>override</code> (set from the command line or by code). <code>derived</code> is a value
+that no source sets, computed from other values or from the project (<code>import_name</code>, <code>src</code>, the test
+paths and the Python version). The config is validated first, so an invalid one stops the task with
+the usual one-line message. The task reads nothing but the config and the two project files of
+<a href="#defaults"><code>package.python_version</code></a>, and changes nothing.</p>
 <h2 id="editor-completion-json-schema">Editor Completion (JSON Schema)<a class="headerlink" href="#editor-completion-json-schema" title="Permanent link">&para;</a></h2>
 <p>The keys, the defaults and the descriptions are declared once, in <code>invoke_tasklib.config.SCHEMA</code>
 (one <code>Option</code> per key: default, validation and JSON schema). The defaults, the key checks, the
@@ -2009,8 +2082,15 @@ error messages and the JSON schema are all generated from it, so they cannot dri
 schema of the <code>tasklib</code> section of <code>invoke.yaml</code> with:</p>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>invoke_tasklib.config<span class="w"> </span>&gt;<span class="w"> </span>invoke-tasklib.schema.json
 </code></pre></div>
-<p>and point your editor to it (for example with a <code># yaml-language-server: $schema=...</code> comment at
-the top of <code>invoke.yaml</code>) to get completion and validation of the keys.</p>
+<p>The same file is published with the documentation. Point your editor to it with a comment at the
+top of <code>invoke.yaml</code> to get completion and validation of the keys:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># yaml-language-server: $schema=https://durandtibo.github.io/invoke-tasklib/schema.json</span>
+<span class="nt">tasklib</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">package</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_package</span>
+</code></pre></div>
+<p>A test checks that the published <code>docs/docs/schema.json</code> equals the schema printed by the command
+(regenerate it with <code>python -m invoke_tasklib.config &gt; docs/docs/schema.json</code>).</p>
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <p>Every key can also be set with an <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code> environment variable, for example
 <code>INVOKE_TASKLIB_PATHS_SRC=lib</code> or <code>INVOKE_TASKLIB_TEST_UNIT_TIMEOUT=30</code>. This is handy in CI. It
