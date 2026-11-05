@@ -1865,7 +1865,8 @@ The task fails if the build did not produce a wheel or a source distribution.</p
 <p>Before anything is built, the task checks the git state: the working tree must be clean, <code>HEAD</code>
 must be tagged and the tag (without a leading <code>v</code>) must be the static <code>project.version</code> of
 <code>pyproject.toml</code> (a dynamic version is not compared). It then asks for a confirmation, unless
-<code>--yes</code> is given or the <code>CI</code> environment variable is set. Finally it builds the package (via
+<code>--yes</code> is given or the <code>CI</code> environment variable is set to something other than <code>0</code> and
+<code>false</code>. Finally it builds the package (via
 <code>release.build</code>, which clears <code>dist/</code> first so stale artifacts are never uploaded) and runs
 <code>uv publish</code>.</p>
 <p>Credentials, in this order:</p>

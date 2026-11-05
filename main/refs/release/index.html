@@ -2052,7 +2052,8 @@ twine. Default is False.</p>
 <p>Before anything is built, the task checks that the working tree is
 clean, that <code>HEAD</code> is tagged and that the tag matches the
 <code>pyproject.toml</code> version (<code>--skip-checks</code> turns it off). Outside
-of CI it then asks for a confirmation (<code>--yes</code> turns it off).</p>
+of CI (<code>CI</code> set to something other than <code>0</code> and <code>false</code>) it
+then asks for a confirmation (<code>--yes</code> turns it off).</p>
 <p>The credentials are either a token, read from <code>PYPI_TOKEN</code> (from
 <code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, so a PyPI token is never
 sent to TestPyPI) or from <code>UV_PUBLISH_TOKEN</code>, which <code>uv publish</code>
