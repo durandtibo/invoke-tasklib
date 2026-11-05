@@ -2,8 +2,6 @@ r"""Schema of the config: the options, their defaults and sections."""
 
 from __future__ import annotations
 
-import json
-import sys
 from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any, get_type_hints
@@ -31,7 +29,7 @@ from invoke_tasklib.config._validate import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
+    from collections.abc import Callable, Mapping
 
 
 @dataclass(frozen=True)
@@ -130,7 +128,7 @@ class Option:
     """
 
     default: object
-    validate: Callable[[object], object]
+    validate: Callable[[str, object], object]
     json_schema: Mapping[str, object]
     doc: str = ""
 
@@ -141,11 +139,10 @@ _STRING = {"type": "string", "minLength": 1}
 _NAMES = {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]}
 
 
-def _timeout(key: str, default: int, doc: str) -> Option:
+def _timeout(default: int, doc: str) -> Option:
     r"""Declare a per-test timeout key of the ``test`` section.
 
     Args:
-        key: The name of the key.
         default: The timeout in seconds.
         doc: The description of the key.
 
@@ -156,24 +153,23 @@ def _timeout(key: str, default: int, doc: str) -> Option:
 
     ```pycon
     >>> from invoke_tasklib.config._schema import _timeout
-    >>> _timeout("unit_timeout", 10, "Timeout.").default
+    >>> _timeout(10, "Timeout.").default
     10
 
     ```
     """
     return Option(
         default,
-        partial(_validate_int, "test", key, minimum=1),
+        partial(_validate_int, minimum=1),
         {"type": "integer", "minimum": 1},
         doc,
     )
 
 
-def _path(key: str, default: str | None, doc: str) -> Option:
+def _path(default: str | None, doc: str) -> Option:
     r"""Declare a key of the ``paths`` section.
 
     Args:
-        key: The name of the key.
         default: The default path, or ``None`` if it is derived.
         doc: The description of the key.
 
@@ -184,12 +180,12 @@ def _path(key: str, default: str | None, doc: str) -> Option:
 
     ```pycon
     >>> from invoke_tasklib.config._schema import _path
-    >>> _path("tests", "tests", "Tests.").default
+    >>> _path("tests", "Tests.").default
     'tests'
 
     ```
     """
-    return Option(default, partial(_validate_str, "paths", key), _STRING, doc)
+    return Option(default, _validate_str, _STRING, doc)
 
 
 _COV_REPORT_PATTERN = f"^({'|'.join(sorted(COV_REPORTS))})(:.+)?$"
@@ -199,7 +195,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     "package": {
         "name": Option(
             None,
-            partial(_validate_str, "package", "name"),
+            _validate_str,
             _STRING,
             "Distribution name, as on PyPI (required).",
         ),
@@ -220,49 +216,41 @@ SCHEMA: dict[str, dict[str, Option]] = {
         ),
     },
     "paths": {
-        "src": _path("src", None, "Source directory (default: src/<import_name>)."),
-        "tests": _path("tests", "tests", "Tests directory."),
-        "unit_tests": _path("unit_tests", None, "Unit tests (default: <tests>/unit)."),
-        "integration_tests": _path(
-            "integration_tests", None, "Integration tests (default: <tests>/integration)."
-        ),
-        "functional_tests": _path(
-            "functional_tests", None, "Functional tests (default: <tests>/functional)."
-        ),
-        "benchmarks": _path("benchmarks", None, "Benchmarks (default: <tests>/benchmarks)."),
-        "docs_config": _path("docs_config", "docs/mkdocs.yml", "MkDocs configuration file."),
+        "src": _path(None, "Source directory (default: src/<import_name>)."),
+        "tests": _path("tests", "Tests directory."),
+        "unit_tests": _path(None, "Unit tests (default: <tests>/unit)."),
+        "integration_tests": _path(None, "Integration tests (default: <tests>/integration)."),
+        "functional_tests": _path(None, "Functional tests (default: <tests>/functional)."),
+        "benchmarks": _path(None, "Benchmarks (default: <tests>/benchmarks)."),
+        "docs_config": _path("docs/mkdocs.yml", "MkDocs configuration file."),
     },
     "groups": {
         "install": Option(
             "dev",
-            partial(_normalize_groups, "install"),
+            _normalize_groups,
             _NAMES,
             "Dependency groups of env.install (comma-separated string or list).",
         ),
         "update": Option(
             "dev,docs",
-            partial(_normalize_groups, "update"),
+            _normalize_groups,
             _NAMES,
             "Dependency groups of env.update (comma-separated string or list).",
         ),
     },
     "test": {
-        "unit_timeout": _timeout("unit_timeout", 10, "Timeout in seconds of each unit test."),
-        "integration_timeout": _timeout(
-            "integration_timeout", 60, "Timeout in seconds of each integration test."
-        ),
-        "functional_timeout": _timeout(
-            "functional_timeout", 60, "Timeout in seconds of each functional test."
-        ),
+        "unit_timeout": _timeout(10, "Timeout in seconds of each unit test."),
+        "integration_timeout": _timeout(60, "Timeout in seconds of each integration test."),
+        "functional_timeout": _timeout(60, "Timeout in seconds of each functional test."),
         "xdoctest": Option(
             True,
-            partial(_validate_bool, "test", "xdoctest"),
+            _validate_bool,
             {"type": "boolean"},
             "Run pytest with --xdoctest.",
         ),
         "timeout": Option(
             True,
-            partial(_validate_bool, "test", "timeout"),
+            _validate_bool,
             {"type": "boolean"},
             "Run pytest with --timeout (it requires pytest-timeout).",
         ),
@@ -295,7 +283,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     "check": {
         "tasks": Option(
             ",".join(DEFAULT_CHECK_STEPS),
-            partial(_validate_steps, "check", CHECK_STEPS),
+            partial(_validate_steps, valid=CHECK_STEPS),
             {
                 "anyOf": [
                     {"type": "string"},
@@ -306,7 +294,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
         ),
         "cov": Option(
             False,
-            partial(_validate_bool, "check", "cov"),
+            _validate_bool,
             {"type": "boolean"},
             "Run the unit step of check.all with --cov, so cov_fail_under is enforced.",
         ),
@@ -314,7 +302,7 @@ SCHEMA: dict[str, dict[str, Option]] = {
     "fix": {
         "tasks": Option(
             ",".join(DEFAULT_FIX_STEPS),
-            partial(_validate_steps, "fix", FIX_STEPS),
+            partial(_validate_steps, valid=FIX_STEPS),
             {
                 "anyOf": [
                     {"type": "string"},
@@ -489,31 +477,3 @@ def json_schema() -> dict[str, Any]:
             }
         },
     }
-
-
-def main(argv: Sequence[str]) -> int:
-    r"""Print the JSON schema of the ``tasklib`` config.
-
-    It is run with ``python -m invoke_tasklib.config``.
-
-    Args:
-        argv: The command line arguments, without the program name.
-            There must be none.
-
-    Returns:
-        The exit code: 0 on success, 2 if there are arguments.
-
-    Example usage:
-
-    ```pycon
-    >>> from invoke_tasklib.config._schema import main
-    >>> _ = main(["--bad"])
-    usage: python -m invoke_tasklib.config
-
-    ```
-    """
-    if argv:
-        sys.stdout.write("usage: python -m invoke_tasklib.config\n")
-        return 2
-    sys.stdout.write(json.dumps(json_schema(), indent=2) + "\n")
-    return 0

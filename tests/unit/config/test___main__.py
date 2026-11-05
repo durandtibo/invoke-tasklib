@@ -6,12 +6,16 @@ import sys
 
 import pytest
 
+from invoke_tasklib.config import json_schema
+from invoke_tasklib.config.__main__ import main
+
 
 @pytest.fixture(autouse=True)
 def _fresh_module(monkeypatch: pytest.MonkeyPatch) -> None:
     r"""Run the module from scratch, as a bare call."""
     monkeypatch.setattr(sys, "argv", ["config"])
     monkeypatch.delitem(sys.modules, "invoke_tasklib.config")
+    monkeypatch.delitem(sys.modules, "invoke_tasklib.config.__main__")
 
 
 def test_running_the_module_exits_with_code_0() -> None:
@@ -29,3 +33,28 @@ def test_running_the_module_prints_the_schema(capsys: pytest.CaptureFixture[str]
 def test_importing_the_main_module_prints_nothing(capsys: pytest.CaptureFixture[str]) -> None:
     runpy.run_module("invoke_tasklib.config.__main__", run_name="not_main")
     assert capsys.readouterr().out == ""
+
+
+###########################
+#     Tests for main      #
+###########################
+
+
+def test_main_returns_0() -> None:
+    assert main([]) == 0
+
+
+def test_main_prints_the_schema(capsys: pytest.CaptureFixture[str]) -> None:
+    main([])
+    assert json.loads(capsys.readouterr().out) == json_schema()
+
+
+def test_main_rejects_arguments() -> None:
+    assert main(["--bad"]) == 2
+
+
+def test_main_prints_the_usage_when_it_rejects_arguments(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    main(["--bad"])
+    assert capsys.readouterr().out == "usage: python -m invoke_tasklib.config\n"
