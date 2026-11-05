@@ -966,6 +966,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#adding-a-shortcut-for-an-existing-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a Shortcut for an Existing Task
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#testing-a-custom-task" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1700,6 +1711,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#adding-a-shortcut-for-an-existing-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a Shortcut for an Existing Task
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#testing-a-custom-task" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1829,6 +1851,22 @@ importers.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"radon cc"</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s2">"-s"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"a.py 'my dir'"</span><span class="p">,</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">"src"</span><span class="p">])</span>
 <span class="go">"radon cc -s a.py 'my dir'"</span>
 </code></pre></div>
+<h2 id="adding-a-shortcut-for-an-existing-task">Adding a Shortcut for an Existing Task<a class="headerlink" href="#adding-a-shortcut-for-an-existing-task" title="Permanent link">&para;</a></h2>
+<p><code>add_task</code> with a <code>name</code> registers a task of the library under one more name, at the top level of
+the collection. The task keeps its own name in its namespace:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_ns</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.release</span><span class="w"> </span><span class="kn">import</span> <span class="n">build</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="n">build</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"build-package"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">"build-package"</span> <span class="ow">in</span> <span class="n">ns</span><span class="o">.</span><span class="n">task_names</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">"release.build"</span> <span class="ow">in</span> <span class="n">ns</span><span class="o">.</span><span class="n">task_names</span>
+<span class="go">True</span>
+</code></pre></div>
+<p>The <code>tasks.py</code> of this repository does it for <code>release.build</code>: <code>inv build-package</code> is the command
+that the composite action <code>durandtibo/build-pypi-package-action</code> runs, as the release workflow
+shows. Such a shortcut shows up in <code>invoke --list</code> of the project, so add one only for a name that
+something else (a CI action, a script) depends on.</p>
 <h2 id="testing-a-custom-task">Testing a Custom Task<a class="headerlink" href="#testing-a-custom-task" title="Permanent link">&para;</a></h2>
 <p><code>invoke.context.MockContext</code> records the commands without running them:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
