@@ -2086,7 +2086,7 @@ as shell, so a pipeline (<code>a | b</code>), a list (<code>a &amp;&amp; b</code
 The module of <code>python -m &lt;module&gt;</code> is checked too (for example <code>pytest</code>), and is reported as
 <code>The Python module 'pytest' is not installed for ...</code> instead of Python's own <code>No module named</code>.</p>
 <p>The pytest plugins of the options are checked as well: <code>--xdoctest</code> needs <code>xdoctest</code>, <code>--timeout</code>
-needs <code>pytest-timeout</code>, <code>--cov*</code> needs <code>pytest-cov</code> and <code>--benchmark-only</code> needs <code>pytest-benchmark</code>.
+needs <code>pytest-timeout</code>, <code>--cov*</code> (also <code>--no-cov</code>) needs <code>pytest-cov</code> and <code>--benchmark-*</code> needs <code>pytest-benchmark</code>.
 A missing plugin is reported as <code>The option --xdoctest needs the pytest plugin 'xdoctest'</code> with the
 command that adds it, instead of pytest's <code>unrecognized arguments</code>.</p>
 <h2 id="invoke-command-not-found-after-installing"><code>invoke: command not found</code> after installing<a class="headerlink" href="#invoke-command-not-found-after-installing" title="Permanent link">&para;</a></h2>

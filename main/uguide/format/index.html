@@ -1936,6 +1936,10 @@ and fixing code, docstring, and shell script formatting.</p>
 <td>Checks shell scripts with <a href="https://www.shellcheck.net/">shellcheck</a> (read-only)</td>
 </tr>
 <tr>
+<td><code>format.check-shell-format</code></td>
+<td>Checks shell script formatting with <a href="https://github.com/mvdan/sh">shfmt</a> (read-only)</td>
+</tr>
+<tr>
 <td><code>format.fix-shell</code></td>
 <td>Formats shell scripts with <a href="https://github.com/mvdan/sh">shfmt</a> (in place)</td>
 </tr>
@@ -1945,6 +1949,7 @@ and fixing code, docstring, and shell script formatting.</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>format.check-python
 invoke<span class="w"> </span>format.check-docstrings
 invoke<span class="w"> </span>format.check-shell
+invoke<span class="w"> </span>format.check-shell-format
 </code></pre></div>
 <p>These are safe to run anywhere, including in CI, since they never modify files.</p>
 <h2 id="fixing-format">Fixing Format<a class="headerlink" href="#fixing-format" title="Permanent link">&para;</a></h2>
@@ -1962,7 +1967,7 @@ invoke<span class="w"> </span>format.fix-shell
 the <a href="../config/">resolved config</a>, using the <code>[tool.docformatter]</code> section of the consuming
 project's <code>pyproject.toml</code> (via <code>--config ./pyproject.toml</code>).</p>
 <h2 id="shell-scripts">Shell Scripts<a class="headerlink" href="#shell-scripts" title="Permanent link">&para;</a></h2>
-<p><code>format.check-shell</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. In a git
+<p><code>format.check-shell</code>, <code>format.check-shell-format</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. In a git
 work tree the files are the ones that git lists (<code>git ls-files --cached --others --exclude-standard</code>):
 the tracked files and the untracked files that are not ignored, so the rules of <code>.gitignore</code> are
 followed, like <code>ruff</code>, <code>codespell</code> and <code>pre-commit</code> do, and third-party scripts (for example the
@@ -1982,7 +1987,7 @@ the tool is not run and the task says so.</p>
 (<code>shfmt</code> there comes from the <code>golang-go</code> toolchain or a
 <a href="https://github.com/mvdan/sh/releases">release binary</a>).</p>
 </div>
-<p><code>format.check-shell</code> and <code>format.fix-shell</code> take <code>--args</code> for the tool and <code>--paths</code> to run on
+<p><code>format.check-shell</code>, <code>format.check-shell-format</code> and <code>format.fix-shell</code> take <code>--args</code> for the tool and <code>--paths</code> to run on
 given scripts instead of every <code>*.sh</code> file of the project.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

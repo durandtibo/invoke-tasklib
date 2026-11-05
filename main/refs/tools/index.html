@@ -2112,6 +2112,7 @@
     <span class="s2">"xdoctest"</span><span class="p">:</span> <span class="s2">"dev"</span><span class="p">,</span>
     <span class="s2">"pytest_timeout"</span><span class="p">:</span> <span class="s2">"dev"</span><span class="p">,</span>
     <span class="s2">"pytest_cov"</span><span class="p">:</span> <span class="s2">"dev"</span><span class="p">,</span>
+    <span class="s2">"pytest_benchmark"</span><span class="p">:</span> <span class="s2">"dev"</span><span class="p">,</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -2143,7 +2144,18 @@
     <span class="s2">"--cov-report"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
     <span class="s2">"--cov-append"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
     <span class="s2">"--cov-fail-under"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--cov-branch"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--cov-config"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
+    <span class="s2">"--no-cov"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"pytest_cov"</span><span class="p">,</span> <span class="s2">"pytest-cov"</span><span class="p">),</span>
     <span class="s2">"--benchmark-only"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"pytest_benchmark"</span><span class="p">,</span>
+        <span class="s2">"pytest-benchmark"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"--benchmark-compare"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"pytest_benchmark"</span><span class="p">,</span>
+        <span class="s2">"pytest-benchmark"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"--benchmark-disable"</span><span class="p">:</span> <span class="p">(</span>
         <span class="s2">"pytest_benchmark"</span><span class="p">,</span>
         <span class="s2">"pytest-benchmark"</span><span class="p">,</span>
     <span class="p">),</span>

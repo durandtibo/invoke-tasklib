@@ -1888,9 +1888,9 @@
 </tbody>
 </table>
 <p>Other steps can be added to the config (or run with <code>--only</code>): <code>doctest</code> (<a href="../test/"><code>test.doctest</code></a>),
-<code>shell</code> (<a href="../format/"><code>format.check-shell</code></a>), <code>spelling</code> (<a href="../lint/"><code>lint.check-spelling</code></a>), <code>docs</code>
+<code>shell</code> (<a href="../format/"><code>format.check-shell</code></a> and <code>format.check-shell-format</code>), <code>spelling</code> (<a href="../lint/"><code>lint.check-spelling</code></a>), <code>docs</code>
 (<a href="../doc/"><code>doc.build</code></a>) and <code>audit</code> (<a href="../security/"><code>security.audit</code></a>). They are not in the default
-set because they need more tools (<code>shellcheck</code>, <code>codespell</code>, <code>mkdocs</code>) or the network.</p>
+set because they need more tools (<code>shellcheck</code>, <code>shfmt</code>, <code>codespell</code>, <code>mkdocs</code>) or the network.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">tasklib</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">check</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">format-python</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">lint</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">types</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">unit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">doctest</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">docs</span><span class="p p-Indicator">]</span>

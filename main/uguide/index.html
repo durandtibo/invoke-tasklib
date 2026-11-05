@@ -1923,6 +1923,12 @@ one page in this guide.</p>
 </tr>
 <tr>
 <td><a href="format/">Format</a></td>
+<td><code>format.check-shell-format</code></td>
+<td>Check the format of shell scripts with shfmt</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><a href="format/">Format</a></td>
 <td><code>format.fix-shell</code></td>
 <td>Format shell scripts with shfmt</td>
 <td style="text-align: center;">✅</td>
@@ -2206,7 +2212,7 @@ invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
 <td style="text-align: center;">✅</td>
 </tr>
 <tr>
-<td><code>format.check-shell</code>, <code>format.fix-shell</code></td>
+<td><code>format.check-shell</code>, <code>format.check-shell-format</code>, <code>format.fix-shell</code></td>
 <td><code>shellcheck</code>, <code>shfmt</code></td>
 <td style="text-align: center;">✅</td>
 </tr>
@@ -2285,7 +2291,7 @@ arguments and the paths are quoted, so they are never interpreted by the shell.<
 </tr>
 <tr>
 <td><a href="https://github.com/mvdan/sh"><code>shfmt</code></a></td>
-<td><code>format.fix-shell</code></td>
+<td><code>format.check-shell-format</code>, <code>format.fix-shell</code></td>
 </tr>
 <tr>
 <td><a href="https://docs.astral.sh/ty/"><code>ty</code></a></td>

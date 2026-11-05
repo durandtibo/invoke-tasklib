@@ -1270,6 +1270,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.formatting.check_shell_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_shell_format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.formatting.fix_docstrings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1868,6 +1879,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#invoke_tasklib.formatting.check_shell_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_shell_format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#invoke_tasklib.formatting.fix_docstrings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2200,6 +2222,98 @@ project (<code>.</code>).</p>
             <td>
               <div class="doc-md-description">
                 <p>Extra arguments passed to shellcheck.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>paths</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The scripts to check instead of every <code>*.sh</code> file of
+the project.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="invoke_tasklib.formatting.check_shell_format" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">invoke_tasklib.formatting.check_shell_format</span>
+
+
+<a href="#invoke_tasklib.formatting.check_shell_format" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_shell_format</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">paths</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check the format of shell scripts with shfmt.</p>
+<p>It is the read-only counterpart of <code>format.fix-shell</code>: <code>shfmt
+-d</code> prints a diff and fails if a script would be reformatted,
+but never changes a file.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>args</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra arguments passed to shfmt.</p>
               </div>
             </td>
             <td>
