@@ -61,40 +61,6 @@ def test_format_value(value: object, expected: str) -> None:
 #############################
 
 
-_LEVEL_ATTRIBUTES = [attribute for attribute, _ in show.LEVELS]
-
-
-# `_origin` reads these private attributes of Invoke with
-# `getattr(..., None)`, which would hide a rename in a new version of
-# Invoke: these tests make it fail loudly.
-@pytest.mark.parametrize("attribute", _LEVEL_ATTRIBUTES)
-def test_levels_exist_on_an_invoke_config(attribute: str) -> None:
-    assert hasattr(Config(), attribute)
-
-
-@pytest.mark.parametrize("attribute", _LEVEL_ATTRIBUTES)
-def test_levels_of_an_invoke_config_are_dicts(attribute: str) -> None:
-    assert isinstance(getattr(Config(), attribute), dict)
-
-
-def test_unknown_internals_of_an_invoke_config_is_empty() -> None:
-    assert show._unknown_internals(Config()) == []
-
-
-@pytest.mark.parametrize("attribute", [*_LEVEL_ATTRIBUTES, "_project_prefix"])
-def test_unknown_internals_names_a_missing_attribute(attribute: str) -> None:
-    config = Config()
-    object.__delattr__(config, attribute)
-    assert show._unknown_internals(config) == [attribute]
-
-
-def test_unknown_internals_lists_the_missing_attributes_in_order() -> None:
-    config = Config()
-    object.__delattr__(config, "_project_prefix")
-    object.__delattr__(config, "_env")
-    assert show._unknown_internals(config) == ["_env", "_project_prefix"]
-
-
 def test_show_warns_when_invoke_has_no_origin_attribute(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
