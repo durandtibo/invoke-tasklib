@@ -2056,8 +2056,9 @@ of CI (<code>CI</code> set to something other than <code>0</code> and <code>fals
 then asks for a confirmation (<code>--yes</code> turns it off).</p>
 <p>The credentials are either a token, read from <code>PYPI_TOKEN</code> (from
 <code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, so a PyPI token is never
-sent to TestPyPI) or from <code>UV_PUBLISH_TOKEN</code>, which <code>uv publish</code>
-reads natively, and passed to <code>uv publish</code> through its
+sent to TestPyPI) or, without <code>--test-pypi</code> only, from
+<code>UV_PUBLISH_TOKEN</code>, which <code>uv publish</code> reads natively. The token
+is passed to <code>uv publish</code> through its
 environment, so it does not appear on the command line; or, in
 GitHub Actions with the
 <code>id-token: write</code> permission, PyPI Trusted Publishing. <code>dist/</code>
