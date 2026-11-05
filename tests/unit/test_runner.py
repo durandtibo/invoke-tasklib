@@ -60,6 +60,33 @@ def test_run_passes_the_command() -> None:
     assert _run_mock(c).call_args.args == ("ls -l",)
 
 
+def test_run_quotes_the_words_of_a_list() -> None:
+    c = _context()
+    run(c, ["ls", "-l", "a b", "*.py", "$HOME", ";"])
+    assert _run_mock(c).call_args.args == ("ls -l 'a b' '*.py' '$HOME' ';'",)
+
+
+def test_run_a_list_of_one_word() -> None:
+    c = _context()
+    run(c, ["ls"])
+    assert _run_mock(c).call_args.args == ("ls",)
+
+
+def test_run_checks_the_first_word_of_a_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    c = _context()
+    with pytest.raises(Exit, match=r"'ruff' was not found"):
+        run(c, ["ruff", "check", "."])
+    assert not _run_mock(c).called
+
+
+def test_run_does_not_check_a_list_without_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("invoke_tasklib.tools.shutil.which", lambda _program, **_kwargs: None)
+    c = _context()
+    run(c, ["my-alias", "--flag"], check=False)
+    assert _run_mock(c).call_args.args == ("my-alias --flag",)
+
+
 def test_run_echoes_the_command_by_default() -> None:
     c = _context()
     run(c, "ls")
@@ -194,6 +221,39 @@ def test_build_command_does_not_quote_the_program() -> None:
     assert build_command("uv run pip-audit") == "uv run pip-audit"
 
 
+def test_build_command_of_a_list_returns_a_list() -> None:
+    assert build_command(["ruff", "check"], args="--select E", default_paths=["."]) == [
+        "ruff",
+        "check",
+        "--select",
+        "E",
+        ".",
+    ]
+
+
+def test_build_command_of_a_list_does_not_quote() -> None:
+    assert build_command(["codespell"], paths="'my dir/*.py'") == ["codespell", "my dir/*.py"]
+
+
+def test_build_command_of_a_list_without_options_is_the_words() -> None:
+    assert build_command(["ty", "check"]) == ["ty", "check"]
+
+
+def test_build_command_of_a_list_paths_replace_default_paths() -> None:
+    assert build_command(["ruff"], paths="a.py", default_paths=["."]) == ["ruff", "a.py"]
+
+
+def test_build_command_of_a_list_does_not_change_its_input() -> None:
+    words = ["ruff", "check"]
+    build_command(words, args="-x", default_paths=["."])
+    assert words == ["ruff", "check"]
+
+
+def test_build_command_of_a_list_unclosed_quote_exits() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --args"):
+        build_command(["pytest"], args="-k 'a")
+
+
 def test_build_command_unclosed_quote_exits() -> None:
     with pytest.raises(Exit, match=r"Cannot parse the value of --args"):
         build_command("pytest", args="-k 'a")
@@ -283,6 +343,12 @@ def test_capture_passes_the_command() -> None:
     c = _context()
     capture(c, "git status")
     assert _run_mock(c).call_args.args == ("git status",)
+
+
+def test_capture_quotes_the_words_of_a_list() -> None:
+    c = _context()
+    capture(c, ["git", "log", "--format=%H %s"])
+    assert _run_mock(c).call_args.args == ("git log '--format=%H %s'",)
 
 
 def test_capture_does_not_warn_by_default() -> None:
