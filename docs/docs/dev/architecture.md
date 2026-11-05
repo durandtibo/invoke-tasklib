@@ -114,8 +114,8 @@ Seven small modules support the task modules:
   and the user guide give the rule for the other paths.
 - `_graph.py`: the static import graph of a package (built with `ast`, without importing
   anything) and its cycles. It is used by `imports.check-cycles`.
-- `_discover.py`: lists the modules of a package without importing them. It is run in a
-  subprocess by `imports.check-isolated`.
+- `_discover.py`: lists the modules of a package without importing them, and imports each one in its
+  own interpreter (`import_each`, called in process by `imports.check-isolated`).
 
 `_files.EXCLUDED_DIRS` is the one list of the directories that the tasks that walk the file tree
 (`clean`, `format`, `test.doctest-markdown`) never enter. It is the union of three named sets:
@@ -173,9 +173,8 @@ checks the rule on the package itself.
 L5  __init__          make_ns: one Collection per module
 L4  check  fix        composites: run _STEPS with the step runner
 L3  formatting lint typecheck testing env release doc security imports clean show
-L2  _steps  _files  _graph  _coverage  _pyproject   private helpers of the tasks
+L2  _steps  _files  _graph  _discover  _coverage  _pyproject   private helpers of the tasks
 L1  config/  runner  tools  output     support: the documented helpers
-L0  _discover                          worker run in a subprocess
 ```
 
 No import breaks the rule; the test fails if one appears.

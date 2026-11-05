@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING
 
 import pytest
@@ -27,7 +28,10 @@ def _write(root: Path, files: dict[str, str]) -> None:
 
 @pytest.fixture
 def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    # Invoke puts the directory of ``tasks.py`` on ``sys.path``.
     monkeypatch.chdir(tmp_path)
+    monkeypatch.syspath_prepend(str(tmp_path))
+    importlib.invalidate_caches()
     return tmp_path
 
 
@@ -90,6 +94,24 @@ def test_check_isolated_does_not_echo_one_command_per_module(
         "🔍 Importing each module of quietpkg in its own interpreter...\n"
         "✅ All 3 module(s) imported on their own\n"
     )
+
+
+def test_check_isolated_checks_a_package_of_a_src_layout(
+    project: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(project, {"src/srcpkg/__init__.py": "", "src/srcpkg/a.py": "X = 1\n"})
+    monkeypatch.syspath_prepend(str(project / "src"))
+    monkeypatch.setenv("PYTHONPATH", str(project / "src"))
+    importlib.invalidate_caches()
+    imports.check_isolated(_context("srcpkg"))
+    assert "✅ All 2 module(s) imported on their own" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("project")
+def test_check_isolated_exits_when_the_package_is_not_found() -> None:
+    with pytest.raises(Exit, match=r"^No module named 'nopkg': not found") as info:
+        imports.check_isolated(_context("nopkg"))
+    assert info.value.code == 1
 
 
 ##################################

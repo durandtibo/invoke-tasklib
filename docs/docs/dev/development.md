@@ -114,7 +114,7 @@ invoke-tasklib/
 │       ├── _pyproject.py     # Reader of `pyproject.toml` (`read_pyproject`)
 │       ├── _coverage.py      # Where the coverage reports are written
 │       ├── _graph.py         # Static import graph of `imports.check-cycles`
-│       ├── _discover.py      # Module discovery run by `imports.check-isolated`
+│       ├── _discover.py      # Module discovery used by `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
 │       ├── imports.py        # imports.* tasks

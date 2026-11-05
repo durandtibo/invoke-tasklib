@@ -26,7 +26,6 @@ PACKAGE = "invoke_tasklib"
 # layer or from the ones below it, and not from its own layer in the
 # layers of ``_FLAT_LAYERS`` (the task modules and the composites).
 LAYERS = {
-    "_discover": 0,
     "config": 1,
     "runner": 1,
     "tools": 1,
@@ -36,6 +35,7 @@ LAYERS = {
     "_coverage": 2,
     "_pyproject": 2,
     "_graph": 2,
+    "_discover": 2,
     "formatting": 3,
     "lint": 3,
     "typecheck": 3,

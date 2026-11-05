@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 from invoke.exceptions import Exit
-from invoke.runners import Result
 
 from invoke_tasklib import imports
-from tests.helpers import commands, make_context, run_kwargs
+from tests.helpers import commands, make_context
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -18,12 +16,11 @@ if TYPE_CHECKING:
     _Maker = Callable[[str, dict[str, str]], None]
 
 
-@pytest.fixture(autouse=True)
-def _fixed_python(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(sys, "executable", "/venv/bin/python")
-
-
-_WORKER_CMD = "/venv/bin/python -m invoke_tasklib._discover --import-each mypkg"
+def _fake_import_each(
+    result: tuple[int, list[tuple[str, str]]] = (3, []),
+) -> Mock:
+    r"""A stand-in for ``import_each`` that returns ``result``."""
+    return Mock(return_value=result)
 
 
 ####################################
@@ -31,41 +28,42 @@ _WORKER_CMD = "/venv/bin/python -m invoke_tasklib._discover --import-each mypkg"
 ####################################
 
 
-def test_check_isolated_runs_the_worker_once() -> None:
-    c = make_context(
-        tasklib_config={"package": {"name": "mypkg"}},
-        run={_WORKER_CMD: Result(stdout="4\n")},
-    )
+def test_check_isolated_imports_each_module_of_the_package(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = _fake_import_each()
+    monkeypatch.setattr(imports, "import_each", fake)
+    imports.check_isolated(make_context(tasklib_config={"package": {"name": "mypkg"}}))
+    assert fake.call_args_list == [call("mypkg")]
+
+
+def test_check_isolated_uses_the_import_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = _fake_import_each()
+    monkeypatch.setattr(imports, "import_each", fake)
+    imports.check_isolated(make_context(tasklib_config={"package": {"name": "my-pkg"}}))
+    assert fake.call_args_list == [call("my_pkg")]
+
+
+def test_check_isolated_uses_the_configured_import_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = _fake_import_each()
+    monkeypatch.setattr(imports, "import_each", fake)
+    c = make_context(tasklib_config={"package": {"name": "my-pkg", "import_name": "other"}})
     imports.check_isolated(c)
-    assert commands(c) == [_WORKER_CMD]
+    assert fake.call_args_list == [call("other")]
 
 
-def test_check_isolated_uses_the_import_name() -> None:
-    cmd = "/venv/bin/python -m invoke_tasklib._discover --import-each my_pkg"
-    c = make_context(
-        tasklib_config={"package": {"name": "my-pkg"}},
-        run={cmd: Result(stdout="1\n")},
-    )
+def test_check_isolated_runs_no_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(imports, "import_each", _fake_import_each())
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
     imports.check_isolated(c)
-    assert commands(c) == [cmd]
+    assert commands(c) == []
 
 
-def test_check_isolated_uses_the_configured_import_name() -> None:
-    cmd = "/venv/bin/python -m invoke_tasklib._discover --import-each other"
-    c = make_context(
-        tasklib_config={"package": {"name": "my-pkg", "import_name": "other"}},
-        run={cmd: Result(stdout="1\n")},
-    )
-    imports.check_isolated(c)
-    assert commands(c) == [cmd]
-
-
-def test_check_isolated_reports_progress(capsys: pytest.CaptureFixture[str]) -> None:
-    c = make_context(
-        tasklib_config={"package": {"name": "mypkg"}},
-        run={_WORKER_CMD: Result(stdout="3\n")},
-    )
-    imports.check_isolated(c)
+def test_check_isolated_reports_progress(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(imports, "import_each", _fake_import_each())
+    imports.check_isolated(make_context(tasklib_config={"package": {"name": "mypkg"}}))
     assert capsys.readouterr().out == (
         "🔍 Importing each module of mypkg in its own interpreter...\n"
         "✅ All 3 module(s) imported on their own\n"
@@ -250,47 +248,32 @@ def test_check_cycles_uses_the_configured_import_name(
     assert "✅ No import cycle in 1 module(s)" in capsys.readouterr().out
 
 
-def test_check_isolated_reports_a_failure(capsys: pytest.CaptureFixture[str]) -> None:
+_FAILURES = (
+    3,
+    [("mypkg.a", "ImportError: cannot import name 'X'"), ("mypkg.b", "SyntaxError: bad")],
+)
+
+
+def test_check_isolated_exits_when_a_module_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(imports, "import_each", _fake_import_each(_FAILURES))
     c = make_context(tasklib_config={"package": {"name": "mypkg"}})
-    c.run = Mock(side_effect=Exit("boom", code=1))
-    with pytest.raises(Exit, match=r"boom"):
-        imports.check_isolated(c)
-    assert "❌ Failed: Checking that each module imports on its own" in capsys.readouterr().err
-
-
-def test_check_isolated_reads_the_modules_without_a_pty_nor_an_echo() -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
-    imports.check_isolated(c)
-    kwargs = run_kwargs(c)[0]
-    assert (kwargs["hide"], kwargs["echo"], kwargs["pty"]) == (True, False, False)
-
-
-def _failing() -> dict[str, Result]:
-    r"""Fresh results: ``MockContext`` changes the dict it is given."""
-    return {
-        _WORKER_CMD: Result(
-            stdout="3\nmypkg.a\tImportError: cannot import name 'X'\nmypkg.b\tSyntaxError: bad\n"
-        )
-    }
-
-
-def test_check_isolated_exits_when_a_module_fails() -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
     with pytest.raises(Exit, match=r"^2 of 3 module\(s\) failed to import on their own$"):
         imports.check_isolated(c)
 
 
-def test_check_isolated_failure_exit_code_is_1() -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+def test_check_isolated_failure_exit_code_is_1(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(imports, "import_each", _fake_import_each(_FAILURES))
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
     with pytest.raises(Exit, match=r"failed to import") as info:
         imports.check_isolated(c)
     assert info.value.code == 1
 
 
 def test_check_isolated_lists_the_failed_modules_with_their_error(
-    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    monkeypatch.setattr(imports, "import_each", _fake_import_each(_FAILURES))
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
     with pytest.raises(Exit, match=r"failed to import"):
         imports.check_isolated(c)
     assert capsys.readouterr().err == (
@@ -300,45 +283,33 @@ def test_check_isolated_lists_the_failed_modules_with_their_error(
     )
 
 
-def test_check_isolated_does_not_echo_the_worker() -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
-    with pytest.raises(Exit, match=r"failed to import"):
-        imports.check_isolated(c)
-    assert [(k["hide"], k["echo"], k["pty"]) for k in run_kwargs(c)] == [(True, False, False)]
-
-
 def test_check_isolated_does_not_report_success_after_a_failure(
-    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    c = make_context(tasklib_config={"package": {"name": "mypkg"}}, run=_failing())
+    monkeypatch.setattr(imports, "import_each", _fake_import_each(_FAILURES))
+    c = make_context(tasklib_config={"package": {"name": "mypkg"}})
     with pytest.raises(Exit, match=r"failed to import"):
         imports.check_isolated(c)
     assert "✅" not in capsys.readouterr().out
 
 
-########################################
-#     Tests for _parse_import_each     #
-########################################
+def test_check_isolated_exits_when_the_package_is_not_found() -> None:
+    c = make_context(tasklib_config={"package": {"name": "no_such_pkg_xyz"}})
+    with pytest.raises(
+        Exit,
+        match=(
+            r"^No module named 'no_such_pkg_xyz': "
+            r"not found in the current directory and not installed$"
+        ),
+    ) as info:
+        imports.check_isolated(c)
+    assert info.value.code == 1
 
 
-def test_parse_import_each_without_failure() -> None:
-    assert imports._parse_import_each("5\n") == (5, [])
-
-
-def test_parse_import_each_with_failures() -> None:
-    assert imports._parse_import_each("3\na\tImportError: x\nb\tSyntaxError: y\n") == (
-        3,
-        [("a", "ImportError: x"), ("b", "SyntaxError: y")],
-    )
-
-
-def test_parse_import_each_keeps_a_tab_of_the_reason() -> None:
-    assert imports._parse_import_each("1\na\tError:\tx\n") == (1, [("a", "Error:\tx")])
-
-
-def test_parse_import_each_of_an_empty_output_is_no_module() -> None:
-    assert imports._parse_import_each("") == (0, [])
-
-
-def test_parse_import_each_ignores_blank_lines() -> None:
-    assert imports._parse_import_each("1\n\na\tE\n\n") == (1, [("a", "E")])
+def test_check_isolated_reports_a_package_that_is_not_found(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context(tasklib_config={"package": {"name": "no_such_pkg_xyz"}})
+    with pytest.raises(Exit, match=r"not found"):
+        imports.check_isolated(c)
+    assert "❌ Failed: Checking that each module imports on its own" in capsys.readouterr().err
