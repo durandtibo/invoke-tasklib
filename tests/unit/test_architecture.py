@@ -30,6 +30,8 @@ LAYERS = {
     "output": 1,
     "_steps": 2,
     "_files": 2,
+    "_coverage": 2,
+    "_pyproject": 2,
     "_graph": 2,
     "formatting": 3,
     "lint": 3,
@@ -47,10 +49,6 @@ LAYERS = {
     "__init__": 5,
 }
 _FLAT_LAYERS = {3, 4}
-
-# The edges that break the layers today, each removed by a step of
-# ``review/target_state.md``.
-KNOWN_VIOLATIONS = {"clean -> testing"}
 
 # ``config.show`` prints the raw Invoke config, which is its job.
 RAW_CONFIG_MODULES = {"show.py"}
@@ -176,13 +174,7 @@ def test_every_module_of_the_package_has_a_layer() -> None:
 
 
 def test_imports_follow_the_layers() -> None:
-    assert _layer_violations() - KNOWN_VIOLATIONS == set()
-
-
-@pytest.mark.parametrize("edge", sorted(KNOWN_VIOLATIONS))
-def test_known_violations_still_exist(edge: str) -> None:
-    # When a step removes a violation, remove it from KNOWN_VIOLATIONS.
-    assert edge in _layer_violations()
+    assert _layer_violations() == set()
 
 
 #####################################

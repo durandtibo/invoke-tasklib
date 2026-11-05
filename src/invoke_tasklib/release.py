@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import os
 import shlex
-import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoke.exceptions import Exit
 from invoke.tasks import task
 
+from invoke_tasklib._pyproject import read_pyproject
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import (
@@ -171,7 +171,7 @@ def _project_version(pyproject: Path) -> str | None:
 
     Raises:
         Exit: If the file cannot be parsed as TOML (code 1). The
-            message names the file.
+            message names the file, the line and the column.
 
     Example usage:
 
@@ -183,13 +183,7 @@ def _project_version(pyproject: Path) -> str | None:
 
     ```
     """
-    if not pyproject.is_file():
-        return None
-    try:
-        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as exc:
-        msg = f"Cannot read the version: {pyproject} is not valid TOML ({exc})"
-        raise Exit(msg, code=1) from exc
+    data = read_pyproject(pyproject)
     version = data.get("project", {}).get("version")
     return version if isinstance(version, str) else None
 

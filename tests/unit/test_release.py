@@ -350,7 +350,7 @@ def test_check_release_state_rejects_an_invalid_pyproject(
 ) -> None:
     (tmp_path / "pyproject.toml").write_text("[project\n")
     monkeypatch.chdir(tmp_path)
-    with pytest.raises(Exit, match=r"pyproject\.toml is not valid TOML"):
+    with pytest.raises(Exit, match=r"invalid TOML in .*pyproject\.toml. \(line 1, column 9\)"):
         release._check_release_state(_git_context())
 
 
@@ -410,7 +410,7 @@ def test_project_version_is_none_without_project_table(tmp_path: Path) -> None:
 def test_project_version_rejects_an_invalid_file(tmp_path: Path) -> None:
     path = tmp_path / "pyproject.toml"
     path.write_text("[project\n")
-    with pytest.raises(Exit, match=r"pyproject\.toml is not valid TOML") as info:
+    with pytest.raises(Exit, match=r"invalid TOML in .*pyproject\.toml'") as info:
         release._project_version(path)
     assert info.value.code == 1
 

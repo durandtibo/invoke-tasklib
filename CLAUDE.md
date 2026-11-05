@@ -42,10 +42,11 @@
   resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`, `_resolve.py` with
   `get_config` and `load_config`, `__init__.py` that re-exports them, and `__main__.py` that
   prints the JSON schema), `runner.py` (the command runner), `tools.py` (tool lookup and install
-  hints) and `output.py` (progress messages). Four private modules support the tasks: `_steps.py`
+  hints) and `output.py` (progress messages). Six private modules support the tasks: `_steps.py`
   (the step runner shared by `check.py` and `fix.py`, so a change to the steps of `check.all`
   usually needs the same change in `fix.all`), `_files.py` (the file lookup of the format and
-  test tasks), `_graph.py` (the static import graph used by `imports.check-cycles`) and
+  test tasks), `_pyproject.py` (the reader of `pyproject.toml`), `_coverage.py` (where the
+  coverage reports are written), `_graph.py` (the static import graph used by `imports.check-cycles`) and
   `_discover.py` (the module listing run in a subprocess by `imports.check-isolated`). The
   namespace of each module is its `NAMESPACE` constant, and the modules are registered in
   `_MODULES` of `src/invoke_tasklib/__init__.py`.

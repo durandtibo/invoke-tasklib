@@ -82,3 +82,10 @@ def test_all_removes_an_untracked_coverage_file(repo: Path) -> None:
     (repo / "coverage.xml").write_text("<coverage/>")
     clean.all_(_context())
     assert not (repo / "coverage.xml").exists()
+
+
+def test_all_still_runs_with_an_invalid_pyproject(repo: Path) -> None:
+    (repo / "pyproject.toml").write_text("[tool.coverage\n")
+    (repo / "htmlcov").mkdir()
+    clean.all_(_context())
+    assert not (repo / "htmlcov").exists()

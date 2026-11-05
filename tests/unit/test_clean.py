@@ -940,3 +940,27 @@ def test_cov_reports_reads_the_config() -> None:
 
 def test_cov_reports_of_an_invalid_config_is_empty() -> None:
     assert clean._cov_reports(make_context()) == ()
+
+
+######################################
+#     Tests for _coverage_outputs    #
+######################################
+
+
+def test_coverage_outputs_reads_the_pyproject_of_the_project(project: Path) -> None:
+    (project / "pyproject.toml").write_text('[tool.coverage.html]\ndirectory = "h"\n')
+    assert clean._coverage_outputs(make_context()).html_dir == "h"
+
+
+def test_coverage_outputs_ignores_an_invalid_pyproject(project: Path) -> None:
+    (project / "pyproject.toml").write_text("[tool.coverage\n")
+    assert clean._coverage_outputs(make_context()).html_dir == "htmlcov"
+
+
+def test_all_removes_the_default_coverage_html_dir_with_an_invalid_pyproject(
+    project: Path,
+) -> None:
+    (project / "pyproject.toml").write_text("[tool.coverage\n")
+    html = _mkdir("htmlcov")(project)
+    clean.all_(_git_context(""))
+    assert not html.exists()

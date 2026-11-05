@@ -152,3 +152,9 @@ def test_doctest_markdown_does_not_walk_into_the_venv(
     monkeypatch.chdir(tmp_path)
     testing.doctest_markdown(_context())
     assert "✅ All 1 markdown files have been checked" in capsys.readouterr().out
+
+
+def test_coverage_report_stops_on_an_invalid_pyproject(flat_project: Path) -> None:
+    (flat_project / "pyproject.toml").write_text("[tool.coverage\n")
+    with pytest.raises(Exit, match=r"invalid TOML in 'pyproject\.toml' \(line 1, column 15\)"):
+        testing.coverage_report(_context())

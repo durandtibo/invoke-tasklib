@@ -94,8 +94,9 @@ def discover_modules(name: str) -> list[str]:
 
     ```pycon
     >>> from invoke_tasklib._discover import discover_modules
-    >>> discover_modules("invoke_tasklib")[:2]
-    ['invoke_tasklib', 'invoke_tasklib._discover']
+    >>> modules = discover_modules("invoke_tasklib")
+    >>> modules[0], "invoke_tasklib._discover" in modules
+    ('invoke_tasklib', True)
 
     ```
     """
