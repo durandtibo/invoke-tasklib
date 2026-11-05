@@ -19,8 +19,9 @@ from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 if TYPE_CHECKING:
     from invoke.context import Context
 
+# The name of the namespace of the tasks of this module.
 NAMESPACE = "format"
-r"""The name of the namespace of the tasks of this module."""
+
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
 def check_python(c: Context, *, args: str | None = None, paths: str | None = None) -> None:
