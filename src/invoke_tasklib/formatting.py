@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from invoke.tasks import task
 
 from invoke_tasklib._files import project_files
-from invoke_tasklib.config import EXCLUDED_DIRS, load_config
+from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
@@ -21,11 +21,6 @@ if TYPE_CHECKING:
 
 NAMESPACE = "format"
 r"""The name of the namespace of the tasks of this module."""
-
-# Directories that the walk skips when looking for shell scripts
-# outside a git work tree. In a work tree git decides (a tracked
-# ``build/run.sh`` is checked), see ``project_files``.
-SHELL_EXCLUDED_DIRS: frozenset[str] = EXCLUDED_DIRS | {"build", "dist", "site"}
 
 
 @task(help={"args": ARGS_HELP, "paths": PATHS_HELP})
@@ -109,7 +104,7 @@ def _shell_command(c: Context, tool: str, args: str | None, paths: str | None) -
         args: Extra arguments of the user, placed before ``--``.
         paths: Scripts of the user. If not set, the ``*.sh`` files
             of the project are used (see ``project_files``; outside a
-            git work tree, the walk skips ``SHELL_EXCLUDED_DIRS``).
+            git work tree, the walk skips ``EXCLUDED_DIRS``).
 
     Returns:
         The command line, or ``None`` if there is no script to run the
@@ -130,7 +125,7 @@ def _shell_command(c: Context, tool: str, args: str | None, paths: str | None) -
     base = build_command(tool, args=args)
     if paths:
         return build_command(f"{base} --", paths=paths)
-    scripts = [path.as_posix() for path in project_files(c, Path(), ".sh", SHELL_EXCLUDED_DIRS)]
+    scripts = [path.as_posix() for path in project_files(c, Path(), ".sh")]
     if not scripts:
         return None
     return build_command(f"{base} --", default_paths=scripts)

@@ -12,8 +12,9 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib._coverage import CoverageOutputs, coverage_outputs
+from invoke_tasklib._files import EXCLUDED_DIRS
 from invoke_tasklib._pyproject import read_pyproject
-from invoke_tasklib.config import EXCLUDED_DIRS, load_config
+from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say
 from invoke_tasklib.runner import build_command, capture
 
@@ -139,8 +140,9 @@ def _find_pycache_dirs(root: Path) -> list[Path]:
     r"""Find the ``__pycache__`` directories under a root directory.
 
     The directories in ``EXCLUDED_DIRS`` (``.venv``, ``.git``,
-    ``node_modules``, ...) are not walked into, so directories that the
-    project does not own are never returned.
+    ``build``, ...) are not walked into, so directories that the
+    project does not own are never returned. A ``__pycache__`` in
+    ``build`` or ``site`` goes with its parent.
 
     Args:
         root: The directory to search.

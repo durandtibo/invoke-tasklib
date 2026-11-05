@@ -9,7 +9,6 @@ from invoke.exceptions import UnexpectedExit
 
 from invoke_tasklib import formatting
 from invoke_tasklib._files import find_files
-from invoke_tasklib.formatting import SHELL_EXCLUDED_DIRS
 from tests.integration.test_imports import _SubprocessContext
 
 if TYPE_CHECKING:
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def _find_scripts(root: Path) -> list[str]:
-    return [p.relative_to(root).as_posix() for p in find_files(root, ".sh", SHELL_EXCLUDED_DIRS)]
+    return [p.relative_to(root).as_posix() for p in find_files(root, ".sh")]
 
 
 def test_find_sh_finds_scripts_of_the_project(tmp_path: Path) -> None:

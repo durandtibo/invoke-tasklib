@@ -94,9 +94,9 @@ Seven small modules support the task modules:
 - `_steps.py`: the step runner shared by `check.all` and `fix.all`: the selection of the steps
   (`--only`, `--skip` and the config), the look-up of the missing tools before anything runs, the
   `--keep-going` mode and the final summary of the failures.
-- `_files.py`: `project_files(c, root, suffix, excluded)` finds the files with a suffix, with
+- `_files.py`: `project_files(c, root, suffix)` finds the files with a suffix, with
   `git ls-files` in a git work tree and with `find_files`, a walk in Python (no `find` or `xargs`)
-  that skips the `EXCLUDED_DIRS` at any depth, otherwise. It is used by the format and test tasks
+  that skips the `EXCLUDED_DIRS` of `_files.py` at any depth, otherwise. It is used by the format and test tasks
   that work on shell scripts and markdown files.
 - `_pyproject.py`: `read_pyproject(path)` reads `pyproject.toml` (`{}` if the file is missing). An
   invalid file exits with `1` and a message that names the file, the line and the column of the
@@ -110,13 +110,14 @@ Seven small modules support the task modules:
 - `_discover.py`: lists the modules of a package without importing them. It is run in a
   subprocess by `imports.check-isolated`.
 
-`config.EXCLUDED_DIRS` lists the directories that the tasks that walk the file tree (`clean`,
-`format`, `test.doctest-markdown`) never enter (`.venv`, `.git`, `node_modules`, ...). The format and
-test tasks find their files with `_files.project_files`: in a git work tree they ask
-`git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and there is no
-list of directories to maintain (the `EXCLUDED_DIRS` are still left out); outside a work tree they
-walk the tree and skip the excluded directories. `clean` keeps its own walk, because the
-`__pycache__` directories it removes are ignored by git.
+`_files.EXCLUDED_DIRS` is the one list of the directories that the tasks that walk the file tree
+(`clean`, `format`, `test.doctest-markdown`) never enter: the directories of tools and environments
+(`.venv`, `.git`, `node_modules`, the caches) and the build outputs (`build`, `dist`, `site`,
+`htmlcov`). The format and test tasks find their files with `_files.project_files`: in a git work
+tree they ask `git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and
+a tracked `build/run.sh` is checked (only the directories of tools and environments are left out);
+outside a work tree they walk the tree and skip every directory of the list. `clean` keeps its own
+walk, because the `__pycache__` directories it removes are ignored by git.
 
 ### Adding a step to `check.all` or `fix.all`
 
