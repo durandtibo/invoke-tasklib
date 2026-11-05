@@ -620,8 +620,6 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
     if not paths and not Path(benchmarks).is_dir():
         msg = f"No '{benchmarks}' directory: there is no benchmark to run"
         raise Exit(msg, code=1)
-    with report_failure(c, "⏱️  Running benchmarks..."):
-        say(c, "⏱️  Running benchmarks...")
+    with step(c, "⏱️  Running benchmarks...", "✅ Benchmarks complete"):
         cmd = f"{python_executable()} -m pytest --benchmark-only --benchmark-enable"
         run(c, build_command(cmd, args=args, paths=paths, default_paths=[benchmarks + "/"]))
-    say(c, "✅ Benchmarks complete")

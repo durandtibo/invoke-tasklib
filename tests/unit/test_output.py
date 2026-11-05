@@ -202,6 +202,21 @@ def test_step_writes_the_start_message_before_the_body() -> None:
     assert seen == "start\n"
 
 
+def test_step_without_done_message_writes_only_the_start_message() -> None:
+    stream, c = _context()
+    with step(c, "🎨 Checking..."):
+        pass
+    assert stream.getvalue() == "🎨 Checking...\n"
+
+
+def test_step_without_done_message_reports_a_failure() -> None:
+    _, err, c = _context_with_err()
+    error = Exit("boom")
+    with pytest.raises(Exit, match=r"boom"), step(c, "🎨 Checking code..."):
+        raise error
+    assert err.getvalue() == "❌ Failed: Checking code\n"
+
+
 def _fail_in_step(c: Context, start: str, error: BaseException) -> None:
     with step(c, start, "done"):
         raise error

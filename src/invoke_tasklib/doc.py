@@ -12,7 +12,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import report_failure, say, step
+from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import ARGS_HELP, build_command, capture, run
 
 if TYPE_CHECKING:
@@ -324,15 +324,15 @@ def publish_dev(c: Context, *, push: bool = True) -> None:
             commit it locally only.
     """
     docs_config = shlex.quote(_docs_config(c))
-    with report_failure(c, "📚 Publishing development documentation..."):
-        say(c, "📚 Publishing development documentation...")
+    with step(
+        c, "📚 Publishing development documentation...", "✅ Development documentation published"
+    ):
         say(c, "🚀 Deploying 'main' and 'dev' aliases...")
         run(
             c,
             f"mike deploy --config-file {docs_config}{_push_option(push)}"
             " --update-aliases main dev",
         )
-    say(c, "✅ Development documentation published")
 
 
 @task(
@@ -398,8 +398,7 @@ def publish_latest(
         raise Exit(msg, code=1)
     config_file = shlex.quote(docs_config)
     push_option = _push_option(push)
-    with report_failure(c, "📚 Publishing latest documentation..."):
-        say(c, "📚 Publishing latest documentation...")
+    with step(c, "📚 Publishing latest documentation...", "✅ Latest documentation published"):
         say(c, f"📌 Using version tag: {tag}")
         say(c, f"🚀 Deploying '{tag}' and 'latest' aliases...")
         run(
@@ -407,4 +406,3 @@ def publish_latest(
         )
         say(c, "🎯 Setting 'latest' as default...")
         run(c, f"mike set-default --config-file {config_file}{push_option} --allow-empty latest")
-    say(c, "✅ Latest documentation published")

@@ -12,7 +12,7 @@ from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
-from invoke_tasklib.output import report_failure, say
+from invoke_tasklib.output import say, step
 from invoke_tasklib.runner import (
     ARGS_HELP,
     build_command,
@@ -123,8 +123,7 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     """
     cfg = load_config(c)
     import_name = cfg.package.import_name
-    with report_failure(c, "📦 Building package..."):
-        say(c, "📦 Building package...")
+    with step(c, "📦 Building package..."):
         run(c, build_command("uv build --clear", args=args))
         directory, patterns = _build_targets(args)
         say(c, "🔍 Verifying package installation...")
@@ -406,12 +405,12 @@ def publish(
         cmd.append("--dry-run")
     if not token and trusted:
         cmd.append("--trusted-publishing always")
-    with report_failure(c, "🚀 Publishing..."):
-        say(c, "🚀 Publishing" + (" (dry run)" if dry_run else "") + "...")
+    start = "🚀 Publishing" + (" (dry run)" if dry_run else "") + "..."
+    done = "✅ Dry run complete" if dry_run else "✅ Package published successfully"
+    with step(c, start, done):
         run(
             c,
             build_command(" ".join(cmd), args=args),
             env=_publish_environment(token),
             replace_env=True,
         )
-    say(c, "✅ Package published successfully" if not dry_run else "✅ Dry run complete")
