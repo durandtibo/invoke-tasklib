@@ -253,26 +253,40 @@ def test_show_installed_packages() -> None:
     assert commands(c) == ["uv pip list"]
 
 
-def test_show_python_config() -> None:
+def test_show_python_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(env, "which", lambda _name: "/usr/bin/python")
     c = make_context()
     env.show_python_config(c)
-    assert commands(c) == [
-        "uv python list --only-installed",
-        "uv python find",
-        "command -v python",
-    ]
+    assert commands(c) == ["uv python list --only-installed", "uv python find"]
 
 
-def test_show_python_config_tolerates_a_missing_python_on_the_path() -> None:
+def test_show_python_config_prints_the_python_of_the_path(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(env, "which", lambda _name: "/usr/bin/python")
+    env.show_python_config(make_context())
+    assert capsys.readouterr().out == "🐍 Python configuration:\n/usr/bin/python\n"
+
+
+def test_show_python_config_tolerates_a_missing_python_on_the_path(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(env, "which", lambda _name: None)
+    env.show_python_config(make_context())
+    assert capsys.readouterr().out == "🐍 Python configuration:\npython: not found\n"
+
+
+def test_show_python_config_looks_up_python(monkeypatch: pytest.MonkeyPatch) -> None:
+    looked_up: list[str] = []
+    monkeypatch.setattr(env, "which", looked_up.append)
+    env.show_python_config(make_context())
+    assert looked_up == ["python"]
+
+
+def test_show_python_config_commands_must_succeed() -> None:
     c = make_context()
     env.show_python_config(c)
-    assert run_kwargs(c)[-1]["warn"] is True
-
-
-def test_show_python_config_other_commands_must_succeed() -> None:
-    c = make_context()
-    env.show_python_config(c)
-    assert [kwargs.get("warn", False) for kwargs in run_kwargs(c)] == [False, False, True]
+    assert [kwargs.get("warn", False) for kwargs in run_kwargs(c)] == [False, False]
 
 
 ############################################

@@ -385,11 +385,11 @@ def test_parse_releases_keeps_the_major_and_the_minor(
 
 
 def test_push_option_with_push() -> None:
-    assert doc._push_option(push=True) == " --push"
+    assert doc._push_option(push=True) == ["--push"]
 
 
 def test_push_option_without_push() -> None:
-    assert doc._push_option(push=False) == ""
+    assert doc._push_option(push=False) == []
 
 
 #####################################

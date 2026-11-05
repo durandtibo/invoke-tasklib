@@ -3,7 +3,6 @@ r"""Build and publish tasks (PyPI package)."""
 from __future__ import annotations
 
 import os
-import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -153,21 +152,18 @@ def build(c: Context, *, check: bool = False, args: str | None = None) -> None:
     cfg = load_config(c)
     import_name = cfg.package.import_name
     with step(c, "📦 Building package..."):
-        run(c, build_command("uv build --clear", args=args))
+        run(c, build_command(["uv", "build", "--clear"], args=args))
         directory, patterns = _build_targets(args)
         say(c, "🔍 Verifying package installation...")
         for pattern in patterns:
             artifact = _latest_artifact(directory, pattern)
             say(c, f"🔍 Verifying {artifact}...")
-            run(
-                c,
-                f"uv run --isolated --no-project --with {shlex.quote(str(artifact))} -- "
-                f"python -I -c {shlex.quote(f'import {import_name}')}",
-            )
+            uv_run = ["uv", "run", "--isolated", "--no-project", "--with", str(artifact), "--"]
+            run(c, [*uv_run, "python", "-I", "-c", f"import {import_name}"])
         if check:
             say(c, "🔍 Checking package metadata with twine...")
-            twine = f"uvx --from {shlex.quote(_TWINE_REQUIREMENT)} twine check"
-            run(c, f"{twine} {shlex.quote(str(directory))}/*")
+            # Twine expands the pattern itself.
+            run(c, ["uvx", "--from", _TWINE_REQUIREMENT, "twine", "check", f"{directory}/*"])
 
 
 def _project_version(pyproject: Path) -> str | None:
@@ -220,7 +216,7 @@ def _head_tag(c: Context) -> str | None:
 
     ```
     """
-    result = capture(c, "git describe --exact-match --tags HEAD", warn=True)
+    result = capture(c, ["git", "describe", "--exact-match", "--tags", "HEAD"], warn=True)
     return result.stdout.strip() if result.ok and result.stdout.strip() else None
 
 
@@ -253,7 +249,7 @@ def _check_release_state(c: Context) -> None:
 
     ```
     """
-    status = capture(c, "git status --porcelain")
+    status = capture(c, ["git", "status", "--porcelain"])
     if status.stdout.strip():
         msg = "The working tree is not clean: commit or stash the changes before publishing"
         raise Exit(msg, code=1)
@@ -428,22 +424,19 @@ def publish(
     if not (yes or dry_run or in_ci()):
         _confirm(target)
     build(c)
-    cmd = ["uv publish"]
+    cmd = ["uv", "publish"]
     if test_pypi:
-        cmd.append(
-            f"--publish-url {shlex.quote(_TEST_PYPI_PUBLISH_URL)} "
-            f"--check-url {shlex.quote(_TEST_PYPI_CHECK_URL)}"
-        )
+        cmd.extend(["--publish-url", _TEST_PYPI_PUBLISH_URL, "--check-url", _TEST_PYPI_CHECK_URL])
     if dry_run:
         cmd.append("--dry-run")
     if not token and trusted:
-        cmd.append("--trusted-publishing always")
+        cmd.extend(["--trusted-publishing", "always"])
     start = "🚀 Publishing" + (" (dry run)" if dry_run else "") + "..."
     done = "✅ Dry run complete" if dry_run else "✅ Package published successfully"
     with step(c, start, done):
         run(
             c,
-            build_command(" ".join(cmd), args=args),
+            build_command(cmd, args=args),
             env=_publish_environment(token),
             replace_env=True,
         )
