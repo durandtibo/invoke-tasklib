@@ -358,7 +358,7 @@ others branch from `main`.
 | 11   | **Make the task modules' extra names private (F5, M2).** The 22 names get a `_`; the test of M2 extends to the task modules; trim `docs/refs/`. Last of the breaking steps: it comes after 4, 5, 6, 7 and 10, which touch the same names.           | yes                             |
 | 12   | **Release `0.1.0`.** The notes list the breaking rows (9, 11) and the one behaviour row (6) with the replacement for each name. Needs a decision to ship (it was step 13 of the previous plan).                                                     | -                               |
 
-**Status.** None of the steps is started. The previous plan's steps 1-12 are merged (#334-#349,
+**Status.** No step is started; the six decisions of section 9 are made, so no step waits on one. The previous plan's steps 1-12 are merged (#334-#349,
 #350 for the tracking page); its step 13, the release, is the last row above.
 
 Order: 1 first (it is the baseline of the contract), then 2. 3 is independent and can go at any
@@ -411,13 +411,15 @@ changelog or status table with the pull request number in each step.
 
 ## 9. Decisions for the maintainers
 
-Each decision has a recommendation; none is made yet.
+All six decisions are made: D1 is "yes", and D2-D6 follow the recommendation.
 
 **D1. Make the 22 extra names of the task modules private (step 11).** _Recommended: yes, before
 `0.1.0`._ A name in `docs/refs/` is a promise, and none of these is in the user guide. An alpha is
 the cheap moment to say so. The alternative is to document the few that are useful (`clean.DIRS`
 for a project that extends the cleanup) and keep them; that is more text to maintain for names that
 nobody asked for.
+
+Decision: yes. The 22 names become private in step 11, and they are listed in the `0.1.0` notes.
 
 **D2. Composites ignore `make_ns(exclude=...)` (step 2).** _Recommended: keep, state it._ The steps
 of `check.all` are chosen by `tasklib.check.tasks`, which is validated early (P5). Making the
@@ -426,25 +428,35 @@ behave differently under two `tasks.py` files. The alternative (the composite sk
 tasks) is about 15 lines, but it silently shortens `check.all`, which is the wrong failure for a
 quality gate.
 
+Decision: follow recommendation
+
 **D3. `default_config()` returns an `Unset` for every key (step 9).** _Recommended: yes._ It removes
 the integer special case and the defaults that nobody reads. The cost is that `c.config.tasklib.*`
-no longer shows the default values; the supported readers are `load_config` and `config.show`. If a
-project is known to read the raw config, keep step 9 out of `0.1.0`; steps 7 and 8 do not depend on
-it.
+no longer shows the default values; the supported readers are `load_config` and `config.show`.
+Step 9 ships in `0.1.0`.
+
+Decision: follow recommendation. The `0.1.0` notes say that `default_config()` returns an `Unset`
+for every key.
 
 **D4. `release.build` keeps reading `--out-dir`, `--wheel` and `--sdist` from `--args` (step 10).**
 _Recommended: keep, with `split_args`._ The alternative is that `release.build` owns the directory
 (`dist`, or `tasklib.paths.dist`) and refuses `--out-dir` in `--args`. It deletes `_build_targets`
 (20 lines) but adds either a refusal or a config key, and it breaks `uv build` habits. Not worth it.
 
+Decision: follow recommendation
+
 **D5. Keep `INVOKE_TASKLIB_ASCII` an environment variable, not a config key.** _Recommended: keep._
 It is a property of the terminal, not of the project: the same project needs `1` on one machine and
 nothing on another. A config key would live in the committed `invoke.yaml`. Section 3.7 lists it so
 it is a documented exception to "the config is the only input".
 
+Decision: follow recommendation. The variable stays; section 3.7 and the test of P1 list it.
+
 **D6. Test P11 before deciding anything else about the fixes (step 3).** _Recommended: yes._ This
 is the only step that can find a real defect. If `fix.all` and `check.all` disagree, the fix to the
 task is the first priority and may change the order of the other steps.
+
+Decision: follow recommendation. Step 3 runs early, right after step 1.
 
 ## 10. Not covered
 
