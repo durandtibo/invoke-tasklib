@@ -7,6 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
+from invoke.exceptions import Exit
 from invoke.tasks import task
 
 from invoke_tasklib._files import project_files
@@ -612,11 +613,17 @@ def benchmark(c: Context, *, args: str | None = None, paths: str | None = None) 
         args: Extra arguments passed to pytest.
         paths: The files or directories to run on instead of
             ``paths.benchmarks``.
+
+    Raises:
+        Exit: With the code 1 if ``paths.benchmarks`` does not exist
+            and ``paths`` is not given. The task is run on purpose, so
+            a nightly job does not pass without measuring anything.
     """
     cfg = load_config(c)
     benchmarks = cfg.paths.benchmarks
-    if not paths and not _directory_exists(c, benchmarks, "benchmarks"):
-        return
+    if not paths and not Path(benchmarks).is_dir():
+        msg = f"No '{benchmarks}' directory: there is no benchmark to run"
+        raise Exit(msg, code=1)
     with report_failure(c, "⏱️  Running benchmarks..."):
         say(c, "⏱️  Running benchmarks...")
         cmd = f"{python_executable()} -m pytest --benchmark-only --benchmark-enable"
