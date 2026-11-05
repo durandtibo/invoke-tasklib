@@ -1159,6 +1159,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#adding-a-step-to-checkall-or-fixall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a step to check.all or fix.all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#3-the-namespace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1918,6 +1929,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#adding-a-step-to-checkall-or-fixall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a step to check.all or fix.all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#3-the-namespace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2128,6 +2150,20 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 </ul>
 <p><code>config.EXCLUDED_DIRS</code> lists the directories that the tasks that walk the file tree (<code>clean</code>,
 <code>format</code>, <code>test.doctest-markdown</code>) never enter (<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, ...).</p>
+<h3 id="adding-a-step-to-checkall-or-fixall">Adding a step to <code>check.all</code> or <code>fix.all</code><a class="headerlink" href="#adding-a-step-to-checkall-or-fixall" title="Permanent link">&para;</a></h3>
+<p>A step is a <code>Step(task, programs, modules)</code> of <code>_steps.py</code> (the task, the programs it looks up on the
+<code>PATH</code>, the Python modules it imports). To add one:</p>
+<ol>
+<li>Write the task in its module, and add <code>"name": Step(task, programs=..., modules=...)</code> to
+   <code>check.STEPS</code> (or <code>fix.STEPS</code>).</li>
+<li>Add the name to <code>CHECK_STEPS</code> (or <code>FIX_STEPS</code>) in <code>config/_constants.py</code>: the config must not
+   import the task modules, and a test checks that the names agree with <code>STEPS</code>.</li>
+<li>Add the programs and modules to <code>TOOL_PROGRAMS</code> and <code>TOOL_MODULES</code> of <code>env.py</code> (a test checks
+   that every tool of <code>STEPS</code> is listed), and their install hints to <code>PROGRAM_HINTS</code> or
+   <code>PROGRAM_GROUPS</code> of <code>runner.py</code> (a test checks that too).</li>
+<li>To run the step by default, add it to the default of <code>check.tasks</code> (or <code>fix.tasks</code>) in
+   <code>config/_schema.py</code>; update the tables of the user guide (<code>uguide/check.md</code>, <code>uguide/fix.md</code>).</li>
+</ol>
 <h3 id="3-the-namespace">3. The Namespace<a class="headerlink" href="#3-the-namespace" title="Permanent link">&para;</a></h3>
 <p><code>invoke_tasklib/__init__.py</code> has <code>make_ns(*, exclude=(), include=None)</code>, which builds a new
 <code>Collection</code> by adding each task module (<code>Collection.from_module(module, name=...)</code>) as a
