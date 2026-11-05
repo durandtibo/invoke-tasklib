@@ -606,6 +606,55 @@ def test_read_sources_of_a_single_module(tmp_path: Path, monkeypatch: pytest.Mon
     assert read_sources("graphsingle") == ({"graphsingle": "X = 1\n"}, set())
 
 
+def test_read_sources_from_a_directory_whole_output(tmp_path: Path) -> None:
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "__init__.py").write_text("A = 1\n")
+    (tmp_path / "a.py").write_text("import notinstalled.sub\n")
+    (tmp_path / "sub" / "__init__.py").write_text("")
+    assert read_sources("notinstalled", src=tmp_path) == (
+        {
+            "notinstalled": "A = 1\n",
+            "notinstalled.a": "import notinstalled.sub\n",
+            "notinstalled.sub": "",
+        },
+        {"notinstalled", "notinstalled.sub"},
+    )
+
+
+def test_read_sources_from_a_directory_does_not_need_the_package_to_be_installed(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "__init__.py").write_text("")
+    assert read_sources("no_such_graph_pkg", src=tmp_path)[1] == {"no_such_graph_pkg"}
+
+
+@pytest.mark.usefixtures("package")
+def test_read_sources_from_a_directory_wins_over_the_installed_copy(tmp_path: Path) -> None:
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "__init__.py").write_text("SOURCE = 1\n")
+    assert read_sources("graphpkg", src=other)[0] == {"graphpkg": "SOURCE = 1\n"}
+
+
+def test_read_sources_from_a_directory_without_init_leaves_the_package_out(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "a.py").write_text("")
+    assert read_sources("noinit", src=tmp_path)[0] == {"noinit.a": ""}
+
+
+@pytest.mark.usefixtures("package")
+def test_read_sources_falls_back_to_the_installed_copy_without_the_directory(
+    tmp_path: Path,
+) -> None:
+    assert "graphpkg.a" in read_sources("graphpkg", src=tmp_path / "missing")[0]
+
+
+def test_read_sources_with_a_missing_directory_and_package_raises(tmp_path: Path) -> None:
+    with pytest.raises(ModuleNotFoundError, match=r"No module named 'no_such_graph_pkg'"):
+        read_sources("no_such_graph_pkg", src=tmp_path / "missing")
+
+
 def test_read_sources_of_a_missing_package() -> None:
     with pytest.raises(ModuleNotFoundError, match=r"No module named 'no_such_graph_pkg'"):
         read_sources("no_such_graph_pkg")

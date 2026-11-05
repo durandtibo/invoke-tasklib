@@ -223,3 +223,50 @@ def test_check_cycles_of_a_dotted_name_finds_its_cycle(dotted_project: Path) -> 
         Exit, match=r"outerpkg\.inner\.a -> outerpkg\.inner\.b -> outerpkg\.inner\.a"
     ):
         imports.check_cycles(_dotted_context())
+
+
+def test_check_cycles_reads_src_when_the_package_is_not_installed(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(project, {"src/srcpkg/__init__.py": "", "src/srcpkg/a.py": "X = 1\n"})
+    imports.check_cycles(_context("srcpkg"))
+    assert "✅ No import cycle in 2 module(s)" in capsys.readouterr().out
+
+
+def test_check_cycles_finds_a_cycle_in_src_when_the_package_is_not_installed(
+    project: Path,
+) -> None:
+    _write(
+        project,
+        {
+            "src/srccyc/__init__.py": "",
+            "src/srccyc/a.py": "from srccyc import b\n",
+            "src/srccyc/b.py": "from srccyc import a\n",
+        },
+    )
+    with pytest.raises(Exit, match=r"srccyc\.a -> srccyc\.b -> srccyc\.a"):
+        imports.check_cycles(_context("srccyc"))
+
+
+def test_check_cycles_reads_the_source_not_the_installed_copy(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _write(
+        project,
+        {
+            "installed/stale/__init__.py": "",
+            "installed/stale/a.py": "X = 1\n",
+            "src/stale/__init__.py": "",
+            "src/stale/a.py": "from stale import b\n",
+            "src/stale/b.py": "from stale import a\n",
+        },
+    )
+    monkeypatch.syspath_prepend(str(project / "installed"))
+    with pytest.raises(Exit, match=r"stale\.a -> stale\.b -> stale\.a"):
+        imports.check_cycles(_context("stale"))
+
+
+@pytest.mark.usefixtures("project")
+def test_check_cycles_missing_package_names_paths_src() -> None:
+    with pytest.raises(Exit, match=r"not found in 'src/nowhere' \(tasklib\.paths\.src\)"):
+        imports.check_cycles(_context("nowhere"))

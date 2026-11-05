@@ -10,7 +10,7 @@ import ast
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from invoke_tasklib._discover import discover_modules, find_spec
+from invoke_tasklib._discover import _walk, discover_modules, find_spec
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Iterator, Mapping
@@ -399,7 +399,7 @@ def find_cycles(graph: Mapping[str, Collection[str]]) -> list[list[str]]:
     return [_cycle_in(component, graph) for component in _components(graph)]
 
 
-def read_sources(name: str) -> tuple[dict[str, str], set[str]]:
+def read_sources(name: str, src: Path | None = None) -> tuple[dict[str, str], set[str]]:
     r"""Read the source of every module of a package.
 
     The modules are found without importing them. A module with no
@@ -408,35 +408,51 @@ def read_sources(name: str) -> tuple[dict[str, str], set[str]]:
 
     Args:
         name: The name of the top-level package (or module).
+        src: The directory of the package (``tasklib.paths.src``). If it
+            is a directory, the modules are read from it and the
+            package does not have to be installed. Otherwise, or if it
+            is ``None``, the package is looked up with the import
+            machinery, so an installed copy is read.
 
     Returns:
         The source code of each module by dotted name, and the names of
         the modules that are packages.
 
     Raises:
-        ModuleNotFoundError: If ``name`` cannot be found.
+        ModuleNotFoundError: If ``name`` is not in ``src`` and cannot be
+            found by the import machinery.
 
     Example usage:
 
     ```pycon
+    >>> from pathlib import Path
     >>> from invoke_tasklib._graph import read_sources
     >>> sources, packages = read_sources("invoke_tasklib")
     >>> "invoke_tasklib._graph" in sources
     True
     >>> "invoke_tasklib" in packages
     True
+    >>> read_sources("anything", src=Path("no/such/dir"))
+    Traceback (most recent call last):
+        ...
+    ModuleNotFoundError: No module named 'anything'
 
     ```
     """
-    spec = find_spec(name)
-    if spec is None:
-        msg = f"No module named '{name}'"
-        raise ModuleNotFoundError(msg, name=name)
-    roots = [Path(p) for p in spec.submodule_search_locations or []]
+    if src is not None and src.is_dir():
+        roots, origin = [src], None
+        modules = [name, *_walk(name, [str(src)])]
+    else:
+        spec = find_spec(name)
+        if spec is None:
+            msg = f"No module named '{name}'"
+            raise ModuleNotFoundError(msg, name=name)
+        roots, origin = [Path(p) for p in spec.submodule_search_locations or []], spec.origin
+        modules = discover_modules(name)
     sources: dict[str, str] = {}
     packages: set[str] = set()
-    for module in discover_modules(name):
-        path = _source_path(module, name, roots, spec.origin)
+    for module in modules:
+        path = _source_path(module, name, roots, origin)
         if path is not None:
             sources[module] = path.read_text(encoding="utf-8")
             if path.name == "__init__.py":
