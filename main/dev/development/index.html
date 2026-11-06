@@ -2169,6 +2169,8 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 │       ├── output.py         # Progress messages (`say`, `step`)
 │       ├── _steps.py         # Step runner shared by `check.all` and `fix.all`
 │       ├── _files.py         # File lookup of the format and test tasks
+│       ├── _pyproject.py     # Reader of `pyproject.toml` (`read_pyproject`)
+│       ├── _coverage.py      # Where the coverage reports are written
 │       ├── _graph.py         # Static import graph of `imports.check-cycles`
 │       ├── _discover.py      # Module discovery run by `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks

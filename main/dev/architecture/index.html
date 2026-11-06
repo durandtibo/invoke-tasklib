@@ -2229,6 +2229,13 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
   <code>git ls-files</code> in a git work tree and with <code>find_files</code>, a walk in Python (no <code>find</code> or <code>xargs</code>)
   that skips the <code>EXCLUDED_DIRS</code> at any depth, otherwise. It is used by the format and test tasks
   that work on shell scripts and markdown files.</li>
+<li><code>_pyproject.py</code>: <code>read_pyproject(path)</code> reads <code>pyproject.toml</code> (<code>{}</code> if the file is missing). An
+  invalid file exits with <code>1</code> and a message that names the file, the line and the column of the
+  error. <code>release</code> (the <code>[project] version</code>) and <code>_coverage</code> use it; <code>clean</code> ignores the error,
+  because it must work on a broken project.</li>
+<li><code>_coverage.py</code>: <code>coverage_outputs(reports, pyproject)</code> returns the HTML directory and the report
+  files, from the <code>--cov-report</code> arguments, then <code>[tool.coverage.*]</code>, then the coverage.py defaults.
+  <code>testing</code> and <code>clean</code> use it.</li>
 <li><code>_graph.py</code>: the static import graph of a package (built with <code>ast</code>, without importing
   anything) and its cycles. It is used by <code>imports.check-cycles</code>.</li>
 <li><code>_discover.py</code>: lists the modules of a package without importing them. It is run in a
@@ -2279,12 +2286,11 @@ checks the rule on the package itself.</p>
 <div class="highlight"><pre><span></span><code>L5  __init__          make_ns: one Collection per module
 L4  check  fix        composites: run STEPS with the step runner
 L3  formatting lint typecheck testing env release doc security imports clean show
-L2  _steps  _files  _graph             private helpers of the tasks
+L2  _steps  _files  _graph  _coverage  _pyproject   private helpers of the tasks
 L1  config/  runner  tools  output     support: the documented helpers
 L0  _discover                          worker run in a subprocess
 </code></pre></div>
-<p>One import breaks the rule today, <code>clean -&gt; testing</code>
-(<code>KNOWN_VIOLATIONS</code> in the test); the test fails if a new one appears.</p>
+<p>No import breaks the rule; the test fails if one appears.</p>
 <h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
 <p>These are the properties that the package guarantees to a project that uses it. The last column
 says what enforces each one.</p>
