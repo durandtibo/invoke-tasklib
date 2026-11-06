@@ -2259,7 +2259,9 @@ applies: the environment variables win over <code>invoke.yaml</code>.</p>
 <p>An invalid value exits with code 2 and a one-line message, like an invalid <code>invoke.yaml</code>. The same
 spellings work for a string value in <code>invoke.yaml</code>. A collection built by hand (<code>Collection(lint, ...)</code>) has no defaults, so it does
 not read the environment variables unless you call
-<code>ns.configure({"tasklib": invoke_tasklib.config.default_config()})</code>.</p>
+<code>ns.configure({"tasklib": invoke_tasklib.config.default_config()})</code>.
+<code>default_config()</code> holds an empty placeholder for every key, not its default: read the config with
+<code>load_config</code> (or see it with <code>inv config.show</code>), not from <code>c.config.tasklib</code>.</p>
 <h2 id="minimal-config">Minimal Config<a class="headerlink" href="#minimal-config" title="Permanent link">&para;</a></h2>
 <p>The smallest valid <code>invoke.yaml</code> only sets the package name:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">tasklib</span><span class="p">:</span>

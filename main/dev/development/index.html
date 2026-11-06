@@ -2163,7 +2163,7 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 ├── src/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `make_ns` and individual task modules
-│       ├── config/           # Config resolution (`get_config`, `load_config`, JSON schema)
+│       ├── config/           # Config resolution (`get_config`, `load_config`, JSON schema); `_invoke.py` reads the Invoke privates
 │       ├── runner.py         # Command runner (`run`, `capture`, `build_command`)
 │       ├── tools.py          # Tool lookup and install hints (`find_tool`, `check_program`)
 │       ├── output.py         # Progress messages (`say`, `step`)

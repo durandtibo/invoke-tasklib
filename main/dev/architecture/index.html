@@ -2161,13 +2161,15 @@ core design follows these principles:</p>
 <h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
 <h3 id="1-config-resolution">1. Config Resolution<a class="headerlink" href="#1-config-resolution" title="Permanent link">&para;</a></h3>
 <p><code>invoke_tasklib.config.get_config(c)</code> (implemented in <code>config/_resolve.py</code> with <code>load_config</code>, and
-re-exported by <code>config/__init__.py</code>) is the single source of truth for project-specific values.
+re-exported by <code>config/__init__.py</code>; the private attributes of the Invoke config are read in
+<code>config/_invoke.py</code> only) is the single source of truth for project-specific values.
 It:</p>
 <ul>
 <li>Reads the <code>tasklib</code> key from the Invoke config (<code>c.config</code>), which Invoke itself populates from
   <code>invoke.yaml</code>.</li>
 <li>Merges it on top of the defaults declared in <code>SCHEMA</code> (<code>default_config()</code> and
-  the JSON schema are loops over it).</li>
+  the JSON schema are loops over it; <code>default_config()</code> registers an <code>Unset</code> for every key so Invoke
+  reads the environment variables as text).</li>
 <li>Rejects unknown keys and validates the values (<code>package.python_version</code>, <code>package.import_name</code>,
   <code>groups.*</code>, <code>test.*</code>, <code>check.tasks</code>, <code>fix.tasks</code>).</li>
 <li>Derives unset <code>paths.*</code> entries from <code>package.import_name</code> (for <code>paths.src</code>) or <code>paths.tests</code> (for the
@@ -2412,7 +2414,7 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <td>M5</td>
 <td>Invoke internals apart</td>
 <td>The private attributes of <code>invoke.config.Config</code> are read in one module, <code>config/_invoke.py</code>, which warns when one is missing. No other module calls <code>getattr</code> or <code>hasattr</code> on a config for a name that starts with <code>_</code>.</td>
-<td>not tested (target state, step 7)</td>
+<td><code>test_architecture.py</code> (AST scan of <code>src/</code> for <code>getattr</code>/<code>hasattr</code> of a private name)</td>
 </tr>
 </tbody>
 </table>

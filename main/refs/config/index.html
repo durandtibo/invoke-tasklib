@@ -2172,7 +2172,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="kc">None</span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_str">_validate_str</span></span><span class="p">,</span> <span class="s2">"package"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_str">_validate_str</span></span><span class="p">,</span>
             <span class="n"><span title="invoke_tasklib.config._schema._STRING">_STRING</span></span><span class="p">,</span>
             <span class="s2">"Distribution name, as on PyPI (required)."</span><span class="p">,</span>
         <span class="p">),</span>
@@ -2204,37 +2204,27 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
     <span class="p">},</span>
     <span class="s2">"paths"</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">"src"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"src"</span><span class="p">,</span>
             <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"Source directory (default: src/&lt;import_name&gt;)."</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="s2">"tests"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"tests"</span><span class="p">,</span> <span class="s2">"tests"</span><span class="p">,</span> <span class="s2">"Tests directory."</span>
-        <span class="p">),</span>
+        <span class="s2">"tests"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span><span class="s2">"tests"</span><span class="p">,</span> <span class="s2">"Tests directory."</span><span class="p">),</span>
         <span class="s2">"unit_tests"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"unit_tests"</span><span class="p">,</span>
-            <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">"Unit tests (default: &lt;tests&gt;/unit)."</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span> <span class="s2">"Unit tests (default: &lt;tests&gt;/unit)."</span>
         <span class="p">),</span>
         <span class="s2">"integration_tests"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"integration_tests"</span><span class="p">,</span>
             <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"Integration tests (default: &lt;tests&gt;/integration)."</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">"functional_tests"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"functional_tests"</span><span class="p">,</span>
             <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"Functional tests (default: &lt;tests&gt;/functional)."</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">"benchmarks"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"benchmarks"</span><span class="p">,</span>
             <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"Benchmarks (default: &lt;tests&gt;/benchmarks)."</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">"docs_config"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._path">_path</span></span><span class="p">(</span>
-            <span class="s2">"docs_config"</span><span class="p">,</span>
-            <span class="s2">"docs/mkdocs.yml"</span><span class="p">,</span>
-            <span class="s2">"MkDocs configuration file."</span><span class="p">,</span>
+            <span class="s2">"docs/mkdocs.yml"</span><span class="p">,</span> <span class="s2">"MkDocs configuration file."</span>
         <span class="p">),</span>
     <span class="p">},</span>
     <span class="s2">"groups"</span><span class="p">:</span> <span class="p">{</span>
@@ -2245,7 +2235,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="s2">"dev"</span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._normalize_groups">_normalize_groups</span></span><span class="p">,</span> <span class="s2">"install"</span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._normalize_groups">_normalize_groups</span></span><span class="p">,</span>
             <span class="n"><span title="invoke_tasklib.config._schema._NAMES">_NAMES</span></span><span class="p">,</span>
             <span class="s2">"Dependency groups of env.install (comma-separated string or list)."</span><span class="p">,</span>
         <span class="p">),</span>
@@ -2256,24 +2246,20 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="s2">"dev,docs"</span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._normalize_groups">_normalize_groups</span></span><span class="p">,</span> <span class="s2">"update"</span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._normalize_groups">_normalize_groups</span></span><span class="p">,</span>
             <span class="n"><span title="invoke_tasklib.config._schema._NAMES">_NAMES</span></span><span class="p">,</span>
             <span class="s2">"Dependency groups of env.update (comma-separated string or list)."</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">},</span>
     <span class="s2">"test"</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">"unit_timeout"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._timeout">_timeout</span></span><span class="p">(</span>
-            <span class="s2">"unit_timeout"</span><span class="p">,</span>
-            <span class="mi">10</span><span class="p">,</span>
-            <span class="s2">"Timeout in seconds of each unit test."</span><span class="p">,</span>
+            <span class="mi">10</span><span class="p">,</span> <span class="s2">"Timeout in seconds of each unit test."</span>
         <span class="p">),</span>
         <span class="s2">"integration_timeout"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._timeout">_timeout</span></span><span class="p">(</span>
-            <span class="s2">"integration_timeout"</span><span class="p">,</span>
             <span class="mi">60</span><span class="p">,</span>
             <span class="s2">"Timeout in seconds of each integration test."</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">"functional_timeout"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib.config._schema._timeout">_timeout</span></span><span class="p">(</span>
-            <span class="s2">"functional_timeout"</span><span class="p">,</span>
             <span class="mi">60</span><span class="p">,</span>
             <span class="s2">"Timeout in seconds of each functional test."</span><span class="p">,</span>
         <span class="p">),</span>
@@ -2284,7 +2270,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="kc">True</span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span> <span class="s2">"test"</span><span class="p">,</span> <span class="s2">"xdoctest"</span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span>
             <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"boolean"</span><span class="p">},</span>
             <span class="s2">"Run pytest with --xdoctest."</span><span class="p">,</span>
         <span class="p">),</span>
@@ -2295,7 +2281,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="kc">True</span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span> <span class="s2">"test"</span><span class="p">,</span> <span class="s2">"timeout"</span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span>
             <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"boolean"</span><span class="p">},</span>
             <span class="s2">"Run pytest with --timeout (it requires pytest-timeout)."</span><span class="p">,</span>
         <span class="p">),</span>
@@ -2358,7 +2344,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="s2">","</span><span class="o">.</span><span class="n"><span title="str.join">join</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_CHECK_STEPS">DEFAULT_CHECK_STEPS</span></span><span class="p">),</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="s2">"check"</span><span class="p">,</span> <span class="n"><span title="invoke_tasklib.config._constants.CHECK_STEPS">CHECK_STEPS</span></span><span class="p">),</span>
+            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="n"><span title="functools.partial(valid)">valid</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.config._constants.CHECK_STEPS">CHECK_STEPS</span></span><span class="p">),</span>
             <span class="p">{</span>
                 <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
                     <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
@@ -2379,7 +2365,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="kc">False</span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span> <span class="s2">"check"</span><span class="p">,</span> <span class="s2">"cov"</span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_bool">_validate_bool</span></span><span class="p">,</span>
             <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"boolean"</span><span class="p">},</span>
             <span class="s2">"Run the unit step of check.all with --cov, so cov_fail_under is enforced."</span><span class="p">,</span>
         <span class="p">),</span>
@@ -2392,7 +2378,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
             <span class="s2">","</span><span class="o">.</span><span class="n"><span title="str.join">join</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_FIX_STEPS">DEFAULT_FIX_STEPS</span></span><span class="p">),</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="s2">"fix"</span><span class="p">,</span> <span class="n"><span title="invoke_tasklib.config._constants.FIX_STEPS">FIX_STEPS</span></span><span class="p">),</span>
+            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="n"><span title="functools.partial(valid)">valid</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.config._constants.FIX_STEPS">FIX_STEPS</span></span><span class="p">),</span>
             <span class="p">{</span>
                 <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
                     <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
@@ -2620,7 +2606,7 @@ key is required. A default is a string for a list, so that
           <tr class="doc-section-item">
             <td><code><span title="invoke_tasklib.config.Option.validate">validate</span></code></td>
             <td>
-                  <code><span title="collections.abc.Callable">Callable</span>[[<span title="object">object</span>], <span title="object">object</span>]</code>
+                  <code><span title="collections.abc.Callable">Callable</span>[[<span title="str">str</span>, <span title="object">object</span>], <span title="object">object</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2953,10 +2939,12 @@ the keys can also be set with the <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&g
 environment variables, for example <code>INVOKE_TASKLIB_PATHS_SRC</code>.
 Invoke only reads an environment variable for a key that exists in
 the defaults. Invoke casts the variable to the type of the default,
-and it reads any text but <code>0</code> as true for a boolean, so the
-booleans and the integers are registered with an <code>Unset</code>: the text
-is kept and parsed by the validation. The real defaults stay in
-<code>SCHEMA</code>.</p>
+and it reads any text but <code>0</code> as true for a boolean, so every key
+is registered with an <code>Unset</code>, which is a string: the text is
+kept and parsed by the validation. The real defaults stay in
+<code>SCHEMA</code>, where <code>get_config</code> and the JSON schema read them.
+Read the config with <code>load_config</code>, not from <code>c.config</code>: it
+holds an <code>Unset</code> for a key that no source sets.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -2984,7 +2972,7 @@ is kept and parsed by the validation. The real defaults stay in
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>test</code>, <code>check</code> and <code>fix</code> sections, each with the default</p>
+                <p><code>test</code>, <code>types</code>, <code>check</code> and <code>fix</code> sections, with an</p>
               </div>
             </td>
           </tr>
@@ -2994,17 +2982,7 @@ is kept and parsed by the validation. The real defaults stay in
             </td>
             <td>
               <div class="doc-md-description">
-                <p>of every key of <code>SCHEMA</code>, except that a boolean or an integer</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>[<span title="str">str</span>, <span title="object">object</span>]]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>is an <code>Unset</code>.</p>
+                <p><code>Unset</code> for every key of <code>SCHEMA</code>.</p>
               </div>
             </td>
           </tr>
@@ -3015,9 +2993,7 @@ is kept and parsed by the validation. The real defaults stay in
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">default_config</span><span class="p">())</span>
 <span class="go">['check', 'fix', 'groups', 'package', 'paths', 'test', 'types']</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">default_config</span><span class="p">()[</span><span class="s2">"groups"</span><span class="p">]</span>
-<span class="go">{'install': 'dev', 'update': 'dev,docs'}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">default_config</span><span class="p">()[</span><span class="s2">"test"</span><span class="p">][</span><span class="s2">"xdoctest"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span>
-<span class="go">True</span>
+<span class="go">{'install': '', 'update': ''}</span>
 </code></pre></div>
 
 
