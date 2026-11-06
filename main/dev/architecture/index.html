@@ -2335,7 +2335,7 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <tr>
 <td>P4</td>
 <td>Exit codes</td>
-<td><code>0</code> pass, or nothing to do (a <code>⏭️</code> line says why); <code>1</code> the checked thing failed; <code>2</code> invalid usage or config; <code>127</code> a tool or module is missing. The failure line is <code>❌ Failed: &lt;what&gt;</code> on stderr.</td>
+<td><code>0</code> pass, or nothing to do (a <code>⏭️</code> line says why); <code>1</code> the checked thing failed; <code>2</code> invalid usage or config; <code>127</code> a tool or module is missing. The failure line is <code>❌ Failed: &lt;what&gt;</code> on stderr. With <code>--keep-going</code>, every step runs and every failure of an <code>Exception</code> is listed in the summary.</td>
 <td><code>tests/integration/test_exit_codes.py</code></td>
 </tr>
 <tr>
@@ -2416,10 +2416,17 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <td>The private attributes of <code>invoke.config.Config</code> are read in one module, <code>config/_invoke.py</code>, which warns when one is missing. No other module calls <code>getattr</code> or <code>hasattr</code> on a config for a name that starts with <code>_</code>.</td>
 <td><code>test_architecture.py</code> (AST scan of <code>src/</code> for <code>getattr</code>/<code>hasattr</code> of a private name)</td>
 </tr>
+<tr>
+<td>M6</td>
+<td>Declared equals run</td>
+<td>The programs and modules that a <code>Step</code> declares are exactly those that its task runs with a check. A tool that a task runs and the step does not declare would be missing from the preflight (P6); one that is declared and not run blocks a step for nothing.</td>
+<td><code>test_check.py</code> and <code>test_fix.py</code> record the commands of every step</td>
+</tr>
 </tbody>
 </table>
 <p>The tool tables are kept consistent by the same test module: every program and module named by a
-step of <code>check.STEPS</code> or <code>fix.STEPS</code> is in <code>tools.TOOLS</code>.</p>
+step of <code>check.STEPS</code> or <code>fix.STEPS</code> is in <code>tools.TOOLS</code>, and (M6) is the one that the task of the
+step runs with a check.</p>
 <h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
 <p>Here's how a task invocation flows through the system:</p>
 <div class="highlight"><pre><span></span><code>User runs `invoke test.unit --cov`

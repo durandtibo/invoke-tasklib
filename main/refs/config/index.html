@@ -2234,7 +2234,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="s2">"dev"</span><span class="p">,</span>
+            <span class="p">(</span><span class="s2">"dev"</span><span class="p">,),</span>
             <span class="n"><span title="invoke_tasklib.config._validate._normalize_groups">_normalize_groups</span></span><span class="p">,</span>
             <span class="n"><span title="invoke_tasklib.config._schema._NAMES">_NAMES</span></span><span class="p">,</span>
             <span class="s2">"Dependency groups of env.install (comma-separated string or list)."</span><span class="p">,</span>
@@ -2245,7 +2245,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="s2">"dev,docs"</span><span class="p">,</span>
+            <span class="p">(</span><span class="s2">"dev"</span><span class="p">,</span> <span class="s2">"docs"</span><span class="p">),</span>
             <span class="n"><span title="invoke_tasklib.config._validate._normalize_groups">_normalize_groups</span></span><span class="p">,</span>
             <span class="n"><span title="invoke_tasklib.config._schema._NAMES">_NAMES</span></span><span class="p">,</span>
             <span class="s2">"Dependency groups of env.update (comma-separated string or list)."</span><span class="p">,</span>
@@ -2306,7 +2306,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="s2">"html,xml,term"</span><span class="p">,</span>
+            <span class="p">(</span><span class="s2">"html"</span><span class="p">,</span> <span class="s2">"xml"</span><span class="p">,</span> <span class="s2">"term"</span><span class="p">),</span>
             <span class="n"><span title="invoke_tasklib.config._validate._validate_cov_reports">_validate_cov_reports</span></span><span class="p">,</span>
             <span class="p">{</span>
                 <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
@@ -2343,7 +2343,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="s2">","</span><span class="o">.</span><span class="n"><span title="str.join">join</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_CHECK_STEPS">DEFAULT_CHECK_STEPS</span></span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_CHECK_STEPS">DEFAULT_CHECK_STEPS</span></span><span class="p">,</span>
             <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="n"><span title="functools.partial(valid)">valid</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.config._constants.CHECK_STEPS">CHECK_STEPS</span></span><span class="p">),</span>
             <span class="p">{</span>
                 <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
@@ -2377,7 +2377,7 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="s2">","</span><span class="o">.</span><span class="n"><span title="str.join">join</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_FIX_STEPS">DEFAULT_FIX_STEPS</span></span><span class="p">),</span>
+            <span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_FIX_STEPS">DEFAULT_FIX_STEPS</span></span><span class="p">,</span>
             <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="n"><span title="functools.partial(valid)">valid</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.config._constants.FIX_STEPS">FIX_STEPS</span></span><span class="p">),</span>
             <span class="p">{</span>
                 <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
@@ -2598,8 +2598,7 @@ and the JSON schema.</p>
               <div class="doc-md-description">
                 <p>The default value. <code>None</code> means that the default is
 derived from other values (see <code>get_config</code>) or that the
-key is required. A default is a string for a list, so that
-<code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code> can override it.</p>
+key is required. A default is a tuple for a list.</p>
               </div>
             </td>
           </tr>
@@ -3089,7 +3088,7 @@ holds an <code>Unset</code> for a key that no source sets.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p><code>groups</code>, <code>test</code>, <code>check</code> and <code>fix</code> sections, each a</p>
+                <p><code>groups</code>, <code>test</code>, <code>types</code>, <code>check</code> and <code>fix</code></p>
               </div>
             </td>
           </tr>
@@ -3104,7 +3103,22 @@ holds an <code>Unset</code> for a key that no source sets.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>frozen dataclass too, e.g. <code>cfg.paths.src</code>.</p>
+                <p>sections, each a frozen dataclass too, e.g.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="invoke_tasklib.config.TasklibConfig
+
+
+  
+      dataclass
+   (invoke_tasklib.config._schema.TasklibConfig)" href="#invoke_tasklib.config.TasklibConfig">TasklibConfig</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>cfg.paths.src</code>.</p>
               </div>
             </td>
           </tr>
