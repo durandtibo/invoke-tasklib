@@ -2222,7 +2222,8 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
   step, or a failure message.</li>
-<li><code>_steps.py</code>: the step runner shared by <code>check.all</code> and <code>fix.all</code>: the selection of the steps
+<li><code>_steps.py</code>: the step runner shared by <code>check.all</code> and <code>fix.all</code> (<code>run_composite</code>, called by
+  each of them with its own <code>STEPS</code>, valid names and config): the selection of the steps
   (<code>--only</code>, <code>--skip</code> and the config), the look-up of the missing tools before anything runs, the
   <code>--keep-going</code> mode and the final summary of the failures.</li>
 <li><code>_files.py</code>: <code>project_files(c, root, suffix)</code> finds the files with a suffix, with
