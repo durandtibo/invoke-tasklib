@@ -2297,8 +2297,9 @@ L0  _discover                          worker run in a subprocess
 </code></pre></div>
 <p>No import breaks the rule; the test fails if one appears.</p>
 <h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
-<p>These are the properties that the package guarantees to a project that uses it. The last column
-says what enforces each one.</p>
+<p>These are the properties that the package guarantees to a project that uses it (<code>P1</code>-<code>P12</code>) and to
+its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enforces each one; a property marked
+"not tested" is a rule that the code follows but no test enforces yet.</p>
 <table>
 <thead>
 <tr>
@@ -2312,50 +2313,104 @@ says what enforces each one.</p>
 <tr>
 <td>P1</td>
 <td>One entry point</td>
-<td>The config is read with <code>load_config</code>, a command runs through <code>runner.run</code> or <code>capture</code>, a message goes through <code>output</code>.</td>
-<td><code>test_architecture.py</code> (AST scan of <code>src/</code>)</td>
+<td>The config is read with <code>load_config</code>, a command runs through <code>runner.run</code> or <code>runner.capture</code>, a message goes through <code>output.say</code>, <code>step</code> or <code>report_failure</code>. The only environment variables read are <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code>, <code>INVOKE_TASKLIB_ASCII</code>, <code>CI</code>, <code>GITHUB_ACTIONS</code>, <code>PATH</code> and the publish credentials of <code>release</code>.</td>
+<td><code>test_architecture.py</code> (AST scan of <code>src/</code>); not tested: the readers of <code>os.environ</code> (target state, section 8)</td>
 </tr>
 <tr>
 <td>P2</td>
 <td>Read-only is read-only</td>
-<td><code>check_&lt;x&gt;</code>, <code>check.all</code>, <code>test.*</code>, <code>types.check</code>, <code>imports.*</code>, <code>security.audit</code> and <code>config.show</code> change no tracked file.</td>
+<td><code>check_&lt;x&gt;</code>, <code>check.all</code>, <code>test.*</code>, <code>types.check</code>, <code>imports.*</code>, <code>security.audit</code> and <code>config.show</code> never change a tracked file. Their only writes are caches and the coverage reports.</td>
 <td><code>tests/integration/test_read_only.py</code></td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Mutation is declared</td>
+<td>A task that changes files, the environment or a remote is named <code>fix_*</code>, or is a verb (<code>publish</code>, <code>build</code>, <code>install</code>, <code>clean</code>), and is marked in the README table.</td>
+<td><code>test_init.py</code> (names, summaries, options); <code>tests/integration/test_readme.py</code></td>
 </tr>
 <tr>
 <td>P4</td>
 <td>Exit codes</td>
-<td><code>0</code> pass or nothing to do, <code>1</code> the checked thing failed, <code>2</code> invalid usage or config, <code>127</code> a tool or module is missing.</td>
+<td><code>0</code> pass, or nothing to do (a <code>⏭️</code> line says why); <code>1</code> the checked thing failed; <code>2</code> invalid usage or config; <code>127</code> a tool or module is missing. The failure line is <code>❌ Failed: &lt;what&gt;</code> on stderr.</td>
 <td><code>tests/integration/test_exit_codes.py</code></td>
 </tr>
 <tr>
 <td>P5</td>
 <td>Fail before acting</td>
-<td>An unknown key, an invalid value or a wrong working directory exits with <code>2</code> before any command runs.</td>
-<td><code>config/_validate.py</code>; <code>tests/unit/config/</code></td>
+<td>An unknown key, an invalid value or a wrong working directory exits with <code>2</code> before any command runs. The message names the key.</td>
+<td><code>config/_validate.py</code>, <code>_check_project_root</code>; <code>tests/unit/config/</code></td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Missing tools</td>
+<td>A missing program or Python module is reported with the command that installs it. A composite task reports all the missing tools of its steps at once, and runs nothing.</td>
+<td><code>tools.hint</code>, <code>_steps.preflight_message</code>; <code>tests/unit/test_check.py</code></td>
 </tr>
 <tr>
 <td>P7</td>
 <td>Commands are data</td>
-<td>A task builds one command string from the config and the options, and every user value is quoted.</td>
-<td><code>runner.build_command</code>; <code>tests/integration/test_quoting.py</code></td>
+<td>A task builds one command string from the config and the options. Every user value is quoted: a space, <code>;</code>, <code>*</code>, <code>~</code> or <code>$VAR</code> reaches the tool unchanged.</td>
+<td><code>runner.build_command</code>; <code>tests/integration/test_quoting.py</code>; <code>_commands(c) == [...]</code> in unit tests</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>One source of truth</td>
+<td>A config key is declared once (<code>SCHEMA</code>), a tool once (<code>TOOLS</code>), a step once (<code>STEPS</code>), a directory policy once (<code>_files</code>). Defaults, the JSON schema, the hints and the docs tables derive from them.</td>
+<td>tests that compare the tables; not tested: the directory lists of <code>clean</code> (target state, step 6)</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>Safe by default</td>
+<td>A destructive task stays inside the project, keeps what git tracks, and asks before an irreversible step. A credential never appears in a command line or in the output.</td>
+<td><code>clean._is_inside_project</code>, <code>release._check_release_state</code>, <code>_publish_environment</code>; <code>tests/unit/test_release.py</code></td>
+</tr>
+<tr>
+<td>P10</td>
+<td>Skips are visible</td>
+<td>A task that has nothing to do prints <code>⏭️ &lt;reason&gt;</code> and exits <code>0</code>. A task that cannot do its job (a path it needs is missing) exits non-zero and names the key.</td>
+<td><code>_files.require_path</code>; <code>tests/unit/test__files.py</code>, <code>tests/integration/test_files.py</code></td>
+</tr>
+<tr>
+<td>P11</td>
+<td>Fix converges</td>
+<td>After <code>fix_&lt;x&gt;</code> (or <code>fix.all</code>) the matching <code>check_&lt;x&gt;</code> (or <code>check.all --only</code> the same steps) passes, and a second <code>fix_&lt;x&gt;</code> changes nothing.</td>
+<td>not tested (target state, step 3)</td>
+</tr>
+<tr>
+<td>P12</td>
+<td>Composition is explicit</td>
+<td><code>make_ns(include=, exclude=)</code> selects the tasks that the command line offers. The steps of <code>check.all</code> and <code>fix.all</code> come only from <code>tasklib.check.tasks</code> and <code>tasklib.fix.tasks</code>; excluding a task from the namespace does not remove its step.</td>
+<td>not tested (target state, step 2)</td>
 </tr>
 <tr>
 <td>M1</td>
 <td>Layers</td>
-<td>See the previous section.</td>
-<td><code>test_architecture.py</code></td>
+<td>A task module imports only the support modules, never another task module. The two composites (<code>check</code>, <code>fix</code>) import task modules and <code>_steps</code>. <code>config</code>, <code>tools</code> and <code>output</code> import nothing of the package that is above them.</td>
+<td><code>test_architecture.py</code> (layering test)</td>
 </tr>
 <tr>
 <td>M2</td>
 <td>Public means documented</td>
-<td>A name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> is public only if it is in the <code>__all__</code> of its module and in <code>uguide/custom_tasks.md</code>. Everything else starts with <code>_</code>.</td>
+<td>A name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> is public only if it is in the <code>__all__</code> of its module and in <code>uguide/custom_tasks.md</code>. Everything else starts with <code>_</code>. (The task modules are not covered yet: target state, step 11.)</td>
 <td><code>test_architecture.py</code></td>
 </tr>
 <tr>
 <td>M3</td>
 <td>Every function tested</td>
-<td>Every function, private ones included, has a docstring and a unit test. Coverage is 100%.</td>
-<td><code>test_docstrings.py</code>, <code>--cov-fail-under=100</code></td>
+<td>Every function, private ones included, has a docstring, a unit test and, if the unit test patches a collaborator, an integration test. Coverage is 100% (lines and branches). A function has no parameter that every caller passes with the same value.</td>
+<td><code>test_docstrings.py</code>, <code>--cov-fail-under=100</code>; the last sentence is a review rule</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Cheap to import</td>
+<td><code>import invoke_tasklib</code> stays below 100 ms; <code>make_ns()</code> does no I/O.</td>
+<td><code>tests/benchmarks/test_init_benchmark.py</code>, nightly <code>ci-benchmark.yaml</code></td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Invoke internals apart</td>
+<td>The private attributes of <code>invoke.config.Config</code> are read in one module, <code>config/_invoke.py</code>, which warns when one is missing. No other module calls <code>getattr</code> or <code>hasattr</code> on a config for a name that starts with <code>_</code>.</td>
+<td>not tested (target state, step 7)</td>
 </tr>
 </tbody>
 </table>

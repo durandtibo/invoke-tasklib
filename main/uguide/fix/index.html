@@ -1886,6 +1886,7 @@ the formatting, which has the last word on the layout, so a second run changes n
 <p>Like <code>check.all</code>, the programs of the selected steps are looked up before anything runs, and all the
 missing ones are reported at once with the exit code 127. With <code>--keep-going</code>, only the steps that
 miss a tool are not run; they are reported as failed.</p>
+<p>The steps come from <code>tasklib.fix.tasks</code>; <code>make_ns(exclude=...)</code> does not remove them.</p>
 <!-- prettier-ignore -->
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>

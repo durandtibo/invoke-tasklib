@@ -1932,8 +1932,9 @@ with the missing tool as the reason. Run <a href="../env/"><code>env.check-tools
 learn about all the problems in one run. A step that fails with an error of the code or of the
 system (for example an <code>OSError</code>) is reported like any other failed step, with the type and the
 message of the error as the reason, and the other steps still run. Use the tasks directly (with <code>--args</code> and <code>--paths</code>) to run only one
-of them, or <a href="../lint/"><code>lint.pre-commit</code></a> to run the hooks of the project. To leave <code>check</code> out of a
-collection, use <code>make_ns(exclude=["check"])</code>.</p>
+of them, or <a href="../lint/"><code>lint.pre-commit</code></a> to run the hooks of the project. The steps come from <code>tasklib.check.tasks</code>; <code>make_ns(exclude=...)</code> does not remove them, so
+<code>make_ns(exclude="lint")</code> hides <code>lint.*</code> from <code>inv --list</code> but <code>inv check --only lint</code> still runs. To
+leave <code>check</code> out of a collection, use <code>make_ns(exclude=["check"])</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../refs/check/"><code>invoke_tasklib.check</code> reference</a></li>
