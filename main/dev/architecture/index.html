@@ -2246,11 +2246,13 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
   subprocess by <code>imports.check-isolated</code>.</li>
 </ul>
 <p><code>_files.EXCLUDED_DIRS</code> is the one list of the directories that the tasks that walk the file tree
-(<code>clean</code>, <code>format</code>, <code>test.doctest-markdown</code>) never enter: the directories of tools and environments
-(<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, the caches) and the build outputs (<code>build</code>, <code>dist</code>, <code>site</code>,
-<code>htmlcov</code>). The format and test tasks find their files with <code>_files.project_files</code>: in a git work
+(<code>clean</code>, <code>format</code>, <code>test.doctest-markdown</code>) never enter. It is the union of three named sets:
+<code>CACHE_DIRS</code> (<code>.pytest_cache</code>, <code>.ruff_cache</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>,
+<code>.benchmarks</code>, <code>.coverage_html</code>), <code>OUTPUT_DIRS</code> (<code>build</code>, <code>dist</code>, <code>site</code>, <code>htmlcov</code>) and
+<code>ENVIRONMENT_DIRS</code> (<code>.git</code>, <code>.venv</code>, <code>node_modules</code>). <code>clean.DIRS</code> derives from <code>CACHE_DIRS</code> and the
+outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format and test tasks find their files with <code>_files.project_files</code>: in a git work
 tree they ask <code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and
-a tracked <code>build/run.sh</code> is checked (only the directories of tools and environments are left out);
+a tracked <code>build/run.sh</code> is checked (only the caches and the environments are left out);
 outside a work tree they walk the tree and skip every directory of the list. <code>clean</code> keeps its own
 walk, because the <code>__pycache__</code> directories it removes are ignored by git.</p>
 <h3 id="adding-a-step-to-checkall-or-fixall">Adding a step to <code>check.all</code> or <code>fix.all</code><a class="headerlink" href="#adding-a-step-to-checkall-or-fixall" title="Permanent link">&para;</a></h3>
@@ -2356,7 +2358,7 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <td>P8</td>
 <td>One source of truth</td>
 <td>A config key is declared once (<code>SCHEMA</code>), a tool once (<code>TOOLS</code>), a step once (<code>STEPS</code>), a directory policy once (<code>_files</code>). Defaults, the JSON schema, the hints and the docs tables derive from them.</td>
-<td>tests that compare the tables; not tested: the directory lists of <code>clean</code> (target state, step 6)</td>
+<td>tests that compare the tables; <code>test_clean.py</code> (every directory of <code>clean.DIRS</code> is in <code>EXCLUDED_DIRS</code>)</td>
 </tr>
 <tr>
 <td>P9</td>
