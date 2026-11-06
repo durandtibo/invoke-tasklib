@@ -115,7 +115,7 @@ is available:
 ❌ 'shfmt' was not found on the PATH or next to the Python interpreter. Install shfmt with your system package manager, ...
 ```
 
-All the tools are listed, so one run shows everything that is missing. The task does not read the
+The tools are sorted by name. All the tools are listed, so one run shows everything that is missing. The task does not read the
 config, so it can be run before `invoke.yaml` is set up. It exits with the code 127 if a tool is
 missing, so it can also gate a CI job. It does not install anything: see `env.install`.
 

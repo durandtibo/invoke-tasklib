@@ -378,8 +378,8 @@ def test_check_tools_all_available_lists_every_tool(
     env.check_tools(make_context())
     assert capsys.readouterr().out == (
         "🧰 Checking the tools of the tasks...\n"
-        "✅ ruff: /found/ruff\n"
         "✅ pytest: /found/pytest\n"
+        "✅ ruff: /found/ruff\n"
         "✅ All the 2 tools are available\n"
     )
 
@@ -393,10 +393,10 @@ def test_check_tools_missing_program_says_how_to_install_it(
         env.check_tools(make_context())
     assert capsys.readouterr().out == (
         "🧰 Checking the tools of the tasks...\n"
+        "✅ pytest: /found/pytest\n"
         "❌ 'ruff' was not found on the PATH or next to the "
         "Python interpreter. Install it with the 'dev' group: "
         "`uv sync --group dev`.\n"
-        "✅ pytest: /found/pytest\n"
     )
 
 
@@ -415,7 +415,7 @@ def test_check_tools_lists_all_the_missing_tools_not_only_the_first(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(env, "find_tool", _available())
-    with pytest.raises(Exit, match=r"2 of 2 tool\(s\) missing: ruff, pytest"):
+    with pytest.raises(Exit, match=r"2 of 2 tool\(s\) missing: pytest, ruff"):
         env.check_tools(make_context())
 
 
@@ -449,7 +449,7 @@ def test_check_tools_looks_the_module_up_as_a_module(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(env, "find_tool", find)
     env.check_tools(make_context())
-    assert calls == [("ruff", False), ("pytest", True)]
+    assert calls == [("pytest", True), ("ruff", False)]
 
 
 @pytest.mark.usefixtures("_two_tools")

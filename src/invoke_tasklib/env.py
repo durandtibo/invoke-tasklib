@@ -243,9 +243,10 @@ def check_tools(c: Context) -> None:
     Every program (``ruff``, ``ty``, ``pyright``, ``uv``, ...) and every
     Python module (``pytest``, ``coverage`` and the pytest plugins) that
     the tasks run is looked up, and one line per tool says where it was
-    found, or how to install it. All the tools are listed, so one run
-    shows everything that is missing. The config of the project is not
-    needed, so the task can be run before anything is set up.
+    found, or how to install it. The tools are sorted by name. All the
+    tools are listed, so one run shows everything that is missing. The
+    config of the project is not needed, so the task can be run before
+    anything is set up.
 
     Args:
         c: The invoke context.
@@ -254,7 +255,7 @@ def check_tools(c: Context) -> None:
         Exit: With the code 127 if a tool is missing.
     """
     say(c, "🧰 Checking the tools of the tasks...")
-    lookups = sorted(TOOLS.values(), key=lambda tool: tool.kind != "program")
+    lookups = sorted(TOOLS.values(), key=lambda tool: tool.name)
     missing: list[str] = []
     for tool in lookups:
         module = tool.kind == "module"
