@@ -2166,8 +2166,8 @@ It:</p>
 <ul>
 <li>Reads the <code>tasklib</code> key from the Invoke config (<code>c.config</code>), which Invoke itself populates from
   <code>invoke.yaml</code>.</li>
-<li>Merges it on top of the defaults declared in <code>SCHEMA</code> (also exposed as <code>DEFAULT_PACKAGE</code>,
-  <code>DEFAULT_PATHS</code>, <code>DEFAULT_GROUPS</code>, <code>DEFAULT_TEST</code>, <code>DEFAULT_CHECK</code> and <code>DEFAULT_FIX</code>).</li>
+<li>Merges it on top of the defaults declared in <code>SCHEMA</code> (<code>default_config()</code> and
+  the JSON schema are loops over it).</li>
 <li>Rejects unknown keys and validates the values (<code>package.python_version</code>, <code>package.import_name</code>,
   <code>groups.*</code>, <code>test.*</code>, <code>check.tasks</code>, <code>fix.tasks</code>).</li>
 <li>Derives unset <code>paths.*</code> entries from <code>package.import_name</code> (for <code>paths.src</code>) or <code>paths.tests</code> (for the

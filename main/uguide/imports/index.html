@@ -1878,7 +1878,9 @@
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>imports.check-cycles
 </code></pre></div>
 <p>The import graph of <code>package.import_name</code> (from the <a href="../config/">resolved config</a>) is built from the
-source files with <code>ast</code>: nothing is imported, so the result is deterministic, does not depend on the
+source files of <code>paths.src</code> with <code>ast</code>, so the package does not have to be installed. If the
+directory does not exist, the task reads the installed package instead; if there is none, it exits
+with 1 and names the directory and the <code>tasklib.paths.src</code> key. Nothing is imported, so the result is deterministic, does not depend on the
 order of the imports, and needs no subprocess. <code>import a.b</code> is an edge to <code>a.b</code>, <code>from a import b</code>
 is an edge to <code>a.b</code> if it is a module (else to <code>a</code>), and relative imports are resolved. Imports of
 other packages are not edges. The strongly connected components of the graph are the cycles; each
@@ -1919,8 +1921,8 @@ depends on something that is only initialized as a side effect of importing anot
 which is often the symptom of a cycle. It also fails on a missing dependency or a syntax error.
 It starts one interpreter per module, so it is slower than <code>imports.check-cycles</code> for a package
 with heavy imports; up to 8 interpreters run at the same time.</p>
-<p>The package that is checked is the one the interpreter finds: the installed (editable) package, or
-the one in the current directory for a flat layout. The task checks the source tree, not a built
+<p>Unlike <code>imports.check-cycles</code>, the package that is checked is the one the interpreter finds: the
+installed (editable) package, or the one in the current directory for a flat layout. The task checks the source tree, not a built
 artifact: use <code>release.build</code> to check an artifact (it imports the package in isolated mode).</p>
 <p>One worker command (<code>python -m invoke_tasklib._discover --import-each &lt;package&gt;</code>) does the discovery
 and starts the interpreters, so the task runs a single command whatever the size of the package. It is
