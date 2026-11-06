@@ -910,6 +910,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1801,6 +1812,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1931,10 +1953,42 @@ with the missing tool as the reason. Run <a href="../env/"><code>env.check-tools
 <p>By default the task stops at the first failure, as the CI jobs do; use <code>--keep-going</code> locally to
 learn about all the problems in one run. A step that fails with an error of the code or of the
 system (for example an <code>OSError</code>) is reported like any other failed step, with the type and the
-message of the error as the reason, and the other steps still run. Use the tasks directly (with <code>--args</code> and <code>--paths</code>) to run only one
-of them, or <a href="../lint/"><code>lint.pre-commit</code></a> to run the hooks of the project. The steps come from <code>tasklib.check.tasks</code>; <code>make_ns(exclude=...)</code> does not remove them, so
-<code>make_ns(exclude="lint")</code> hides <code>lint.*</code> from <code>inv --list</code> but <code>inv check --only lint</code> still runs. To
-leave <code>check</code> out of a collection, use <code>make_ns(exclude=["check"])</code>.</p>
+message of the error as the reason, and the other steps still run.</p>
+<p>A step whose directory does not exist (for example the <code>unit</code> step of a project without
+<code>tests/unit</code> and <code>tests</code>) prints a <code>⏭️</code> line and counts as passed, see
+<a href="../#missing-paths">Missing Paths</a>.</p>
+<p>Use the tasks directly (with <code>--args</code> and <code>--paths</code>) to run only one of them, or
+<a href="../lint/"><code>lint.pre-commit</code></a> to run the hooks of the project.</p>
+<p>The steps come from <code>tasklib.check.tasks</code>; <code>make_ns(exclude=...)</code> does not remove them, so
+<code>make_ns(exclude="lint")</code> hides <code>lint.*</code> from <code>inv --list</code> but <code>inv check --only lint</code> still runs.
+To leave <code>check</code> out of a collection, use <code>make_ns(exclude=["check"])</code>.</p>
+<h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Every selected step passed (or was skipped)</td>
+</tr>
+<tr>
+<td>1</td>
+<td>A step failed (with <code>--keep-going</code>, at the end; the failed steps are listed)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>An unknown step in <code>--only</code>, <code>--skip</code> or <code>tasklib.check.tasks</code>, or a bad config</td>
+</tr>
+<tr>
+<td>127</td>
+<td>A tool of a selected step is missing, nothing was run</td>
+</tr>
+</tbody>
+</table>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../refs/check/"><code>invoke_tasklib.check</code> reference</a></li>

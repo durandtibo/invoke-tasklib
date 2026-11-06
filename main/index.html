@@ -491,6 +491,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#conventions-of-the-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions of the Tasks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1967,6 +1978,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#conventions-of-the-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions of the Tasks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2207,6 +2229,7 @@ project imports one namespace and gets a consistent set of <code>invoke</code> c
 <li><a href="get_started/">Get Started</a></li>
 <li><a href="uguide/">User Guide</a></li>
 <li><a href="uguide/config/">Config</a></li>
+<li><a href="uguide/custom_tasks/">Writing a Custom Task</a></li>
 <li><a href="troubleshooting/">Troubleshooting</a></li>
 </ul>
 <h2 id="why-invoke-tasklib">Why invoke-tasklib?<a class="headerlink" href="#why-invoke-tasklib" title="Permanent link">&para;</a></h2>
@@ -2227,7 +2250,26 @@ used by the tasks:</p>
 <span class="w">  </span><span class="nt">package</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_package</span>
 </code></pre></div>
-<p>See the <a href="uguide/config/">user guide</a> for the full config schema.</p>
+<p>See the <a href="uguide/config/">user guide</a> for the full config schema. Every key can also be set with
+an <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code> environment variable (for example <code>INVOKE_TASKLIB_PATHS_SRC</code>),
+and an editor can check the file against the <a href="schema.json">JSON schema</a>.</p>
+<p>A project that needs fewer tasks, or tasks of its own, builds the namespace with
+<code>make_ns(exclude=[...])</code> or <code>make_ns(include=[...])</code>, see
+<a href="uguide/custom_tasks/">Writing a Custom Task</a>.</p>
+<h2 id="conventions-of-the-tasks">Conventions of the Tasks<a class="headerlink" href="#conventions-of-the-tasks" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>check_&lt;target&gt;</code> never modifies a file and <code>fix_&lt;target&gt;</code> does.</strong> <code>check.all</code> runs the
+  read-only checks of the project and <code>fix.all</code> the fixers; the <a href="uguide/check/">Check</a> and
+  <a href="uguide/fix/">Fix</a> pages list their steps.</li>
+<li><strong>Every tool is looked up before it runs.</strong> A missing program or Python module is reported with
+  the command that installs it (exit code <code>127</code>), and a composite task reports all the missing
+  tools of its steps at once.</li>
+<li><strong>Exit codes:</strong> <code>0</code> the task passed, or had nothing to do (a <code>⏭️</code> line says why); <code>1</code> the checked
+  thing failed; <code>2</code> invalid usage or config (the message names the key); <code>127</code> a tool is missing.</li>
+<li><strong>Extra arguments:</strong> the tasks that run a tool take <code>--args</code> and, for the tasks that work on
+  files, <code>--paths</code>, see
+  <a href="uguide/#passing-arguments-to-the-tools">Passing Arguments to the Tools</a>.</li>
+</ul>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> provides a comprehensive set of tasks organized into namespaces:</p>
 <h3 id="format-and-lint">🎨 <strong>Format and Lint</strong><a class="headerlink" href="#format-and-lint" title="Permanent link">&para;</a></h3>

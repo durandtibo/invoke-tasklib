@@ -1962,8 +1962,8 @@ inspect a project's Python environment using <a href="https://docs.astral.sh/uv/
 </code></pre></div>
 <p>Creates (or recreates) a <code>.venv</code> with <code>uv venv</code>, using the <code>package.python_version</code> from the
 <a href="../config/">resolved config</a> if it is set (<code>--python</code>), and the version that <code>uv</code> chooses otherwise
-(the <code>.python-version</code> file, then <code>requires-python</code>), and then runs <a href="#installing-dependencies"><code>env.install</code></a> (<code>uv sync</code>), so
-the environment has <code>invoke</code> within the bounds of the project and the packages that <code>tasks.py</code>
+(the <code>.python-version</code> file, then <code>requires-python</code>), and then runs
+<a href="#installing-dependencies"><code>env.install</code></a> (<code>uv sync</code>), so the environment has <code>invoke</code> within the bounds of the project and the packages that <code>tasks.py</code>
 imports, such as <code>invoke-tasklib</code>. The task is run with <code>invoke</code>, so <code>invoke</code> must already be
 available (for example through <code>uv tool install invoke</code>) to run it. Use <code>env.install</code> to choose
 the dependency groups.</p>
@@ -1978,10 +1978,11 @@ another environment.</p>
 <h2 id="installing-dependencies">Installing Dependencies<a class="headerlink" href="#installing-dependencies" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install
 </code></pre></div>
-<p>Runs <code>uv sync</code>, which also installs the package itself in editable mode. If the project has a <code>uv.lock</code>,
-the task passes <code>--locked</code>, which fails if the lock file is out of date with <code>pyproject.toml</code> instead of
-silently using it (run <code>uv lock</code> to refresh it). Without a <code>uv.lock</code> (common for libraries), the task says
-so, and <code>uv sync</code> resolves the dependencies and creates the file.</p>
+<p>Runs <code>uv sync</code>, which also installs the package itself in editable mode. If the project has a
+<code>uv.lock</code>, the task passes <code>--locked</code>, which fails if the lock file is out of date with
+<code>pyproject.toml</code> instead of silently using it (run <code>uv lock</code> to refresh it). Without a <code>uv.lock</code>
+(common for libraries), the task says so, and <code>uv sync</code> resolves the dependencies and creates the
+file.</p>
 <table>
 <thead>
 <tr>
@@ -2017,8 +2018,9 @@ than <code>dev</code>/<code>docs</code> can change the default once instead of p
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.update
 </code></pre></div>
 <p>Runs <code>uv lock --upgrade</code>, updates the pre-commit hooks (<code>pre-commit autoupdate</code>, only if the
-project has a <code>.pre-commit-config.yaml</code> file), and reinstalls the project with the groups from <code>--groups</code> (default:
-the <a href="../config/">resolved config</a>'s <code>groups.update</code>, <code>"dev,docs"</code> unless overridden).</p>
+project has a <code>.pre-commit-config.yaml</code> file; otherwise a <code>⏭️</code> line says so), and reinstalls the
+project with the groups from <code>--groups</code> (default: the <a href="../config/">resolved config</a>'s
+<code>groups.update</code>, <code>"dev,docs"</code> unless overridden).</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.update<span class="w"> </span>--groups<span class="w"> </span>dev,docs,test
 </code></pre></div>
 <!-- prettier-ignore -->
@@ -2032,15 +2034,16 @@ suite afterward.</p>
 invoke<span class="w"> </span>env.show-python-config
 </code></pre></div>
 <p><code>env.show-python-config</code> prints the installed Python versions known to <code>uv</code>, the interpreter <code>uv</code>
-would select, and the interpreter currently on <code>PATH</code>. It does not fail when no <code>python</code> is on
-the <code>PATH</code>.</p>
+would select, and the interpreter currently on <code>PATH</code> (<code>python: not found</code> when there is none, which
+is not an error).</p>
 <h2 id="checking-the-tools">Checking the Tools<a class="headerlink" href="#checking-the-tools" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.check-tools
 </code></pre></div>
 <p><code>env.check-tools</code> gives a single view of the tools that the tasks run: the programs (<code>uv</code>, <code>uvx</code>,
-<code>git</code>, <code>ruff</code>, <code>ty</code>, <code>pyright</code>, <code>docformatter</code>, <code>codespell</code>, <code>pre-commit</code>, <code>shellcheck</code>, <code>shfmt</code>,
+<code>git</code>, <code>ruff</code>, <code>ty</code>, <code>pyright</code>, <code>mypy</code>, <code>docformatter</code>, <code>codespell</code>, <code>pre-commit</code>, <code>shellcheck</code>, <code>shfmt</code>,
 <code>mkdocs</code>, <code>mike</code>) and the Python modules of the interpreter (<code>pytest</code>, <code>coverage</code>, <code>xdoctest</code>,
-<code>pytest_timeout</code>, <code>pytest_cov</code>, <code>pytest_benchmark</code>). Each tool has one line, with its path when it is available:</p>
+<code>pytest_timeout</code>, <code>pytest_cov</code>, <code>pytest_benchmark</code>). Each tool has one line, with its path when it
+is available:</p>
 <div class="highlight"><pre><span></span><code>✅ ruff: /project/.venv/bin/ruff
 ❌ 'shfmt' was not found on the PATH or next to the Python interpreter. Install shfmt with your system package manager, ...
 </code></pre></div>

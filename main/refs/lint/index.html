@@ -1895,7 +1895,11 @@
 
     <div class="doc doc-contents first">
 
-        <p>Lint tasks.</p>
+        <p>Lint tasks (<code>lint.*</code>).</p>
+<p>The Python code is linted with ruff, the text with codespell, and
+<code>lint.pre-commit</code> runs the pre-commit hooks of the project.</p>
+<p>Naming convention: <code>check_&lt;target&gt;</code> tasks are read-only;
+<code>fix_&lt;target&gt;</code> tasks modify files in place.</p>
 
 
 

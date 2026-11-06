@@ -2371,7 +2371,7 @@ skipped directory is a skipped step, not a failure.</p>
 </tr>
 <tr>
 <td><a href="https://github.com/Erotemic/xdoctest"><code>xdoctest</code></a></td>
-<td><code>test.*</code> (unless <code>test.xdoctest</code> is false), <code>test.doctest-src</code></td>
+<td><code>test.*</code> (unless <code>tasklib.test.xdoctest</code> is false), <code>test.doctest-src</code></td>
 </tr>
 <tr>
 <td><a href="https://pytest-benchmark.readthedocs.io/"><code>pytest-benchmark</code></a></td>
@@ -2379,7 +2379,7 @@ skipped directory is a skipped step, not a failure.</p>
 </tr>
 <tr>
 <td><a href="https://docs.astral.sh/uv/"><code>uv</code></a></td>
-<td><code>env.*</code>, <code>release.*</code></td>
+<td><code>env.*</code> (except <code>env.check-tools</code>), <code>release.*</code>, <code>security.audit</code></td>
 </tr>
 <tr>
 <td><a href="https://twine.readthedocs.io/"><code>twine</code></a> (via <code>uvx</code>)</td>
@@ -2407,7 +2407,7 @@ skipped directory is a skipped step, not a failure.</p>
 </tr>
 <tr>
 <td><a href="https://git-scm.com/"><code>git</code></a></td>
-<td><code>doc.publish-latest</code>, <code>release.publish</code></td>
+<td><code>doc.publish-latest</code>, <code>release.publish</code>, and the file lookup of the shell and markdown tasks</td>
 </tr>
 <tr>
 <td><a href="https://github.com/pypa/pip-audit"><code>pip-audit</code></a> (via <code>uvx</code>)</td>

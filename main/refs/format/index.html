@@ -1961,9 +1961,15 @@
 
     <div class="doc doc-contents first">
 
-        <p>Code and docstring formatting tasks.</p>
+        <p>Code, docstring and shell script formatting tasks (<code>format.*</code>).</p>
+<p>The Python code is formatted with ruff, the docstrings with docformatter
+and the shell scripts with shellcheck and shfmt.</p>
 <p>Naming convention: <code>check_&lt;target&gt;</code> tasks are read-only (they fail
-without modifying files); <code>fix_&lt;target&gt;</code> tasks modify files in place.</p>
+without modifying files); <code>fix_&lt;target&gt;</code> tasks modify files in place.
+Every <code>fix_&lt;target&gt;</code> has a matching <code>check_&lt;target&gt;</code> (the lint of
+the shell scripts, <code>check_shell</code>, has no fixer).</p>
+<p>The module is named <code>formatting</code> so that it does not shadow the
+<code>format</code> builtin; its namespace is <code>format</code>, see <code>NAMESPACE</code>.</p>
 
 
 
@@ -2207,6 +2213,10 @@ project (<code>.</code>).</p>
     <div class="doc doc-contents ">
 
         <p>Check shell scripts with shellcheck.</p>
+<p>The scripts are the <code>*.sh</code> files of the project (the files that
+git tracks, or all the files outside the excluded directories
+when the project is not a git work tree). If there is none, the
+task prints a <code>⏭️</code> line and succeeds. The files are not modified.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2298,7 +2308,8 @@ the project.</p>
         <p>Check the format of shell scripts with shfmt.</p>
 <p>It is the read-only counterpart of <code>format.fix-shell</code>: <code>shfmt
 -d</code> prints a diff and fails if a script would be reformatted,
-but never changes a file.</p>
+but never changes a file. Like <code>format.check-shell</code>, it skips
+(and succeeds) when the project has no <code>*.sh</code> file.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2602,6 +2613,9 @@ before running this task.</p>
     <div class="doc doc-contents ">
 
         <p>Format shell scripts in place with shfmt.</p>
+<p>It runs <code>shfmt -l -w</code> on the <code>*.sh</code> files of the project, so
+it lists the files that it rewrites. It skips (and succeeds) when
+there is no script.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

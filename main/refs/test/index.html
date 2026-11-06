@@ -2027,7 +2027,16 @@
 
     <div class="doc doc-contents first">
 
-        <p>Test and benchmark tasks.</p>
+        <p>Test, doctest, coverage and benchmark tasks (<code>test.*</code>).</p>
+<p>The tests run with pytest, through the running interpreter (<code>python -m
+pytest</code>). The directory of each scope (<code>unit</code>, <code>integration</code>,
+<code>functional</code> and <code>benchmarks</code>) comes from the <code>tasklib.paths</code>
+config; a scope whose directory does not exist is skipped with a <code>⏭️</code>
+line, except <code>test.benchmark</code>, which fails. The options of pytest come
+from <code>tasklib.test</code>: the timeout of each scope, <code>xdoctest</code>,
+<code>timeout</code>, <code>cov_fail_under</code> and <code>cov_reports</code>.</p>
+<p>The module is named <code>testing</code> so that it does not shadow the standard
+library package <code>test</code>; its namespace is <code>test</code>, see <code>NAMESPACE</code>.</p>
 
 
 
@@ -2414,6 +2423,39 @@ default web browser. Default is False.</p>
     <div class="doc doc-contents ">
 
         <p>Run doctests on both source code and markdown files.</p>
+<p>It runs <code>test.doctest-src</code> then <code>test.doctest-markdown</code> with
+their defaults, and stops at the first failure.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -2439,6 +2481,12 @@ default web browser. Default is False.</p>
     <div class="doc doc-contents ">
 
         <p>Run doctests on the Python examples of the markdown files.</p>
+<p>The files are the <code>*.md</code> files of the project (the files that
+git tracks, or all the files outside the excluded directories
+when the project is not a git work tree), or <code>paths</code>. They run
+with <code>python -m doctest</code> and the options
+<code>NORMALIZE_WHITESPACE</code>, <code>ELLIPSIS</code> and <code>REPORT_NDIFF</code>. A
+project without markdown file passes.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

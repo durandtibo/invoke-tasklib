@@ -1917,7 +1917,13 @@
 
     <div class="doc doc-contents first">
 
-        <p>Documentation build and publishing tasks (mkdocs and mike).</p>
+        <p>Documentation build and publishing tasks (<code>doc.*</code>).</p>
+<p><code>doc.build</code> and <code>doc.serve</code> run mkdocs on the config file of
+<code>tasklib.paths.docs_config</code>; <code>doc.publish-dev</code> and <code>doc.publish-
+latest</code> deploy the versioned documentation with mike. A project without
+documentation can use all the other tasks: only these tasks read
+<code>paths.docs_config</code>, and they exit with the code 2 when the file does
+not exist.</p>
 
 
 

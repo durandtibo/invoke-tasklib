@@ -1961,7 +1961,13 @@
 
     <div class="doc doc-contents first">
 
-        <p>Environment and dependency management tasks.</p>
+        <p>Environment and dependency management tasks (<code>env.*</code>).</p>
+<p>The tasks create and update the virtual environment with <code>uv</code>
+(<code>create-venv</code>, <code>install</code>, <code>update</code>), show it (<code>show-installed-
+packages</code>, <code>show-python-config</code>) and check the tools that the other
+tasks run (<code>check-tools</code>). The dependency groups come from
+<code>tasklib.groups</code> and the Python version from
+<code>tasklib.package.python_version</code>.</p>
 
 
 
@@ -2317,6 +2323,38 @@ unless overridden in <code>invoke.yaml</code>).</p>
     <div class="doc doc-contents ">
 
         <p>Show the installed packages.</p>
+<p>It runs <code>uv pip list</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -2337,8 +2375,40 @@ unless overridden in <code>invoke.yaml</code>).</p>
     <div class="doc doc-contents ">
 
         <p>Show the python configuration.</p>
-<p><code>command -v python</code> is allowed to fail: it exits with 1 when no
-<code>python</code> is on the <code>PATH</code>, which is not an error of the task.</p>
+<p>It lists the Python versions that <code>uv</code> knows, the one it would
+use, and the <code>python</code> of the <code>PATH</code>. Having no <code>python</code> on the
+<code>PATH</code> is not an error of the task.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>

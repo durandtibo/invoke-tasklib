@@ -2140,18 +2140,18 @@
 
 <a href="#invoke_tasklib.runner.build_command" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">build_command</span><span class="p">(</span>
-    <span class="n">program</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+    <span class="n">words</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">paths</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">default_paths</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
     <span class="n">args_option</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">"--args"</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Build a command line from a program and the options of a task.</p>
+        <p>Build a command from its words and the options of a task.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2167,15 +2167,16 @@
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>program</code>
+                <code>words</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
                 <p>The program and its fixed arguments, e.g.
-<code>"ruff check"</code>. It is used as it is (not quoted).</p>
+<code>["ruff", "check"]</code>. Nothing is quoted or split: a word
+is an argument of the program.</p>
               </div>
             </td>
             <td>
@@ -2211,9 +2212,8 @@ fixed arguments.</p>
               <div class="doc-md-description">
                 <p>Paths of the user, as one string that is split like a
 shell does. They replace <code>default_paths</code>. A glob (<code>*</code>)
-or <code>~</code> is quoted, so the tool receives it as it is: it
-is up to the tool to expand a glob, and <code>~</code> is never
-expanded.</p>
+or <code>~</code> is passed as it is: it is up to the tool to expand
+a glob, and <code>~</code> is never expanded.</p>
               </div>
             </td>
             <td>
@@ -2269,21 +2269,21 @@ one set of arguments, e.g. <code>"--pyright-args"</code>).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="list">list</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The command line. The arguments and the paths are quoted when</p>
+                <p>The words, the split <code>args</code> and the paths. <code>run</code> quotes</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="list">list</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>needed, so the shell does not expand a glob, <code>~</code> or <code>$VAR</code>.</p>
+                <p>them, so the shell does not expand a glob, <code>~</code> or <code>$VAR</code>.</p>
               </div>
             </td>
           </tr>
@@ -2315,12 +2315,12 @@ unclosed quote).</p>
     </table>
         <p>Example usage:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_command</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"ruff check"</span><span class="p">,</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">"."</span><span class="p">])</span>
-<span class="go">'ruff check .'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s2">"-x"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"src"</span><span class="p">)</span>
-<span class="go">'ruff -x src'</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"*.py"</span><span class="p">)</span>
-<span class="go">"ruff '*.py'"</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">([</span><span class="s2">"ruff"</span><span class="p">,</span> <span class="s2">"check"</span><span class="p">],</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">"."</span><span class="p">])</span>
+<span class="go">['ruff', 'check', '.']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">([</span><span class="s2">"ruff"</span><span class="p">],</span> <span class="n">args</span><span class="o">=</span><span class="s2">"-x"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"src"</span><span class="p">)</span>
+<span class="go">['ruff', '-x', 'src']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">([</span><span class="s2">"ruff"</span><span class="p">],</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"*.py"</span><span class="p">)</span>
+<span class="go">['ruff', '*.py']</span>
 </code></pre></div>
 
 
@@ -2338,7 +2338,7 @@ unclosed quote).</p>
 <a href="#invoke_tasklib.runner.capture" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">capture</span><span class="p">(</span>
     <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
-    <span class="n">command</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+    <span class="n">command</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">warn</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">check</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -2387,11 +2387,11 @@ never read as data.</p>
                 <code>command</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The command to run.</p>
+                <p>The command to run, as a list of words, see <code>run</code>.</p>
               </div>
             </td>
             <td>
@@ -2480,6 +2480,16 @@ see <code>run</code>.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>command</code> is a string: pass the words.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                   <code><span title="invoke.exceptions.Exit">Exit</span></code>
             </td>
             <td>
@@ -2506,7 +2516,7 @@ found.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">MockContext</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">capture</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">MockContext</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(),</span> <span class="n">run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">capture</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"ls"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">capture</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">[</span><span class="s2">"ls"</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">call_args</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"pty"</span><span class="p">]</span>
 <span class="go">False</span>
 </code></pre></div>
@@ -2660,7 +2670,7 @@ services set <code>CI=true</code>, GitHub Actions included.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the shell-quoted path of the running Python interpreter.</p>
+        <p>Return the path of the running Python interpreter.</p>
 <p>Tasks that run Python code or a Python module use this interpreter
 instead of the <code>python</code> found on the <code>PATH</code>: the interpreter
 running Invoke is the one that has the project installed, and it
@@ -2682,7 +2692,17 @@ works outside an activated virtual environment.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The path of <code>sys.executable</code>, quoted for the shell.</p>
+                <p>The path of <code>sys.executable</code>, as it is: <code>run</code> quotes it</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>with the other words of the command.</p>
               </div>
             </td>
           </tr>
@@ -2710,7 +2730,7 @@ works outside an activated virtual environment.</p>
 <a href="#invoke_tasklib.runner.run" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span>
     <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span>
-    <span class="n">command</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+    <span class="n">command</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">check</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">,</span>
@@ -2774,11 +2794,13 @@ behave alike:</p>
                 <code>command</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The command to run.</p>
+                <p>The command to run, as a list of words: each one is
+quoted for the shell, so a space, <code>;</code>, <code>*</code>, <code>~</code> or
+<code>$VAR</code> reaches the program unchanged.</p>
               </div>
             </td>
             <td>
@@ -2856,6 +2878,16 @@ take precedence over the defaults of this helper.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>command</code> is a string: pass the words.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                   <code><span title="invoke.exceptions.Exit">Exit</span></code>
             </td>
             <td>
@@ -2872,9 +2904,12 @@ found.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">MockContext</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">MockContext</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(),</span> <span class="n">run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"ls"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">[</span><span class="s2">"ls"</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">call_args</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"echo"</span><span class="p">]</span>
 <span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">[</span><span class="s2">"ls"</span><span class="p">,</span> <span class="s2">"a b"</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">call_args</span><span class="o">.</span><span class="n">args</span>
+<span class="go">("ls 'a b'",)</span>
 </code></pre></div>
 
 

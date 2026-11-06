@@ -1909,10 +1909,11 @@
         <p>Report a failure of a block of a task.</p>
 <p>If the block raises, the failure message
 (<code>❌ Failed: &lt;title without symbol and dots&gt;</code>) is written to the
-error stream and the exception is raised again. Nothing is written
-otherwise: use it in a task that writes its own progress messages
-with <code>say</code>; use <code>step</code> for a block with a start and a done
-message.</p>
+error stream and the exception is raised again. Only an
+<code>Exception</code> is reported: <code>KeyboardInterrupt</code> goes through.
+Nothing is written otherwise: use it in a task that writes its own
+progress messages with <code>say</code>; use <code>step</code> for a block with a
+start and a done message.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2122,11 +2123,11 @@ stream.</p>
         <p>Report the start and the end of a step of a task.</p>
 <p>The start message is written when the block is entered and the done
 message (if there is one) when it exits normally. If the block
-raises, a failure
-message (<code>❌ Failed: &lt;start message without symbol and dots&gt;</code>) is
+raises, a failure message
+(<code>❌ Failed: &lt;start message without symbol and dots&gt;</code>) is
 written to the error stream instead and the exception is raised
 again, so that a failed step is visible and not only the output of
-the tool.</p>
+the tool (see <code>report_failure</code>).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

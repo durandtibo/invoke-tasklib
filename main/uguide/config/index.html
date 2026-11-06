@@ -2044,8 +2044,8 @@ invalid config, see below) to read project-specific values from an
 <span class="w">  </span><span class="nt">fix</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lint,format-python,format-docstrings</span>
 </code></pre></div>
-<p>Only <code>tasklib.package.name</code> (the distribution name, as on PyPI) is required. Everything else has a default, and most of the <code>paths</code>
-defaults are derived from <code>package.name</code> or from <code>paths.tests</code>.</p>
+<p>Only <code>tasklib.package.name</code> (the distribution name, as on PyPI) is required. Everything else has a
+default, and most of the <code>paths</code> defaults are derived from <code>package.name</code> or from <code>paths.tests</code>.</p>
 <h2 id="defaults">Defaults<a class="headerlink" href="#defaults" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2137,7 +2137,7 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 </tr>
 <tr>
 <td><code>check.tasks</code></td>
-<td><code>format-python,format-docstrings,lint,types,imports,unit</code></td>
+<td>not set (<code>format-python,format-docstrings,lint,types,imports,unit</code>)</td>
 </tr>
 <tr>
 <td><code>check.cov</code></td>
@@ -2145,7 +2145,7 @@ defaults are derived from <code>package.name</code> or from <code>paths.tests</c
 </tr>
 <tr>
 <td><code>fix.tasks</code></td>
-<td><code>lint,format-python,format-docstrings</code></td>
+<td>not set (<code>lint,format-python,format-docstrings</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -2154,26 +2154,29 @@ with <code>--xdoctest</code> (it requires the <code>xdoctest</code> package, so 
 not have it; <code>test.doctest-src</code> ignores it and always uses the plugin), whether it runs with
 <code>--timeout</code> (it requires the <code>pytest-timeout</code> package, so set <code>timeout: false</code> if the project does
 not have it; the <code>unit_timeout</code>, <code>integration_timeout</code> and <code>functional_timeout</code> values are then
-unused), and a coverage threshold:
-with <code>--cov</code>, <code>cov_fail_under</code> is forwarded as <code>--cov-fail-under</code>. Timeouts and <code>cov_fail_under</code> are integers, <code>xdoctest</code> is a boolean.
-<code>cov_reports</code> is a comma-separated string or a list of the <code>--cov-report</code> values of pytest-cov
+unused), and a coverage threshold: with <code>--cov</code>, <code>cov_fail_under</code> is forwarded as
+<code>--cov-fail-under</code>. Timeouts and <code>cov_fail_under</code> are integers, <code>xdoctest</code> and <code>timeout</code> are
+booleans. <code>cov_reports</code> is a comma-separated string or a list of the <code>--cov-report</code> values of pytest-cov
 (<code>html</code>, <code>xml</code>, <code>json</code>, <code>lcov</code>, <code>annotate</code>, <code>term</code>, <code>term-missing</code>) that <code>--cov</code> generates. A value
 can have the argument of pytest-cov after a colon, for example <code>term-missing:skip-covered</code> or
 <code>html:cov_html</code> (the directory or file of the report). The value is quoted in the command. An empty
 value passes no <code>--cov-report</code>, so pytest-cov uses its default.</p>
 <p><code>types.checker</code> is the type checker of <code>types.check</code> and of the <code>types</code> step of <code>check.all</code>: <code>ty</code>
-(default), <code>pyright</code> or <code>mypy</code>. With <code>--complete</code>, <code>types.check</code> also runs <code>pyright</code> after it (unless it is
-<code>pyright</code>). <code>mypy</code> is not installed by <code>env.install</code>: add it to the project dependencies.</p>
+(default), <code>pyright</code> or <code>mypy</code>. With <code>--complete</code>, <code>types.check</code> also runs <code>pyright</code> after it
+(unless it is <code>pyright</code>). <code>mypy</code> is not installed by <code>env.install</code>: add it to the project dependencies.</p>
 <p><code>check.cov</code> is a boolean. If true, the <code>unit</code> step of <code>check.all</code> runs with <code>--cov</code>, so
 <code>test.cov_fail_under</code> is enforced there too (the coverage reports are generated).</p>
-<p><code>check.tasks</code> is a comma-separated string or a list of the steps of <code>check.all</code>, run in that order:
+<p><code>check.tasks</code> is a comma-separated string or a list of the steps of <code>check.all</code>, run in the order
+of the list below. It is not set by default (<code>null</code> in <code>config.show</code>), which means the first six
+steps below (<code>format-python</code> to <code>unit</code>). The names are checked by <code>check.all</code>, before any step runs (exit code 2). The steps are:
 <code>format-python</code>, <code>format-docstrings</code>, <code>lint</code>, <code>types</code>, <code>imports</code>, <code>unit</code>, <code>doctest</code>, <code>shell</code>,
 <code>spelling</code>, <code>docs</code> and <code>audit</code>. It must have at least one step and no unknown step.</p>
-<p><code>fix.tasks</code> is the same for the steps of <code>fix.all</code>: <code>lint</code>, <code>format-python</code>, <code>format-docstrings</code> and
+<p><code>fix.tasks</code> is the same for the steps of <code>fix.all</code> (not set means <code>lint</code>, <code>format-python</code> and
+<code>format-docstrings</code>): <code>lint</code>, <code>format-python</code>, <code>format-docstrings</code> and
 <code>shell</code>, run in that order (the lint fixes first, so that the formatting has the last word on the
 layout).</p>
-<p><code>package.import_name</code> is the name used to import the package. It is used by <code>imports.check-cycles</code>, <code>imports.check-isolated</code>,
-<code>release.build</code> (the import check of the built artifacts) and the <code>--cov</code> option of the test tasks.
+<p><code>package.import_name</code> is the name used to import the package. It is used by <code>imports.check-cycles</code>,
+<code>imports.check-isolated</code>, <code>release.build</code> (the import check of the built artifacts) and the <code>--cov</code> option of the test tasks.
 Set it when it is not the distribution name with <code>-</code> replaced by <code>_</code>. It must be a Python module
 name, which may be dotted for a package of a namespace package (<code>company.package</code>): the tasks that
 read the source of the package (<code>imports.check-cycles</code>, <code>imports.check-isolated</code>) find it without
@@ -2182,12 +2185,13 @@ importing <code>company</code>.</p>
 <code>load_config</code>, which turns it into an <code>invoke.exceptions.Exit</code> with the same message and the exit
 code 2 (no traceback).</p>
 <p>Unknown keys in <code>tasklib</code> itself (typically a typo of a section such as <code>path</code>) and in the
-<code>package</code>, <code>paths</code>, <code>groups</code>, <code>test</code>, <code>check</code> or <code>fix</code> sections (such as <code>paths.unit_test</code>) also raise a
+<code>package</code>, <code>paths</code>, <code>groups</code>, <code>test</code>, <code>types</code>, <code>check</code> or <code>fix</code> sections (such as
+<code>paths.unit_test</code>) also raise a
 <code>ValueError</code> that lists the valid keys and suggests the closest one, instead of being silently
 ignored. Each section must be a mapping, <code>package.name</code> and every <code>paths.*</code> value must be a
 non-empty string, and <code>test.cov_fail_under</code> must be between 0 and 100. A <code>null</code> (<code>~</code>) is the same as
-not setting the key only for a key that has no default (<code>test.cov_fail_under</code>, <code>package.python_version</code>,
-...); for a boolean or an integer (<code>test.xdoctest</code>, <code>test.unit_timeout</code>, <code>check.cov</code>, ...) it is an
+not setting the key only for a key that has no default (<code>test.cov_fail_under</code>,
+<code>package.python_version</code>, <code>check.tasks</code>, <code>fix.tasks</code>); for a boolean or an integer (<code>test.xdoctest</code>, <code>test.unit_timeout</code>, <code>check.cov</code>, ...) it is an
 error, like any other invalid value, so write the value or remove the key.</p>
 <p><code>package.python_version</code> must be a quoted string such as <code>"3.10"</code> or <code>"3.10.4"</code>. YAML reads an
 unquoted <code>3.10</code> as the number <code>3.1</code>, so <code>get_config</code> raises a <code>ValueError</code> for any non-string or
@@ -2219,8 +2223,8 @@ that no source sets, computed from other values or from the project (<code>impor
 test paths). The origins come from private attributes of Invoke (there is no public API for them):
 if a release of Invoke renames one, the task writes a warning on the error stream that names it,
 and the check that <code>inv</code> runs from the project root (also based on one of them) writes a
-<code>RuntimeWarning</code>, instead of going on silently. The config is validated first, so an invalid one stops the task with
-the usual one-line message. The task reads nothing but the config and the project directories of
+<code>RuntimeWarning</code>, instead of going on silently. The config is validated first, so an invalid one
+stops the task with the usual one-line message. The task reads nothing but the config and the project directories of
 <a href="#defaults"><code>paths</code></a>, and changes nothing.</p>
 <h2 id="editor-completion-json-schema">Editor Completion (JSON Schema)<a class="headerlink" href="#editor-completion-json-schema" title="Permanent link">&para;</a></h2>
 <p>The keys, the defaults and the descriptions are declared once, in <code>invoke_tasklib.config.SCHEMA</code>
@@ -2257,8 +2261,9 @@ applies: the environment variables win over <code>invoke.yaml</code>.</p>
   error.</li>
 </ul>
 <p>An invalid value exits with code 2 and a one-line message, like an invalid <code>invoke.yaml</code>. The same
-spellings work for a string value in <code>invoke.yaml</code>. A collection built by hand (<code>Collection(lint, ...)</code>) has no defaults, so it does
-not read the environment variables unless you call
+spellings work for a string value in <code>invoke.yaml</code>. A collection built by hand
+(<code>Collection(lint, ...)</code>) has no defaults, so it does not read the environment variables unless you
+call
 <code>ns.configure({"tasklib": invoke_tasklib.config.default_config()})</code>.
 <code>default_config()</code> holds an empty placeholder for every key, not its default: read the config with
 <code>load_config</code> (or see it with <code>inv config.show</code>), not from <code>c.config.tasklib</code>.</p>
@@ -2302,7 +2307,7 @@ those tasks use, instead of passing <code>--groups</code> on every invocation:</
 <p>The <code>--groups</code> flag of the tasks stays a comma-separated string (<code>--groups dev,docs</code>).</p>
 <h2 id="using-get_config-in-a-custom-task">Using <code>get_config</code> in a Custom Task<a class="headerlink" href="#using-get_config-in-a-custom-task" title="Permanent link">&para;</a></h2>
 <p><code>get_config</code> returns frozen dataclasses (<code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code>,
-<code>cfg.check</code> and <code>cfg.fix</code>), so the values are read as attributes and cannot be modified. It raises a
+<code>cfg.types</code>, <code>cfg.check</code> and <code>cfg.fix</code>), so the values are read as attributes and cannot be modified. It raises a
 <code>ValueError</code> on an invalid config. A task uses <code>load_config</code>, which exits with a one-line message
 instead (and also checks that <code>inv</code> runs from the project root), like every built-in task, so a
 project-specific task reads the same config:</p>

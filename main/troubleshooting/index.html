@@ -2070,24 +2070,26 @@ of <code>tasks.py</code>, as in <code>cd &lt;project root&gt; &amp;&amp; inv che
 <p>Before running a command, the tasks check that its program (<code>ruff</code>, <code>ty</code>, <code>uv</code>, <code>mike</code>, ...) is on
 the <code>PATH</code> or in the directory of the Python interpreter that runs <code>invoke</code> (so <code>.venv/bin/inv</code> finds
 the programs of <code>.venv/bin</code> without an activation), and exit with code 127 if it is not. The commands
-run with that directory first on their <code>PATH</code>. Install the project tools with
-<code>invoke env.install</code> (the <code>dev</code> group has the linters and test tools, the <code>docs</code> group has <code>mike</code>). Run <code>invoke env.check-tools</code> to list every missing
-tool at once; <code>invoke check</code> does the same for the steps it is going to run.</p>
+run with that directory first on their <code>PATH</code>. Install the project tools with <code>invoke env.install</code>
+(the <code>dev</code> group has the linters and test tools, the <code>docs</code> group has <code>mike</code>). Run
+<code>invoke env.check-tools</code> to list every missing tool at once; <code>invoke check</code> does the same for the
+steps it is going to run.</p>
 <p>The hint depends on the program: <code>uv</code> and <code>uvx</code> point to the installation page of <code>uv</code>
 (<code>env.install</code> itself needs it), <code>git</code>, <code>shellcheck</code> and <code>shfmt</code> to the system package manager, and
 <code>codespell</code> to the project dependencies. The tools of the <code>dev</code> group (<code>ruff</code>, <code>ty</code>, <code>pyright</code>,
 <code>docformatter</code>, <code>pre-commit</code>, <code>pytest</code> and its plugins) and of the <code>docs</code> group (<code>mkdocs</code>, <code>mike</code>)
 name their group, for example <code>uv sync --group docs</code>.</p>
-<p>Only the first word of a command is checked, after the <code>NAME=value</code> words that set environment
-variables. A program given by a path (<code>./run.sh</code>, <code>~/bin/tool</code>) and the shell builtins (<code>cd</code>,
-<code>export</code>, <code>test</code>, <code>[</code>, <code>exec</code>, <code>source</code>, <code>.</code>, <code>:</code>) are not looked up. The command line is not parsed
-as shell, so a pipeline (<code>a | b</code>), a list (<code>a &amp;&amp; b</code>) or a subshell is not understood: pass
-<code>check=False</code> to <code>run</code> to run it without the check.
-The module of <code>python -m &lt;module&gt;</code> is checked too (for example <code>pytest</code>), and is reported as
+<p>Only the first word of a command is checked. A program given by a path (<code>./run.sh</code>,
+<code>/usr/bin/tool</code>, the running interpreter) is not looked up. A command is a list of words, which
+<code>run</code> quotes: it is never parsed as a shell line, so a shell builtin, function or alias is not
+found, and a pipeline (<code>a | b</code>) or a list (<code>a &amp;&amp; b</code>) cannot be written. Pass <code>check=False</code> to <code>run</code>
+to run a program that is not on the <code>PATH</code> without the check, see
+<a href="../uguide/custom_tasks/">Writing a Custom Task</a>.</p>
+<p>The module of <code>python -m &lt;module&gt;</code> is checked too (for example <code>pytest</code>), and is reported as
 <code>The Python module 'pytest' is not installed for ...</code> instead of Python's own <code>No module named</code>.</p>
 <p>The pytest plugins of the options are checked as well: <code>--xdoctest</code> needs <code>xdoctest</code>, <code>--timeout</code>
-needs <code>pytest-timeout</code>, <code>--cov*</code> (also <code>--no-cov</code>) needs <code>pytest-cov</code> and <code>--benchmark-*</code> needs <code>pytest-benchmark</code>.
-A missing plugin is reported as <code>The option --xdoctest needs the pytest plugin 'xdoctest'</code> with the
+needs <code>pytest-timeout</code>, <code>--cov*</code> (also <code>--no-cov</code>) needs <code>pytest-cov</code> and <code>--benchmark-*</code> needs
+<code>pytest-benchmark</code>. A missing plugin is reported as <code>The option --xdoctest needs the pytest plugin 'xdoctest'</code> with the
 command that adds it, instead of pytest's <code>unrecognized arguments</code>.</p>
 <h2 id="invoke-command-not-found-after-installing"><code>invoke: command not found</code> after installing<a class="headerlink" href="#invoke-command-not-found-after-installing" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> depends on <code>invoke</code>, but installing a library into a virtual environment does not
@@ -2111,8 +2113,8 @@ renamed the variable or wrapped it, Invoke won't find it. (The pre-built <code>i
 removed: <code>from invoke_tasklib import ns</code> raises an <code>ImportError</code>, use <code>make_ns()</code>.)</p>
 <h2 id="a-task-fails-with-command-not-found-ruff-ty-shellcheck">A task fails with "command not found" (<code>ruff</code>, <code>ty</code>, <code>shellcheck</code>, ...)<a class="headerlink" href="#a-task-fails-with-command-not-found-ruff-ty-shellcheck" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Run
-<code>invoke env.check-tools</code> to see, in one list, which tools are available and which are missing. Install
-the missing tool, either directly or via your project's dependency groups:</p>
+<code>invoke env.check-tools</code> to see, in one list, which tools are available and which are missing.
+Install the missing tool, either directly or via your project's dependency groups:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install<span class="w">                  </span><span class="c1"># installs dev deps: ruff, ty, pytest, ...</span>
 invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs<span class="w">  </span><span class="c1"># additionally installs mike</span>
 </code></pre></div>
@@ -2137,9 +2139,9 @@ tags on any terminal, for example in a log that is read by a tool.</p>
 <p>See <a href="../uguide/custom_tasks/">Custom tasks</a>.</p>
 <h2 id="releasepublish-fails-to-authenticate"><code>release.publish</code> fails to authenticate<a class="headerlink" href="#releasepublish-fails-to-authenticate" title="Permanent link">&para;</a></h2>
 <p><code>release.publish</code> passes the <code>PYPI_TOKEN</code> (<code>TEST_PYPI_TOKEN</code> with <code>--test-pypi</code>, and
-<code>UV_PUBLISH_TOKEN</code> without it) environment variable to <code>uv publish</code>. Without a token it only works in GitHub Actions with the <code>id-token: write</code>
-permission (Trusted Publishing); anywhere else it stops with a clear message. Make sure the
-variable is set (e.g. as a CI secret) before running it:</p>
+<code>UV_PUBLISH_TOKEN</code> without it) environment variable to <code>uv publish</code>. Without a token it only works
+in GitHub Actions with the <code>id-token: write</code> permission (Trusted Publishing); anywhere else it stops
+with a clear message. Make sure the variable is set (e.g. as a CI secret) before running it:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PYPI_TOKEN</span><span class="o">=</span>pypi-...
 invoke<span class="w"> </span>release.publish
 

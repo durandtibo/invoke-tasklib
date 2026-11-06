@@ -1978,9 +1978,9 @@ blocks is still visited but simply reports zero tests, so it always "passes".
 The task reports the number of files it checks: the files of <code>--paths</code> when it is set, otherwise
 every markdown file of the project. As for the shell scripts (see <a href="../format/">Format</a>), the files are
 the ones that git lists in a git work tree, so the rules of <code>.gitignore</code> are followed and a package
-named <code>build</code> or <code>site</code> is not skipped; outside a git work tree a walk skips the <code>.git</code>, <code>.venv</code>,
-<code>.pytest_cache</code>, <code>node_modules</code>, <code>build</code>, <code>dist</code>, <code>site</code>, <code>htmlcov</code>, <code>.tox</code>, <code>.nox</code>, <code>.mypy_cache</code>
-and <code>.ruff_cache</code> directories.</p>
+named <code>build</code> or <code>site</code> is not skipped; outside a git work tree a walk skips the directories of the
+environments and of the caches of the tools, and <code>build</code>, <code>dist</code>, <code>site</code> and <code>htmlcov</code> (the
+complete list is in <a href="../format/#shell-scripts">Format</a>).</p>
 <h2 id="running-tests-by-scope">Running Tests by Scope<a class="headerlink" href="#running-tests-by-scope" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.unit
 invoke<span class="w"> </span>test.integration
@@ -2022,21 +2022,23 @@ the coverage is lower. With <code>--append</code>, the threshold applies to the 
 was run before.</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.coverage-report
 </code></pre></div>
-<p>Runs <code>python -m coverage</code> (the interpreter of the tests) to regenerate the HTML report and prints the terminal summary from whatever coverage data (<code>.coverage</code>)
-is currently on disk — the data produced by an earlier <code>--cov</code> run — without re-running the tests.
-The report goes to the directory of the <code>html:&lt;dir&gt;</code> value of <code>test.cov_reports</code> if there is one, else to the
-<code>directory</code> of <code>[tool.coverage.html]</code> in <code>pyproject.toml</code>, else to <code>htmlcov/</code>.
+<p>Runs <code>python -m coverage</code> (the interpreter of the tests) to regenerate the HTML report and prints
+the terminal summary from whatever coverage data (<code>.coverage</code>) is currently on disk — the data
+produced by an earlier <code>--cov</code> run — without re-running the tests. The report goes to the directory
+of the <code>html:&lt;dir&gt;</code> value of <code>test.cov_reports</code> if there is one, else to the <code>directory</code> of
+<code>[tool.coverage.html]</code> in <code>pyproject.toml</code>, else to <code>htmlcov/</code>.
 Pass <code>--open-browser</code> to also open its <code>index.html</code> in your default browser:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.coverage-report<span class="w"> </span>--open-browser
 </code></pre></div>
 <h2 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>test.benchmark
 </code></pre></div>
-<p>Runs <code>pytest --benchmark-only --benchmark-enable</code> against <code>paths.benchmarks</code> (<code>--benchmark-enable</code> measures even if
-the pytest config has <code>--benchmark-disable</code> in <code>addopts</code>, which this repository uses so that a normal test run
-executes each benchmark once). This requires
-<a href="https://pytest-benchmark.readthedocs.io/"><code>pytest-benchmark</code></a> to be installed. The task fails with the exit code 1 if <code>paths.benchmarks</code> does not exist
-(and <code>--paths</code> is not given): it is run on purpose, so a scheduled job does not pass without measuring.</p>
+<p>Runs <code>pytest --benchmark-only --benchmark-enable</code> against <code>paths.benchmarks</code> (<code>--benchmark-enable</code>
+measures even if the pytest config has <code>--benchmark-disable</code> in <code>addopts</code>, which this repository
+uses so that a normal test run executes each benchmark once). This requires
+<a href="https://pytest-benchmark.readthedocs.io/"><code>pytest-benchmark</code></a> to be installed. The task fails with
+the exit code 1 if <code>paths.benchmarks</code> does not exist (and <code>--paths</code> is not given): it is run on
+purpose, so a scheduled job does not pass without measuring.</p>
 <p><code>test.benchmark</code>, <code>test.doctest-src</code> and <code>test.doctest-markdown</code> take <code>--args</code> and <code>--paths</code>, and
 <code>test.coverage-report</code> takes <code>--args</code> (for example <code>--fail-under=90</code>).</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>

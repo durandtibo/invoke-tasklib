@@ -1873,7 +1873,12 @@
 
     <div class="doc doc-contents first">
 
-        <p>Build and publish tasks (PyPI package).</p>
+        <p>Build and publish tasks (<code>release.*</code>) of the PyPI package.</p>
+<p><code>release.build</code> builds the wheel and the source distribution with <code>uv
+build</code> and verifies that each one installs and imports.
+<code>release.publish</code> checks the git state, builds, and uploads with <code>uv
+publish</code> to PyPI or TestPyPI. The credentials are read from the
+environment and never appear on a command line.</p>
 
 
 
@@ -2058,6 +2063,8 @@ line. The credential variables that <code>uv publish</code> reads
 the chosen token is given, so a token meant for PyPI is never sent
 to TestPyPI. <code>dist/</code> is cleared by the build, so only the freshly
 built artifacts are uploaded.</p>
+<p>The build is the one of <code>release.build</code>, run with its defaults:
+<code>args</code> is given to <code>uv publish</code> only.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

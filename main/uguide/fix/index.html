@@ -1887,6 +1887,8 @@ the formatting, which has the last word on the layout, so a second run changes n
 missing ones are reported at once with the exit code 127. With <code>--keep-going</code>, only the steps that
 miss a tool are not run; they are reported as failed.</p>
 <p>The steps come from <code>tasklib.fix.tasks</code>; <code>make_ns(exclude=...)</code> does not remove them.</p>
+<p>The exit codes are the ones of <a href="../check/#exit-codes"><code>check.all</code></a>: <code>0</code> when every step passed, <code>1</code>
+when a step failed, <code>2</code> for an unknown step or a bad config and <code>127</code> for a missing tool.</p>
 <!-- prettier-ignore -->
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>

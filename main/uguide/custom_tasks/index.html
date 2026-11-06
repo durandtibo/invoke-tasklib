@@ -1897,11 +1897,11 @@ Anything else in these modules starts with an underscore and can change without 
 </tr>
 <tr>
 <td><code>invoke_tasklib.runner.build_command</code></td>
-<td>Build a command line with quoted arguments and paths</td>
+<td>Build a command (a list of words) with the args and paths</td>
 </tr>
 <tr>
 <td><code>invoke_tasklib.runner.run</code></td>
-<td>Run a command: echo, pty only on a terminal, program check</td>
+<td>Run a command (a list of words): echo, pty, program check</td>
 </tr>
 <tr>
 <td><code>invoke_tasklib.runner.in_ci</code></td>
@@ -1952,7 +1952,7 @@ Anything else in these modules starts with an underscore and can change without 
 <tbody>
 <tr>
 <td><code>invoke_tasklib.runner.python_executable</code></td>
-<td>Get the interpreter that runs Invoke, quoted for a command</td>
+<td>Get the interpreter that runs Invoke, as a word of a command</td>
 </tr>
 <tr>
 <td><code>invoke_tasklib.runner.ARGS_HELP</code>, <code>PATHS_HELP</code>, <code>TOOL_HELP</code></td>
@@ -2003,7 +2003,10 @@ Anything else in these modules starts with an underscore and can change without 
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check the complexity of the code with radon."""</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">step</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"🔍 Checking the complexity..."</span><span class="p">,</span> <span class="s2">"✅ Complexity check passed"</span><span class="p">):</span>
-        <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">build_command</span><span class="p">(</span><span class="s2">"radon cc"</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="n">paths</span><span class="p">,</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="n">cfg</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">src</span><span class="p">]))</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="n">build_command</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">"radon"</span><span class="p">,</span> <span class="s2">"cc"</span><span class="p">],</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="n">paths</span><span class="p">,</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="n">cfg</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">src</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">command</span><span class="p">)</span>
 
 
 <span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
@@ -2012,18 +2015,29 @@ Anything else in these modules starts with an underscore and can change without 
 <ul>
 <li><strong>Read the config with <code>load_config(c)</code></strong>, not from <code>c.config</code>: it merges the defaults, validates
   the values and exits with a one-line message on an invalid config. The <code>tasklib</code> section is
-  available as <code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code>, <code>cfg.check</code> and <code>cfg.fix</code>.</li>
-<li><strong>Build the command with <code>build_command</code></strong>: the program is used as it is, and the user's <code>args</code>
-  and <code>paths</code> (and the default paths) are split like a shell does and quoted, so a space or a <code>;</code>
-  never splits or injects a command. For the same reason a glob (<code>*.py</code>), <code>~</code> or <code>$HOME</code> reaches
-  the tool as it is: the shell does not expand it.</li>
-<li><strong>Run it with <code>run</code></strong>: it echoes the command, uses a pty only on a terminal, and first checks that
-  the program is on the <code>PATH</code> (with an installation hint if it is not). Only the first word of
-  the command is checked, so a command that is a pipeline or a list (<code>a | b</code>, <code>a &amp;&amp; b</code>) needs
-  <code>run(c, command, check=False)</code>. Do not call <code>c.run</code> directly. For <code>python -m &lt;module&gt;</code>, the module is checked only when the command uses the running
+  available as <code>cfg.package</code>, <code>cfg.paths</code>, <code>cfg.groups</code>, <code>cfg.test</code>, <code>cfg.types</code>, <code>cfg.check</code> and
+  <code>cfg.fix</code>.</li>
+<li><strong>A command is a list of words</strong>, never a string: <code>["radon", "cc", "src"]</code>. Do not quote anything
+  and do not split a string yourself. <code>build_command(words, args=, paths=, default_paths=)</code> adds
+  the user's <code>args</code> and <code>paths</code> (and the default paths) to the words; the two options are split like
+  a shell does, each word stays one word.</li>
+<li><strong>Run it with <code>run</code></strong>: <code>run</code> quotes each word (<code>shlex.join</code>) in the only place that builds the shell
+  line, so a space or a <code>;</code> never splits or injects a command. For the same reason a glob (<code>*.py</code>),
+  <code>~</code> or <code>$HOME</code> reaches the tool as it is: the shell does not expand it. A string raises a
+  <code>TypeError</code>.</li>
+<li><strong><code>run</code> also</strong> echoes the command, uses a pty only on a terminal, and first checks that the
+  program is on the <code>PATH</code> (with an installation hint if it is not). Only the first word of the
+  command is checked. A command whose program is a shell function or an alias, which is not on the
+  <code>PATH</code>, needs <code>run(c, command, check=False)</code>; a shell operator (<code>|</code>, <code>&amp;&amp;</code>, <code>&gt;</code>) cannot be used,
+  because each word is quoted: run the two commands one after the other. Do not call <code>c.run</code>
+  directly. For <code>python -m &lt;module&gt;</code>, the module is checked only when the command uses the running
   interpreter (<code>python_executable()</code>, the one that runs <code>invoke</code>): for another interpreter or a
   <code>python</code> found on the <code>PATH</code>, a missing module is reported by Python itself
-  (<code>No module named ...</code>), without a hint. Use <code>python_executable()</code> in your commands.</li>
+  (<code>No module named ...</code>), without a hint. Use <code>python_executable()</code> in your commands, as the first
+  word of a list: <code>run(c, [python_executable(), "-m", "pytest"])</code> (<code>run</code> quotes each word of a
+  list).</li>
+<li><strong>Read the output with <code>capture</code></strong> when the code needs it: it is <code>run</code> with the output hidden,
+  the command not echoed and no pty, so a warning on stderr is never read as data.</li>
 <li><strong>Report the step with <code>step</code></strong>: it prints the start message, then the done message, or
   <code>❌ Failed: &lt;what was being done&gt;</code> on the error stream (stderr, like the message of an <code>Exit</code>) if
   the block raises (the exception is raised again, so the exit code is unchanged). Use <code>say</code> for any
@@ -2036,8 +2050,8 @@ Anything else in these modules starts with an underscore and can change without 
 <code>fix_&lt;target&gt;</code> does. Add the task to a <code>make_ns()</code> result, as above, so it does not leak into other
 importers.</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_command</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">(</span><span class="s2">"radon cc"</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="s2">"-s"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"a.py 'my dir'"</span><span class="p">,</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">"src"</span><span class="p">])</span>
-<span class="go">"radon cc -s a.py 'my dir'"</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">build_command</span><span class="p">([</span><span class="s2">"radon"</span><span class="p">,</span> <span class="s2">"cc"</span><span class="p">],</span> <span class="n">args</span><span class="o">=</span><span class="s2">"-s"</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="s2">"a.py 'my dir'"</span><span class="p">,</span> <span class="n">default_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">"src"</span><span class="p">])</span>
+<span class="go">['radon', 'cc', '-s', 'a.py', 'my dir']</span>
 </code></pre></div>
 <h2 id="adding-a-shortcut-for-an-existing-task">Adding a Shortcut for an Existing Task<a class="headerlink" href="#adding-a-shortcut-for-an-existing-task" title="Permanent link">&para;</a></h2>
 <p><code>add_task</code> with a <code>name</code> registers a task of the library under one more name, at the top level of
@@ -2061,9 +2075,9 @@ something else (a CI action, a script) depends on.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">MockContext</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">MockContext</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(),</span> <span class="n">run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"ls"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">[</span><span class="s2">"ls"</span><span class="p">,</span> <span class="s2">"my dir"</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">call_args</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="go">'ls'</span>
+<span class="go">"ls 'my dir'"</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

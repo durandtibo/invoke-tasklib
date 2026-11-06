@@ -1230,6 +1230,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#testing-guidelines" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2056,6 +2067,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#testing-guidelines" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2158,21 +2180,23 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 ├── .github/                  # GitHub configuration (workflows, etc.)
 ├── dev/                      # Scripts used by the repository itself
 ├── docs/                     # Documentation
-│   ├── docs/                # Documentation source
+│   ├── docs/                 # Documentation source (`uguide/`, `refs/`, `dev/`, `schema.json`)
 │   └── mkdocs.yml            # MkDocs configuration
 ├── src/
 │   └── invoke_tasklib/
 │       ├── __init__.py       # Public API: `make_ns` and individual task modules
-│       ├── config/           # Config resolution (`get_config`, `load_config`, JSON schema); `_invoke.py` reads the Invoke privates
+│       ├── config/           # Config resolution: `_schema.py` (`SCHEMA`, dataclasses, JSON schema),
+│       │                     # `_validate.py`, `_derive.py`, `_resolve.py` (`get_config`, `load_config`),
+│       │                     # `_invoke.py` (the only reader of the Invoke privates), `__main__.py`
 │       ├── runner.py         # Command runner (`run`, `capture`, `build_command`)
 │       ├── tools.py          # Tool lookup and install hints (`find_tool`, `check_program`)
-│       ├── output.py         # Progress messages (`say`, `step`)
+│       ├── output.py         # Progress messages (`say`, `step`, `report_failure`)
 │       ├── _steps.py         # Step runner shared by `check.all` and `fix.all`
 │       ├── _files.py         # File lookup of the format and test tasks
 │       ├── _pyproject.py     # Reader of `pyproject.toml` (`read_pyproject`)
 │       ├── _coverage.py      # Where the coverage reports are written
 │       ├── _graph.py         # Static import graph of `imports.check-cycles`
-│       ├── _discover.py      # Module discovery used by `imports.check-isolated`
+│       ├── _discover.py      # Module discovery and `import_each` of `imports.check-isolated`
 │       ├── formatting.py     # format.* tasks
 │       ├── lint.py           # lint.* tasks
 │       ├── imports.py        # imports.* tasks
@@ -2188,13 +2212,13 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
 │       └── show.py           # config.* tasks
 ├── tests/
 │   ├── helpers.py            # `make_context` and `commands`, shared by the tests
-│   ├── unit/                 # Unit tests, one module per source module
-│   ├── integration/          # Tests that run the real tools
+│   ├── unit/                 # Unit tests, one module per source module (`config/` for `config/`)
+│   ├── integration/          # Tests that run the real tools (`helpers.py`: `subprocess_context`)
 │   └── benchmarks/           # Benchmarks (`inv test.benchmark`), run once by `pytest tests`
 ├── review/                   # Review notes of the repository
 ├── tasks.py                  # invoke-tasklib's own tasks.py (dogfoods `make_ns`)
-├── invoke.yaml                # invoke-tasklib's own tasklib config
-├── pyproject.toml             # Project configuration
+├── invoke.yaml               # invoke-tasklib's own tasklib config
+├── pyproject.toml            # Project configuration
 └── README.md
 </code></pre></div>
 <h2 id="adding-a-new-task">Adding a New Task<a class="headerlink" href="#adding-a-new-task" title="Permanent link">&para;</a></h2>
@@ -2208,7 +2232,7 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
    <a href="../../uguide/format/">Format</a>).</li>
 <li>Call <code>load_config(c)</code> if the task needs project-specific paths or the package name, rather than
    hardcoding them. Run the external commands with <code>invoke_tasklib.runner.run</code> and build them
-   with <code>build_command</code> (it quotes the arguments), and print the progress with
+   with <code>build_command</code> (a list of words that <code>run</code> quotes), and print the progress with
    <code>invoke_tasklib.output.say</code>; do not call <code>c.run</code> or <code>print</code> in a task.</li>
 <li>Write a docstring (Google style) describing the task; its first line, one sentence, is the
    summary shown by <code>invoke --list</code>. Give each option a <code>help</code> entry in <code>@task</code>, and add
@@ -2222,6 +2246,22 @@ invoke<span class="w"> </span>check<span class="w">          </span><span class=
    table, <code>uguide/index.md</code>, <code>docs/index.md</code> and the corresponding
    <a href="../../uguide/format/">user guide</a> page.</li>
 </ol>
+<h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
+<p><code>CLAUDE.md</code> at the root of the repository is the complete list of the rules for code, tests and
+pull requests. The main ones:</p>
+<ul>
+<li>Every function, public or private, has a Google-style docstring (at most 72 characters wide) and
+  its own unit tests; the coverage of <code>src/</code> is 100%. Keep the docstrings and the documentation
+  up to date when the behaviour, the signature or the options of the code change.</li>
+<li>A test checks one behaviour (one <code>assert</code> or one <code>pytest.raises</code> with a <code>match</code>). A test that
+  patches a collaborator has a matching integration test in <code>tests/integration/</code> that runs the real
+  thing.</li>
+<li>Lint, format and type check before committing: <code>.venv/bin/ruff check src tests</code>,
+  <code>.venv/bin/ruff format src tests</code> and <code>.venv/bin/ty check</code>, then run the tests and the doctests
+  (<code>.venv/bin/pytest tests -q</code> and <code>.venv/bin/inv test.doctest</code>).</li>
+<li>One branch and one pull request per logical change, named <code>&lt;type&gt;/&lt;short-description&gt;</code> (for
+  example <code>feat/add-cache-option</code>), branched from an up to date <code>main</code>.</li>
+</ul>
 <h2 id="testing-guidelines">Testing Guidelines<a class="headerlink" href="#testing-guidelines" title="Permanent link">&para;</a></h2>
 <p>Tests use <code>invoke.context.MockContext</code> to capture the shell commands a task would run, without
 actually running them. Two helpers of <code>tests/helpers.py</code> are shared by the test modules:

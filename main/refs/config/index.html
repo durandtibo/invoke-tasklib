@@ -2343,20 +2343,10 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_CHECK_STEPS">DEFAULT_CHECK_STEPS</span></span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="n"><span title="functools.partial(valid)">valid</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.config._constants.CHECK_STEPS">CHECK_STEPS</span></span><span class="p">),</span>
-            <span class="p">{</span>
-                <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
-                    <span class="p">{</span>
-                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span>
-                        <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">"enum"</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._constants.CHECK_STEPS">CHECK_STEPS</span></span><span class="p">)</span>
-                        <span class="p">},</span>
-                    <span class="p">},</span>
-                <span class="p">]</span>
-            <span class="p">},</span>
-            <span class="s2">"Steps of check.all (comma-separated string or list)."</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span>
+            <span class="n"><span title="invoke_tasklib.config._schema._NAMES">_NAMES</span></span><span class="p">,</span>
+            <span class="s2">"Steps of check.all (comma-separated string or list); null for the default steps."</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">"cov"</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.config.Option
 
@@ -2377,18 +2367,10 @@ the name with <code>-</code> replaced by <code>_</code>.</p>
   
       dataclass
    (invoke_tasklib.config._schema.Option)" href="#invoke_tasklib.config.Option">Option</a></span><span class="p">(</span>
-            <span class="n"><span title="invoke_tasklib.config._constants.DEFAULT_FIX_STEPS">DEFAULT_FIX_STEPS</span></span><span class="p">,</span>
-            <span class="n"><span title="functools.partial">partial</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span> <span class="n"><span title="functools.partial(valid)">valid</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.config._constants.FIX_STEPS">FIX_STEPS</span></span><span class="p">),</span>
-            <span class="p">{</span>
-                <span class="s2">"anyOf"</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
-                    <span class="p">{</span>
-                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span>
-                        <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"enum"</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.config._constants.FIX_STEPS">FIX_STEPS</span></span><span class="p">)},</span>
-                    <span class="p">},</span>
-                <span class="p">]</span>
-            <span class="p">},</span>
-            <span class="s2">"Steps of fix.all (comma-separated string or list)."</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n"><span title="invoke_tasklib.config._validate._validate_steps">_validate_steps</span></span><span class="p">,</span>
+            <span class="n"><span title="invoke_tasklib.config._schema._NAMES">_NAMES</span></span><span class="p">,</span>
+            <span class="s2">"Steps of fix.all (comma-separated string or list); null for the default steps."</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">},</span>
 <span class="p">}</span>
@@ -2597,8 +2579,11 @@ and the JSON schema.</p>
             <td>
               <div class="doc-md-description">
                 <p>The default value. <code>None</code> means that the default is
-derived from other values (see <code>get_config</code>) or that the
-key is required. A default is a tuple for a list.</p>
+derived from other values (see <code>get_config</code>), that the
+key is required (<code>package.name</code>), that the key is not set
+(<code>package.python_version</code>, <code>test.cov_fail_under</code>), or
+that the composite task chooses the steps (<code>check.tasks</code>,
+<code>fix.tasks</code>). A default is a tuple for a list.</p>
               </div>
             </td>
           </tr>
@@ -3165,8 +3150,8 @@ the user guide, see <code>uguide/config.md</code>.</p>
 <span class="go">GroupsConfig(install=('dev',), update=('dev', 'docs'))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cfg</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">unit_timeout</span>
 <span class="go">10</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">cfg</span><span class="o">.</span><span class="n">check</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="go">'format-python'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cfg</span><span class="o">.</span><span class="n">check</span><span class="o">.</span><span class="n">tasks</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="go">True</span>
 </code></pre></div>
 
 

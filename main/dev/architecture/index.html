@@ -2187,6 +2187,7 @@ environment variable names and the JSON schema (<code>python -m invoke_tasklib.c
     <span class="n">paths</span><span class="p">:</span> <span class="n">PathsConfig</span>
     <span class="n">groups</span><span class="p">:</span> <span class="n">GroupsConfig</span>
     <span class="n">test</span><span class="p">:</span> <span class="n">TestConfig</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">TypesConfig</span>
     <span class="n">check</span><span class="p">:</span> <span class="n">CheckConfig</span>
     <span class="n">fix</span><span class="p">:</span> <span class="n">FixConfig</span>
 </code></pre></div>
@@ -2205,16 +2206,18 @@ same underlying tool or concern (e.g. most of <code>testing.py</code> wraps <cod
 <code>test.doctest-markdown</code>, which wraps the standard library's <code>doctest</code> module directly).</p>
 <p>Tasks that need project-specific values call <code>load_config(c)</code> at the top of the function body;
 tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
-<p>Seven small modules support the task modules:</p>
+<p>Nine small modules support the task modules (three public ones, <code>runner</code>, <code>tools</code> and <code>output</code>,
+and six private ones):</p>
 <ul>
 <li><code>runner.py</code>: <code>run(c, command)</code> is the only way a task runs an external command. It checks that
   the program is on the <code>PATH</code> (with <code>tools.check_program</code>), echoes the command, and
   uses a pty only on a terminal. <code>capture(c, command)</code> is <code>run</code> for a command whose output the task
   reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
   <code>in_ci()</code> and <code>in_github_actions()</code> are the only readers of <code>CI</code> and <code>GITHUB_ACTIONS</code>.
-  <code>build_command</code> builds a command line and quotes the arguments, and
-  <code>ARGS_HELP</code>/<code>PATHS_HELP</code> are the help of the <code>--args</code> and <code>--paths</code> options, and <code>TOOL_HELP</code>
-  is the <code>help</code> of a task that has both.</li>
+  <code>build_command</code> builds the list of the words of a command (the words, the split <code>--args</code>, the
+  paths), <code>run</code> is the only place that turns the list into a shell line (<code>shlex.join</code>) and it
+  rejects a string, <code>ARGS_HELP</code>/<code>PATHS_HELP</code> are the help of the <code>--args</code> and <code>--paths</code> options, and
+  <code>TOOL_HELP</code> is the <code>help</code> of a task that has both.</li>
 <li><code>tools.py</code>: finds the tools that the tasks run: <code>find_tool</code> looks a program up on the <code>PATH</code> or
   a module up for the running interpreter, <code>check_program</code> checks the first word of a command (and
   the module of <code>python -m &lt;module&gt;</code> and the plugins of the pytest options), and <code>hint</code> and
@@ -2231,8 +2234,8 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
   <code>--keep-going</code> mode and the final summary of the failures.</li>
 <li><code>_files.py</code>: <code>project_files(c, root, suffix)</code> finds the files with a suffix, with
   <code>git ls-files</code> in a git work tree and with <code>find_files</code>, a walk in Python (no <code>find</code> or <code>xargs</code>)
-  that skips the <code>EXCLUDED_DIRS</code> of <code>_files.py</code> at any depth, otherwise. It is used by the format and test tasks
-  that work on shell scripts and markdown files.</li>
+  that skips the <code>EXCLUDED_DIRS</code> of <code>_files.py</code> at any depth, otherwise. It is used by the format
+  and test tasks that work on shell scripts and markdown files.</li>
 <li><code>_pyproject.py</code>: <code>read_pyproject(path)</code> reads <code>pyproject.toml</code> (<code>{}</code> if the file is missing). An
   invalid file exits with <code>1</code> and a message that names the file, the line and the column of the
   error. <code>release</code> (the <code>[project] version</code>) and <code>_coverage</code> use it; <code>clean</code> ignores the error,
@@ -2253,27 +2256,26 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <code>CACHE_DIRS</code> (<code>.pytest_cache</code>, <code>.ruff_cache</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>,
 <code>.benchmarks</code>, <code>.coverage_html</code>), <code>OUTPUT_DIRS</code> (<code>build</code>, <code>dist</code>, <code>site</code>, <code>htmlcov</code>) and
 <code>ENVIRONMENT_DIRS</code> (<code>.git</code>, <code>.venv</code>, <code>node_modules</code>). <code>clean._DIRS</code> derives from <code>CACHE_DIRS</code> and the
-outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format and test tasks find their files with <code>_files.project_files</code>: in a git work
-tree they ask <code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and
+outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format
+and test tasks find their files with <code>_files.project_files</code>: in a git work tree they ask <code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and
 a tracked <code>build/run.sh</code> is checked (only the caches and the environments are left out);
 outside a work tree they walk the tree and skip every directory of the list. <code>clean</code> keeps its own
 walk, because the <code>__pycache__</code> directories it removes are ignored by git.</p>
 <h3 id="adding-a-step-to-checkall-or-fixall">Adding a step to <code>check.all</code> or <code>fix.all</code><a class="headerlink" href="#adding-a-step-to-checkall-or-fixall" title="Permanent link">&para;</a></h3>
-<p>A step is a <code>Step(task, programs, modules)</code> of <code>_steps.py</code> (the task, the programs it looks up on the
-<code>PATH</code>, the Python modules it imports). <code>modules</code> is a tuple, or a function of the config that
-returns one, for a step whose modules depend on an option (<code>check._unit_modules</code>). To add one:</p>
+<p>A step is a <code>Step(task, programs, modules, default)</code> of <code>_steps.py</code> (the task, the programs it looks up
+on the <code>PATH</code>, the Python modules it imports, and whether it runs when <code>check.tasks</code> or <code>fix.tasks</code>
+is not set). <code>modules</code> is a tuple, or a function of the config that returns one, for a step whose
+modules depend on an option (<code>check._unit_modules</code>). <code>_STEPS</code> is the only list of the step names, in
+the order of the run; the composite checks the names of the config, <code>--only</code> and <code>--skip</code> against it
+before any step runs. To add one:</p>
 <ol>
 <li>Write the task in its module, and add <code>"name": Step(task, programs=..., modules=...)</code> to
-   <code>check._STEPS</code> (or <code>fix._STEPS</code>).</li>
-<li>Add the name to <code>CHECK_STEPS</code> (or <code>FIX_STEPS</code>) in <code>config/_constants.py</code>: the config must not
-   import the task modules, and a test checks that the names agree with <code>_STEPS</code>.</li>
+   <code>check._STEPS</code> (or <code>fix._STEPS</code>), at the place where it must run. Pass <code>default=False</code> if it must
+   not run unless the config or <code>--only</code> asks for it.</li>
 <li>Add each new program or module to <code>TOOLS</code> of <code>tools.py</code> as a <code>Tool</code> with its dependency group
    (or an install hint), and the pytest options of a plugin: <code>env.check-tools</code>, the hints and the
    check of the plugins read it (a test checks that every tool of <code>_STEPS</code> is listed).</li>
-<li>To run the step by default, put it among the first steps of <code>CHECK_STEPS</code> (or <code>FIX_STEPS</code>) and
-   extend <code>DEFAULT_CHECK_STEPS</code> (or <code>DEFAULT_FIX_STEPS</code>) in <code>config/_constants.py</code>, which derive the
-   default of <code>check.tasks</code> (or <code>fix.tasks</code>) in <code>config/_schema.py</code>; update the tables of the user
-   guide (<code>uguide/check.md</code>, <code>uguide/fix.md</code>).</li>
+<li>Update the tables of the user guide (<code>uguide/check.md</code>, <code>uguide/fix.md</code>).</li>
 </ol>
 <h3 id="3-the-namespace">3. The Namespace<a class="headerlink" href="#3-the-namespace" title="Permanent link">&para;</a></h3>
 <p><code>invoke_tasklib/__init__.py</code> has <code>make_ns(*, exclude=(), include=None)</code>, which builds a new
@@ -2281,8 +2283,8 @@ returns one, for a step whose modules depend on an option (<code>check._unit_mod
 sub-collection named after the module, leaving out the tasks of <code>exclude</code> and keeping only the
 tasks of <code>include</code> when it is set. The modules whose names would shadow the standard library or a
 builtin (<code>format</code>, <code>types</code>, <code>test</code>) are named <code>formatting</code>, <code>typecheck</code> and <code>testing</code>; the
-namespace name of each module is its <code>NAMESPACE</code> constant (<code>"format"</code> in <code>formatting.py</code>), which <code>_MODULES</code>
-of <code>__init__.py</code> reads, not the module name; a project that builds its own collection passes
+namespace name of each module is its <code>NAMESPACE</code> constant (<code>"format"</code> in <code>formatting.py</code>), which
+<code>_MODULES</code> of <code>__init__.py</code> reads, not the module name; a project that builds its own collection passes
 <code>name=module.NAMESPACE</code> to <code>Collection.from_module</code>.</p>
 <p>This is what gives consuming projects <code>format.check-python</code>, <code>test.unit</code>, etc. via
 <code>ns = make_ns()</code> in their <code>tasks.py</code>, or a trimmed copy with <code>make_ns(exclude=...)</code>. Each call returns
@@ -2302,7 +2304,7 @@ L1  config/  runner  tools  output     support: the documented helpers
 <p>No import breaks the rule; the test fails if one appears.</p>
 <h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
 <p>These are the properties that the package guarantees to a project that uses it (<code>P1</code>-<code>P12</code>) and to
-its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enforces each one; a property marked
+its maintainers (<code>M1</code>-<code>M6</code>). The last column says what enforces each one; a property marked
 "not tested" is a rule that the code follows but no test enforces yet.</p>
 <table>
 <thead>
@@ -2336,7 +2338,7 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <td>P4</td>
 <td>Exit codes</td>
 <td><code>0</code> pass, or nothing to do (a <code>⏭️</code> line says why); <code>1</code> the checked thing failed; <code>2</code> invalid usage or config; <code>127</code> a tool or module is missing. The failure line is <code>❌ Failed: &lt;what&gt;</code> on stderr. With <code>--keep-going</code>, every step runs and every failure of an <code>Exception</code> is listed in the summary.</td>
-<td><code>tests/integration/test_exit_codes.py</code></td>
+<td><code>tests/integration/test_exit_codes.py</code>; <code>test__steps.py</code> (any <code>Exception</code>)</td>
 </tr>
 <tr>
 <td>P5</td>
@@ -2353,13 +2355,13 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <tr>
 <td>P7</td>
 <td>Commands are data</td>
-<td>A task builds one command string from the config and the options. Every user value is quoted: a space, <code>;</code>, <code>*</code>, <code>~</code> or <code>$VAR</code> reaches the tool unchanged.</td>
-<td><code>runner.build_command</code>; <code>tests/integration/test_quoting.py</code>; <code>_commands(c) == [...]</code> in unit tests</td>
+<td>A task builds a command as a list of words; <code>runner.run</code> is the only place that turns it into a shell line (<code>shlex.join</code>) and it rejects a string. A space, <code>;</code>, <code>*</code>, <code>~</code> or <code>$VAR</code> in a user value reaches the tool unchanged.</td>
+<td><code>test_architecture.py</code> (no <code>shlex.quote</code> or <code>shlex.split</code> outside <code>runner.py</code>); <code>tests/integration/test_quoting.py</code></td>
 </tr>
 <tr>
 <td>P8</td>
 <td>One source of truth</td>
-<td>A config key is declared once (<code>SCHEMA</code>), a tool once (<code>TOOLS</code>), a step once (<code>_STEPS</code>), a directory policy once (<code>_files</code>). Defaults, the JSON schema, the hints and the docs tables derive from them.</td>
+<td>A config key is declared once (<code>SCHEMA</code>), a tool once (<code>TOOLS</code>), a step once (<code>_STEPS</code>, with its order and whether it is a default), a directory policy once (<code>_files</code>). Defaults, the JSON schema, the hints and the docs tables derive from them.</td>
 <td>tests that compare the tables; <code>test_clean.py</code> (every directory of <code>clean._DIRS</code> is in <code>EXCLUDED_DIRS</code>)</td>
 </tr>
 <tr>
@@ -2378,13 +2380,13 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <td>P11</td>
 <td>Fix converges</td>
 <td>After <code>fix_&lt;x&gt;</code> (or <code>fix.all</code>) the matching <code>check_&lt;x&gt;</code> (or <code>check.all --only</code> the same steps) passes, and a second <code>fix_&lt;x&gt;</code> changes nothing.</td>
-<td>not tested (target state, step 3)</td>
+<td><code>tests/integration/test_fix_converges.py</code></td>
 </tr>
 <tr>
 <td>P12</td>
 <td>Composition is explicit</td>
 <td><code>make_ns(include=, exclude=)</code> selects the tasks that the command line offers. The steps of <code>check.all</code> and <code>fix.all</code> come only from <code>tasklib.check.tasks</code> and <code>tasklib.fix.tasks</code>; excluding a task from the namespace does not remove its step.</td>
-<td>not tested (target state, step 2)</td>
+<td><code>test_init.py</code> (the selection); not tested: that an excluded task keeps its step</td>
 </tr>
 <tr>
 <td>M1</td>
@@ -2395,7 +2397,7 @@ its maintainers (<code>M1</code>-<code>M5</code>). The last column says what enf
 <tr>
 <td>M2</td>
 <td>Public means documented</td>
-<td>A name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> is public only if it is in the <code>__all__</code> of its module and in <code>uguide/custom_tasks.md</code>. Everything else starts with <code>_</code>. (The task modules are not covered yet: target state, step 11.)</td>
+<td>A name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> is public only if it is in the <code>__all__</code> of its module and in <code>uguide/custom_tasks.md</code>. Everything else starts with <code>_</code>; a task module has no public name except its tasks and <code>NAMESPACE</code>.</td>
 <td><code>test_architecture.py</code></td>
 </tr>
 <tr>
@@ -2437,10 +2439,10 @@ test.unit(c, cov=True) is called
     ↓
 load_config(c) resolves package.name and paths.unit_tests
     ↓
-Task builds the pytest command line with build_command (quoted)
+Task builds the pytest command, a list of words, with build_command
     ↓
-runner.run(c, cmd) checks the program (tools.check_program), echoes the command and
-executes it with c.run (pty only on a terminal)
+runner.run(c, cmd) checks the program (tools.check_program), quotes the words (shlex.join),
+echoes the command and executes it with c.run (pty only on a terminal)
 </code></pre></div>
 <h2 id="design-decisions">Design Decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h2>
 <h3 id="why-a-shared-load_config-instead-of-per-task-config">Why a Shared <code>load_config</code> Instead of Per-Task Config?<a class="headerlink" href="#why-a-shared-load_config-instead-of-per-task-config" title="Permanent link">&para;</a></h3>
@@ -2473,8 +2475,9 @@ machine.</p>
 <p>Potential areas for enhancement:</p>
 <ol>
 <li>Additional task modules for other common project needs (e.g. changelog generation).</li>
-<li>A task to validate a project's <code>invoke.yaml</code> against the config schema ahead of time (the
-   errors of <code>get_config</code> are only raised when a task runs).</li>
+<li>Validating a project's <code>invoke.yaml</code> before a task runs: <code>config.show</code> already validates the
+   config and an editor can check it against the published JSON schema, but nothing validates it
+   in CI without running a task.</li>
 </ol>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>

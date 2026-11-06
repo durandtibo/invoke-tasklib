@@ -1851,8 +1851,8 @@
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>types.check
 </code></pre></div>
-<p>This runs <code>ty check</code>, or the checker of <code>types.checker</code> in the <a href="../config/">config</a>: <code>pyright</code> or <code>mypy</code>
-(<code>mypy</code> must be a dependency of the project).</p>
+<p>This runs <code>ty check</code>, or the checker of <code>tasklib.types.checker</code> in the <a href="../config/">config</a>:
+<code>pyright</code> or <code>mypy</code> (<code>mypy</code> must be a dependency of the project).</p>
 <p>Pass <code>--complete</code> to also run <a href="https://microsoft.github.io/pyright/">pyright</a> after the checker (slower,
 more thorough; nothing more if the checker is <code>pyright</code>):</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>types.check<span class="w"> </span>--complete

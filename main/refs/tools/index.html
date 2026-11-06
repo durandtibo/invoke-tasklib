@@ -2343,26 +2343,21 @@ plugins read it. Names are unique across the programs and the modules.</p>
 
 
 <a href="#invoke_tasklib.tools.check_program" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_program</span><span class="p">(</span><span class="n">command</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_program</span><span class="p">(</span><span class="n">command</span><span class="p">:</span> <span class="n"><span title="collections.abc.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Check that the program of a command is available.</p>
-<p>Only the first word of the command is checked, after the
-<code>NAME=value</code> words that set environment variables. It is not
-checked when it is a path (for example the running interpreter, see
-<code>python_executable</code>, or <code>~/bin/tool</code>) or one of
-<code>_UNCHECKED_PROGRAMS</code> (the shell builtins). For
-<code>python -m &lt;module&gt;</code> with the running interpreter, the module is
-checked, and so are the plugins of the pytest options (see
-<code>_PLUGIN_OPTIONS</code>).</p>
-<p>The tasks run one program, so the rest of the command line is not
-parsed: a pipeline (<code>a | b</code>), a list (<code>a &amp;&amp; b</code>), a subshell or
-a reserved word of the shell is not understood, and only its first
-word is looked up. To run such a command, pass <code>check=False</code> to
-<code>run</code>. A command that cannot be split like a shell does (an
-unclosed quote) is not checked: the shell reports it.</p>
+<p>The command is a program and its arguments, as a list of words: only
+the first word is looked up. It is not checked when it is a path
+(for example the running interpreter, see <code>python_executable</code>, or
+<code>~/bin/tool</code>). For <code>python -m &lt;module&gt;</code> with the running
+interpreter, the module is checked, and so are the plugins of the
+pytest options (see <code>_PLUGIN_OPTIONS</code>).</p>
+<p>The words are never given to a shell parser, so a program that is a
+shell builtin or a shell function or alias is not found: pass
+<code>check=False</code> to <code>run</code> to run it.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2381,11 +2376,11 @@ unclosed quote) is not checked: the shell reports it.</p>
                 <code>command</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The command line.</p>
+                <p>The words of the command.</p>
               </div>
             </td>
             <td>
@@ -2420,8 +2415,8 @@ says how to install it, see <code>hint</code>.</p>
     </table>
         <p>Example usage:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_program</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">check_program</span><span class="p">(</span><span class="s2">"cd docs"</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">check_program</span><span class="p">(</span><span class="s2">"no-such-program --version"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_program</span><span class="p">([</span><span class="s2">"/bin/sh"</span><span class="p">,</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_program</span><span class="p">([</span><span class="s2">"no-such-program"</span><span class="p">,</span> <span class="s2">"--version"</span><span class="p">])</span>
 <span class="gt">Traceback (most recent call last):</span>
 <span class="w">    </span><span class="o">...</span>
 <span class="gr">invoke.exceptions.Exit</span>: <span class="n">...</span>

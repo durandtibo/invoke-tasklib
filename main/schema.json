@@ -208,31 +208,11 @@
                 {
                   "type": "array",
                   "items": {
-                    "enum": [
-                      "format-python",
-                      "format-docstrings",
-                      "lint",
-                      "types",
-                      "imports",
-                      "unit",
-                      "doctest",
-                      "shell",
-                      "spelling",
-                      "docs",
-                      "audit"
-                    ]
+                    "type": "string"
                   }
                 }
               ],
-              "description": "Steps of check.all (comma-separated string or list).",
-              "default": [
-                "format-python",
-                "format-docstrings",
-                "lint",
-                "types",
-                "imports",
-                "unit"
-              ]
+              "description": "Steps of check.all (comma-separated string or list); null for the default steps."
             },
             "cov": {
               "type": "boolean",
@@ -253,21 +233,11 @@
                 {
                   "type": "array",
                   "items": {
-                    "enum": [
-                      "lint",
-                      "format-python",
-                      "format-docstrings",
-                      "shell"
-                    ]
+                    "type": "string"
                   }
                 }
               ],
-              "description": "Steps of fix.all (comma-separated string or list).",
-              "default": [
-                "lint",
-                "format-python",
-                "format-docstrings"
-              ]
+              "description": "Steps of fix.all (comma-separated string or list); null for the default steps."
             }
           }
         }

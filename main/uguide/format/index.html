@@ -1968,17 +1968,19 @@ the <a href="../config/">resolved config</a>, using the <code>[tool.docformatter
 project's <code>pyproject.toml</code> (via <code>--config ./pyproject.toml</code>). If <code>paths.src</code> does not exist (and
 <code>--paths</code> is not set), the tasks exit with 2 and name <code>tasklib.paths.src</code>, before running anything.</p>
 <h2 id="shell-scripts">Shell Scripts<a class="headerlink" href="#shell-scripts" title="Permanent link">&para;</a></h2>
-<p><code>format.check-shell</code>, <code>format.check-shell-format</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. In a git
-work tree the files are the ones that git lists (<code>git ls-files --cached --others --exclude-standard</code>):
+<p><code>format.check-shell</code>, <code>format.check-shell-format</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code>
+file in the project. In a git work tree the files are the ones that git lists
+(<code>git ls-files --cached --others --exclude-standard</code>):
 the tracked files and the untracked files that are not ignored, so the rules of <code>.gitignore</code> are
 followed, like <code>ruff</code>, <code>codespell</code> and <code>pre-commit</code> do, and third-party scripts (for example the
 activation scripts of a virtual environment, whatever its name) are never checked or rewritten as
 long as the environment is ignored. A tracked file is kept, even in a <code>build</code> directory. The
-<code>.git</code>, <code>.venv</code>, <code>.pytest_cache</code> and <code>node_modules</code> directories are always left out.</p>
+directories of the environments (<code>.git</code>, <code>.venv</code>, <code>node_modules</code>) and of the caches of the tools
+(<code>.pytest_cache</code>, <code>.ruff_cache</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, ...) are always left out.</p>
 <p>Outside a git work tree, or without <code>git</code>, the files are found by a walk in Python (no <code>find</code> or
-<code>xargs</code>) that does not search the <code>.git</code>, <code>.venv</code>, <code>.pytest_cache</code>, <code>node_modules</code>, <code>build</code>, <code>dist</code>
-and <code>site</code> directories. The files are given to the tool as arguments; if there is no <code>*.sh</code> file,
-the tool is not run and the task says so.</p>
+<code>xargs</code>) that does not search those directories nor <code>build</code>, <code>dist</code>, <code>site</code> and <code>htmlcov</code>. The files
+are given to the tool as arguments; if there is no <code>*.sh</code> file, the tool is not run, the task
+prints a <code>⏭️</code> line and exits with 0.</p>
 <!-- prettier-ignore -->
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1988,8 +1990,10 @@ the tool is not run and the task says so.</p>
 (<code>shfmt</code> there comes from the <code>golang-go</code> toolchain or a
 <a href="https://github.com/mvdan/sh/releases">release binary</a>).</p>
 </div>
-<p><code>format.check-shell</code>, <code>format.check-shell-format</code> and <code>format.fix-shell</code> take <code>--args</code> for the tool and <code>--paths</code> to run on
-given scripts instead of every <code>*.sh</code> file of the project.</p>
+<p>The three tasks take <code>--args</code> for the tool (placed before a <code>--</code> separator, so a script name that
+starts with a dash is not read as an option) and <code>--paths</code> to run on given scripts instead of every
+<code>*.sh</code> file of the project. <code>format.check-shell-format</code> runs <code>shfmt -d</code> (it prints a diff and never
+changes a file) and <code>format.fix-shell</code> runs <code>shfmt -l -w</code> (it lists the files that it rewrites).</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../config/">Config</a>: where <code>paths.src</code> (used by the docstring tasks) comes from.</li>
