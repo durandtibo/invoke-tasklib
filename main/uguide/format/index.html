@@ -1965,7 +1965,8 @@ invoke<span class="w"> </span>format.fix-shell
 <h2 id="docstring-style">Docstring Style<a class="headerlink" href="#docstring-style" title="Permanent link">&para;</a></h2>
 <p><code>format.check-docstrings</code> and <code>format.fix-docstrings</code> run <code>docformatter</code> against <code>paths.src</code> from
 the <a href="../config/">resolved config</a>, using the <code>[tool.docformatter]</code> section of the consuming
-project's <code>pyproject.toml</code> (via <code>--config ./pyproject.toml</code>).</p>
+project's <code>pyproject.toml</code> (via <code>--config ./pyproject.toml</code>). If <code>paths.src</code> does not exist (and
+<code>--paths</code> is not set), the tasks exit with 2 and name <code>tasklib.paths.src</code>, before running anything.</p>
 <h2 id="shell-scripts">Shell Scripts<a class="headerlink" href="#shell-scripts" title="Permanent link">&para;</a></h2>
 <p><code>format.check-shell</code>, <code>format.check-shell-format</code> and <code>format.fix-shell</code> operate on every <code>*.sh</code> file in the project. In a git
 work tree the files are the ones that git lists (<code>git ls-files --cached --others --exclude-standard</code>):

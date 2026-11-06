@@ -1908,7 +1908,8 @@ versioned documentation with <a href="https://github.com/jimporter/mike"><code>m
 </table>
 <p>All four tasks read <code>paths.docs_config</code> from the <a href="../config/">resolved config</a> (default:
 <code>docs/mkdocs.yml</code>). The two publish tasks pass it to <code>mike</code> via <code>--config-file</code>, and <code>doc.build</code> and
-<code>doc.serve</code> pass it to <code>mkdocs</code>.</p>
+<code>doc.serve</code> pass it to <code>mkdocs</code>. If the file does not exist, the tasks exit with 2 and name
+<code>tasklib.paths.docs_config</code>, before running anything.</p>
 <h2 id="publishing-development-docs">Publishing Development Docs<a class="headerlink" href="#publishing-development-docs" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>doc.publish-dev
 </code></pre></div>

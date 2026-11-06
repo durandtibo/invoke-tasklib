@@ -2237,6 +2237,9 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <li><code>_coverage.py</code>: <code>coverage_outputs(reports, pyproject)</code> returns the HTML directory and the report
   files, from the <code>--cov-report</code> arguments, then <code>[tool.coverage.*]</code>, then the coverage.py defaults.
   <code>testing</code> and <code>clean</code> use it.</li>
+<li><code>_files.py</code> also has <code>require_path(path, key)</code>, which exits with 2 and names the config key when a
+  path that a task is about does not exist (<code>paths.src</code>, <code>paths.docs_config</code>); the module docstring
+  and the user guide give the rule for the other paths.</li>
 <li><code>_graph.py</code>: the static import graph of a package (built with <code>ast</code>, without importing
   anything) and its cycles. It is used by <code>imports.check-cycles</code>.</li>
 <li><code>_discover.py</code>: lists the modules of a package without importing them. It is run in a

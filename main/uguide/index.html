@@ -613,6 +613,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#missing-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing Paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#external-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1834,6 +1845,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#missing-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing Paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#external-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2266,6 +2288,36 @@ invoke<span class="w"> </span>test.coverage-report<span class="w"> </span>--args
 </code></pre></div>
 <p>For <code>types.check</code>, <code>--args</code> goes to <code>ty</code> only and <code>--paths</code> goes to <code>ty</code> and <code>pyright</code>. The
 arguments and the paths are quoted, so they are never interpreted by the shell.</p>
+<h2 id="missing-paths">Missing Paths<a class="headerlink" href="#missing-paths" title="Permanent link">&para;</a></h2>
+<p>One rule says what a task does when a path of the <a href="config/">config</a> does not exist:</p>
+<table>
+<thead>
+<tr>
+<th>Kind of path</th>
+<th>When it is missing</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A directory the task may legitimately not have</td>
+<td><code>⏭️</code> message naming the directory, exit code <code>0</code></td>
+<td><code>paths.unit_tests</code>, <code>paths.integration_tests</code>, <code>paths.functional_tests</code></td>
+</tr>
+<tr>
+<td>A path the task is about</td>
+<td>Exit code <code>2</code>, the message names the key</td>
+<td><code>paths.src</code> (<code>test.doctest-src</code>, <code>format.*-docstrings</code>), <code>paths.docs_config</code></td>
+</tr>
+<tr>
+<td>The only input of a task that produces a measurement</td>
+<td>Exit code <code>1</code></td>
+<td><code>paths.benchmarks</code> (<code>test.benchmark</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>A path given with <code>--paths</code> is never checked by the task: the tool reports it. In <code>check.all</code> a
+skipped directory is a skipped step, not a failure.</p>
 <h2 id="external-tools">External Tools<a class="headerlink" href="#external-tools" title="Permanent link">&para;</a></h2>
 <p>Tasks are thin wrappers around external command-line tools. Each is expected to be available on
 <code>PATH</code> or next to the Python interpreter that runs <code>invoke</code> (or installed via <a href="env/"><code>env.install</code></a>/<a href="env/"><code>env.create-venv</code></a>):</p>
