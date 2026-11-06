@@ -2225,9 +2225,9 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <li><code>_steps.py</code>: the step runner shared by <code>check.all</code> and <code>fix.all</code>: the selection of the steps
   (<code>--only</code>, <code>--skip</code> and the config), the look-up of the missing tools before anything runs, the
   <code>--keep-going</code> mode and the final summary of the failures.</li>
-<li><code>_files.py</code>: <code>project_files(c, root, suffix, excluded)</code> finds the files with a suffix, with
+<li><code>_files.py</code>: <code>project_files(c, root, suffix)</code> finds the files with a suffix, with
   <code>git ls-files</code> in a git work tree and with <code>find_files</code>, a walk in Python (no <code>find</code> or <code>xargs</code>)
-  that skips the <code>EXCLUDED_DIRS</code> at any depth, otherwise. It is used by the format and test tasks
+  that skips the <code>EXCLUDED_DIRS</code> of <code>_files.py</code> at any depth, otherwise. It is used by the format and test tasks
   that work on shell scripts and markdown files.</li>
 <li><code>_pyproject.py</code>: <code>read_pyproject(path)</code> reads <code>pyproject.toml</code> (<code>{}</code> if the file is missing). An
   invalid file exits with <code>1</code> and a message that names the file, the line and the column of the
@@ -2241,13 +2241,14 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
 <li><code>_discover.py</code>: lists the modules of a package without importing them. It is run in a
   subprocess by <code>imports.check-isolated</code>.</li>
 </ul>
-<p><code>config.EXCLUDED_DIRS</code> lists the directories that the tasks that walk the file tree (<code>clean</code>,
-<code>format</code>, <code>test.doctest-markdown</code>) never enter (<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, ...). The format and
-test tasks find their files with <code>_files.project_files</code>: in a git work tree they ask
-<code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and there is no
-list of directories to maintain (the <code>EXCLUDED_DIRS</code> are still left out); outside a work tree they
-walk the tree and skip the excluded directories. <code>clean</code> keeps its own walk, because the
-<code>__pycache__</code> directories it removes are ignored by git.</p>
+<p><code>_files.EXCLUDED_DIRS</code> is the one list of the directories that the tasks that walk the file tree
+(<code>clean</code>, <code>format</code>, <code>test.doctest-markdown</code>) never enter: the directories of tools and environments
+(<code>.venv</code>, <code>.git</code>, <code>node_modules</code>, the caches) and the build outputs (<code>build</code>, <code>dist</code>, <code>site</code>,
+<code>htmlcov</code>). The format and test tasks find their files with <code>_files.project_files</code>: in a git work
+tree they ask <code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and
+a tracked <code>build/run.sh</code> is checked (only the directories of tools and environments are left out);
+outside a work tree they walk the tree and skip every directory of the list. <code>clean</code> keeps its own
+walk, because the <code>__pycache__</code> directories it removes are ignored by git.</p>
 <h3 id="adding-a-step-to-checkall-or-fixall">Adding a step to <code>check.all</code> or <code>fix.all</code><a class="headerlink" href="#adding-a-step-to-checkall-or-fixall" title="Permanent link">&para;</a></h3>
 <p>A step is a <code>Step(task, programs, modules)</code> of <code>_steps.py</code> (the task, the programs it looks up on the
 <code>PATH</code>, the Python modules it imports). <code>modules</code> is a tuple, or a function of the config that
