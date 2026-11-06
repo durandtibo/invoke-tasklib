@@ -1668,43 +1668,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.MODULE_GROUPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MODULE_GROUPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.tools.PLUGIN_OPTIONS" class="md-nav__link">
     <span class="md-ellipsis">
       
         PLUGIN_OPTIONS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.PROGRAM_GROUPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PROGRAM_GROUPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.PROGRAM_HINTS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PROGRAM_HINTS
       
     </span>
   </a>
@@ -1973,43 +1940,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.MODULE_GROUPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MODULE_GROUPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.tools.PLUGIN_OPTIONS" class="md-nav__link">
     <span class="md-ellipsis">
       
         PLUGIN_OPTIONS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.PROGRAM_GROUPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PROGRAM_GROUPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.PROGRAM_HINTS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PROGRAM_HINTS
       
     </span>
   </a>
@@ -2230,41 +2164,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>The hint of the programs that are in neither <code>PROGRAM_HINTS</code> nor
-<code>PROGRAM_GROUPS</code>.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.tools.MODULE_GROUPS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.MODULE_GROUPS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.tools.MODULE_GROUPS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">MODULE_GROUPS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.name">name</span></span><span class="p">:</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.group">group</span></span>
-    <span class="k">for</span> <span class="n"><span title="tool">tool</span></span> <span class="ow">in</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.tools.TOOLS
-
-
-  
-      module-attribute
-  " href="#invoke_tasklib.tools.TOOLS">TOOLS</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.tools.TOOLS.values">values</span></span><span class="p">()</span>
-    <span class="k">if</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.kind">kind</span></span> <span class="o">==</span> <span class="s2">"module"</span> <span class="ow">and</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.group">group</span></span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-<span class="p">}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The dependency group that provides a Python module, by name.</p>
+        <p>The hint of a tool that is not in <code>TOOLS</code>.</p>
 
     </div>
 
@@ -2299,76 +2199,6 @@
 
         <p>The pytest options that come from a plugin, as a tuple of the module
 and of the package to install, by option.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.tools.PROGRAM_GROUPS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.PROGRAM_GROUPS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.tools.PROGRAM_GROUPS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">PROGRAM_GROUPS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.name">name</span></span><span class="p">:</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.group">group</span></span>
-    <span class="k">for</span> <span class="n"><span title="tool">tool</span></span> <span class="ow">in</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.tools.TOOLS
-
-
-  
-      module-attribute
-  " href="#invoke_tasklib.tools.TOOLS">TOOLS</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.tools.TOOLS.values">values</span></span><span class="p">()</span>
-    <span class="k">if</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.kind">kind</span></span> <span class="o">==</span> <span class="s2">"program"</span>
-    <span class="ow">and</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.group">group</span></span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="ow">and</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.hint">hint</span></span> <span class="ow">is</span> <span class="kc">None</span>
-<span class="p">}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The dependency group that provides a program, by program name, for
-the programs that are not in <code>PROGRAM_HINTS</code>.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.tools.PROGRAM_HINTS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.PROGRAM_HINTS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.tools.PROGRAM_HINTS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">PROGRAM_HINTS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.name">name</span></span><span class="p">:</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.hint">hint</span></span>
-    <span class="k">for</span> <span class="n"><span title="tool">tool</span></span> <span class="ow">in</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.tools.TOOLS
-
-
-  
-      module-attribute
-  " href="#invoke_tasklib.tools.TOOLS">TOOLS</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.tools.TOOLS.values">values</span></span><span class="p">()</span>
-    <span class="k">if</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.kind">kind</span></span> <span class="o">==</span> <span class="s2">"program"</span> <span class="ow">and</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.hint">hint</span></span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-<span class="p">}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>How to install the programs that <code>invoke env.install</code> does not
-install (or that it needs itself), by program name.</p>
 
     </div>
 
@@ -2466,7 +2296,8 @@ install (or that it needs itself), by program name.</p>
         <p>Every program and module that the tasks run, by name.</p>
 <p>It is the one place to edit to add a tool: <code>hint</code>,
 <code>not_found_message</code>, <code>env.check-tools</code> and the check of the pytest
-plugins read it. The tables below are derived from it.</p>
+plugins read it. Names are unique across the programs and the
+modules.</p>
 
     </div>
 
@@ -2745,7 +2576,7 @@ unclosed quote) is not checked: the shell reports it.</p>
             <td>
               <div class="doc-md-description">
                 <p>If the program (or the module) is not found. The message
-says how to install it, see <code>PROGRAM_HINTS</code>.</p>
+says how to install it, see <code>hint</code>.</p>
               </div>
             </td>
           </tr>
@@ -2882,7 +2713,7 @@ looked up in <code>tool_path()</code>.</p>
 
 
 <a href="#invoke_tasklib.tools.hint" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">hint</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">hint</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2917,22 +2748,6 @@ looked up in <code>tool_path()</code>.</p>
                 <em>required</em>
             </td>
           </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>module</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, name is a Python module.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
       </tbody>
     </table>
 
@@ -2952,7 +2767,7 @@ looked up in <code>tool_path()</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The entry of PROGRAM_HINTS for the program; else the</p>
+                <p>The <code>hint</code> of the tool in <code>TOOLS</code>; else the command that</p>
               </div>
             </td>
           </tr>
@@ -2962,7 +2777,7 @@ looked up in <code>tool_path()</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>command that installs its dependency group, from</p>
+                <p>installs its dependency group; else <code>DEFAULT_HINT</code> (the tool</p>
               </div>
             </td>
           </tr>
@@ -2972,17 +2787,7 @@ looked up in <code>tool_path()</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>PROGRAM_GROUPS (or MODULE_GROUPS for a module); else</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>DEFAULT_HINT.</p>
+                <p>is not in <code>TOOLS</code>).</p>
               </div>
             </td>
           </tr>
@@ -2994,7 +2799,7 @@ looked up in <code>tool_path()</code>.</p>
 <span class="go">'Install uv, see https://docs.astral.sh/uv/getting-started/installation/.'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hint</span><span class="p">(</span><span class="s2">"mike"</span><span class="p">)</span>
 <span class="go">"Install it with the 'docs' group: `uv sync --group docs`."</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">hint</span><span class="p">(</span><span class="s2">"pytest"</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hint</span><span class="p">(</span><span class="s2">"pytest"</span><span class="p">)</span>
 <span class="go">"Install it with the 'dev' group: `uv sync --group dev`."</span>
 </code></pre></div>
 

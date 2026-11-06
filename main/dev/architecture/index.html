@@ -2217,8 +2217,8 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
   the module of <code>python -m &lt;module&gt;</code> and the plugins of the pytest options), and <code>hint</code> and
   <code>not_found_message</code> say how to install a tool. Every program and module is one <code>Tool</code> of
   <code>tools.TOOLS</code> (name, kind, dependency group or install hint, pytest options for a plugin);
-  <code>PROGRAM_HINTS</code>, <code>PROGRAM_GROUPS</code>, <code>MODULE_GROUPS</code>, <code>PLUGIN_OPTIONS</code> and <code>env.TOOL_PROGRAMS</code> /
-  <code>env.TOOL_MODULES</code> are derived from it.</li>
+  <code>hint(name)</code> is one lookup in it, <code>PLUGIN_OPTIONS</code> (option to plugin) is derived from it, and
+  <code>env.check-tools</code> loops over it.</li>
 <li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
   step, or a failure message.</li>
