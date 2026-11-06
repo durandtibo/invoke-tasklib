@@ -1925,7 +1925,7 @@ modify files; <code>check.all</code> is the read-only counterpart. By
 default the first failure stops the task; with <code>keep_going</code> every
 step is run and the failed ones are listed at the end.</p>
 <p>Before any step is run, the programs that the selected steps need
-(the programs of <code>STEPS</code>) are looked up and all the missing ones
+(the programs of <code>_STEPS</code>) are looked up and all the missing ones
 are reported at once, with the code 127 and nothing run. With
 <code>keep_going</code>, only the steps that miss a tool are not run: they
 are reported as failed, with the missing tools as the reason.</p>

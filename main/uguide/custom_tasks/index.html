@@ -1955,7 +1955,7 @@ Anything else in these modules starts with an underscore and can change without 
 <td>Get the interpreter that runs Invoke, quoted for a command</td>
 </tr>
 <tr>
-<td><code>invoke_tasklib.runner.ARGS_HELP</code>, <code>PATHS_HELP</code></td>
+<td><code>invoke_tasklib.runner.ARGS_HELP</code>, <code>PATHS_HELP</code>, <code>TOOL_HELP</code></td>
 <td>Reuse the <code>help</code> text of the <code>args</code> and <code>paths</code> options</td>
 </tr>
 <tr>
@@ -1995,10 +1995,10 @@ Anything else in these modules starts with an underscore and can change without 
 <span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_ns</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">step</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ARGS_HELP</span><span class="p">,</span> <span class="n">PATHS_HELP</span><span class="p">,</span> <span class="n">build_command</span><span class="p">,</span> <span class="n">run</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">invoke_tasklib.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">TOOL_HELP</span><span class="p">,</span> <span class="n">build_command</span><span class="p">,</span> <span class="n">run</span>
 
 
-<span class="nd">@task</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="p">{</span><span class="s2">"args"</span><span class="p">:</span> <span class="n">ARGS_HELP</span><span class="p">,</span> <span class="s2">"paths"</span><span class="p">:</span> <span class="n">PATHS_HELP</span><span class="p">})</span>
+<span class="nd">@task</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="n">TOOL_HELP</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_complexity</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check the complexity of the code with radon."""</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>

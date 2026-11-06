@@ -2017,9 +2017,9 @@ which is the usual symptom of a cyclic import. It also fails on a
 missing dependency or a syntax error. It starts one interpreter per
 module, a few at a time, so it is slow for a package with heavy
 imports; see <code>check_cycles</code> for the static check.</p>
-<p>One worker (<code>python -m invoke_tasklib._discover --import-each</code>)
-does the discovery and starts the interpreters, so the task runs a
-single command whatever the size of the package.</p>
+<p>The discovery runs in the Invoke process (it imports nothing); only
+the imports run in the new interpreters, so the task runs no
+command in the Invoke context.</p>
 <p>The package that is checked is the one that the running
 interpreter finds: the installed (editable) package, or the one in
 the current directory for a flat layout. It is the source tree,
@@ -2042,23 +2042,13 @@ write 300 lines.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="UnexpectedExit">UnexpectedExit</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the discovery fails (for example the package
-cannot be found).</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                   <code><span title="invoke.exceptions.Exit">Exit</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If a module fails to import on its own (code 1). Every
-module is tried, and all the failures are listed.</p>
+                <p>If the package cannot be found, or if a module fails to
+import on its own (code 1). Every module is tried, and all
+the failures are listed.</p>
               </div>
             </td>
           </tr>

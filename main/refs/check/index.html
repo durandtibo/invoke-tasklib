@@ -1528,17 +1528,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.check.STEPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        STEPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.check.all_" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1813,17 +1802,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.check.STEPS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        STEPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.check.all_" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1916,59 +1894,6 @@
 
 </div>
 
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.check.STEPS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.check.STEPS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.check.STEPS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">STEPS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"format-python"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting" href="../format/#invoke_tasklib.formatting">formatting</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting.check_python" href="../format/#invoke_tasklib.formatting.check_python">check_python</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,)</span>
-    <span class="p">),</span>
-    <span class="s2">"format-docstrings"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting" href="../format/#invoke_tasklib.formatting">formatting</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.formatting.check_docstrings" href="../format/#invoke_tasklib.formatting.check_docstrings">check_docstrings</a></span><span class="p">,</span>
-        <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"docformatter"</span><span class="p">,),</span>
-    <span class="p">),</span>
-    <span class="s2">"lint"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint" href="../lint/#invoke_tasklib.lint">lint</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint.check_python" href="../lint/#invoke_tasklib.lint.check_python">check_python</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"ruff"</span><span class="p">,)),</span>
-    <span class="s2">"types"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.typecheck" href="../types/#invoke_tasklib.typecheck">typecheck</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.typecheck.check" href="../types/#invoke_tasklib.typecheck.check">check</a></span><span class="p">,</span>
-        <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="k">lambda</span> <span class="n">cfg</span><span class="p">:</span> <span class="p">(</span><span class="n"><span title="cfg">cfg</span></span><span class="o">.</span><span class="n"><span title="cfg.types">types</span></span><span class="o">.</span><span class="n"><span title="cfg.types.checker">checker</span></span><span class="p">,),</span>
-    <span class="p">),</span>
-    <span class="s2">"imports"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.imports" href="../imports/#invoke_tasklib.imports">imports</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.imports.check_cycles" href="../imports/#invoke_tasklib.imports.check_cycles">check_cycles</a></span><span class="p">),</span>
-    <span class="s2">"unit"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.check._unit">_unit</span></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(modules)">modules</span></span><span class="o">=</span><span class="n"><span title="invoke_tasklib.check._unit_modules">_unit_modules</span></span><span class="p">),</span>
-    <span class="s2">"doctest"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.testing" href="../test/#invoke_tasklib.testing">testing</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.testing.doctest" href="../test/#invoke_tasklib.testing.doctest">doctest</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(modules)">modules</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"pytest"</span><span class="p">,</span> <span class="s2">"xdoctest"</span><span class="p">)</span>
-    <span class="p">),</span>
-    <span class="s2">"shell"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><span title="invoke_tasklib.check._shell">_shell</span></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"shellcheck"</span><span class="p">,</span> <span class="s2">"shfmt"</span><span class="p">)),</span>
-    <span class="s2">"spelling"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint" href="../lint/#invoke_tasklib.lint">lint</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.lint.check_spelling" href="../lint/#invoke_tasklib.lint.check_spelling">check_spelling</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"codespell"</span><span class="p">,)</span>
-    <span class="p">),</span>
-    <span class="s2">"docs"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.doc" href="../doc/#invoke_tasklib.doc">doc</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.doc.build" href="../doc/#invoke_tasklib.doc.build">build</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"mkdocs"</span><span class="p">,)),</span>
-    <span class="s2">"audit"</span><span class="p">:</span> <span class="n"><span title="invoke_tasklib._steps.Step">Step</span></span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.security" href="../security/#invoke_tasklib.security">security</a></span><span class="o">.</span><span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.security.audit" href="../security/#invoke_tasklib.security.audit">audit</a></span><span class="p">,</span> <span class="n"><span title="invoke_tasklib._steps.Step(programs)">programs</span></span><span class="o">=</span><span class="p">(</span><span class="s2">"uv"</span><span class="p">,</span> <span class="s2">"uvx"</span><span class="p">)),</span>
-<span class="p">}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The steps of <code>check.all</code> (task, programs and Python modules), by
-step name.</p>
-<p>The modules of <code>unit</code> depend on the config, see <code>_unit_modules</code>. To
-add a step, add its name to <code>CHECK_STEPS</code> in <code>config/_constants.py</code>
-(a test checks that the names agree), and its programs and install hints
-to <code>TOOLS</code> in <code>tools.py</code>.</p>
-
-    </div>
-
-</div>
-
 
 
 
@@ -2002,7 +1927,7 @@ with <code>tasklib.check.cov</code>, which also enforces
 stops the task; with <code>keep_going</code> every step is run and the
 failed ones are listed at the end.</p>
 <p>Before any step is run, the tools that the selected steps need
-(the programs and modules of <code>STEPS</code>) are looked up and all the
+(the programs and modules of <code>_STEPS</code>) are looked up and all the
 missing ones are reported at once, with the code 127 and nothing
 run. With <code>keep_going</code>, only the steps that miss a tool are not
 run: they are reported as failed, with the missing tools as the
