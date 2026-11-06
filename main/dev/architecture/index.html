@@ -1186,6 +1186,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#data-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1984,6 +2006,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#data-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2228,6 +2272,78 @@ of <code>__init__.py</code> reads, not the module name; a project that builds it
 a new collection, so a project can add its own tasks without affecting other importers. (The
 module-level <code>invoke_tasklib.ns</code>, one collection shared by every importer, was removed: use
 <code>ns = make_ns()</code>.)</p>
+<h2 id="layers">Layers<a class="headerlink" href="#layers" title="Permanent link">&para;</a></h2>
+<p>A module imports only from its own layer or from the ones below it. The task modules (L3) do
+not import each other, and neither do the composites (L4). <code>tests/unit/test_architecture.py</code>
+checks the rule on the package itself.</p>
+<div class="highlight"><pre><span></span><code>L5  __init__          make_ns: one Collection per module
+L4  check  fix        composites: run STEPS with the step runner
+L3  formatting lint typecheck testing env release doc security imports clean show
+L2  _steps  _files  _graph             private helpers of the tasks
+L1  config/  runner  tools  output     support: the documented helpers
+L0  _discover                          worker run in a subprocess
+</code></pre></div>
+<p>One import breaks the rule today, <code>clean -&gt; testing</code>
+(<code>KNOWN_VIOLATIONS</code> in the test); the test fails if a new one appears.</p>
+<h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
+<p>These are the properties that the package guarantees to a project that uses it. The last column
+says what enforces each one.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Property</th>
+<th>Statement</th>
+<th>Enforced by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>One entry point</td>
+<td>The config is read with <code>load_config</code>, a command runs through <code>runner.run</code> or <code>capture</code>, a message goes through <code>output</code>.</td>
+<td><code>test_architecture.py</code> (AST scan of <code>src/</code>)</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Read-only is read-only</td>
+<td><code>check_&lt;x&gt;</code>, <code>check.all</code>, <code>test.*</code>, <code>types.check</code>, <code>imports.*</code>, <code>security.audit</code> and <code>config.show</code> change no tracked file.</td>
+<td><code>tests/integration/test_read_only.py</code></td>
+</tr>
+<tr>
+<td>P4</td>
+<td>Exit codes</td>
+<td><code>0</code> pass or nothing to do, <code>1</code> the checked thing failed, <code>2</code> invalid usage or config, <code>127</code> a tool or module is missing.</td>
+<td><code>tests/integration/test_exit_codes.py</code></td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Fail before acting</td>
+<td>An unknown key, an invalid value or a wrong working directory exits with <code>2</code> before any command runs.</td>
+<td><code>config/_validate.py</code>; <code>tests/unit/config/</code></td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Commands are data</td>
+<td>A task builds one command string from the config and the options, and every user value is quoted.</td>
+<td><code>runner.build_command</code>; <code>tests/integration/test_quoting.py</code></td>
+</tr>
+<tr>
+<td>M1</td>
+<td>Layers</td>
+<td>See the previous section.</td>
+<td><code>test_architecture.py</code></td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Every function tested</td>
+<td>Every function, private ones included, has a docstring and a unit test. Coverage is 100%.</td>
+<td><code>test_docstrings.py</code>, <code>--cov-fail-under=100</code></td>
+</tr>
+</tbody>
+</table>
+<p>The tool tables are kept consistent by the same test module: every program and module named by a
+step of <code>check.STEPS</code> or <code>fix.STEPS</code> is in <code>tools.TOOLS</code>.</p>
 <h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
 <p>Here's how a task invocation flows through the system:</p>
 <div class="highlight"><pre><span></span><code>User runs `invoke test.unit --cov`
