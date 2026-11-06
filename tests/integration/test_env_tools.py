@@ -59,7 +59,10 @@ def test_check_tools_exits_with_code_127_when_a_tool_is_missing(tmp_path: Path) 
 
 
 def test_check_tools_names_the_missing_tools_in_the_error(tmp_path: Path) -> None:
-    assert "tool(s) missing: uv, uvx, git, ruff" in _check_tools(tmp_path, "/nonexistent").stderr
+    assert (
+        "tool(s) missing: codespell, docformatter, git"
+        in _check_tools(tmp_path, "/nonexistent").stderr
+    )
 
 
 def test_check_tools_finds_the_python_modules_of_the_interpreter(tmp_path: Path) -> None:
