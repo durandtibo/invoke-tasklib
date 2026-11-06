@@ -1657,43 +1657,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.DEFAULT_HINT" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DEFAULT_HINT
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.PLUGIN_OPTIONS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PLUGIN_OPTIONS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.tools.TOOLS" class="md-nav__link">
     <span class="md-ellipsis">
       
         TOOLS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.UNCHECKED_PROGRAMS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UNCHECKED_PROGRAMS
       
     </span>
   </a>
@@ -1929,43 +1896,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.DEFAULT_HINT" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DEFAULT_HINT
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.PLUGIN_OPTIONS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PLUGIN_OPTIONS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#invoke_tasklib.tools.TOOLS" class="md-nav__link">
     <span class="md-ellipsis">
       
         TOOLS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#invoke_tasklib.tools.UNCHECKED_PROGRAMS" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UNCHECKED_PROGRAMS
       
     </span>
   </a>
@@ -2150,64 +2084,6 @@
 
 
 
-<h3 id="invoke_tasklib.tools.DEFAULT_HINT" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.DEFAULT_HINT</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.tools.DEFAULT_HINT" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">DEFAULT_HINT</span> <span class="o">=</span> <span class="s2">"Install the project tools with `invoke env.install` (see the troubleshooting page of the documentation)."</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The hint of a tool that is not in <code>TOOLS</code>.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.tools.PLUGIN_OPTIONS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.PLUGIN_OPTIONS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.tools.PLUGIN_OPTIONS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">PLUGIN_OPTIONS</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n"><span title="option">option</span></span><span class="p">:</span> <span class="p">(</span><span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.name">name</span></span><span class="p">,</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.name">name</span></span><span class="o">.</span><span class="n"><span title="tool.name.replace">replace</span></span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n"><span title="tool">tool</span></span> <span class="ow">in</span> <span class="n"><a class="autorefs autorefs-internal" title="invoke_tasklib.tools.TOOLS
-
-
-  
-      module-attribute
-  " href="#invoke_tasklib.tools.TOOLS">TOOLS</a></span><span class="o">.</span><span class="n"><span title="invoke_tasklib.tools.TOOLS.values">values</span></span><span class="p">()</span>
-    <span class="k">for</span> <span class="n"><span title="option">option</span></span> <span class="ow">in</span> <span class="n"><span title="tool">tool</span></span><span class="o">.</span><span class="n"><span title="tool.plugin_options">plugin_options</span></span>
-<span class="p">}</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The pytest options that come from a plugin, as a tuple of the module
-and of the package to install, by option.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h3 id="invoke_tasklib.tools.TOOLS" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.TOOLS</span>
 
@@ -2298,45 +2174,6 @@ and of the package to install, by option.</p>
 <code>not_found_message</code>, <code>env.check-tools</code> and the check of the pytest
 plugins read it. Names are unique across the programs and the
 modules.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="invoke_tasklib.tools.UNCHECKED_PROGRAMS" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">invoke_tasklib.tools.UNCHECKED_PROGRAMS</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
-  </span>
-
-<a href="#invoke_tasklib.tools.UNCHECKED_PROGRAMS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">UNCHECKED_PROGRAMS</span><span class="p">:</span> <span class="n"><span title="frozenset">frozenset</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="frozenset">frozenset</span></span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">"command"</span><span class="p">,</span>
-        <span class="s2">"cd"</span><span class="p">,</span>
-        <span class="s2">"export"</span><span class="p">,</span>
-        <span class="s2">"test"</span><span class="p">,</span>
-        <span class="s2">"["</span><span class="p">,</span>
-        <span class="s2">"exec"</span><span class="p">,</span>
-        <span class="s2">"source"</span><span class="p">,</span>
-        <span class="s2">"."</span><span class="p">,</span>
-        <span class="s2">":"</span><span class="p">,</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>First words of a command that are not looked up on the <code>PATH</code>
-(shell builtins).</p>
-<p>Some of them have an executable on some systems only (for example <code>cd</code>
-on macOS).</p>
 
     </div>
 
@@ -2517,10 +2354,10 @@ on macOS).</p>
 <code>NAME=value</code> words that set environment variables. It is not
 checked when it is a path (for example the running interpreter, see
 <code>python_executable</code>, or <code>~/bin/tool</code>) or one of
-<code>UNCHECKED_PROGRAMS</code> (the shell builtins). For
+<code>_UNCHECKED_PROGRAMS</code> (the shell builtins). For
 <code>python -m &lt;module&gt;</code> with the running interpreter, the module is
 checked, and so are the plugins of the pytest options (see
-<code>PLUGIN_OPTIONS</code>).</p>
+<code>_PLUGIN_OPTIONS</code>).</p>
 <p>The tasks run one program, so the rest of the command line is not
 parsed: a pipeline (<code>a | b</code>), a list (<code>a &amp;&amp; b</code>), a subshell or
 a reserved word of the shell is not understood, and only its first
@@ -2777,7 +2614,7 @@ looked up in <code>tool_path()</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>installs its dependency group; else <code>DEFAULT_HINT</code> (the tool</p>
+                <p>installs its dependency group; else <code>_DEFAULT_HINT</code> (the tool</p>
               </div>
             </td>
           </tr>

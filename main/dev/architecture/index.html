@@ -2217,7 +2217,7 @@ tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
   the module of <code>python -m &lt;module&gt;</code> and the plugins of the pytest options), and <code>hint</code> and
   <code>not_found_message</code> say how to install a tool. Every program and module is one <code>Tool</code> of
   <code>tools.TOOLS</code> (name, kind, dependency group or install hint, pytest options for a plugin);
-  <code>hint(name)</code> is one lookup in it, <code>PLUGIN_OPTIONS</code> (option to plugin) is derived from it, and
+  <code>hint(name)</code> is one lookup in it, <code>_PLUGIN_OPTIONS</code> (option to plugin) is derived from it, and
   <code>env.check-tools</code> loops over it.</li>
 <li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
   cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
@@ -2343,6 +2343,12 @@ says what enforces each one.</p>
 <td>M1</td>
 <td>Layers</td>
 <td>See the previous section.</td>
+<td><code>test_architecture.py</code></td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Public means documented</td>
+<td>A name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> is public only if it is in the <code>__all__</code> of its module and in <code>uguide/custom_tasks.md</code>. Everything else starts with <code>_</code>.</td>
 <td><code>test_architecture.py</code></td>
 </tr>
 <tr>

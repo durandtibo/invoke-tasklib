@@ -1877,9 +1877,11 @@
 
 <h1 id="writing-a-custom-task">Writing a Custom Task<a class="headerlink" href="#writing-a-custom-task" title="Permanent link">&para;</a></h1>
 <p><img alt="📖" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4d6.svg" title=":book:" /> This page shows how to write a task of your own that behaves like the tasks of
-<code>invoke-tasklib</code>. The helpers below are the supported public API for that: their signatures are
-documented in the reference pages (<a href="../../refs/runner/"><code>runner</code></a>, <a href="../../refs/tools/"><code>tools</code></a>,
-<a href="../../refs/output/"><code>output</code></a> and <a href="../../refs/config/"><code>config</code></a>).</p>
+<code>invoke-tasklib</code>. The helpers below are the supported public API for that: they are the names in
+the <code>__all__</code> of <code>runner</code>, <code>tools</code>, <code>output</code> and <code>config</code> (a test compares this page with them), and
+their signatures are documented in the reference pages (<a href="../../refs/runner/"><code>runner</code></a>,
+<a href="../../refs/tools/"><code>tools</code></a>, <a href="../../refs/output/"><code>output</code></a> and <a href="../../refs/config/"><code>config</code></a>).
+Anything else in these modules starts with an underscore and can change without notice.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1936,6 +1938,53 @@ documented in the reference pages (<a href="../../refs/runner/"><code>runner</co
 <tr>
 <td><code>invoke_tasklib.output.report_failure</code></td>
 <td>Print <code>❌ Failed: ...</code> if a block raises, for a task that uses <code>say</code></td>
+</tr>
+</tbody>
+</table>
+<p>More helpers, for a task that needs less common things:</p>
+<table>
+<thead>
+<tr>
+<th>Helper</th>
+<th>Use it to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>invoke_tasklib.runner.python_executable</code></td>
+<td>Get the interpreter that runs Invoke, quoted for a command</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.runner.ARGS_HELP</code>, <code>PATHS_HELP</code></td>
+<td>Reuse the <code>help</code> text of the <code>args</code> and <code>paths</code> options</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.tools.hint</code>, <code>not_found_message</code>, <code>tool_path</code></td>
+<td>Say how to install a tool, or find the <code>PATH</code> of the tools</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.tools.Tool</code>, <code>TOOLS</code></td>
+<td>Read the table of the programs and modules that the tasks run</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.config.get_config</code></td>
+<td>Resolve the config and raise <code>ValueError</code> (<code>load_config</code> exits)</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.config.TasklibConfig</code>, <code>PackageConfig</code>, <code>PathsConfig</code></td>
+<td>Type the resolved config and its sections</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.config.GroupsConfig</code>, <code>TestConfig</code>, <code>TypesConfig</code></td>
+<td>(the other sections)</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.config.CheckConfig</code>, <code>FixConfig</code></td>
+<td>(the other sections)</td>
+</tr>
+<tr>
+<td><code>invoke_tasklib.config.SCHEMA</code>, <code>Option</code>, <code>default_config</code>, <code>json_schema</code></td>
+<td>Read the declaration of the keys, their defaults and the JSON schema</td>
 </tr>
 </tbody>
 </table>
