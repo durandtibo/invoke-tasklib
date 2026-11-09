@@ -6,7 +6,13 @@ name: Cancel Stale Queued Runs
 on:
   schedule:
     - cron: "0 * * * *" # runs every hour
-  workflow_dispatch: # to trigger manually
+  workflow_dispatch:
+    inputs:
+      max_age_hours:
+        description: "Cancel queued runs older than this many hours"
+        required: false
+        default: "24"
+        type: string
 
 permissions: {}
 
@@ -22,3 +28,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.repository }}
+          # Scheduled runs have no inputs, so fall back to 24 hours.
+          max_age_hours: ${{ inputs.max_age_hours || '24' }}
