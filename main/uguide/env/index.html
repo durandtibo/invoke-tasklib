@@ -2047,7 +2047,7 @@ is available:</p>
 <div class="highlight"><pre><span></span><code>✅ ruff: /project/.venv/bin/ruff
 ❌ 'shfmt' was not found on the PATH or next to the Python interpreter. Install shfmt with your system package manager, ...
 </code></pre></div>
-<p>All the tools are listed, so one run shows everything that is missing. The task does not read the
+<p>The tools are sorted by name. All the tools are listed, so one run shows everything that is missing. The task does not read the
 config, so it can be run before <code>invoke.yaml</code> is set up. It exits with the code 127 if a tool is
 missing, so it can also gate a CI job. It does not install anything: see <code>env.install</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
