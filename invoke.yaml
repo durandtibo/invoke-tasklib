@@ -1,6 +1,5 @@
 tasklib:
   package:
     name: invoke_tasklib
-    python_version: "3.14"
   test:
     cov_fail_under: 100
