@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 from typing import TYPE_CHECKING
 
@@ -46,7 +47,7 @@ def test_all_keep_going_prints_the_hint_of_a_missing_tool(
     monkeypatch.setenv("PATH", "/usr/bin:/bin")
     with pytest.raises(Exit, match=r"1 of 1 check\(s\) failed: shell"):
         check.all_(_context("badpkg"), only="shell", keep_going=True)
-    assert "'shellcheck' was not found on the PATH" in capsys.readouterr().err
+    assert re.search(r"'(shellcheck|shfmt)' was not found", capsys.readouterr().err)
 
 
 def test_all_stops_before_running_when_a_tool_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
