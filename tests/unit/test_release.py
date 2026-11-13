@@ -82,7 +82,7 @@ def test_build_with_check() -> None:
         "uv build --clear",
         _WHEEL_CHECK_CMD,
         _SDIST_CHECK_CMD,
-        "uvx --from 'twine>=6.1,<7' twine check 'dist/*'",
+        "uvx --from 'twine>=7,<8' twine check 'dist/*'",
     ]
 
 
@@ -118,7 +118,7 @@ def test_build_checks_the_out_dir_with_twine(
     (tmp_path / "out" / "mypkg-0.0.9-py3-none-any.whl").write_text("")
     c = make_context({"package": {"name": "mypkg"}})
     release.build(c, check=True, args="--wheel --out-dir out")
-    assert commands(c)[-1] == "uvx --from 'twine>=6.1,<7' twine check 'out/*'"
+    assert commands(c)[-1] == "uvx --from 'twine>=7,<8' twine check 'out/*'"
 
 
 def test_build_installs_the_built_wheel_not_the_package_name(dist: Path) -> None:
