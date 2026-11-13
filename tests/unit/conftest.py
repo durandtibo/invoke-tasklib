@@ -19,8 +19,8 @@ def _all_programs_available(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(autouse=True)
 def _not_on_github_actions(monkeypatch: pytest.MonkeyPatch) -> None:
-    r"""Make the unit tests independent of the CI: ruff does not use
-    the ``github`` output format."""
+    r"""Make the unit tests independent of the CI: ruff does not use the
+    ``github`` output format."""
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
 
 
