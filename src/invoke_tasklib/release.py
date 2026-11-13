@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 NAMESPACE = "release"
 r"""The name of the namespace of the tasks of this module."""
 
-_TWINE_REQUIREMENT = "twine>=6.1,<7"
+_TWINE_REQUIREMENT = "twine>=7,<8"
 r"""The version range of ``twine`` that ``release.build --check`` runs.
 
 ``uvx`` installs the latest release in this range, so a new major

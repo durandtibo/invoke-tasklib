@@ -31,7 +31,7 @@ Pass `--check` to additionally validate the package's PyPI metadata with
 invoke release.build --check
 ```
 
-`twine` is run with `uvx` from the version range `twine>=6.1,<7` (`_TWINE_REQUIREMENT` in
+`twine` is run with `uvx` from the version range `twine>=7,<8` (`_TWINE_REQUIREMENT` in
 `invoke_tasklib.release`), so a new major release is never run without a release of
 `invoke-tasklib`.
 
