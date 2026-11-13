@@ -54,4 +54,7 @@ jobs:
         run: uv pip install "invoke==${{ matrix.package-version }}"
 
       - name: Run unit tests
-        run: uv run inv test.all
+        run: inv test.unit
+
+      - name: Run integration tests
+        run: inv test.integration
