@@ -2035,7 +2035,8 @@ invoke<span class="w"> </span>env.show-python-config
 </code></pre></div>
 <p><code>env.show-python-config</code> prints the installed Python versions known to <code>uv</code>, the interpreter <code>uv</code>
 would select, and the interpreter currently on <code>PATH</code> (<code>python: not found</code> when there is none, which
-is not an error).</p>
+is not an error). A Python version that <code>uv</code> would select but that is not installed (for example a
+pinned <code>.python-version</code>) is not an error either.</p>
 <h2 id="checking-the-tools">Checking the Tools<a class="headerlink" href="#checking-the-tools" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.check-tools
 </code></pre></div>

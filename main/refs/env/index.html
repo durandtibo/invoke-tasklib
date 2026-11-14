@@ -2378,7 +2378,9 @@ unless overridden in <code>invoke.yaml</code>).</p>
         <p>Show the python configuration.</p>
 <p>It lists the Python versions that <code>uv</code> knows, the one it would
 use, and the <code>python</code> of the <code>PATH</code>. Having no <code>python</code> on the
-<code>PATH</code> is not an error of the task.</p>
+<code>PATH</code> is not an error of the task, and neither is a Python
+version that <code>uv</code> would use but that is not installed (for
+example a pinned <code>.python-version</code>).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
