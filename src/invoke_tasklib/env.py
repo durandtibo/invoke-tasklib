@@ -225,14 +225,16 @@ def show_python_config(c: Context) -> None:
 
     It lists the Python versions that ``uv`` knows, the one it would
     use, and the ``python`` of the ``PATH``. Having no ``python`` on the
-    ``PATH`` is not an error of the task.
+    ``PATH`` is not an error of the task, and neither is a Python
+    version that ``uv`` would use but that is not installed (for
+    example a pinned ``.python-version``).
 
     Args:
         c: The invoke context.
     """
     say(c, "🐍 Python configuration:")
     run(c, ["uv", "python", "list", "--only-installed"])
-    run(c, ["uv", "python", "find"])
+    run(c, ["uv", "python", "find"], warn=True)
     say(c, which("python") or "python: not found")
 
 

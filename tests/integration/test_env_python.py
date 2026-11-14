@@ -31,3 +31,12 @@ def test_show_python_config_prints_the_python_of_the_path(
     monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ['PATH']}")
     env.show_python_config(subprocess_context())
     assert capsys.readouterr().out.splitlines()[-1] == str(fake)
+
+
+def test_show_python_config_accepts_a_pinned_version_that_is_not_installed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / ".python-version").write_text("2.6\n")
+    monkeypatch.chdir(tmp_path)
+    env.show_python_config(subprocess_context())
+    assert "Python configuration" in capsys.readouterr().out

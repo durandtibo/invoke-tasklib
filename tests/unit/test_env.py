@@ -283,10 +283,16 @@ def test_show_python_config_looks_up_python(monkeypatch: pytest.MonkeyPatch) -> 
     assert looked_up == ["python"]
 
 
-def test_show_python_config_commands_must_succeed() -> None:
+def test_show_python_config_listing_must_succeed() -> None:
     c = make_context()
     env.show_python_config(c)
-    assert [kwargs.get("warn", False) for kwargs in run_kwargs(c)] == [False, False]
+    assert run_kwargs(c)[0].get("warn", False) is False
+
+
+def test_show_python_config_find_may_fail() -> None:
+    c = make_context()
+    env.show_python_config(c)
+    assert run_kwargs(c)[1].get("warn", False) is True
 
 
 ############################################
