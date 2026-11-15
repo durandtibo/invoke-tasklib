@@ -1,59 +1,22 @@
 # invoke-tasklib
 
 <p align="center">
-    <a href="https://github.com/durandtibo/invoke-tasklib/actions/workflows/ci.yaml">
-        <img alt="CI" src="https://github.com/durandtibo/invoke-tasklib/actions/workflows/ci.yaml/badge.svg">
-    </a>
-    <a href="https://github.com/durandtibo/invoke-tasklib/actions/workflows/nightly-package.yaml">
-        <img alt="Nightly Package Tests" src="https://github.com/durandtibo/invoke-tasklib/actions/workflows/nightly-package.yaml/badge.svg">
-    </a>
-    <a href="https://codecov.io/gh/durandtibo/invoke-tasklib">
-        <img alt="Codecov" src="https://codecov.io/gh/durandtibo/invoke-tasklib/branch/main/graph/badge.svg">
-    </a>
+    <a href="https://github.com/durandtibo/invoke-tasklib/actions/workflows/ci.yaml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/durandtibo/invoke-tasklib/ci.yaml?branch=main&label=CI&logo=github"></a>
+    <a href="https://github.com/durandtibo/invoke-tasklib/actions/workflows/nightly-package.yaml"><img alt="Nightly Package Tests" src="https://img.shields.io/github/actions/workflow/status/durandtibo/invoke-tasklib/nightly-package.yaml?label=nightly&logo=github"></a>
+    <a href="https://codecov.io/gh/durandtibo/invoke-tasklib"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/durandtibo/invoke-tasklib?logo=codecov"></a>
+    <a href="https://durandtibo.github.io/invoke-tasklib/"><img alt="Documentation (stable)" src="https://img.shields.io/badge/docs-stable-blue?logo=readthedocs&logoColor=white"></a>
     <br/>
-    <a href="https://durandtibo.github.io/invoke-tasklib/">
-        <img alt="Documentation" src="https://github.com/durandtibo/invoke-tasklib/actions/workflows/release-docs.yaml/badge.svg">
-    </a>
-    <a href="https://durandtibo.github.io/invoke-tasklib/dev/">
-        <img alt="Documentation" src="https://github.com/durandtibo/invoke-tasklib/actions/workflows/release-docs-dev.yaml/badge.svg">
-    </a>
+    <a href="https://pypi.org/project/invoke-tasklib/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/invoke-tasklib?logo=pypi&logoColor=white"></a>
+    <a href="https://pypi.org/project/invoke-tasklib/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/invoke-tasklib?logo=python&logoColor=white"></a>
+    <a href="https://opensource.org/licenses/BSD-3-Clause"><img alt="BSD-3-Clause" src="https://img.shields.io/pypi/l/invoke-tasklib"></a>
     <br/>
-    <a href="https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings">
-        <img alt="Doc style: google" src="https://img.shields.io/badge/%20style-google-3666d6.svg">
-    </a>
-    <a href="https://github.com/astral-sh/ruff">
-        <img alt="Ruff" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json">
-    </a>
-    <a href="https://github.com/guilatrova/tryceratops">
-        <img alt="try/except style: tryceratops" src="https://img.shields.io/badge/try%2Fexcept%20style-tryceratops%20%F0%9F%A6%96%E2%9C%A8-black">
-    </a>
+    <a href="https://github.com/astral-sh/ruff"><img alt="Ruff" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json"></a>
+    <a href="https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings"><img alt="Doc style: google" src="https://img.shields.io/badge/docstyle-google-3666d6"></a>
+    <a href="https://scorecard.dev/viewer/?uri=github.com/durandtibo/invoke-tasklib"><img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/durandtibo/invoke-tasklib?label=openssf%20scorecard"></a>
     <br/>
-    <a href="https://pypi.org/project/invoke-tasklib/">
-        <img alt="PYPI version" src="https://img.shields.io/pypi/v/invoke-tasklib">
-    </a>
-    <a href="https://pypi.org/project/invoke-tasklib/">
-        <img alt="Python" src="https://img.shields.io/pypi/pyversions/invoke-tasklib.svg">
-    </a>
-    <a href="https://opensource.org/licenses/BSD-3-Clause">
-        <img alt="BSD-3-Clause" src="https://img.shields.io/pypi/l/invoke-tasklib">
-    </a>
-    <br/>
-    <a href="https://pepy.tech/project/invoke-tasklib">
-        <img alt="Downloads" src="https://static.pepy.tech/badge/invoke-tasklib">
-    </a>
-    <a href="https://pepy.tech/project/invoke-tasklib">
-        <img alt="Monthly downloads" src="https://static.pepy.tech/badge/invoke-tasklib/month">
-    </a>
-    <a href="https://github.com/durandtibo/invoke-tasklib/stargazers">
-        <img alt="GitHub stars" src="https://img.shields.io/github/stars/durandtibo/invoke-tasklib">
-    </a>
-    <br/>
-    <a href="https://www.bestpractices.dev/projects/14387">
-        <img src="https://www.bestpractices.dev/projects/14387/badge">
-    </a>
-    <a href="https://scorecard.dev/viewer/?uri=github.com/durandtibo/invoke-tasklib">
-        <img alt="OpenSSF Scorecard" src="https://img.shields.io/badge/dynamic/json?url=https://api.scorecard.dev/projects/github.com/durandtibo/invoke-tasklib&label=openssf%20scorecard&query=score">
-    </a>
+    <a href="https://pepy.tech/project/invoke-tasklib"><img alt="Downloads" src="https://img.shields.io/pepy/dt/invoke-tasklib"></a>
+    <a href="https://pepy.tech/project/invoke-tasklib"><img alt="Monthly downloads" src="https://img.shields.io/pepy/dm/invoke-tasklib"></a>
+    <a href="https://github.com/durandtibo/invoke-tasklib/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/durandtibo/invoke-tasklib?logo=github"></a>
 </p>
 
 Reusable [Invoke](https://www.pyinvoke.org/) tasks shared across Python
