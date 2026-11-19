@@ -23,10 +23,10 @@ invoke env.create-venv
 Creates (or recreates) a `.venv` with `uv venv`, using the `package.python_version` from the
 [resolved config](config.md) if it is set (`--python`), and the version that `uv` chooses otherwise
 (the `.python-version` file, then `requires-python`), and then runs
-[`env.install`](#installing-dependencies) (`uv sync`), so the environment has `invoke` within the bounds of the project and the packages that `tasks.py`
-imports, such as `invoke-tasklib`. The task is run with `invoke`, so `invoke` must already be
-available (for example through `uv tool install invoke`) to run it. Use `env.install` to choose
-the dependency groups.
+[`env.install`](#installing-dependencies) (`uv sync`), so the environment has `invoke` within the
+bounds of the project and the packages that `tasks.py` imports, such as `invoke-tasklib`. The task
+is run with `invoke`, so `invoke` must already be available (for example through
+`uv tool install invoke`) to run it. Use `env.install` to choose the dependency groups.
 
 <!-- prettier-ignore -->
 !!! warning
@@ -52,8 +52,9 @@ file.
 | `--optional-deps` | on                               | `--all-extras`                                  |
 | `--groups`        | `groups.install` (default `dev`) | `--group <name>` for each comma-separated group |
 
-`--groups` takes a comma-separated list of [dependency groups](https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups)
-to install, e.g. `dev,docs`. A group listed twice is installed once. Pass an empty string to skip
+`--groups` takes a comma-separated list of
+[dependency groups](https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups) to
+install, e.g. `dev,docs`. A group listed twice is installed once. Pass an empty string to skip
 installing any group.
 
 Disable the on-by-default optional deps, or override the groups, with:
@@ -106,19 +107,20 @@ invoke env.check-tools
 ```
 
 `env.check-tools` gives a single view of the tools that the tasks run: the programs (`uv`, `uvx`,
-`git`, `ruff`, `ty`, `pyright`, `mypy`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`, `shfmt`,
-`mkdocs`, `mike`) and the Python modules of the interpreter (`pytest`, `coverage`, `xdoctest`,
-`pytest_timeout`, `pytest_cov`, `pytest_benchmark`). Each tool has one line, with its path when it
-is available:
+`git`, `ruff`, `ty`, `pyright`, `mypy`, `docformatter`, `codespell`, `pre-commit`, `shellcheck`,
+`shfmt`, `mkdocs`, `mike`) and the Python modules of the interpreter (`pytest`, `coverage`,
+`xdoctest`, `pytest_timeout`, `pytest_cov`, `pytest_benchmark`). Each tool has one line, with its
+path when it is available:
 
 ```text
 ✅ ruff: /project/.venv/bin/ruff
 ❌ 'shfmt' was not found on the PATH or next to the Python interpreter. Install shfmt with your system package manager, ...
 ```
 
-The tools are sorted by name. All the tools are listed, so one run shows everything that is missing. The task does not read the
-config, so it can be run before `invoke.yaml` is set up. It exits with the code 127 if a tool is
-missing, so it can also gate a CI job. It does not install anything: see `env.install`.
+The tools are sorted by name. All the tools are listed, so one run shows everything that is
+missing. The task does not read the config, so it can be run before `invoke.yaml` is set up. It
+exits with the code 127 if a tool is missing, so it can also gate a CI job. It does not install
+anything: see `env.install`.
 
 ## See Also
 

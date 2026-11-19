@@ -11,18 +11,18 @@ and the future state weighs more than the past one.
 The previous rounds removed the duplicated tables, split the support modules and wrote the contract.
 What is left is of another kind. The package still builds a command as a **string and parses it
 back** to find the program, still lists the steps of a composite in **four places**, still catches
-the errors of a step with a **hand-written list** that misses some, and still starts a **subprocess**
-only to call a function. Each of these is small; together they are most of the rules that a
-maintainer has to remember. The target removes them instead of documenting them. It adds no task, no
-dependency and no option.
+the errors of a step with a **hand-written list** that misses some, and still starts
+a **subprocess** only to call a function. Each of these is small; together they are most of the
+rules that a maintainer has to remember. The target removes them instead of documenting them. It
+adds no task, no dependency and no option.
 
 **Evidence labels.** **[verified]** means reproduced by running code (the `.venv` tools, or a
 throwaway project in the scratchpad, outside the repository). **[reading]** means found by reading
 the source and not run. Line counts are `wc -l` of the files; the size of a change is an estimate
 and is labelled as such.
 
-**What was not changed.** No source file or test was changed to write this document. `release.publish`,
-`doc.publish-*`, the workflows and CI were not run or looked at.
+**What was not changed.** No source file or test was changed to write this document.
+`release.publish`, `doc.publish-*`, the workflows and CI were not run or looked at.
 
 **Baseline on `main`** [verified]: `pytest tests -q` 3126 passed, 13 skipped (the `mike` tests: the
 `docs` group is not installed here); `ruff check src tests` and `ty check` clean. `import
@@ -37,8 +37,8 @@ import graph and the module discovery 825, `__init__.py` 248); tests: 14,816 lin
    system, no new option, no new abstraction layer.
 2. **Breaking changes are allowed, in one release.** They ship together in `0.1.0` and are listed in
    its notes. The task names, the task options, the `make_ns` signature and the **keys** of
-   `invoke.yaml` do not change, so a project's `tasks.py` and `invoke.yaml` keep working. What breaks
-   is the Python API of `runner` and `tools` (section 4) and one moment of validation (D1).
+   `invoke.yaml` do not change, so a project's `tasks.py` and `invoke.yaml` keep working. What
+   breaks is the Python API of `runner` and `tools` (section 4) and one moment of validation (D1).
 3. **Start-up cost is a floor.** `import invoke_tasklib` stays below 100 ms (M4). Nothing in the
    target imports more than today; the target imports `shlex` in fewer modules, not more.
 4. **One convention per concern**, as in `CLAUDE.md`: read the config with `load_config`, run a
@@ -108,10 +108,10 @@ rejected for an integer, the working-directory guard), the exit-code convention,
 the tools of a composite and `--keep-going`, the ASCII fallback of `output.say`, `release.build`
 verifying the artifact with `python -I`, the scrubbed credentials of `uv publish`, `clean` refusing
 paths outside the project and tracked directories, the single `step` helper, the missing-path rule
-and `require_path`, `imports.check-cycles` reading `paths.src`, `run_composite` shared by `check.all`
-and `fix.all`, one `TOOLS` registry, one `_Version` in `doc.py`, one reader of the private Invoke
-attributes (`config/_invoke.py`), one list of excluded directories (`_files`), the integration test
-that a fix leads to a passing check, and 100% coverage.
+and `require_path`, `imports.check-cycles` reading `paths.src`, `run_composite` shared by
+`check.all` and `fix.all`, one `TOOLS` registry, one `_Version` in `doc.py`, one reader of the
+private Invoke attributes (`config/_invoke.py`), one list of excluded directories (`_files`), the
+integration test that a fix leads to a passing check, and 100% coverage.
 
 ## 3. Architecture
 
@@ -266,8 +266,8 @@ so the step only adds the test.
 
 - The 21 names of F5 become private (`_DIRS`, `_VENV_DIR`, `_TWINE_REQUIREMENT`, `_PYTEST_HELP`,
   `_COMMANDS`, `_STEPS`, ...). `NAMESPACE` stays. The two version ranges that the user guide quotes
-  (`twine>=6.1,<7`, `pip-audit>=2.10,<3`) stay in the guide as text; a test already compares them with the code and
-  is updated to read the private name.
+  (`twine>=6.1,<7`, `pip-audit>=2.10,<3`) stay in the guide as text; a test already compares them
+  with the code and is updated to read the private name.
 - The architecture test of M2 loops over the 13 task modules: the public names (no leading
   underscore, defined in the module, not imported) are the `Task` objects and `NAMESPACE`.
 - `docs/refs/` stops rendering the constants. Nothing else in the repository imports them except
@@ -410,7 +410,8 @@ completes them). The alternative is to keep `CHECK_STEPS`/`FIX_STEPS` in `config
 make `DEFAULT_*` explicit tuples instead of slices, and export the names from `config`; that keeps
 the editor completion and the early failure at the price of the four-place recipe.
 
-**Decided: the step names are checked by the composite, before any step runs.** The plan keeps `_STEPS` as the only list (steps 6 and 10 of section 7); the `enum` of the JSON schema is dropped.
+**Decided: the step names are checked by the composite, before any step runs.** The plan keeps
+`_STEPS` as the only list (steps 6 and 10 of section 7); the `enum` of the JSON schema is dropped.
 
 **D2. Does `run` keep accepting a string?** _Recommended: no, a `str` raises `TypeError`._ Keeping
 both would keep `_strip_assignments`, the builtins list and the quoting rule by discipline, which is
@@ -418,11 +419,13 @@ the point of F1. The alpha version is the time to break it.
 
 **Decided: `run` rejects a string** with a `TypeError` (step 10).
 
-**D3. What replaces `command -v python`?** _Recommended: `say(c, shutil.which("python") or "python: not found")`._
-The alternative is to delete the line: `uv python find` right above it prints the interpreter that
-uv would use, which is the useful answer; the `PATH` one is only informative.
+**D3. What replaces `command -v python`?** _Recommended:
+`say(c, shutil.which("python") or "python: not found")`._ The alternative is to delete the line:
+`uv python find` right above it prints the interpreter that uv would use, which is the useful
+answer; the `PATH` one is only informative.
 
-**Decided: `env.show-python-config` prints `shutil.which("python")`** with `say` instead of `command -v python` (step 9).
+**Decided: `env.show-python-config` prints `shutil.which("python")`** with `say` instead of
+`command -v python` (step 9).
 
 **D4. Is the worker of `check-isolated` worth keeping?** _Recommended: no (3.5)._ The one reason to
 keep a process boundary would be a `sys.path` that differs from the project's; E5 shows that it does
@@ -451,8 +454,8 @@ Nobody asked for a public `clean.DIRS`; a name becomes public when the user guid
   the version and `mike` parsing inside `doc.py` and the credential lookup inside `release.py`
   (private to one task each); `load_config` called by each task (it is cheap: no I/O but one
   `is_dir`); the module name `show` for the namespace `config`.
-- **Not reviewed.** The workflows, the 3,126 tests beyond their rules in `CLAUDE.md`, `docs/docs/uguide/`
-  beyond the passages named above, `dev/`, and `.make/`.
+- **Not reviewed.** The workflows, the 3,126 tests beyond their rules in `CLAUDE.md`,
+  `docs/docs/uguide/` beyond the passages named above, `dev/`, and `.make/`.
 - **Not run.** `release.publish`, `doc.publish-dev`, `doc.publish-latest`, `env.create-venv`,
   `env.update`, and the 13 skipped `mike` tests.
 

@@ -30,18 +30,20 @@ Removes, if present, at the repository root:
   directory of the project. The directories of the environments (`.venv`, `.git`, `node_modules`),
   of the caches of the tools and of the build outputs (`build`, `dist`, `site`, `htmlcov`) are never
   walked into: a `__pycache__` inside them goes with its parent, or is not removed.
-- Files: `.coverage`, `.coverage.*` (parallel coverage data), `coverage.xml`, and the XML, JSON or LCOV report of
-  `test.cov_reports` when it is written elsewhere (`xml:<path>`, or `output` of `[tool.coverage.xml]`)
+- Files: `.coverage`, `.coverage.*` (parallel coverage data), `coverage.xml`, and the XML,
+  JSON or LCOV report of `test.cov_reports` when it is written elsewhere (`xml:<path>`, or
+  `output` of `[tool.coverage.xml]`)
 
 A top-level directory that contains files tracked by git (for example a `build/` directory with
-scripts that are committed) is kept, and the task says so (`⏭️  Keeping build: it contains files
-tracked by git`). A coverage file that git tracks (`.coverage`, `coverage.xml`, ...) is kept too (`⏭️  Keeping
-coverage.xml: it is tracked by git`). Outside a git repository, or without `git`, nothing counts as tracked. The caches
-(`__pycache__`, `*.egg-info`) and the glob-matched files are not looked up.
+scripts that are committed) is kept, and the task says so
+(`⏭️  Keeping build: it contains files tracked by git`). A coverage file that git tracks
+(`.coverage`, `coverage.xml`, ...) is kept too (`⏭️  Keeping coverage.xml: it is tracked by git`).
+Outside a git repository, or without `git`, nothing counts as tracked. The caches (`__pycache__`,
+`*.egg-info`) and the glob-matched files are not looked up.
 
 A directory outside the project is never removed: if the `site_dir` of the MkDocs config is an
-absolute path, contains `..` or points to the project root, the task says `⏭️  Not removing ...: it is
-outside the project` and goes on.
+absolute path, contains `..` or points to the project root, the task says
+`⏭️  Not removing ...: it is outside the project` and goes on.
 
 Nothing is removed if the corresponding directory or file doesn't exist, so `clean` is safe to run
 repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a

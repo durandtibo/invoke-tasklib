@@ -4,13 +4,15 @@
 
 - Use the virtual environment in `.venv`: `.venv/bin/python`, `.venv/bin/pytest`, `.venv/bin/ruff`.
   There is no `python` on the `PATH`.
-- Lint and format before committing: `.venv/bin/ruff check src tests` and `.venv/bin/ruff format src tests`.
-  Fix the issues raised by ruff. Ignoring an issue (`noqa`, a changed rule set) is not fixing it.
+- Lint and format before committing: `.venv/bin/ruff check src tests` and
+  `.venv/bin/ruff format src tests`. Fix the issues raised by ruff. Ignoring an issue (`noqa`, a
+  changed rule set) is not fixing it.
 - Type check with `.venv/bin/ty check`. Fix the issues raised by ty. Ignoring an issue
   (`type: ignore`, `ty: ignore`, a cast that hides the problem) is not fixing it.
-- Run the unit tests of the modules you changed (for example `.venv/bin/pytest tests/unit/test_lint.py -q`),
-  then the whole suite (`.venv/bin/pytest tests -q`) and the doctests (`.venv/bin/inv test.doctest`).
-  All the tests pass on `main`; if one fails, check with `git stash` before blaming your change.
+- Run the unit tests of the modules you changed (for example
+  `.venv/bin/pytest tests/unit/test_lint.py -q`), then the whole suite (`.venv/bin/pytest tests -q`)
+  and the doctests (`.venv/bin/inv test.doctest`). All the tests pass on `main`; if one fails, check
+  with `git stash` before blaming your change.
 
 ## Workflow
 
@@ -44,25 +46,24 @@
 
 - The source is in `src/invoke_tasklib/`: one module per task namespace (`formatting.py`,
   `lint.py`, `typecheck.py`, `testing.py`, `env.py`, `release.py`, `doc.py`, `security.py`,
-  `imports.py`, `clean.py`, `check.py`, `fix.py`, `show.py`), plus `config/` (config
-  resolution: `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`, `_invoke.py` (the only reader of the private
-  attributes of the Invoke config), `_resolve.py` with
-  `get_config` and `load_config`, `__init__.py` that re-exports them, and `__main__.py` that
-  prints the JSON schema), `runner.py` (the command runner), `tools.py` (tool lookup and install
-  hints) and `output.py` (progress messages). Six private modules support the tasks: `_steps.py`
-  (the step runner shared by `check.py` and `fix.py`: `run_composite` selects the steps,
-  looks up their tools and runs them), `_files.py` (the file lookup of the format and
-  test tasks), `_pyproject.py` (the reader of `pyproject.toml`), `_coverage.py` (where the
-  coverage reports are written), `_graph.py` (the static import graph used by `imports.check-cycles`) and
-  `_discover.py` (the module listing run in a subprocess by `imports.check-isolated`). The
-  namespace of each module is its `NAMESPACE` constant, and the modules are registered in
-  `_MODULES` of `src/invoke_tasklib/__init__.py`.
+  `imports.py`, `clean.py`, `check.py`, `fix.py`, `show.py`), plus `config/` (config resolution:
+  `_schema.py`, `_validate.py`, `_derive.py`, `_constants.py`, `_invoke.py` (the only reader of the
+  private attributes of the Invoke config), `_resolve.py` with `get_config` and `load_config`,
+  `__init__.py` that re-exports them, and `__main__.py` that prints the JSON schema), `runner.py`
+  (the command runner), `tools.py` (tool lookup and install hints) and `output.py` (progress
+  messages). Six private modules support the tasks: `_steps.py` (the step runner shared by
+  `check.py` and `fix.py`: `run_composite` selects the steps, looks up their tools and runs them),
+  `_files.py` (the file lookup of the format and test tasks), `_pyproject.py` (the reader of
+  `pyproject.toml`), `_coverage.py` (where the coverage reports are written), `_graph.py` (the
+  static import graph used by `imports.check-cycles`) and `_discover.py` (the module listing run in
+  a subprocess by `imports.check-isolated`). The namespace of each module is its `NAMESPACE`
+  constant, and the modules are registered in `_MODULES` of `src/invoke_tasklib/__init__.py`.
 - Match the surrounding code: comment density, naming, docstring style (Google style with
   `Args:`, `Returns:`, `Raises:` and, where useful, an `Example usage:` with a `pycon` block that
   runs as a doctest).
-- `inv test.doctest` runs every `>>>` example of every tracked markdown file, `review/` included. In a
-  review (`review/*.md`), show an example that is not meant to pass (a bug that was fixed, a failing
-  command) in a `text` block without the `>>>` prompt, not in a `pycon` block.
+- `inv test.doctest` runs every `>>>` example of every tracked markdown file, `review/` included. In
+  a review (`review/*.md`), show an example that is not meant to pass (a bug that was fixed, a
+  failing command) in a `text` block without the `>>>` prompt, not in a `pycon` block.
 - Follow the current style of the repository in everything you add (source, tests, docs, commit
   messages, PR descriptions). Look at a few neighbouring files first, and do not introduce a new
   convention or reformat code you do not otherwise change.
@@ -70,7 +71,8 @@
   `c.config` directly. Run external commands with `invoke_tasklib.runner.run` and build them with
   `build_command` (it quotes the arguments), and print progress with `invoke_tasklib.output.say`;
   do not call `c.run` or `print` in a task.
-- Validate the `invoke.yaml` values in `config/_validate.py`, next to the existing `_validate_*` helpers.
+- Validate the `invoke.yaml` values in `config/_validate.py`, next to the
+  existing `_validate_*` helpers.
 - Keep new task options keyword-only where the signature allows it, and give each option a `help`
   entry in `@task`.
 - Keep the read-only/mutating naming: `check_<target>` never modifies a file and `fix_<target>`
