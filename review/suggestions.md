@@ -104,8 +104,8 @@ $ env PATH=/usr/bin:/bin:<uv dir> .venv/bin/inv format.check-python
 
 `ruff` is installed, in the same `bin` directory as the running interpreter. The two rules disagree
 (a module is found, a program of the same environment is not), the hint tells the user to install
-what is installed, and `CLAUDE.md` itself asks agents to call `.venv/bin/...` directly, where this is
-the normal case. `uv run inv ...` (what the CI does) hides it.
+what is installed, and `CLAUDE.md` itself asks agents to call `.venv/bin/...` directly, where this
+is the normal case. `uv run inv ...` (what the CI does) hides it.
 
 Suggestion: add `Path(sys.executable).parent` to the front of the `PATH` used by the lookups
 (`shutil.which(name, path=...)` in `find_tool` and `check_program`) and by the commands
@@ -169,9 +169,9 @@ the XML/JSON/LCOV paths from `cov_reports`, falling back to `pyproject.toml`, th
 
 ### 1.6 `check.all` never checks the format of the shell scripts — low **[reading]**
 
-`format.check-shell` runs `shellcheck` only and `format.fix-shell` runs `shfmt -l -w`. So the `shell`
-step of `fix.all` can rewrite files that the `shell` step of `check.all` accepted, which breaks the
-rule of `CLAUDE.md` that `check_<target>` and `fix_<target>` are a pair. Suggestion: add
+`format.check-shell` runs `shellcheck` only and `format.fix-shell` runs `shfmt -l -w`. So the
+`shell` step of `fix.all` can rewrite files that the `shell` step of `check.all` accepted, which
+breaks the rule of `CLAUDE.md` that `check_<target>` and `fix_<target>` are a pair. Suggestion: add
 `format.check-shell-format` (`shfmt -d`, which exits non-zero on a diff) or give `check-shell` an
 `--format` flag, and make the `check` step run both. Document the programs in `env.TOOL_PROGRAMS`
 (`shfmt` is already there).
@@ -223,24 +223,26 @@ A program or module is described in `check.STEPS` / `fix.STEPS` (`programs`, `mo
 keep them in line (the last review's 2.3 asked for that), but a new tool is still edited in five
 places, and 1.7 shows that they already drift (`pytest_benchmark`).
 
-Suggestion: one `Tool` record in `tools.py`: `Tool(name, kind="program"|"module", group=None,
-hint=None, plugin_options=())`, and one `TOOLS: dict[str, Tool]`. `hint`, `not_found_message`,
-`env.check-tools` (all of `TOOLS`) and `PLUGIN_OPTIONS` (derived) read it, and the steps keep naming
-the tools they need. The `STEPS` registries could also carry the step name, so `CHECK_STEPS` is
-`tuple(STEPS)`; the circular import (`config` cannot import `check`) is the reason it is not done, so
-keep the constants and the test, or validate `check.tasks` at use time (in `check.all_`) instead of in
-the config. That would also let a custom project register its own step.
+Suggestion: one `Tool` record in `tools.py`:
+`Tool(name, kind="program"|"module", group=None, hint=None, plugin_options=())`, and one
+`TOOLS: dict[str, Tool]`. `hint`, `not_found_message`, `env.check-tools` (all of `TOOLS`) and
+`PLUGIN_OPTIONS` (derived) read it, and the steps keep naming the tools they need. The `STEPS`
+registries could also carry the step name, so `CHECK_STEPS` is `tuple(STEPS)`; the circular import
+(`config` cannot import `check`) is the reason it is not done, so keep the constants and the test,
+or validate `check.tasks` at use time (in `check.all_`) instead of in the config. That would also
+let a custom project register its own step.
 
 ### 2.2 `report_failure` plus `say` is `step` written by hand — low **[reading]**
 
-Eight tasks write the same four lines: `with report_failure(c, "X..."):`, `say(c, "X...")`, the work,
-and `say(c, "✅ ...")` after the block. They are `testing.benchmark`, `testing.doctest_markdown`,
-`release.build`, `release.publish`, `doc.publish_dev`, `doc.publish_latest`, `env.create_venv` and
-`env.update`, plus `imports.check_isolated`. `output.step(c, start, done)` is the same thing with
-the start message written once and the done message inside the block. Make `done` optional
-(`build` has none) and use `step` everywhere: 25 lines fewer, one wording, and no task can forget
-the failure line. One catch: the done message of `doctest_markdown` and `publish` is computed from
-a value of the block (`len(files)`, `dry_run`), so build the message before the block.
+Eight tasks write the same four lines: `with report_failure(c, "X..."):`, `say(c, "X...")`, the
+work, and `say(c, "✅ ...")` after the block. They are `testing.benchmark`,
+`testing.doctest_markdown`, `release.build`, `release.publish`, `doc.publish_dev`,
+`doc.publish_latest`, `env.create_venv` and `env.update`, plus `imports.check_isolated`.
+`output.step(c, start, done)` is the same thing with the start message written once and the done
+message inside the block. Make `done` optional (`build` has none) and use `step` everywhere: 25
+lines fewer, one wording, and no task can forget the failure line. One catch: the done message of
+`doctest_markdown` and `publish` is computed from a value of the block (`len(files)`, `dry_run`), so
+build the message before the block.
 
 ### 2.3 Namespace names and `configuration.py` — low **[breaking]**
 
@@ -324,9 +326,9 @@ the number of skips is not above an expected value (`--strict-markers` does not 
 ### 3.3 No benchmarks, and `check.all` is not run for pull requests — medium **[verified]**
 
 Unchanged from the previous review: `tests/benchmarks/` does not exist, so the nightly
-`ci-benchmark.yaml` runs `inv test.benchmark`, prints `⏭️ No 'tests/benchmarks' directory` and passes.
-The job, the `pytest-benchmark` dependency and the task exist, and nothing is measured. The previous
-review (commit `80300bf`, section 4.4) has the full plan; the short version:
+`ci-benchmark.yaml` runs `inv test.benchmark`, prints `⏭️ No 'tests/benchmarks' directory` and
+passes. The job, the `pytest-benchmark` dependency and the task exist, and nothing is measured. The
+previous review (commit `80300bf`, section 4.4) has the full plan; the short version:
 
 - add `tests/benchmarks/` with `test_<area>_benchmark.py` files for the pure-Python hot paths:
   `_graph.import_graph` and `find_cycles` on generated graphs of 1,000 and 10,000 modules

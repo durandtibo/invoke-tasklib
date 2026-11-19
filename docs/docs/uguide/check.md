@@ -27,8 +27,9 @@ Runs the steps of `tasklib.check.tasks`, in that order, and stops at the first f
 | `imports`           | [`imports.check-cycles`](imports.md)   |
 | `unit`              | [`test.unit`](test.md)                 |
 
-Other steps can be added to the config (or run with `--only`): `doctest` ([`test.doctest`](test.md)),
-`shell` ([`format.check-shell`](format.md) and `format.check-shell-format`), `spelling` ([`lint.check-spelling`](lint.md)), `docs`
+Other steps can be added to the config (or run with `--only`): `doctest`
+([`test.doctest`](test.md)), `shell` ([`format.check-shell`](format.md) and
+`format.check-shell-format`), `spelling` ([`lint.check-spelling`](lint.md)), `docs`
 ([`doc.build`](doc.md)) and `audit` ([`security.audit`](security.md)). They are not in the default
 set because they need more tools (`shellcheck`, `shfmt`, `codespell`, `mkdocs`) or the network.
 
@@ -39,8 +40,8 @@ tasklib:
 ```
 
 None of them modifies a file. The exception is the `unit` step with `tasklib.check.cov: true`: it
-runs `test.unit --cov`, which generates the coverage reports and enforces `tasklib.test.cov_fail_under`
-(without it `check` never checks the threshold).
+runs `test.unit --cov`, which generates the coverage reports and enforces
+`tasklib.test.cov_fail_under` (without it `check` never checks the threshold).
 
 | Option         | Effect                                                                                 |
 | -------------- | -------------------------------------------------------------------------------------- |
@@ -54,10 +55,11 @@ invoke check --only lint,types
 invoke check --skip unit
 ```
 
-Before running anything, the task looks up the tools that the selected steps need and reports all the
-missing ones at once (exit code 127), so a missing `ty` is not discovered after the formatting has
-run. With `--keep-going`, only the steps that miss a tool are not run: they are reported as failed,
-with the missing tool as the reason. Run [`env.check-tools`](env.md) to see every tool of the tasks.
+Before running anything, the task looks up the tools that the selected steps need and reports all
+the missing ones at once (exit code 127), so a missing `ty` is not discovered after the
+formatting has run. With `--keep-going`, only the steps that miss a tool are not run: they are
+reported as failed, with the missing tool as the reason. Run [`env.check-tools`](env.md) to see
+every tool of the tasks.
 
 By default the task stops at the first failure, as the CI jobs do; use `--keep-going` locally to
 learn about all the problems in one run. A step that fails with an error of the code or of the

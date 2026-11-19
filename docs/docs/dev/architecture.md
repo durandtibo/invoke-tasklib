@@ -34,8 +34,8 @@ It:
   reads the environment variables as text).
 - Rejects unknown keys and validates the values (`package.python_version`, `package.import_name`,
   `groups.*`, `test.*`, `check.tasks`, `fix.tasks`).
-- Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for the
-  `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
+- Derives unset `paths.*` entries from `package.import_name` (for `paths.src`) or `paths.tests` (for
+  the `unit_tests`/`integration_tests`/`functional_tests`/`benchmarks` entries).
 - Raises `ValueError` if `package.name` is missing, since nearly every task needs it, or if a
   value is invalid. Tasks call `load_config`, which turns the `ValueError` into an `Exit`.
 
@@ -124,21 +124,22 @@ and six private ones):
 (`clean`, `format`, `test.doctest-markdown`) never enter. It is the union of three named sets:
 `CACHE_DIRS` (`.pytest_cache`, `.ruff_cache`, `.mypy_cache`, `.tox`, `.nox`, `.hypothesis`,
 `.benchmarks`, `.coverage_html`), `OUTPUT_DIRS` (`build`, `dist`, `site`, `htmlcov`) and
-`ENVIRONMENT_DIRS` (`.git`, `.venv`, `node_modules`). `clean._DIRS` derives from `CACHE_DIRS` and the
-outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format
-and test tasks find their files with `_files.project_files`: in a git work tree they ask `git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and
-a tracked `build/run.sh` is checked (only the caches and the environments are left out);
-outside a work tree they walk the tree and skip every directory of the list. `clean` keeps its own
-walk, because the `__pycache__` directories it removes are ignored by git.
+`ENVIRONMENT_DIRS` (`.git`, `.venv`, `node_modules`). `clean._DIRS` derives from `CACHE_DIRS` and
+the outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format
+and test tasks find their files with `_files.project_files`: in a git work tree they ask
+`git ls-files --cached --others --exclude-standard`, so `.gitignore` is the policy and a tracked
+`build/run.sh` is checked (only the caches and the environments are left out); outside a work tree
+they walk the tree and skip every directory of the list. `clean` keeps its own walk, because the
+`__pycache__` directories it removes are ignored by git.
 
 ### Adding a step to `check.all` or `fix.all`
 
-A step is a `Step(task, programs, modules, default)` of `_steps.py` (the task, the programs it looks up
-on the `PATH`, the Python modules it imports, and whether it runs when `check.tasks` or `fix.tasks`
-is not set). `modules` is a tuple, or a function of the config that returns one, for a step whose
-modules depend on an option (`check._unit_modules`). `_STEPS` is the only list of the step names, in
-the order of the run; the composite checks the names of the config, `--only` and `--skip` against it
-before any step runs. To add one:
+A step is a `Step(task, programs, modules, default)` of `_steps.py` (the task, the programs it looks
+up on the `PATH`, the Python modules it imports, and whether it runs when `check.tasks` or
+`fix.tasks` is not set). `modules` is a tuple, or a function of the config that returns one, for a
+step whose modules depend on an option (`check._unit_modules`). `_STEPS` is the only list of the
+step names, in the order of the run; the composite checks the names of the config, `--only` and
+`--skip` against it before any step runs. To add one:
 
 1. Write the task in its module, and add `"name": Step(task, programs=..., modules=...)` to
    `check._STEPS` (or `fix._STEPS`), at the place where it must run. Pass `default=False` if it must
@@ -152,18 +153,17 @@ before any step runs. To add one:
 
 `invoke_tasklib/__init__.py` has `make_ns(*, exclude=(), include=None)`, which builds a new
 `Collection` by adding each task module (`Collection.from_module(module, name=...)`) as a
-sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the
-tasks of `include` when it is set. The modules whose names would shadow the standard library or a
-builtin (`format`, `types`, `test`) are named `formatting`, `typecheck` and `testing`; the
-namespace name of each module is its `NAMESPACE` constant (`"format"` in `formatting.py`), which
-`_MODULES` of `__init__.py` reads, not the module name; a project that builds its own collection passes
+sub-collection named after the module, leaving out the tasks of `exclude` and keeping only the tasks
+of `include` when it is set. The modules whose names would shadow the standard library or a builtin
+(`format`, `types`, `test`) are named `formatting`, `typecheck` and `testing`; the namespace name of
+each module is its `NAMESPACE` constant (`"format"` in `formatting.py`), which `_MODULES` of
+`__init__.py` reads, not the module name; a project that builds its own collection passes
 `name=module.NAMESPACE` to `Collection.from_module`.
 
-This is what gives consuming projects `format.check-python`, `test.unit`, etc. via
-`ns = make_ns()` in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns
-a new collection, so a project can add its own tasks without affecting other importers. (The
-module-level `invoke_tasklib.ns`, one collection shared by every importer, was removed: use
-`ns = make_ns()`.)
+This is what gives consuming projects `format.check-python`, `test.unit`, etc. via `ns = make_ns()`
+in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns a new
+collection, so a project can add its own tasks without affecting other importers. (The module-level
+`invoke_tasklib.ns`, one collection shared by every importer, was removed: use `ns = make_ns()`.)
 
 ## Layers
 
@@ -235,13 +235,13 @@ echoes the command and executes it with c.run (pty only on a terminal)
 
 ### Why a Shared `load_config` Instead of Per-Task Config?
 
-**Rationale**: A single resolution function keeps defaults and the validation of the config in one place, and
-guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.check` agree on
-`package.name`).
+**Rationale**: A single resolution function keeps defaults and the validation of the config in one
+place, and guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.check`
+agree on `package.name`).
 
 **Trade-off**: Every task pays the (cheap) cost of re-resolving config on each call, rather than
-resolving it once. This is negligible since `load_config` does no I/O beyond reading `c.config` and, for the defaults
-that come from the project, whether the source directory exists.
+resolving it once. This is negligible since `load_config` does no I/O beyond reading `c.config` and,
+for the defaults that come from the project, whether the source directory exists.
 
 ### Why `check_<target>`/`fix_<target>` Naming?
 
@@ -258,17 +258,18 @@ time, and attribute access reads better than nested keys, without requiring a ru
 validation dependency.
 
 **Trade-off**: The dataclasses don't validate values on construction; the validation is done by
-`get_config` (e.g. the `package.name` and `package.python_version` checks). It runs when a task starts, not when the collection
-is loaded, because the `invoke.yaml` values are only known once Invoke has built the context.
+`get_config` (e.g. the `package.name` and `package.python_version` checks). It runs when a task
+starts, not when the collection is loaded, because the `invoke.yaml` values are only known once
+Invoke has built the context.
 
 ## Testing Strategy
 
 Tests use `invoke.context.MockContext`, which records every `c.run(...)` call (made by
-`runner.run`) without executing it. This lets tests assert on the exact shell command a task would run, without depending on
-`ruff`, `pytest`, `uv`, etc. being installed or configured in the test environment. The unit
-tests also patch `shutil.which` (an autouse fixture in `tests/unit/conftest.py`) so that the check
-of the `PATH` done by `invoke_tasklib.tools.check_program` (called by `runner.run`) passes on any
-machine.
+`runner.run`) without executing it. This lets tests assert on the exact shell command a task would
+run, without depending on `ruff`, `pytest`, `uv`, etc. being installed or configured in the test
+environment. The unit tests also patch `shutil.which` (an autouse fixture in
+`tests/unit/conftest.py`) so that the check of the `PATH` done by
+`invoke_tasklib.tools.check_program` (called by `runner.run`) passes on any machine.
 
 ## Future Directions
 

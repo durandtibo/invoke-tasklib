@@ -27,12 +27,12 @@ of `tasks.py`, as in `cd <project root> && inv check.all`, or use the `make` tar
 ## `'ruff' was not found on the PATH or next to the Python interpreter`
 
 Before running a command, the tasks check that its program (`ruff`, `ty`, `uv`, `mike`, ...) is on
-the `PATH` or in the directory of the Python interpreter that runs `invoke` (so `.venv/bin/inv` finds
-the programs of `.venv/bin` without an activation), and exit with code 127 if it is not. The commands
-run with that directory first on their `PATH`. Install the project tools with `invoke env.install`
-(the `dev` group has the linters and test tools, the `docs` group has `mike`). Run
-`invoke env.check-tools` to list every missing tool at once; `invoke check` does the same for the
-steps it is going to run.
+the `PATH` or in the directory of the Python interpreter that runs `invoke` (so `.venv/bin/inv`
+finds the programs of `.venv/bin` without an activation), and exit with code 127 if it is not. The
+commands run with that directory first on their `PATH`. Install the project tools with
+`invoke env.install` (the `dev` group has the linters and test tools, the `docs` group has `mike`).
+Run `invoke env.check-tools` to list every missing tool at once; `invoke check` does the same for
+the steps it is going to run.
 
 The hint depends on the program: `uv` and `uvx` point to the installation page of `uv`
 (`env.install` itself needs it), `git`, `shellcheck` and `shfmt` to the system package manager, and
@@ -52,8 +52,9 @@ The module of `python -m <module>` is checked too (for example `pytest`), and is
 
 The pytest plugins of the options are checked as well: `--xdoctest` needs `xdoctest`, `--timeout`
 needs `pytest-timeout`, `--cov*` (also `--no-cov`) needs `pytest-cov` and `--benchmark-*` needs
-`pytest-benchmark`. A missing plugin is reported as `The option --xdoctest needs the pytest plugin 'xdoctest'` with the
-command that adds it, instead of pytest's `unrecognized arguments`.
+`pytest-benchmark`. A missing plugin is reported as
+`The option --xdoctest needs the pytest plugin 'xdoctest'` with the command that adds it, instead of
+pytest's `unrecognized arguments`.
 
 ## `invoke: command not found` after installing
 

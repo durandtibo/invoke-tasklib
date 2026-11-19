@@ -57,8 +57,9 @@ It starts one interpreter per module, so it is slower than `imports.check-cycles
 with heavy imports; up to 8 interpreters run at the same time.
 
 Unlike `imports.check-cycles`, the package that is checked is the one the interpreter finds: the
-installed (editable) package, or the one in the current directory for a flat layout. The task
-checks the source tree, not a built artifact: use `release.build` to check an artifact (it imports the package in isolated mode).
+installed (editable) package, or the one in the current directory for a flat layout. The task checks
+the source tree, not a built artifact: use `release.build` to check an artifact (it imports the
+package in isolated mode).
 
 The discovery runs in the Invoke process and imports nothing; only the imports start interpreters
 (one per module), so the task runs no command in the Invoke context. If the package cannot be found,
