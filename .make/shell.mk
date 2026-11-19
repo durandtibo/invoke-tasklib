@@ -37,16 +37,6 @@ install-bats:
 	fi
 	$(call show-tool,bats)
 
-.PHONY: install-bats
-install-bats:
-	@if ! command -v bats >/dev/null 2>&1; then \
-		echo "📦 bats not found, installing..."; \
-		case "$$(uname -s)" in \
-			Darwin) brew install bats-core ;; \
-			*) sudo apt-get update && sudo apt-get install -y bats ;; \
-		esac; \
-	fi
-
 .PHONY: install-shfmt
 install-shfmt:
 	@if ! command -v shfmt >/dev/null 2>&1; then \
