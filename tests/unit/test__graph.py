@@ -11,6 +11,7 @@ import pytest
 from invoke_tasklib._graph import (
     _components,
     _cycle_in,
+    _ImportCollector,
     _is_type_checking,
     _resolve,
     _source_path,
@@ -279,6 +280,118 @@ def test_import_graph_rejects_invalid_source() -> None:
         import_graph({"p.a": "def (:\n"})
 
 
+######################################
+#     Tests for _ImportCollector     #
+######################################
+
+
+def _collect(
+    source: str,
+    package: str = "pkg",
+    *,
+    lazy: bool = False,
+    type_checking: bool = False,
+) -> list[tuple[str, tuple[str, ...]]]:
+    collector = _ImportCollector(package, lazy=lazy, type_checking=type_checking)
+    collector.visit(ast.parse(source))
+    return collector.found
+
+
+def test_import_collector_starts_with_nothing_found() -> None:
+    assert _ImportCollector("pkg", lazy=False, type_checking=False).found == []
+
+
+def test_import_collector_visit_import_collects_each_alias() -> None:
+    assert _collect("import a.b, c as d") == [("a.b", ()), ("c", ())]
+
+
+def test_import_collector_visit_import_from_collects_the_names() -> None:
+    assert _collect("from a.b import c, d as e") == [("a.b", ("c", "d"))]
+
+
+def test_import_collector_visit_import_from_keeps_a_star() -> None:
+    assert _collect("from a import *") == [("a", ("*",))]
+
+
+def test_import_collector_visit_import_from_one_dot_is_the_package() -> None:
+    assert _collect("from . import x", package="pkg.sub") == [("pkg.sub", ("x",))]
+
+
+def test_import_collector_visit_import_from_one_dot_with_a_module() -> None:
+    assert _collect("from .m import x", package="pkg.sub") == [("pkg.sub.m", ("x",))]
+
+
+def test_import_collector_visit_import_from_two_dots_is_the_parent() -> None:
+    assert _collect("from .. import x", package="pkg.sub") == [("pkg", ("x",))]
+
+
+def test_import_collector_visit_import_from_beyond_the_top_level_is_rejected() -> None:
+    with pytest.raises(SyntaxError, match=r"attempted relative import beyond top-level package"):
+        _collect("from ... import x", package="pkg.sub")
+
+
+def test_import_collector_visit_import_from_relative_without_a_package_is_rejected() -> None:
+    with pytest.raises(SyntaxError, match=r"attempted relative import beyond top-level package"):
+        _collect("from . import x", package="")
+
+
+def test_import_collector_visit_import_from_error_has_the_filename_and_the_position() -> None:
+    collector = _ImportCollector("", lazy=False, type_checking=False, filename="mod.py")
+    with pytest.raises(SyntaxError, match=r"beyond top-level package") as info:
+        collector.visit(ast.parse("x = 1\nfrom . import y"))
+    assert (info.value.filename, info.value.lineno, info.value.offset) == ("mod.py", 2, 1)
+
+
+def test_import_collector_visit_if_skips_type_checking_by_default() -> None:
+    source = "if TYPE_CHECKING:\n    import a\n"
+    assert _collect(source) == []
+
+
+def test_import_collector_visit_if_collects_type_checking_when_asked() -> None:
+    source = "if TYPE_CHECKING:\n    import a\n"
+    assert _collect(source, type_checking=True) == [("a", ())]
+
+
+def test_import_collector_visit_if_keeps_the_else_of_type_checking() -> None:
+    source = "if TYPE_CHECKING:\n    import a\nelse:\n    import b\n"
+    assert _collect(source) == [("b", ())]
+
+
+def test_import_collector_visit_if_keeps_the_body_of_another_condition() -> None:
+    source = "if sys.version_info >= (3, 11):\n    import a\nelse:\n    import b\n"
+    assert _collect(source) == [("a", ()), ("b", ())]
+
+
+def test_import_collector_visit_function_def_skips_the_body_by_default() -> None:
+    assert _collect("def f():\n    import a\n") == []
+
+
+def test_import_collector_visit_function_def_collects_the_body_when_lazy() -> None:
+    assert _collect("def f():\n    import a\n", lazy=True) == [("a", ())]
+
+
+def test_import_collector_visit_async_function_def_skips_the_body_by_default() -> None:
+    assert _collect("async def f():\n    import a\n") == []
+
+
+def test_import_collector_visit_async_function_def_collects_the_body_when_lazy() -> None:
+    assert _collect("async def f():\n    import a\n", lazy=True) == [("a", ())]
+
+
+@pytest.mark.parametrize("lazy", [False, True])
+def test_import_collector_visit_lambda_collects_nothing(lazy: bool) -> None:
+    assert _collect("f = lambda: __import__('a')\n", lazy=lazy) == []
+
+
+def test_import_collector_visit_function_def_collects_a_nested_function_when_lazy() -> None:
+    source = "def f():\n    def g():\n        import a\n"
+    assert _collect(source, lazy=True) == [("a", ())]
+
+
+def test_import_collector_collects_a_module_level_import_when_not_lazy() -> None:
+    assert _collect("import a\ndef f():\n    import b\nimport c\n") == [("a", ()), ("c", ())]
+
+
 #############################
 #     Tests for _Tarjan     #
 #############################
@@ -289,6 +402,93 @@ def _tarjan_with_stack(stack: list[str]) -> _Tarjan:
     tarjan.stack = list(stack)
     tarjan.on_stack = set(stack)
     return tarjan
+
+
+def test_tarjan_starts_without_state() -> None:
+    tarjan = _Tarjan({"a": []})
+    assert (tarjan.index, tarjan.low, tarjan.stack, tarjan.on_stack, tarjan.found) == (
+        {},
+        {},
+        [],
+        set(),
+        [],
+    )
+
+
+def test_tarjan_advance_pushes_an_unvisited_child() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": []})
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    assert [node for node, _ in work] == ["a", "b"]
+
+
+def test_tarjan_advance_keeps_the_work_when_the_child_is_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["a"]})
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    tarjan._advance(work)
+    assert [node for node, _ in work] == ["a", "b"]
+
+
+def test_tarjan_advance_lowers_the_node_to_the_index_of_a_child_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["a"]})
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    tarjan._advance(work)
+    assert tarjan.low == {"a": 0, "b": 0}
+
+
+def test_tarjan_advance_pops_a_finished_node() -> None:
+    tarjan = _Tarjan({"a": []})
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    assert work == []
+
+
+def test_tarjan_advance_drops_the_component_of_a_single_node() -> None:
+    tarjan = _Tarjan({"a": []})
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    assert (tarjan.found, tarjan.stack, tarjan.on_stack) == ([], [], set())
+
+
+def test_tarjan_advance_lowers_the_parent_to_the_low_of_a_finished_child() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["c"], "c": ["a"]})
+    work = [tarjan._push("a")]
+    for _ in range(5):
+        tarjan._advance(work)
+    assert tarjan.low == {"a": 0, "b": 0, "c": 0}
+
+
+def test_tarjan_advance_keeps_the_nodes_of_an_open_component_on_the_stack() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["c"], "c": ["a"]})
+    work = [tarjan._push("a")]
+    for _ in range(5):
+        tarjan._advance(work)
+    assert tarjan.stack == ["a", "b", "c"]
+
+
+def test_tarjan_advance_closes_the_component_at_its_root() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": ["a"]})
+    work = [tarjan._push("a")]
+    for _ in range(4):
+        tarjan._advance(work)
+    assert (tarjan.found, work) == ([["a", "b"]], [])
+
+
+def test_tarjan_advance_skips_a_child_of_a_finished_component() -> None:
+    tarjan = _Tarjan({"a": ["b"], "b": []})
+    tarjan._advance([tarjan._push("b")])
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    assert work == []
+
+
+def test_tarjan_advance_visits_the_children_in_sorted_order() -> None:
+    tarjan = _Tarjan({"a": ["c", "b"], "b": [], "c": []})
+    work = [tarjan._push("a")]
+    tarjan._advance(work)
+    assert work[-1][0] == "b"
 
 
 def test_tarjan_push_puts_the_node_on_the_stack() -> None:

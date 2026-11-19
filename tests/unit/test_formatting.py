@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from invoke.config import Config
@@ -276,3 +277,81 @@ def test_shell_command_keeps_each_path_as_a_word() -> None:
 def test_shell_command_rejects_an_unclosed_quote() -> None:
     with pytest.raises(Exit, match="--paths"):
         formatting._shell_command(make_context(), ["shellcheck"], None, "'a.sh")
+
+
+#####################################
+#     Tests for _run_shell_tool     #
+#####################################
+
+
+_MESSAGES = ("🔎 Running mytool...", "✅ Done")
+
+
+def test_run_shell_tool_runs_the_tool_on_the_paths() -> None:
+    c = make_context()
+    formatting._run_shell_tool(c, ["mytool"], None, "a.sh", _MESSAGES)
+    assert commands(c) == ["mytool -- a.sh"]
+
+
+def test_run_shell_tool_puts_the_args_before_the_paths() -> None:
+    c = make_context()
+    formatting._run_shell_tool(c, ["mytool", "-d"], "-x", "a.sh 'b c.sh'", _MESSAGES)
+    assert commands(c) == ["mytool -d -x -- a.sh 'b c.sh'"]
+
+
+@pytest.mark.usefixtures("scripts")
+def test_run_shell_tool_searches_the_project_without_paths() -> None:
+    c = make_context()
+    formatting._run_shell_tool(c, ["mytool"], None, None, _MESSAGES)
+    assert commands(c) == ["mytool -- src/run.sh top.sh"]
+
+
+def test_run_shell_tool_says_the_start_and_the_done_messages(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    formatting._run_shell_tool(make_context(), ["mytool"], None, "a.sh", _MESSAGES)
+    assert capsys.readouterr().out == "🔎 Running mytool...\n✅ Done\n"
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_run_shell_tool_without_script_runs_nothing() -> None:
+    c = make_context()
+    formatting._run_shell_tool(c, ["mytool"], None, None, _MESSAGES)
+    assert commands(c) == []
+
+
+@pytest.mark.usefixtures("no_scripts")
+def test_run_shell_tool_without_script_says_it_skips_between_the_messages(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    formatting._run_shell_tool(make_context(), ["mytool"], None, None, _MESSAGES)
+    assert capsys.readouterr().out == (
+        "🔎 Running mytool...\n⏭️  No shell script found: skipping\n✅ Done\n"
+    )
+
+
+def test_run_shell_tool_reports_a_failure_of_the_tool(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context()
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        formatting._run_shell_tool(c, ["mytool"], None, "a.sh", _MESSAGES)
+    assert "❌ Failed: Running mytool" in capsys.readouterr().err
+
+
+def test_run_shell_tool_does_not_say_done_after_a_failure(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    c = make_context()
+    c.run = Mock(side_effect=Exit("boom", code=1))
+    with pytest.raises(Exit, match=r"boom"):
+        formatting._run_shell_tool(c, ["mytool"], None, "a.sh", _MESSAGES)
+    assert "✅ Done" not in capsys.readouterr().out
+
+
+def test_run_shell_tool_rejects_an_unclosed_quote_without_running_the_tool() -> None:
+    c = make_context()
+    with pytest.raises(Exit, match=r"--paths"):
+        formatting._run_shell_tool(c, ["mytool"], None, "'a.sh", _MESSAGES)
+    assert commands(c) == []

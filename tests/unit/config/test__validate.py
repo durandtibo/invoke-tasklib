@@ -5,7 +5,7 @@ from functools import partial
 import pytest
 
 from invoke_tasklib.config import SCHEMA
-from invoke_tasklib.config._constants import COV_REPORTS
+from invoke_tasklib.config._constants import COV_REPORTS, TYPE_CHECKERS
 from invoke_tasklib.config._validate import (
     _as_mapping,
     _as_names,
@@ -14,6 +14,7 @@ from invoke_tasklib.config._validate import (
     _is_cov_report,
     _normalize_groups,
     _validate_bool,
+    _validate_checker,
     _validate_cov_fail_under,
     _validate_cov_reports,
     _validate_import_name,
@@ -45,6 +46,30 @@ def test_as_mapping_accepts_an_empty_mapping() -> None:
 def test_as_mapping_rejects_other_types(value: object) -> None:
     with pytest.raises(ValueError, match=r"'tasklib\.paths' must be a mapping, got "):
         _as_mapping("tasklib.paths", value)
+
+
+#######################################
+#     Tests for _validate_checker     #
+#######################################
+
+
+@pytest.mark.parametrize("value", TYPE_CHECKERS)
+def test_validate_checker_accepts_a_type_checker(value: str) -> None:
+    assert _validate_checker("tasklib.types.checker", value) == value
+
+
+def test_validate_checker_message_names_the_key_and_lists_the_checkers() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"^'tasklib\.types\.checker' must be one of ty, pyright, mypy, got 'pytype'$",
+    ):
+        _validate_checker("tasklib.types.checker", "pytype")
+
+
+@pytest.mark.parametrize("value", ["", "TY", " ty", None, 3, ["ty"]])
+def test_validate_checker_rejects_other_values(value: object) -> None:
+    with pytest.raises(ValueError, match=r"must be one of ty, pyright, mypy"):
+        _validate_checker("tasklib.types.checker", value)
 
 
 ##############################################

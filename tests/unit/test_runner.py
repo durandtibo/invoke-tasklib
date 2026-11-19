@@ -331,19 +331,51 @@ def test_build_command_args_option_does_not_change_the_command() -> None:
 ################################
 
 
-def testsplit_args_none() -> None:
+def test_split_args_none() -> None:
     assert split_args(None, "--args") == []
 
 
-def testsplit_args_empty_string() -> None:
+def test_split_args_empty_string() -> None:
     assert split_args("", "--args") == []
 
 
-def testsplit_args_keeps_quoted_words_together() -> None:
+def test_split_args_keeps_quoted_words_together() -> None:
     assert split_args("-k 'a b' -x", "--args") == ["-k", "a b", "-x"]
 
 
-def testsplit_args_unclosed_quote_exit_code() -> None:
+def test_split_args_whitespace_only_has_no_words() -> None:
+    assert split_args("   ", "--args") == []
+
+
+def test_split_args_splits_on_any_run_of_spaces() -> None:
+    assert split_args("  -a   -b\t-c ", "--args") == ["-a", "-b", "-c"]
+
+
+def test_split_args_keeps_a_double_quoted_empty_word() -> None:
+    assert split_args('-k ""', "--args") == ["-k", ""]
+
+
+def test_split_args_unescapes_a_backslash_space() -> None:
+    assert split_args(r"a\ b c", "--args") == ["a b", "c"]
+
+
+def test_split_args_does_not_expand_a_glob_or_a_variable() -> None:
+    assert split_args("*.py $HOME", "--args") == ["*.py", "$HOME"]
+
+
+def test_split_args_error_names_the_option_and_the_value() -> None:
+    with pytest.raises(
+        Exit, match=r"^Cannot parse the value of --paths \(No closing quotation\): \"'a\"$"
+    ):
+        split_args("'a", "--paths")
+
+
+def test_split_args_a_trailing_backslash_exits() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --args \(No escaped character\)"):
+        split_args("a\\", "--args")
+
+
+def test_split_args_unclosed_quote_exit_code() -> None:
     with pytest.raises(Exit, match=r"Cannot parse the value of --args") as excinfo:
         split_args("'a", "--args")
     assert excinfo.value.code == 2
