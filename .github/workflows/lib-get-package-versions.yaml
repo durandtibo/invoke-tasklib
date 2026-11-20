@@ -1,9 +1,7 @@
 name: Get Package Versions
 
-# Reusable workflow that reads the invoke version bounds from
-# dev/config/package_versions.json and exposes them as a single output, so
-# ci-test-deps.yaml and nightly-test-package-dep.yaml don't each parse the
-# file themselves. Kept up to date by bot-generate-package-versions.yaml.
+# This reusable workflow reads package version configuration from a JSON file
+# and exposes it as an output for use in other workflows.
 #
 # Usage:
 #   jobs:
@@ -12,9 +10,10 @@ name: Get Package Versions
 #
 #     use-versions:
 #       needs: get-versions
-#       strategy:
-#         matrix:
-#           package-version: ${{ fromJson(needs.get-versions.outputs.package_versions).invoke }}
+#       runs-on: ubuntu-latest
+#       steps:
+#         - name: Use versions
+#           run: echo "${{ needs.get-versions.outputs.package_versions }}"
 
 on:
   workflow_call:
@@ -23,19 +22,20 @@ on:
         description: "JSON string containing all package versions from dev/config/package_versions.json"
         value: ${{ jobs.get-versions.outputs.package_versions }}
 
-  workflow_dispatch: # to trigger manually
+  workflow_dispatch: # Allows manual triggering for testing purposes
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   get-versions:
+    permissions:
+      contents: read
     runs-on: ubuntu-slim
     timeout-minutes: 2
     outputs:
       package_versions: ${{ steps.read-json.outputs.json-content }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Read and validate JSON file

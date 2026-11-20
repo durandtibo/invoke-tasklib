@@ -1,18 +1,19 @@
-# Composite check workflow. Maps to src/invoke_tasklib/check.py's all task
-# with its default steps, run the way a user of the library runs it: if a
-# step is renamed or a tool list is wrong, it fails here and not a day later
-# in the nightly job.
+# Composite check workflow.
+# Runs the `all` task of src/invoke_tasklib/check.py with its default steps,
+# the way a user of the library runs it: if a step is renamed or a tool list
+# is wrong, it fails here and not a day later in the nightly job.
 
 name: Check
 on:
   workflow_call:
   workflow_dispatch: # to trigger manually
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   check:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -20,8 +21,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
+        uses: durandtibo/setup-venv-uv-action@4445098aa662d3d72aa0455918bc46a091b2a7f8 # ratchet:durandtibo/setup-venv-uv-action@v0.3.1
 
+      # Run all the check steps, and report all the failures at the end
       - name: Run all the checks
         run: |
-          uv run inv check.all --keep-going
+          inv check.all --keep-going

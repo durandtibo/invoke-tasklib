@@ -1,8 +1,7 @@
 # Development documentation deployment workflow.
-# Builds and deploys documentation for the development version to GitHub
-# Pages (gh-pages branch), triggered on every push to main.
-# The actual build/deploy steps live in release-docs-publish.yaml, shared
-# with release-docs.yaml.
+# Builds and deploys documentation for the development version to GitHub Pages.
+# Triggered on every push to main branch to keep dev docs up to date.
+# The actual build/deploy steps live in release-docs-publish.yaml, shared with release-docs.yaml.
 
 name: Documentation (unstable)
 on:

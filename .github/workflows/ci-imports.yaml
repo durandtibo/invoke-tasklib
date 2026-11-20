@@ -1,17 +1,19 @@
-# Import-graph workflow. Maps to src/invoke_tasklib/imports.py's
-# check_cycles task, which imports each subpackage in isolation to
-# catch cyclic import dependencies.
+# Import-graph workflow.
+# Imports every invoke_tasklib module in isolation to catch circular-import
+# regressions (the `check_cycles` task of src/invoke_tasklib/imports.py),
+# and checks the layering contracts of [tool.importlinter] in pyproject.toml.
 
 name: Imports
 on:
   workflow_call:
   workflow_dispatch: # to trigger manually
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   imports:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -19,8 +21,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
+        uses: durandtibo/setup-venv-uv-action@4445098aa662d3d72aa0455918bc46a091b2a7f8 # ratchet:durandtibo/setup-venv-uv-action@v0.3.1
 
-      - name: Check imports
+      - name: Check cyclic imports
         run: |
-          uv run inv imports.check-cycles
+          inv imports.check-cycles
+
+      # grimp (import-linter) does not build on free-threaded Python, so the
+      # dev group only has it on Python 3.14 and later.
+      - name: Check import contracts
+        run: |
+          lint-imports

@@ -1,5 +1,8 @@
 tasklib:
   package:
     name: invoke_tasklib
+  groups:
+    install: dev,docs
+    update: dev,docs
   test:
     cov_fail_under: 100

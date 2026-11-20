@@ -1,27 +1,52 @@
 # Build and package validation workflow.
-# Tests that the package can be built (sdist + wheel), installs cleanly, and
-# passes twine's metadata checks, via the `inv release.build --check` task
-# (src/invoke_tasklib/release.py:build).
+# Tests that the package can be built correctly as both source distribution and wheel.
+# Validates package metadata, dependencies, and that the package is properly typed.
 
 name: Build Tests
 on:
   workflow_call:
-  workflow_dispatch: # to trigger manually
+    inputs:
+      test-matrix:
+        description: "JSON test matrix from lib-get-test-matrix.yaml, loaded once by the caller"
+        required: true
+        type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
+  # Read the package name from pyproject.toml, so it is not repeated here.
+  get-metadata:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/lib-get-package-metadata.yaml
+
+  # Every supported Python version x sdist/wheel. invoke-tasklib has no
+  # optional dependencies, so there is no per-extra build as in coola.
   build:
+    permissions:
+      contents: read
+    needs: get-metadata
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      max-parallel: 8
+      fail-fast: false
+      matrix:
+        dist-type: ["sdist", "wheel"]
+        # Test at least one build per supported Python version to catch
+        # version-specific build regressions (e.g. free-threaded 3.13t/3.14t).
+        python-version: ${{ fromJson(inputs.test-matrix).python_versions }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-
-      - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
-
-      - name: Build and verify package
-        run: |
-          uv run inv release.build --check
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # ratchet:astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
+      - name: Verify Build
+        uses: durandtibo/verify-uv-build-action@88da014d506b5f0b4f657d4ba8920061ab785620 # ratchet:durandtibo/verify-uv-build-action@v0.0.7
+        with:
+          package-name: ${{ needs.get-metadata.outputs.name }}
+          package-dependencies: "invoke"
+          dist-type: ${{ matrix.dist-type }}

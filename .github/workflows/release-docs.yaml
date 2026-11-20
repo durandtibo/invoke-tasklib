@@ -1,8 +1,7 @@
 # Stable documentation deployment workflow.
-# Builds and deploys documentation for released versions to GitHub Pages
-# (gh-pages branch), triggered by version tags.
-# The actual build/deploy steps live in release-docs-publish.yaml, shared
-# with release-docs-dev.yaml.
+# Builds and deploys documentation for released versions to GitHub Pages.
+# Triggered by version tags and uses mike for documentation versioning.
+# The actual build/deploy steps live in release-docs-publish.yaml, shared with release-docs-dev.yaml.
 
 name: Documentation (stable)
 on:
@@ -15,6 +14,8 @@ permissions: {}
 
 jobs:
   publish:
+    # The stable docs are only published from a version tag, also for a manual run.
+    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write # Required by the called workflow to push to gh-pages branch
     uses: ./.github/workflows/release-docs-publish.yaml

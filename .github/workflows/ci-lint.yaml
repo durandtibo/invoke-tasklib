@@ -1,4 +1,5 @@
-# Linting workflow. Maps to src/invoke_tasklib/lint.py's check_python task
+# Linting workflow.
+# Runs the `check_python` task of src/invoke_tasklib/lint.py
 # (ruff check --output-format=github).
 
 name: Lint
@@ -6,11 +7,12 @@ on:
   workflow_call:
   workflow_dispatch: # to trigger manually
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   lint:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -18,8 +20,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
+        uses: durandtibo/setup-venv-uv-action@4445098aa662d3d72aa0455918bc46a091b2a7f8 # ratchet:durandtibo/setup-venv-uv-action@v0.3.1
 
+      # Check the Python files with ruff
       - name: Check lint
         run: |
-          uv run inv lint.check-python
+          inv lint.check-python
