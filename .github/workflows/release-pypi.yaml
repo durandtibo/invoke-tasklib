@@ -129,14 +129,17 @@ jobs:
             dist/*.whl
 
   publish:
-    needs: [build, sign-and-release]
+    needs: [build, sign-and-release, provenance, attest]
     # Only fail-closed on tag pushes: on a tag, publish must wait for
-    # sign-and-release to succeed; on workflow_dispatch, sign-and-release is
-    # skipped (not failed), so allow publish to proceed.
+    # sign-and-release, provenance and attest to succeed; on
+    # workflow_dispatch they are skipped (not failed), so allow publish to
+    # proceed.
     if: |
       always() &&
       needs.build.result == 'success' &&
-      (needs.sign-and-release.result == 'success' || needs.sign-and-release.result == 'skipped')
+      (needs.sign-and-release.result == 'success' || needs.sign-and-release.result == 'skipped') &&
+      (needs.provenance.result == 'success' || needs.provenance.result == 'skipped') &&
+      (needs.attest.result == 'success' || needs.attest.result == 'skipped')
     # publish-pypi-package-action runs pypa/gh-action-pypi-publish, a Docker
     # container action, which requires a Docker daemon - ubuntu-slim doesn't
     # have one, so this job needs ubuntu-latest unlike the other jobs here.
