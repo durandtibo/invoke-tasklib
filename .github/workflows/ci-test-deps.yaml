@@ -1,10 +1,6 @@
-# Dependency compatibility workflow (source).
-# Runs unit tests against every supported version of invoke, invoke-tasklib's
-# one runtime dependency, to catch breakage from its lower bound
-# (dependencies = ["invoke>=3.0"] in pyproject.toml) up to its latest release.
-# Adapted from coola's ci-test-deps.yaml: coola matrices this per-extra
-# (numpy, torch, ...); invoke-tasklib has no optional dependencies, so this
-# runs a single job over invoke's version list instead.
+# Dependency compatibility testing workflow.
+# Tests the package with different versions of its dependencies.
+# Ensures compatibility across supported dependency version ranges.
 
 name: Dependency Compatibility (Source)
 on:
@@ -14,47 +10,32 @@ on:
         description: "JSON test matrix from lib-get-test-matrix.yaml, loaded once by the caller"
         required: true
         type: string
-  workflow_dispatch: # to trigger manually
-    inputs:
-      test-matrix:
-        required: false
-        type: string
-        default: ""
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
-  # Load invoke's supported version list from dev/config/package_versions.json.
+  # Get the version bounds of the dependencies from
+  # dev/config/package_versions.json.
   get-versions:
+    permissions:
+      contents: read
     uses: ./.github/workflows/lib-get-package-versions.yaml
 
+  # One job per dependency, driven by the matrix instead of a hardcoded
+  # job, so a new dependency only needs to be added to pyproject.toml, to
+  # dev/config/package_versions.json (kept up to date by
+  # bot-generate-package-versions.yaml) and to this list. invoke-tasklib
+  # has no optional dependencies: invoke is its only runtime dependency.
   test-dep:
+    permissions:
+      contents: read
     needs: get-versions
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
     strategy:
-      max-parallel: 8
       fail-fast: false
       matrix:
-        python-version: ${{ fromJson(inputs.test-matrix).python_versions }}
-        package-version: ${{ fromJson(needs.get-versions.outputs.package_versions).invoke }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-
-      - name: Setup python environment
-        uses: ./.github/actions/setup-uv-env
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      # Override the synced invoke with the version under test.
-      - name: Install invoke version
-        run: uv pip install "invoke==${{ matrix.package-version }}"
-
-      - name: Run unit tests
-        run: inv test.unit
-
-      - name: Run integration tests
-        run: inv test.integration
+        package-name: ["invoke"]
+    uses: ./.github/workflows/ci-test-code-dep.yaml
+    with:
+      package-name: ${{ matrix.package-name }}
+      package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions)[matrix.package-name]) }}
+      test-matrix: ${{ inputs.test-matrix }}

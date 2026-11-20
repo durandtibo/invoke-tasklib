@@ -159,7 +159,7 @@ failure points at the specific behavior that broke.
 ## GitHub Actions workflows
 
 The workflows are in `.github/workflows/`; the composite actions are in `.github/actions/`
-(`setup-uv-env`, `setup-doc-deploy`, `verify-installed-package`). `.github/GUIDELINES.md` has the
+(`setup-doc-deploy`, `verify-installed-package`). `.github/GUIDELINES.md` has the
 full table of workflows, triggers and conventions (including the status checks required by the
 branch protection): read it and keep it up to date when you add, rename or remove a workflow or a
 job id.
@@ -174,18 +174,23 @@ job id.
   - `nightly-`: scheduled tests of the _published_ PyPI package, not of the source.
     `nightly-package.yaml` is the entry point and calls `nightly-test-package.yaml` and
     `nightly-test-package-dep.yaml`. `nightly-repo-tasks.yaml` is the exception: it is scheduled
-    and checks the source (`security.audit` and the `shell` and `spelling` steps of `check.all`).
+    and checks the source (the `shell` and `spelling` steps of `check.all`).
   - `bot-`: scheduled automation that opens pull requests (dependency updates, pinning
     actions, formatting, shared Makefile sync, ...) with the `ci-bot` GitHub App token.
   - `release-`: publishing to PyPI and the documentation, triggered by version tags
     (`v*.*.*`) or manually.
-  - `security-`: dependency review of PRs and scheduled scorecard.
+  - `security-`: dependency review of PRs, scheduled scorecard and scheduled dependency audit.
 - `ci.yaml` is the single entry point of the checks (pull request, push to `main`, nightly).
   It calls `lib-get-test-matrix.yaml` once and passes the matrix (`test-matrix` input) to the
   test workflows, so the Python versions and OS are defined in one place. To add a check,
   create a `ci-<name>.yaml` reusable workflow and add a job in `ci.yaml`.
+- Set up Python with `durandtibo/setup-venv-uv-action` (it activates the virtual environment, so
+  the steps run `inv ...` without `uv run`), get the OSs and Python versions to test from
+  `lib-get-test-matrix.yaml` (`durandtibo/workflow-config-action`) and the project metadata from
+  `lib-get-package-metadata.yaml` (`durandtibo/extract-pyproject-metadata-action`). Do not repeat
+  the package name or the versions in a workflow.
 - Run the checks of a workflow through the task it maps to (for example
-  `uv run inv lint.check-python` in `ci-lint.yaml`), so the CI and the local run use the same
+  `inv lint.check-python` in `ci-lint.yaml`), so the CI and the local run use the same
   command.
 - Conventions: a header comment that says what the workflow does and when it runs; the minimum
   `permissions` at the workflow level (`{}` or `contents: read`) and, where a job needs more, on
