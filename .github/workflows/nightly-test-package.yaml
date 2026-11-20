@@ -7,9 +7,8 @@ on:
   workflow_call:
     inputs:
       install-cmd:
-        default: "uv pip install invoke-tasklib"
         description: "Command to install the package"
-        required: false
+        required: true
         type: string
       test-matrix:
         description: "JSON test matrix from lib-get-test-matrix.yaml, loaded once by the caller"
