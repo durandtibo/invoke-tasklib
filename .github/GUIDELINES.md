@@ -26,10 +26,9 @@ either side. Configure branch protection to require these status checks
 (job name / called-workflow job id):
 
 - `build / build`
-- `format / format` and `format / shell`
+- `format / format`, `format / lint` and `format / python`
 - `check / check`
 - `imports / imports`
-- `lint / lint`
 - `type-checking / type-checking`
 - `pre-commit / pre-commit`
 - `doctest / doctest` and `doctest / build`
@@ -60,9 +59,8 @@ the `nightly-test-*` ones).
 | `ci-build.yaml`                      | called by `ci.yaml`                    | Build the sdist and the wheel, and check that the built package installs.       |
 | `ci-check.yaml`                      | called by `ci.yaml`, manual            | Run the composite `check.all` task (`inv check.all --keep-going`).              |
 | `ci-doctest.yaml`                    | called by `ci.yaml`, manual            | Run the doctests (`inv test.doctest`) and check that the documentation builds.  |
-| `ci-format.yaml`                     | called by `ci.yaml`, manual            | Check the formatting and the linting of the Python and shell files.             |
+| `ci-format.yaml`                     | called by `ci.yaml`, manual            | Check the formatting and the linting of all the files (`make`) and of Python.   |
 | `ci-imports.yaml`                    | called by `ci.yaml`, manual            | Check that there is no circular import and that the import contracts are kept.  |
-| `ci-lint.yaml`                       | called by `ci.yaml`, manual            | Lint the Python files with ruff (`inv lint.check-python`).                      |
 | `ci-pre-commit.yaml`                 | called by `ci.yaml`, manual            | Run all the pre-commit hooks.                                                   |
 | `ci-test.yaml`                       | called by `ci.yaml`                    | Unit, integration and functional tests with coverage (`inv test.all --cov`).    |
 | `ci-test-deps.yaml`                  | called by `ci.yaml`                    | One job per dependency, to test it with its supported versions.                 |
@@ -148,10 +146,10 @@ this repo in editable mode, since it is `invoke-tasklib` itself. Key mappings:
 
 | Workflow job                | Invoke task                                                  |
 | --------------------------- | ------------------------------------------------------------ |
-| `ci-format.yaml` / `format` | `format.check-python`, `lint.check-python`                   |
-| `ci-format.yaml` / `shell`  | `make check-format-shell`, `make lint-shell` (no task)       |
+| `ci-format.yaml` / `format` | `make format` (no task)                                      |
+| `ci-format.yaml` / `lint`   | `make lint` (no task)                                        |
+| `ci-format.yaml` / `python` | `format.check-python`, `lint.check-python`                   |
 | `ci-check.yaml`             | `check.all --keep-going`                                     |
-| `ci-lint.yaml`              | `lint.check-python`                                          |
 | `ci-imports.yaml`           | `imports.check-cycles`, `lint-imports`                       |
 | `security-audit.yaml`       | `security.audit`                                             |
 | `ci-type-checking.yaml`     | `types.check --complete`                                     |
