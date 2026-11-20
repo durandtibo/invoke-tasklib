@@ -190,7 +190,7 @@ job id.
   `lib-get-package-metadata.yaml` (`durandtibo/extract-pyproject-metadata-action`). Do not repeat
   the package name or the versions in a workflow.
 - Run the checks of a workflow through the task it maps to (for example
-  `inv lint.check-python` in `ci-lint.yaml`), so the CI and the local run use the same
+  `inv lint.check-python` in `ci-format.yaml`), so the CI and the local run use the same
   command.
 - Conventions: a header comment that says what the workflow does and when it runs; the minimum
   `permissions` at the workflow level (`{}` or `contents: read`) and, where a job needs more, on

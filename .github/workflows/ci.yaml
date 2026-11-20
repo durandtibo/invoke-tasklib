@@ -16,10 +16,9 @@
 # (ci-build.yaml, ci-format.yaml, ...) instead of inlining their steps here,
 # so each check can still be run/tested on its own (workflow_dispatch) and to
 # keep this file short. Job ids are load-bearing: main's branch protection
-# requires status checks named "format / format", "lint / lint",
-# "pre-commit / pre-commit" and "type-checking / type-checking", derived from
-# the job id here plus the job id in the called workflow - keep both in sync
-# if either is renamed.
+# requires status checks named "format / format", "pre-commit / pre-commit"
+# and "type-checking / type-checking", derived from the job id here plus the
+# job id in the called workflow - keep both in sync if either is renamed.
 
 name: CI
 on:
@@ -65,7 +64,7 @@ jobs:
     uses: ./.github/workflows/ci-doctest.yaml
     secrets: inherit
 
-  # Verify code formatting (ruff, docstrings, shell)
+  # Verify code formatting and linting
   format:
     permissions:
       contents: read
@@ -76,12 +75,6 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/ci-imports.yaml
-
-  # Check code linting with ruff
-  lint:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/ci-lint.yaml
 
   # Check type annotations with ty and pyright
   type-checking:

@@ -23,6 +23,12 @@ concurrency:
 permissions: {}
 
 jobs:
+  # Read the package name from pyproject.toml, so it is not repeated here.
+  get-metadata:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/lib-get-package-metadata.yaml
+
   # Nothing is published unless the whole CI passes on the released commit.
   ci:
     permissions:
@@ -69,7 +75,7 @@ jobs:
         uses: durandtibo/sign-pypi-package-action@27337599193dc08605604ca7dd844528833f78b0 # ratchet:durandtibo/sign-pypi-package-action@v0.1.0
 
   publish:
-    needs: [build, sign-and-release]
+    needs: [get-metadata, build, sign-and-release]
     # Only fail-closed on tag pushes: on a tag, publish must wait for
     # sign-and-release to succeed; on workflow_dispatch, sign-and-release is
     # skipped (not failed), so allow publish to proceed.
@@ -84,7 +90,7 @@ jobs:
     timeout-minutes: 5
     environment:
       name: pypi
-      url: https://pypi.org/project/invoke-tasklib/
+      url: https://pypi.org/project/${{ needs.get-metadata.outputs.normalized_name }}/
     permissions:
       id-token: write # Required for PyPI Trusted Publishing (OIDC)
     steps:
