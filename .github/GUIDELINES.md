@@ -77,7 +77,7 @@ the `nightly-test-*` ones).
 | `nightly-test-package.yaml`          | called by `nightly-package.yaml`       | Run the checks against the installed PyPI package.                              |
 | `nightly-test-package-dep.yaml`      | called by `nightly-package.yaml`       | Test the installed PyPI package with the supported versions of one dependency.  |
 | `nightly-repo-tasks.yaml`            | nightly (10:40 UTC), manual            | Run the `shell` and `spelling` steps of `check.all` on the source.              |
-| `release-pypi.yaml`                  | version tag `v*.*.*`, manual           | Run the CI, then build, sign and publish the package to PyPI.                   |
+| `release-pypi.yaml`                  | version tag `v*.*.*`, manual           | Run the CI, then build, sign, attest (SLSA) and publish to PyPI.                |
 | `release-docs.yaml`                  | version tag `v*.*.*`, manual           | Deploy the documentation of the stable version (with `mike`).                   |
 | `release-docs-dev.yaml`              | push to `main`, manual                 | Deploy the documentation of the development version.                            |
 | `release-docs-publish.yaml`          | called by the two previous workflows   | Build and deploy the documentation (shared logic).                              |
@@ -117,7 +117,9 @@ action/reusable workflow over copy-pasting steps.
   comment, meant to be added and refreshed automatically by
   [`ratchet`](https://github.com/sethvargo/ratchet) via `workflows/bot-pin-action.yaml`.
   Never hand-pin a SHA without that comment - the next `bot-pin-action` run
-  would otherwise silently downgrade or drift it. Local composite actions
+  would otherwise silently downgrade or drift it. The one exception is the SLSA generator
+  (`slsa-framework/slsa-github-generator`) in `release-pypi.yaml`: it must be
+  referenced by tag and is marked `# ratchet:exclude`. Local composite actions
   (`uses: ./.github/actions/...`) are referenced by path, not pinned. Any
   runtime tool invoked outside of a pinned action (e.g. `npx <pkg>`) should
   also pin an explicit version, so a bot-authored PR can't pick up an
