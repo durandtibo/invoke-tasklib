@@ -1923,8 +1923,9 @@ which is often the symptom of a cycle. It also fails on a missing dependency or 
 It starts one interpreter per module, so it is slower than <code>imports.check-cycles</code> for a package
 with heavy imports; up to 8 interpreters run at the same time.</p>
 <p>Unlike <code>imports.check-cycles</code>, the package that is checked is the one the interpreter finds: the
-installed (editable) package, or the one in the current directory for a flat layout. The task
-checks the source tree, not a built artifact: use <code>release.build</code> to check an artifact (it imports the package in isolated mode).</p>
+installed (editable) package, or the one in the current directory for a flat layout. The task checks
+the source tree, not a built artifact: use <code>release.build</code> to check an artifact (it imports the
+package in isolated mode).</p>
 <p>The discovery runs in the Invoke process and imports nothing; only the imports start interpreters
 (one per module), so the task runs no command in the Invoke context. If the package cannot be found,
 the task exits with 1 and says so. The task prints one line, and then either one <code>✅</code> summary or one

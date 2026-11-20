@@ -1869,17 +1869,19 @@
   directory of the project. The directories of the environments (<code>.venv</code>, <code>.git</code>, <code>node_modules</code>),
   of the caches of the tools and of the build outputs (<code>build</code>, <code>dist</code>, <code>site</code>, <code>htmlcov</code>) are never
   walked into: a <code>__pycache__</code> inside them goes with its parent, or is not removed.</li>
-<li>Files: <code>.coverage</code>, <code>.coverage.*</code> (parallel coverage data), <code>coverage.xml</code>, and the XML, JSON or LCOV report of
-  <code>test.cov_reports</code> when it is written elsewhere (<code>xml:&lt;path&gt;</code>, or <code>output</code> of <code>[tool.coverage.xml]</code>)</li>
+<li>Files: <code>.coverage</code>, <code>.coverage.*</code> (parallel coverage data), <code>coverage.xml</code>, and the XML,
+  JSON or LCOV report of <code>test.cov_reports</code> when it is written elsewhere (<code>xml:&lt;path&gt;</code>, or
+  <code>output</code> of <code>[tool.coverage.xml]</code>)</li>
 </ul>
 <p>A top-level directory that contains files tracked by git (for example a <code>build/</code> directory with
-scripts that are committed) is kept, and the task says so (<code>⏭️  Keeping build: it contains files
-tracked by git</code>). A coverage file that git tracks (<code>.coverage</code>, <code>coverage.xml</code>, ...) is kept too (<code>⏭️  Keeping
-coverage.xml: it is tracked by git</code>). Outside a git repository, or without <code>git</code>, nothing counts as tracked. The caches
-(<code>__pycache__</code>, <code>*.egg-info</code>) and the glob-matched files are not looked up.</p>
+scripts that are committed) is kept, and the task says so
+(<code>⏭️  Keeping build: it contains files tracked by git</code>). A coverage file that git tracks
+(<code>.coverage</code>, <code>coverage.xml</code>, ...) is kept too (<code>⏭️  Keeping coverage.xml: it is tracked by git</code>).
+Outside a git repository, or without <code>git</code>, nothing counts as tracked. The caches (<code>__pycache__</code>,
+<code>*.egg-info</code>) and the glob-matched files are not looked up.</p>
 <p>A directory outside the project is never removed: if the <code>site_dir</code> of the MkDocs config is an
-absolute path, contains <code>..</code> or points to the project root, the task says <code>⏭️  Not removing ...: it is
-outside the project</code> and goes on.</p>
+absolute path, contains <code>..</code> or points to the project root, the task says
+<code>⏭️  Not removing ...: it is outside the project</code> and goes on.</p>
 <p>Nothing is removed if the corresponding directory or file doesn't exist, so <code>clean</code> is safe to run
 repeatedly (it's idempotent) and doesn't fail on an already-clean checkout. A symbolic link to a
 directory is removed as a link, and the directory it points to is left untouched.</p>

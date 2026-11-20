@@ -1909,8 +1909,9 @@
 </tr>
 </tbody>
 </table>
-<p>Other steps can be added to the config (or run with <code>--only</code>): <code>doctest</code> (<a href="../test/"><code>test.doctest</code></a>),
-<code>shell</code> (<a href="../format/"><code>format.check-shell</code></a> and <code>format.check-shell-format</code>), <code>spelling</code> (<a href="../lint/"><code>lint.check-spelling</code></a>), <code>docs</code>
+<p>Other steps can be added to the config (or run with <code>--only</code>): <code>doctest</code>
+(<a href="../test/"><code>test.doctest</code></a>), <code>shell</code> (<a href="../format/"><code>format.check-shell</code></a> and
+<code>format.check-shell-format</code>), <code>spelling</code> (<a href="../lint/"><code>lint.check-spelling</code></a>), <code>docs</code>
 (<a href="../doc/"><code>doc.build</code></a>) and <code>audit</code> (<a href="../security/"><code>security.audit</code></a>). They are not in the default
 set because they need more tools (<code>shellcheck</code>, <code>shfmt</code>, <code>codespell</code>, <code>mkdocs</code>) or the network.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">tasklib</span><span class="p">:</span>
@@ -1918,8 +1919,8 @@ set because they need more tools (<code>shellcheck</code>, <code>shfmt</code>, <
 <span class="w">    </span><span class="nt">tasks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">format-python</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">lint</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">types</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">unit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">doctest</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">docs</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>None of them modifies a file. The exception is the <code>unit</code> step with <code>tasklib.check.cov: true</code>: it
-runs <code>test.unit --cov</code>, which generates the coverage reports and enforces <code>tasklib.test.cov_fail_under</code>
-(without it <code>check</code> never checks the threshold).</p>
+runs <code>test.unit --cov</code>, which generates the coverage reports and enforces
+<code>tasklib.test.cov_fail_under</code> (without it <code>check</code> never checks the threshold).</p>
 <table>
 <thead>
 <tr>
@@ -1946,10 +1947,11 @@ runs <code>test.unit --cov</code>, which generates the coverage reports and enfo
 invoke<span class="w"> </span>check<span class="w"> </span>--only<span class="w"> </span>lint,types
 invoke<span class="w"> </span>check<span class="w"> </span>--skip<span class="w"> </span>unit
 </code></pre></div>
-<p>Before running anything, the task looks up the tools that the selected steps need and reports all the
-missing ones at once (exit code 127), so a missing <code>ty</code> is not discovered after the formatting has
-run. With <code>--keep-going</code>, only the steps that miss a tool are not run: they are reported as failed,
-with the missing tool as the reason. Run <a href="../env/"><code>env.check-tools</code></a> to see every tool of the tasks.</p>
+<p>Before running anything, the task looks up the tools that the selected steps need and reports all
+the missing ones at once (exit code 127), so a missing <code>ty</code> is not discovered after the
+formatting has run. With <code>--keep-going</code>, only the steps that miss a tool are not run: they are
+reported as failed, with the missing tool as the reason. Run <a href="../env/"><code>env.check-tools</code></a> to see
+every tool of the tasks.</p>
 <p>By default the task stops at the first failure, as the CI jobs do; use <code>--keep-going</code> locally to
 learn about all the problems in one run. A step that fails with an error of the code or of the
 system (for example an <code>OSError</code>) is reported like any other failed step, with the type and the
