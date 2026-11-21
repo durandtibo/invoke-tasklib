@@ -162,8 +162,10 @@ each module is its `NAMESPACE` constant (`"format"` in `formatting.py`), which `
 
 This is what gives consuming projects `format.check-python`, `test.unit`, etc. via `ns = make_ns()`
 in their `tasks.py`, or a trimmed copy with `make_ns(exclude=...)`. Each call returns a new
-collection, so a project can add its own tasks without affecting other importers. (The module-level
-`invoke_tasklib.ns`, one collection shared by every importer, was removed: use `ns = make_ns()`.)
+collection, so a project can add its own tasks without affecting other importers. The package has
+no module-level `ns`: a collection shared by every importer would let one project's `add_task` leak
+into another, so `from invoke_tasklib import ns` raises an `ImportError` and a project calls
+`make_ns()` instead.
 
 ## Layers
 
@@ -184,12 +186,12 @@ No import breaks the rule; the test fails if one appears.
 ## Properties
 
 These are the properties that the package guarantees to a project that uses it (`P1`-`P12`) and to
-its maintainers (`M1`-`M6`). The last column says what enforces each one; a property marked
-"not tested" is a rule that the code follows but no test enforces yet.
+the people who change it (`M1`-`M6`). The last column says what enforces each one; a property marked
+"not tested" is a rule that the code follows but no test enforces.
 
 | #   | Property                | Statement                                                                                                                                                                                                                                                                                                                                   | Enforced by                                                                                                         |
 | --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| P1  | One entry point         | The config is read with `load_config`, a command runs through `runner.run` or `runner.capture`, a message goes through `output.say`, `step` or `report_failure`. The only environment variables read are `INVOKE_TASKLIB_<SECTION>_<KEY>`, `INVOKE_TASKLIB_ASCII`, `CI`, `GITHUB_ACTIONS`, `PATH` and the publish credentials of `release`. | `test_architecture.py` (AST scan of `src/`); not tested: the readers of `os.environ` (target state, section 8)      |
+| P1  | One entry point         | The config is read with `load_config`, a command runs through `runner.run` or `runner.capture`, a message goes through `output.say`, `step` or `report_failure`. The only environment variables read are `INVOKE_TASKLIB_<SECTION>_<KEY>`, `INVOKE_TASKLIB_ASCII`, `CI`, `GITHUB_ACTIONS`, `PATH` and the publish credentials of `release`. | `test_architecture.py` (AST scan of `src/`); not tested: the readers of `os.environ`                                |
 | P2  | Read-only is read-only  | `check_<x>`, `check.all`, `test.*`, `types.check`, `imports.*`, `security.audit` and `config.show` never change a tracked file. Their only writes are caches and the coverage reports.                                                                                                                                                      | `tests/integration/test_read_only.py`                                                                               |
 | P3  | Mutation is declared    | A task that changes files, the environment or a remote is named `fix_*`, or is a verb (`publish`, `build`, `install`, `clean`), and is marked in the README table.                                                                                                                                                                          | `test_init.py` (names, summaries, options); `tests/integration/test_readme.py`                                      |
 | P4  | Exit codes              | `0` pass, or nothing to do (a `⏭️` line says why); `1` the checked thing failed; `2` invalid usage or config; `127` a tool or module is missing. The failure line is `❌ Failed: <what>` on stderr. With `--keep-going`, every step runs and every failure of an `Exception` is listed in the summary.                                      | `tests/integration/test_exit_codes.py`; `test__steps.py` (any `Exception`)                                          |
@@ -231,36 +233,125 @@ runner.run(c, cmd) checks the program (tools.check_program), quotes the words (s
 echoes the command and executes it with c.run (pty only on a terminal)
 ```
 
-## Design Decisions
+## Design Choices
 
-### Why a Shared `load_config` Instead of Per-Task Config?
+The design makes a few choices that shape how the package is used and extended. Each one has a
+cost, and the alternative is given, so you can judge whether the current design fits your project
+or what to change if it does not.
 
-**Rationale**: A single resolution function keeps defaults and the validation of the config in one
-place, and guarantees every task sees the same resolved paths (e.g. `test.unit` and `types.check`
-agree on `package.name`).
+### One shared `load_config` instead of per-task config
 
-**Trade-off**: Every task pays the (cheap) cost of re-resolving config on each call, rather than
-resolving it once. This is negligible since `load_config` does no I/O beyond reading `c.config` and,
-for the defaults that come from the project, whether the source directory exists.
+Every task that needs a project value calls `load_config(c)`. A single resolution function keeps
+the defaults and the validation of the config in one place, and every task sees the same resolved
+paths (`test.unit` and `types.check` agree on `package.name`).
 
-### Why `check_<target>`/`fix_<target>` Naming?
+- **Cost**: each task resolves the config again instead of once per run. This is cheap, because
+  `load_config` reads `c.config` and checks at most whether the source directory exists.
+- **Alternative**: let each task read the keys it needs. The tasks would be independent, but the
+  defaults and the checks would be repeated, and an invalid value would fail in some tasks and not
+  in others.
 
-**Rationale**: Makes the read-only/mutating counterpart of a task discoverable by name alone, and
-lets CI safely run every `check_*` task without risk of it modifying the working tree.
+### `check_<target>` and `fix_<target>` instead of a `--fix` flag
 
-**Trade-off**: Slightly more verbose task names than a single `format` task with a `--fix` flag,
-but the split keeps `invoke --list` self-documenting.
+The read-only task and the task that changes files are two tasks with two names. The name tells
+you what a task does before you run it, and CI can run every `check_*` task knowing that none
+changes the working tree (P2, P3).
 
-### Why Frozen Dataclasses for Config?
+- **Cost**: more task names than a single `format` task with a `--fix` flag.
+- **Alternative**: one task per tool with a flag. The list is shorter, but a task that changes
+  files looks the same as one that does not, and `check.all` could not be proven read-only.
 
-**Rationale**: Static type checking (via ty) catches typos like `cfg.path.src` at development
-time, and attribute access reads better than nested keys, without requiring a runtime schema
-validation dependency.
+### Frozen dataclasses instead of a dict
 
-**Trade-off**: The dataclasses don't validate values on construction; the validation is done by
-`get_config` (e.g. the `package.name` and `package.python_version` checks). It runs when a task
-starts, not when the collection is loaded, because the `invoke.yaml` values are only known once
-Invoke has built the context.
+`load_config` returns a tree of frozen dataclasses. The type checker catches a typo such as
+`cfg.path.src`, attribute access reads better than nested keys, and a task cannot modify the
+config that other tasks read.
+
+- **Cost**: the dataclasses do not validate on construction. `get_config` validates the values
+  when a task starts, not when the collection is loaded, because the `invoke.yaml` values are only
+  known once Invoke has built the context. Each section also has a class next to its `SCHEMA`
+  options, and a test keeps the two equal.
+- **Alternative**: a runtime schema library (pydantic, attrs validators). It validates on
+  construction, but it adds a dependency to a package that only needs `invoke`.
+
+### One declaration per fact
+
+A config key is declared once (`SCHEMA`), a tool once (`TOOLS`), a step once (`_STEPS`) and a
+directory policy once (`_files`). The defaults, the JSON schema, the environment variable names, the
+install hints and the tables of the docs are derived from them, or compared with them by a test, so
+adding a key or a step is a short, local change (P8).
+
+- **Cost**: the declarations are data structures that you read through, not plain functions, so
+  they take a little longer to learn.
+- **Alternative**: write each list where it is used. It is simpler to read, but the lists drift
+  apart.
+
+### Step names are checked by the composite, not by the config
+
+The names in `tasklib.check.tasks` and `tasklib.fix.tasks` are checked by `check.all` and `fix.all`
+against `_STEPS`, before any step runs. The list of names exists in one place, and adding a step is
+two edits (the entry of `_STEPS` and the entry of `TOOLS`).
+
+- **Cost**: a typo in `check.tasks` only fails when `check.all` runs, not in an unrelated task such
+  as `test.unit`, and `config.show` does not flag it. The JSON schema describes the value as a
+  string or a list of strings, so an editor cannot complete the step names.
+- **Alternative**: keep the names in `config/_constants.py` and validate them in the config. The
+  editor completes them and every task fails early, at the price of one more place to edit when you
+  add a step.
+
+### Commands are lists of words, not strings
+
+A task builds a command with `build_command`, and `runner.run` is the only place that turns the
+list into a shell line with `shlex.join`. It rejects a string. A path with a space, a glob or a
+`$VAR` in a user value reaches the tool unchanged (P7), and the quoting rule is enforced by code
+instead of by the discipline of each task author.
+
+- **Cost**: a custom task cannot pass a ready-made shell string to `run`. A shell pipeline needs its
+  own `c.run`, outside the helpers.
+- **Alternative**: accept strings. It is more flexible, but every task must remember to quote.
+
+### `make_ns()` builds a new collection on each call
+
+`make_ns(include=..., exclude=...)` returns a new `Collection` each time. A project selects the
+tasks it wants and adds its own without any effect on another importer (P12).
+
+- **Cost**: the namespace is built by a call in `tasks.py`, not by an import. Excluding a task
+  removes it from the command line but not from the steps of `check.all` and `fix.all`, which only
+  come from the config.
+- **Alternative**: a pre-built `ns`. It is one line shorter, but the instance is shared, and a
+  mutation by one importer is seen by every other.
+
+### `imports.check-isolated` runs in the same process
+
+`imports.check-isolated` imports each module in its own fresh interpreter, so a module cannot hide
+a missing import behind another one. `_discover.import_each` starts these interpreters and the task
+calls it directly, with no intermediate worker process. A worker would only help if the `sys.path`
+of the task differed from the one of the project, and the check of the project root makes sure it
+does not.
+
+- **Cost**: the task trusts the working directory. It exits with `2` if it is not the project root.
+- **Alternative**: a worker process per task. It isolates more, and it adds a second entry point
+  to maintain.
+
+### Names are private until the user guide needs them
+
+Only a name of `config`, `runner`, `tools` or `output` that is in `__all__` and in
+`uguide/custom_tasks.md` is public (M2). The module constants, such as `clean._DIRS`, start with
+an underscore.
+
+- **Cost**: a project that wants one of these constants has to copy it, or ask for it to become
+  public.
+- **Alternative**: export everything. It is convenient, but every name becomes part of the API
+  that you have to keep stable.
+
+### Linux and macOS only
+
+The tasks rely on a POSIX shell for the quoting of the commands (P7). On Windows `make_ns` emits a
+`RuntimeWarning` and the platform is not supported.
+
+- **Cost**: a Windows project cannot rely on the tasks.
+- **Alternative**: abstract the shell. It is possible, but it needs a test matrix on Windows and a
+  different quoting rule.
 
 ## Testing Strategy
 
@@ -271,14 +362,17 @@ environment. The unit tests also patch `shutil.which` (an autouse fixture in
 `tests/unit/conftest.py`) so that the check of the `PATH` done by
 `invoke_tasklib.tools.check_program` (called by `runner.run`) passes on any machine.
 
-## Future Directions
+## Limits and Extension Points
 
-Potential areas for enhancement:
+What the current design does not cover, and where you would change it:
 
-1. Additional task modules for other common project needs (e.g. changelog generation).
-2. Validating a project's `invoke.yaml` before a task runs: `config.show` already validates the
-   config and an editor can check it against the published JSON schema, but nothing validates it
-   in CI without running a task.
+1. **Task modules**: a new concern (for example changelog generation) is a new module with its own
+   `NAMESPACE`, registered in `_MODULES`. See [Adding a New Task](development.md#adding-a-new-task).
+2. **Validation in CI without running a task**: `config.show` validates the config, and an editor
+   checks `invoke.yaml` against the published JSON schema, but no command validates the file on its
+   own. A project that wants this runs `inv config.show` in CI.
+3. **Step names in the schema**: the JSON schema does not list the valid step names (see
+   [Design Choices](#design-choices)). The names are in `uguide/check.md` and `uguide/fix.md`.
 
 ## References
 
