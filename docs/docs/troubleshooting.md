@@ -21,7 +21,7 @@ Invoke looks for `tasks.py` in the parents of the current directory and loads th
 next to it, but it does not change directory. The tasks use paths relative to the current directory
 (`tests/unit`, `pyproject.toml`, `dist`, ...), so from a subdirectory they would look in the wrong
 place, and a task like `test.unit` would skip the missing `tests/unit` directory and pass. A task
-that reads the config now exits with code 2 and this message instead. Run `inv` from the directory
+that reads the config therefore exits with code 2 and this message. Run `inv` from the directory
 of `tasks.py`, as in `cd <project root> && inv check.all`, or use the `make` targets.
 
 ## `'ruff' was not found on the PATH or next to the Python interpreter`
@@ -79,8 +79,8 @@ ns = make_ns()
 ```
 
 Invoke discovers tasks from a module-level `ns` (or `namespace`) variable in `tasks.py`; if you
-renamed the variable or wrapped it, Invoke won't find it. (The pre-built `invoke_tasklib.ns` was
-removed: `from invoke_tasklib import ns` raises an `ImportError`, use `make_ns()`.)
+renamed the variable or wrapped it, Invoke won't find it. The package has no pre-built
+`invoke_tasklib.ns`: `from invoke_tasklib import ns` raises an `ImportError`, use `make_ns()`.
 
 ## A task fails with "command not found" (`ruff`, `ty`, `shellcheck`, ...)
 
