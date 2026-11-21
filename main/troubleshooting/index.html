@@ -2064,7 +2064,7 @@ least:</p>
 next to it, but it does not change directory. The tasks use paths relative to the current directory
 (<code>tests/unit</code>, <code>pyproject.toml</code>, <code>dist</code>, ...), so from a subdirectory they would look in the wrong
 place, and a task like <code>test.unit</code> would skip the missing <code>tests/unit</code> directory and pass. A task
-that reads the config now exits with code 2 and this message instead. Run <code>inv</code> from the directory
+that reads the config therefore exits with code 2 and this message. Run <code>inv</code> from the directory
 of <code>tasks.py</code>, as in <code>cd &lt;project root&gt; &amp;&amp; inv check.all</code>, or use the <code>make</code> targets.</p>
 <h2 id="ruff-was-not-found-on-the-path-or-next-to-the-python-interpreter"><code>'ruff' was not found on the PATH or next to the Python interpreter</code><a class="headerlink" href="#ruff-was-not-found-on-the-path-or-next-to-the-python-interpreter" title="Permanent link">&para;</a></h2>
 <p>Before running a command, the tasks check that its program (<code>ruff</code>, <code>ty</code>, <code>uv</code>, <code>mike</code>, ...) is on
@@ -2110,8 +2110,8 @@ always put its console scripts on <code>PATH</code> the way you expect. Make sur
 <span class="n">ns</span> <span class="o">=</span> <span class="n">make_ns</span><span class="p">()</span>
 </code></pre></div>
 <p>Invoke discovers tasks from a module-level <code>ns</code> (or <code>namespace</code>) variable in <code>tasks.py</code>; if you
-renamed the variable or wrapped it, Invoke won't find it. (The pre-built <code>invoke_tasklib.ns</code> was
-removed: <code>from invoke_tasklib import ns</code> raises an <code>ImportError</code>, use <code>make_ns()</code>.)</p>
+renamed the variable or wrapped it, Invoke won't find it. The package has no pre-built
+<code>invoke_tasklib.ns</code>: <code>from invoke_tasklib import ns</code> raises an <code>ImportError</code>, use <code>make_ns()</code>.</p>
 <h2 id="a-task-fails-with-command-not-found-ruff-ty-shellcheck">A task fails with "command not found" (<code>ruff</code>, <code>ty</code>, <code>shellcheck</code>, ...)<a class="headerlink" href="#a-task-fails-with-command-not-found-ruff-ty-shellcheck" title="Permanent link">&para;</a></h2>
 <p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Run
 <code>invoke env.check-tools</code> to see, in one list, which tools are available and which are missing.
