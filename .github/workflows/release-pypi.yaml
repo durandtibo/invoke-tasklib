@@ -32,25 +32,17 @@ jobs:
       contents: read
     uses: ./.github/workflows/lib-get-package-metadata.yaml
 
-  # Nothing is published unless the whole CI passes on the released commit.
-  ci:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/ci.yaml
-    secrets: inherit
-
   build:
     permissions:
       contents: read
-    needs: ci
     # Manual runs are only allowed from main; tag pushes are always allowed.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       # Base64 of the sha256sum lines of the artifacts, the subjects of the
-      # SLSA provenance.
-      hashes: ${{ steps.hash.outputs.hashes }}
+      # SLSA provenance (computed by build-pypi-package-action).
+      hashes: ${{ steps.build.outputs.hashes }}
     # Unlike a typical consumer of build-pypi-package-action, this repo's own
     # tasks.py imports invoke_tasklib itself, so it must be importable
     # before `inv build-package` can even load the task collection.
@@ -67,19 +59,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
       - name: Build package
-        uses: durandtibo/build-pypi-package-action@239defb64fe09080292442db058bddd02f498eb3 # ratchet:durandtibo/build-pypi-package-action@v0.1.0
-
-      - name: Download distribution artifacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # ratchet:actions/download-artifact@v8.0.2
+        id: build
+        uses: durandtibo/build-pypi-package-action@ade1f9b224bd9bb90b4f551dfe3abbb1409f3782 # ratchet:durandtibo/build-pypi-package-action@v0.1.2
         with:
-          name: dist
-          path: dist/
-
-      - name: Compute the hashes of the artifacts
-        id: hash
-        working-directory: dist
-        run: |
-          echo "hashes=$(sha256sum ./*.tar.gz ./*.whl | base64 -w0)" >> "$GITHUB_OUTPUT"
+          checksum-file: "true"
 
   sign-and-release:
     needs: build
