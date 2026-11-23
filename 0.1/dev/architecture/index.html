@@ -1,0 +1,2795 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://durandtibo.github.io/invoke-tasklib/0.1/dev/architecture/">
+      
+      
+        <link rel="prev" href="../development/">
+      
+      
+        <link rel="next" href="../../refs/invoke_tasklib/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>Architecture and Design - invoke-tasklib</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture-and-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="invoke-tasklib" class="md-header__button md-logo" aria-label="invoke-tasklib" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            invoke-tasklib
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture and Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/durandtibo/invoke-tasklib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    durandtibo/invoke-tasklib
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../get_started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Get Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../uguide/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting &amp; FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../development/" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../refs/invoke_tasklib/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/durandtibo/invoke-tasklib" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GitHub
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="invoke-tasklib" class="md-nav__button md-logo" aria-label="invoke-tasklib" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    invoke-tasklib
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/durandtibo/invoke-tasklib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    durandtibo/invoke-tasklib
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/lint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/imports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/env/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Env
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/doc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../uguide/custom_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a Custom Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting &amp; FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Design
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-config-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Config Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-task-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Task Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-step-to-checkall-or-fixall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a step to check.all or fix.all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Choices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-shared-load_config-instead-of-per-task-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One shared load_config instead of per-task config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check_target-and-fix_target-instead-of-a-fix-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_&lt;target&gt; and fix_&lt;target&gt; instead of a --fix flag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frozen-dataclasses-instead-of-a-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frozen dataclasses instead of a dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-declaration-per-fact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One declaration per fact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-names-are-checked-by-the-composite-not-by-the-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step names are checked by the composite, not by the config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commands-are-lists-of-words-not-strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands are lists of words, not strings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make_ns-builds-a-new-collection-on-each-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_ns() builds a new collection on each call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importscheck-isolated-runs-in-the-same-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        imports.check-isolated runs in the same process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#names-are-private-until-the-user-guide-needs-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names are private until the user guide needs them
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-and-macos-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux and macOS only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-and-extension-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits and Extension Points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/invoke_tasklib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invoke tasklib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/lint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/imports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Imports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/env/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Env
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/doc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/check/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/fix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/show/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Show
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/durandtibo/invoke-tasklib" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-config-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Config Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-task-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Task Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-step-to-checkall-or-fixall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a step to check.all or fix.all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Choices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-shared-load_config-instead-of-per-task-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One shared load_config instead of per-task config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check_target-and-fix_target-instead-of-a-fix-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_&lt;target&gt; and fix_&lt;target&gt; instead of a --fix flag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frozen-dataclasses-instead-of-a-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frozen dataclasses instead of a dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-declaration-per-fact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One declaration per fact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-names-are-checked-by-the-composite-not-by-the-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step names are checked by the composite, not by the config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commands-are-lists-of-words-not-strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands are lists of words, not strings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make_ns-builds-a-new-collection-on-each-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_ns() builds a new collection on each call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importscheck-isolated-runs-in-the-same-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        imports.check-isolated runs in the same process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#names-are-private-until-the-user-guide-needs-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names are private until the user guide needs them
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-and-macos-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux and macOS only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-and-extension-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits and Extension Points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="architecture-and-design">Architecture and Design<a class="headerlink" href="#architecture-and-design" title="Permanent link">&para;</a></h1>
+<p>This document describes the internal architecture and design principles of <code>invoke-tasklib</code>.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><code>invoke-tasklib</code> is designed around a simple idea: task modules are plain
+<a href="https://www.pyinvoke.org/">Invoke</a> collections that share one config-resolution function. The
+core design follows these principles:</p>
+<ol>
+<li><strong>One config entry point</strong>: every task reads project-specific values through
+   <code>invoke_tasklib.config.load_config</code> (which wraps <code>get_config</code> and exits with a message on an
+   invalid config), never directly from <code>c.config</code>.</li>
+<li><strong>Convention over configuration</strong>: sensible defaults derived from <code>package.name</code> mean most
+   projects only set one value (<code>tasklib.package.name</code>).</li>
+<li><strong>Composability</strong>: <code>make_ns()</code> builds the default namespace; any subset of task modules
+   can be imported and combined with project-specific tasks.</li>
+<li><strong>No hidden state</strong>: tasks only run external commands (<code>ruff</code>, <code>pytest</code>, <code>uv</code>, <code>mike</code>, ...);
+   they don't maintain state between invocations.</li>
+</ol>
+<h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
+<h3 id="1-config-resolution">1. Config Resolution<a class="headerlink" href="#1-config-resolution" title="Permanent link">&para;</a></h3>
+<p><code>invoke_tasklib.config.get_config(c)</code> (implemented in <code>config/_resolve.py</code> with <code>load_config</code>, and
+re-exported by <code>config/__init__.py</code>; the private attributes of the Invoke config are read in
+<code>config/_invoke.py</code> only) is the single source of truth for project-specific values.
+It:</p>
+<ul>
+<li>Reads the <code>tasklib</code> key from the Invoke config (<code>c.config</code>), which Invoke itself populates from
+  <code>invoke.yaml</code>.</li>
+<li>Merges it on top of the defaults declared in <code>SCHEMA</code> (<code>default_config()</code> and
+  the JSON schema are loops over it; <code>default_config()</code> registers an <code>Unset</code> for every key so Invoke
+  reads the environment variables as text).</li>
+<li>Rejects unknown keys and validates the values (<code>package.python_version</code>, <code>package.import_name</code>,
+  <code>groups.*</code>, <code>test.*</code>, <code>check.tasks</code>, <code>fix.tasks</code>).</li>
+<li>Derives unset <code>paths.*</code> entries from <code>package.import_name</code> (for <code>paths.src</code>) or <code>paths.tests</code> (for
+  the <code>unit_tests</code>/<code>integration_tests</code>/<code>functional_tests</code>/<code>benchmarks</code> entries).</li>
+<li>Raises <code>ValueError</code> if <code>package.name</code> is missing, since nearly every task needs it, or if a
+  value is invalid. Tasks call <code>load_config</code>, which turns the <code>ValueError</code> into an <code>Exit</code>.</li>
+</ul>
+<p>Adding a key means adding one <code>Option(default, validate, json_schema, doc)</code> to <code>SCHEMA</code> and the
+field to the dataclass of its section (a test checks that they match), then one row in the
+<code>uguide/config.md</code> table (a test checks that too). The known keys, the defaults, the validation, the
+environment variable names and the JSON schema (<code>python -m invoke_tasklib.config</code>) follow from it.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TasklibConfig</span><span class="p">:</span>
+    <span class="n">package</span><span class="p">:</span> <span class="n">PackageConfig</span>
+    <span class="n">paths</span><span class="p">:</span> <span class="n">PathsConfig</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="n">GroupsConfig</span>
+    <span class="n">test</span><span class="p">:</span> <span class="n">TestConfig</span>
+    <span class="n">types</span><span class="p">:</span> <span class="n">TypesConfig</span>
+    <span class="n">check</span><span class="p">:</span> <span class="n">CheckConfig</span>
+    <span class="n">fix</span><span class="p">:</span> <span class="n">FixConfig</span>
+</code></pre></div>
+<p>Returning frozen dataclasses rather than a raw dict gives task authors static typing on
+<code>cfg.package.name</code> and similar accesses, and the values cannot be modified by a task.</p>
+<h3 id="2-task-modules">2. Task Modules<a class="headerlink" href="#2-task-modules" title="Permanent link">&para;</a></h3>
+<p>Each task module (<code>formatting.py</code>, <code>lint.py</code>, <code>imports.py</code>, <code>typecheck.py</code>, <code>testing.py</code>, <code>env.py</code>,
+<code>release.py</code>, <code>doc.py</code>, <code>security.py</code>, <code>clean.py</code>, <code>check.py</code>, <code>fix.py</code>, <code>show.py</code>) is a
+collection of <code>@task</code>-decorated functions. <code>clean.py</code>, <code>check.py</code> and <code>fix.py</code> also have a default
+task (<code>clean.all</code>, <code>check.all</code>, <code>fix.all</code>) that is run by <code>invoke clean</code>, <code>invoke check</code> and
+<code>invoke fix</code>. <code>check.all</code> and <code>fix.all</code> are the composite tasks: each runs the steps of its config
+key (<code>tasklib.check.tasks</code>, <code>tasklib.fix.tasks</code>) with the step runner of <code>_steps.py</code>.
+<code>show.py</code> holds <code>config.show</code>, which prints the resolved config and where each value
+comes from. A module groups tasks that operate on the
+same underlying tool or concern (e.g. most of <code>testing.py</code> wraps <code>pytest</code>, except
+<code>test.doctest-markdown</code>, which wraps the standard library's <code>doctest</code> module directly).</p>
+<p>Tasks that need project-specific values call <code>load_config(c)</code> at the top of the function body;
+tasks that don't (e.g. <code>lint.check_python</code>) skip it entirely.</p>
+<p>Nine small modules support the task modules (three public ones, <code>runner</code>, <code>tools</code> and <code>output</code>,
+and six private ones):</p>
+<ul>
+<li><code>runner.py</code>: <code>run(c, command)</code> is the only way a task runs an external command. It checks that
+  the program is on the <code>PATH</code> (with <code>tools.check_program</code>), echoes the command, and
+  uses a pty only on a terminal. <code>capture(c, command)</code> is <code>run</code> for a command whose output the task
+  reads (output hidden, command not echoed, no pty, so stderr is not merged into stdout).
+  <code>in_ci()</code> and <code>in_github_actions()</code> are the only readers of <code>CI</code> and <code>GITHUB_ACTIONS</code>.
+  <code>build_command</code> builds the list of the words of a command (the words, the split <code>--args</code>, the
+  paths), <code>run</code> is the only place that turns the list into a shell line (<code>shlex.join</code>) and it
+  rejects a string, <code>ARGS_HELP</code>/<code>PATHS_HELP</code> are the help of the <code>--args</code> and <code>--paths</code> options, and
+  <code>TOOL_HELP</code> is the <code>help</code> of a task that has both.</li>
+<li><code>tools.py</code>: finds the tools that the tasks run: <code>find_tool</code> looks a program up on the <code>PATH</code> or
+  a module up for the running interpreter, <code>check_program</code> checks the first word of a command (and
+  the module of <code>python -m &lt;module&gt;</code> and the plugins of the pytest options), and <code>hint</code> and
+  <code>not_found_message</code> say how to install a tool. Every program and module is one <code>Tool</code> of
+  <code>tools.TOOLS</code> (name, kind, dependency group or install hint, pytest options for a plugin);
+  <code>hint(name)</code> is one lookup in it, <code>_PLUGIN_OPTIONS</code> (option to plugin) is derived from it, and
+  <code>env.check-tools</code> loops over it.</li>
+<li><code>output.py</code>: <code>say(c, message)</code> prints a progress message (it never fails on a terminal that
+  cannot encode the emojis) and the <code>step</code> context manager prints the start and done messages of a
+  step, or a failure message.</li>
+<li><code>_steps.py</code>: the step runner shared by <code>check.all</code> and <code>fix.all</code> (<code>run_composite</code>, called by
+  each of them with its own <code>_STEPS</code>, valid names and config): the selection of the steps
+  (<code>--only</code>, <code>--skip</code> and the config), the look-up of the missing tools before anything runs, the
+  <code>--keep-going</code> mode and the final summary of the failures.</li>
+<li><code>_files.py</code>: <code>project_files(c, root, suffix)</code> finds the files with a suffix, with
+  <code>git ls-files</code> in a git work tree and with <code>find_files</code>, a walk in Python (no <code>find</code> or <code>xargs</code>)
+  that skips the <code>EXCLUDED_DIRS</code> of <code>_files.py</code> at any depth, otherwise. It is used by the format
+  and test tasks that work on shell scripts and markdown files.</li>
+<li><code>_pyproject.py</code>: <code>read_pyproject(path)</code> reads <code>pyproject.toml</code> (<code>{}</code> if the file is missing). An
+  invalid file exits with <code>1</code> and a message that names the file, the line and the column of the
+  error. <code>release</code> (the <code>[project] version</code>) and <code>_coverage</code> use it; <code>clean</code> ignores the error,
+  because it must work on a broken project.</li>
+<li><code>_coverage.py</code>: <code>coverage_outputs(reports, pyproject)</code> returns the HTML directory and the report
+  files, from the <code>--cov-report</code> arguments, then <code>[tool.coverage.*]</code>, then the coverage.py defaults.
+  <code>testing</code> and <code>clean</code> use it.</li>
+<li><code>_files.py</code> also has <code>require_path(path, key)</code>, which exits with 2 and names the config key when a
+  path that a task is about does not exist (<code>paths.src</code>, <code>paths.docs_config</code>); the module docstring
+  and the user guide give the rule for the other paths.</li>
+<li><code>_graph.py</code>: the static import graph of a package (built with <code>ast</code>, without importing
+  anything) and its cycles. It is used by <code>imports.check-cycles</code>.</li>
+<li><code>_discover.py</code>: lists the modules of a package without importing them, and imports each one in its
+  own interpreter (<code>import_each</code>, called in process by <code>imports.check-isolated</code>).</li>
+</ul>
+<p><code>_files.EXCLUDED_DIRS</code> is the one list of the directories that the tasks that walk the file tree
+(<code>clean</code>, <code>format</code>, <code>test.doctest-markdown</code>) never enter. It is the union of three named sets:
+<code>CACHE_DIRS</code> (<code>.pytest_cache</code>, <code>.ruff_cache</code>, <code>.mypy_cache</code>, <code>.tox</code>, <code>.nox</code>, <code>.hypothesis</code>,
+<code>.benchmarks</code>, <code>.coverage_html</code>), <code>OUTPUT_DIRS</code> (<code>build</code>, <code>dist</code>, <code>site</code>, <code>htmlcov</code>) and
+<code>ENVIRONMENT_DIRS</code> (<code>.git</code>, <code>.venv</code>, <code>node_modules</code>). <code>clean._DIRS</code> derives from <code>CACHE_DIRS</code> and
+the outputs it removes, so a cache added to the sets is cleaned and skipped by the walks. The format
+and test tasks find their files with <code>_files.project_files</code>: in a git work tree they ask
+<code>git ls-files --cached --others --exclude-standard</code>, so <code>.gitignore</code> is the policy and a tracked
+<code>build/run.sh</code> is checked (only the caches and the environments are left out); outside a work tree
+they walk the tree and skip every directory of the list. <code>clean</code> keeps its own walk, because the
+<code>__pycache__</code> directories it removes are ignored by git.</p>
+<h3 id="adding-a-step-to-checkall-or-fixall">Adding a step to <code>check.all</code> or <code>fix.all</code><a class="headerlink" href="#adding-a-step-to-checkall-or-fixall" title="Permanent link">&para;</a></h3>
+<p>A step is a <code>Step(task, programs, modules, default)</code> of <code>_steps.py</code> (the task, the programs it looks
+up on the <code>PATH</code>, the Python modules it imports, and whether it runs when <code>check.tasks</code> or
+<code>fix.tasks</code> is not set). <code>modules</code> is a tuple, or a function of the config that returns one, for a
+step whose modules depend on an option (<code>check._unit_modules</code>). <code>_STEPS</code> is the only list of the
+step names, in the order of the run; the composite checks the names of the config, <code>--only</code> and
+<code>--skip</code> against it before any step runs. To add one:</p>
+<ol>
+<li>Write the task in its module, and add <code>"name": Step(task, programs=..., modules=...)</code> to
+   <code>check._STEPS</code> (or <code>fix._STEPS</code>), at the place where it must run. Pass <code>default=False</code> if it must
+   not run unless the config or <code>--only</code> asks for it.</li>
+<li>Add each new program or module to <code>TOOLS</code> of <code>tools.py</code> as a <code>Tool</code> with its dependency group
+   (or an install hint), and the pytest options of a plugin: <code>env.check-tools</code>, the hints and the
+   check of the plugins read it (a test checks that every tool of <code>_STEPS</code> is listed).</li>
+<li>Update the tables of the user guide (<code>uguide/check.md</code>, <code>uguide/fix.md</code>).</li>
+</ol>
+<h3 id="3-the-namespace">3. The Namespace<a class="headerlink" href="#3-the-namespace" title="Permanent link">&para;</a></h3>
+<p><code>invoke_tasklib/__init__.py</code> has <code>make_ns(*, exclude=(), include=None)</code>, which builds a new
+<code>Collection</code> by adding each task module (<code>Collection.from_module(module, name=...)</code>) as a
+sub-collection named after the module, leaving out the tasks of <code>exclude</code> and keeping only the tasks
+of <code>include</code> when it is set. The modules whose names would shadow the standard library or a builtin
+(<code>format</code>, <code>types</code>, <code>test</code>) are named <code>formatting</code>, <code>typecheck</code> and <code>testing</code>; the namespace name of
+each module is its <code>NAMESPACE</code> constant (<code>"format"</code> in <code>formatting.py</code>), which <code>_MODULES</code> of
+<code>__init__.py</code> reads, not the module name; a project that builds its own collection passes
+<code>name=module.NAMESPACE</code> to <code>Collection.from_module</code>.</p>
+<p>This is what gives consuming projects <code>format.check-python</code>, <code>test.unit</code>, etc. via <code>ns = make_ns()</code>
+in their <code>tasks.py</code>, or a trimmed copy with <code>make_ns(exclude=...)</code>. Each call returns a new
+collection, so a project can add its own tasks without affecting other importers. The package has
+no module-level <code>ns</code>: a collection shared by every importer would let one project's <code>add_task</code> leak
+into another, so <code>from invoke_tasklib import ns</code> raises an <code>ImportError</code> and a project calls
+<code>make_ns()</code> instead.</p>
+<h2 id="layers">Layers<a class="headerlink" href="#layers" title="Permanent link">&para;</a></h2>
+<p>A module imports only from its own layer or from the ones below it. The task modules (L3) do
+not import each other, and neither do the composites (L4). <code>tests/unit/test_architecture.py</code>
+checks the rule on the package itself.</p>
+<div class="highlight"><pre><span></span><code>L5  __init__          make_ns: one Collection per module
+L4  check  fix        composites: run _STEPS with the step runner
+L3  formatting lint typecheck testing env release doc security imports clean show
+L2  _steps  _files  _graph  _discover  _coverage  _pyproject   private helpers of the tasks
+L1  config/  runner  tools  output     support: the documented helpers
+</code></pre></div>
+<p>No import breaks the rule; the test fails if one appears.</p>
+<h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
+<p>These are the properties that the package guarantees to a project that uses it (<code>P1</code>-<code>P12</code>) and to
+the people who change it (<code>M1</code>-<code>M6</code>). The last column says what enforces each one; a property marked
+"not tested" is a rule that the code follows but no test enforces.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Property</th>
+<th>Statement</th>
+<th>Enforced by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>One entry point</td>
+<td>The config is read with <code>load_config</code>, a command runs through <code>runner.run</code> or <code>runner.capture</code>, a message goes through <code>output.say</code>, <code>step</code> or <code>report_failure</code>. The only environment variables read are <code>INVOKE_TASKLIB_&lt;SECTION&gt;_&lt;KEY&gt;</code>, <code>INVOKE_TASKLIB_ASCII</code>, <code>CI</code>, <code>GITHUB_ACTIONS</code>, <code>PATH</code> and the publish credentials of <code>release</code>.</td>
+<td><code>test_architecture.py</code> (AST scan of <code>src/</code>); not tested: the readers of <code>os.environ</code></td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Read-only is read-only</td>
+<td><code>check_&lt;x&gt;</code>, <code>check.all</code>, <code>test.*</code>, <code>types.check</code>, <code>imports.*</code>, <code>security.audit</code> and <code>config.show</code> never change a tracked file. Their only writes are caches and the coverage reports.</td>
+<td><code>tests/integration/test_read_only.py</code></td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Mutation is declared</td>
+<td>A task that changes files, the environment or a remote is named <code>fix_*</code>, or is a verb (<code>publish</code>, <code>build</code>, <code>install</code>, <code>clean</code>), and is marked in the README table.</td>
+<td><code>test_init.py</code> (names, summaries, options); <code>tests/integration/test_readme.py</code></td>
+</tr>
+<tr>
+<td>P4</td>
+<td>Exit codes</td>
+<td><code>0</code> pass, or nothing to do (a <code>⏭️</code> line says why); <code>1</code> the checked thing failed; <code>2</code> invalid usage or config; <code>127</code> a tool or module is missing. The failure line is <code>❌ Failed: &lt;what&gt;</code> on stderr. With <code>--keep-going</code>, every step runs and every failure of an <code>Exception</code> is listed in the summary.</td>
+<td><code>tests/integration/test_exit_codes.py</code>; <code>test__steps.py</code> (any <code>Exception</code>)</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Fail before acting</td>
+<td>An unknown key, an invalid value or a wrong working directory exits with <code>2</code> before any command runs. The message names the key.</td>
+<td><code>config/_validate.py</code>, <code>_check_project_root</code>; <code>tests/unit/config/</code></td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Missing tools</td>
+<td>A missing program or Python module is reported with the command that installs it. A composite task reports all the missing tools of its steps at once, and runs nothing.</td>
+<td><code>tools.hint</code>, <code>_steps.preflight_message</code>; <code>tests/unit/test_check.py</code></td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Commands are data</td>
+<td>A task builds a command as a list of words; <code>runner.run</code> is the only place that turns it into a shell line (<code>shlex.join</code>) and it rejects a string. A space, <code>;</code>, <code>*</code>, <code>~</code> or <code>$VAR</code> in a user value reaches the tool unchanged.</td>
+<td><code>test_architecture.py</code> (no <code>shlex.quote</code> or <code>shlex.split</code> outside <code>runner.py</code>); <code>tests/integration/test_quoting.py</code></td>
+</tr>
+<tr>
+<td>P8</td>
+<td>One source of truth</td>
+<td>A config key is declared once (<code>SCHEMA</code>), a tool once (<code>TOOLS</code>), a step once (<code>_STEPS</code>, with its order and whether it is a default), a directory policy once (<code>_files</code>). Defaults, the JSON schema, the hints and the docs tables derive from them.</td>
+<td>tests that compare the tables; <code>test_clean.py</code> (every directory of <code>clean._DIRS</code> is in <code>EXCLUDED_DIRS</code>)</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>Safe by default</td>
+<td>A destructive task stays inside the project, keeps what git tracks, and asks before an irreversible step. A credential never appears in a command line or in the output.</td>
+<td><code>clean._is_inside_project</code>, <code>release._check_release_state</code>, <code>_publish_environment</code>; <code>tests/unit/test_release.py</code></td>
+</tr>
+<tr>
+<td>P10</td>
+<td>Skips are visible</td>
+<td>A task that has nothing to do prints <code>⏭️ &lt;reason&gt;</code> and exits <code>0</code>. A task that cannot do its job (a path it needs is missing) exits non-zero and names the key.</td>
+<td><code>_files.require_path</code>; <code>tests/unit/test__files.py</code>, <code>tests/integration/test_files.py</code></td>
+</tr>
+<tr>
+<td>P11</td>
+<td>Fix converges</td>
+<td>After <code>fix_&lt;x&gt;</code> (or <code>fix.all</code>) the matching <code>check_&lt;x&gt;</code> (or <code>check.all --only</code> the same steps) passes, and a second <code>fix_&lt;x&gt;</code> changes nothing.</td>
+<td><code>tests/integration/test_fix_converges.py</code></td>
+</tr>
+<tr>
+<td>P12</td>
+<td>Composition is explicit</td>
+<td><code>make_ns(include=, exclude=)</code> selects the tasks that the command line offers. The steps of <code>check.all</code> and <code>fix.all</code> come only from <code>tasklib.check.tasks</code> and <code>tasklib.fix.tasks</code>; excluding a task from the namespace does not remove its step.</td>
+<td><code>test_init.py</code> (the selection); not tested: that an excluded task keeps its step</td>
+</tr>
+<tr>
+<td>M1</td>
+<td>Layers</td>
+<td>A task module imports only the support modules, never another task module. The two composites (<code>check</code>, <code>fix</code>) import task modules and <code>_steps</code>. <code>config</code>, <code>tools</code> and <code>output</code> import nothing of the package that is above them.</td>
+<td><code>test_architecture.py</code> (layering test)</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Public means documented</td>
+<td>A name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> is public only if it is in the <code>__all__</code> of its module and in <code>uguide/custom_tasks.md</code>. Everything else starts with <code>_</code>; a task module has no public name except its tasks and <code>NAMESPACE</code>.</td>
+<td><code>test_architecture.py</code></td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Every function tested</td>
+<td>Every function, private ones included, has a docstring, a unit test and, if the unit test patches a collaborator, an integration test. Coverage is 100% (lines and branches). A function has no parameter that every caller passes with the same value.</td>
+<td><code>test_docstrings.py</code>, <code>--cov-fail-under=100</code>; the last sentence is a review rule</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Cheap to import</td>
+<td><code>import invoke_tasklib</code> stays below 100 ms; <code>make_ns()</code> does no I/O.</td>
+<td><code>tests/benchmarks/test_init_benchmark.py</code>, nightly <code>ci-benchmark.yaml</code></td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Invoke internals apart</td>
+<td>The private attributes of <code>invoke.config.Config</code> are read in one module, <code>config/_invoke.py</code>, which warns when one is missing. No other module calls <code>getattr</code> or <code>hasattr</code> on a config for a name that starts with <code>_</code>.</td>
+<td><code>test_architecture.py</code> (AST scan of <code>src/</code> for <code>getattr</code>/<code>hasattr</code> of a private name)</td>
+</tr>
+<tr>
+<td>M6</td>
+<td>Declared equals run</td>
+<td>The programs and modules that a <code>Step</code> declares are exactly those that its task runs with a check. A tool that a task runs and the step does not declare would be missing from the preflight (P6); one that is declared and not run blocks a step for nothing.</td>
+<td><code>test_check.py</code> and <code>test_fix.py</code> record the commands of every step</td>
+</tr>
+</tbody>
+</table>
+<p>The tool tables are kept consistent by the same test module: every program and module named by a
+step of <code>check._STEPS</code> or <code>fix._STEPS</code> is in <code>tools.TOOLS</code>, and (M6) is the one that the task of the
+step runs with a check.</p>
+<h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
+<p>Here's how a task invocation flows through the system:</p>
+<div class="highlight"><pre><span></span><code>User runs `invoke test.unit --cov`
+    ↓
+Invoke loads invoke.yaml into c.config
+    ↓
+test.unit(c, cov=True) is called
+    ↓
+load_config(c) resolves package.name and paths.unit_tests
+    ↓
+Task builds the pytest command, a list of words, with build_command
+    ↓
+runner.run(c, cmd) checks the program (tools.check_program), quotes the words (shlex.join),
+echoes the command and executes it with c.run (pty only on a terminal)
+</code></pre></div>
+<h2 id="design-choices">Design Choices<a class="headerlink" href="#design-choices" title="Permanent link">&para;</a></h2>
+<p>The design makes a few choices that shape how the package is used and extended. Each one has a
+cost, and the alternative is given, so you can judge whether the current design fits your project
+or what to change if it does not.</p>
+<h3 id="one-shared-load_config-instead-of-per-task-config">One shared <code>load_config</code> instead of per-task config<a class="headerlink" href="#one-shared-load_config-instead-of-per-task-config" title="Permanent link">&para;</a></h3>
+<p>Every task that needs a project value calls <code>load_config(c)</code>. A single resolution function keeps
+the defaults and the validation of the config in one place, and every task sees the same resolved
+paths (<code>test.unit</code> and <code>types.check</code> agree on <code>package.name</code>).</p>
+<ul>
+<li><strong>Cost</strong>: each task resolves the config again instead of once per run. This is cheap, because
+  <code>load_config</code> reads <code>c.config</code> and checks at most whether the source directory exists.</li>
+<li><strong>Alternative</strong>: let each task read the keys it needs. The tasks would be independent, but the
+  defaults and the checks would be repeated, and an invalid value would fail in some tasks and not
+  in others.</li>
+</ul>
+<h3 id="check_target-and-fix_target-instead-of-a-fix-flag"><code>check_&lt;target&gt;</code> and <code>fix_&lt;target&gt;</code> instead of a <code>--fix</code> flag<a class="headerlink" href="#check_target-and-fix_target-instead-of-a-fix-flag" title="Permanent link">&para;</a></h3>
+<p>The read-only task and the task that changes files are two tasks with two names. The name tells
+you what a task does before you run it, and CI can run every <code>check_*</code> task knowing that none
+changes the working tree (P2, P3).</p>
+<ul>
+<li><strong>Cost</strong>: more task names than a single <code>format</code> task with a <code>--fix</code> flag.</li>
+<li><strong>Alternative</strong>: one task per tool with a flag. The list is shorter, but a task that changes
+  files looks the same as one that does not, and <code>check.all</code> could not be proven read-only.</li>
+</ul>
+<h3 id="frozen-dataclasses-instead-of-a-dict">Frozen dataclasses instead of a dict<a class="headerlink" href="#frozen-dataclasses-instead-of-a-dict" title="Permanent link">&para;</a></h3>
+<p><code>load_config</code> returns a tree of frozen dataclasses. The type checker catches a typo such as
+<code>cfg.path.src</code>, attribute access reads better than nested keys, and a task cannot modify the
+config that other tasks read.</p>
+<ul>
+<li><strong>Cost</strong>: the dataclasses do not validate on construction. <code>get_config</code> validates the values
+  when a task starts, not when the collection is loaded, because the <code>invoke.yaml</code> values are only
+  known once Invoke has built the context. Each section also has a class next to its <code>SCHEMA</code>
+  options, and a test keeps the two equal.</li>
+<li><strong>Alternative</strong>: a runtime schema library (pydantic, attrs validators). It validates on
+  construction, but it adds a dependency to a package that only needs <code>invoke</code>.</li>
+</ul>
+<h3 id="one-declaration-per-fact">One declaration per fact<a class="headerlink" href="#one-declaration-per-fact" title="Permanent link">&para;</a></h3>
+<p>A config key is declared once (<code>SCHEMA</code>), a tool once (<code>TOOLS</code>), a step once (<code>_STEPS</code>) and a
+directory policy once (<code>_files</code>). The defaults, the JSON schema, the environment variable names, the
+install hints and the tables of the docs are derived from them, or compared with them by a test, so
+adding a key or a step is a short, local change (P8).</p>
+<ul>
+<li><strong>Cost</strong>: the declarations are data structures that you read through, not plain functions, so
+  they take a little longer to learn.</li>
+<li><strong>Alternative</strong>: write each list where it is used. It is simpler to read, but the lists drift
+  apart.</li>
+</ul>
+<h3 id="step-names-are-checked-by-the-composite-not-by-the-config">Step names are checked by the composite, not by the config<a class="headerlink" href="#step-names-are-checked-by-the-composite-not-by-the-config" title="Permanent link">&para;</a></h3>
+<p>The names in <code>tasklib.check.tasks</code> and <code>tasklib.fix.tasks</code> are checked by <code>check.all</code> and <code>fix.all</code>
+against <code>_STEPS</code>, before any step runs. The list of names exists in one place, and adding a step is
+two edits (the entry of <code>_STEPS</code> and the entry of <code>TOOLS</code>).</p>
+<ul>
+<li><strong>Cost</strong>: a typo in <code>check.tasks</code> only fails when <code>check.all</code> runs, not in an unrelated task such
+  as <code>test.unit</code>, and <code>config.show</code> does not flag it. The JSON schema describes the value as a
+  string or a list of strings, so an editor cannot complete the step names.</li>
+<li><strong>Alternative</strong>: keep the names in <code>config/_constants.py</code> and validate them in the config. The
+  editor completes them and every task fails early, at the price of one more place to edit when you
+  add a step.</li>
+</ul>
+<h3 id="commands-are-lists-of-words-not-strings">Commands are lists of words, not strings<a class="headerlink" href="#commands-are-lists-of-words-not-strings" title="Permanent link">&para;</a></h3>
+<p>A task builds a command with <code>build_command</code>, and <code>runner.run</code> is the only place that turns the
+list into a shell line with <code>shlex.join</code>. It rejects a string. A path with a space, a glob or a
+<code>$VAR</code> in a user value reaches the tool unchanged (P7), and the quoting rule is enforced by code
+instead of by the discipline of each task author.</p>
+<ul>
+<li><strong>Cost</strong>: a custom task cannot pass a ready-made shell string to <code>run</code>. A shell pipeline needs its
+  own <code>c.run</code>, outside the helpers.</li>
+<li><strong>Alternative</strong>: accept strings. It is more flexible, but every task must remember to quote.</li>
+</ul>
+<h3 id="make_ns-builds-a-new-collection-on-each-call"><code>make_ns()</code> builds a new collection on each call<a class="headerlink" href="#make_ns-builds-a-new-collection-on-each-call" title="Permanent link">&para;</a></h3>
+<p><code>make_ns(include=..., exclude=...)</code> returns a new <code>Collection</code> each time. A project selects the
+tasks it wants and adds its own without any effect on another importer (P12).</p>
+<ul>
+<li><strong>Cost</strong>: the namespace is built by a call in <code>tasks.py</code>, not by an import. Excluding a task
+  removes it from the command line but not from the steps of <code>check.all</code> and <code>fix.all</code>, which only
+  come from the config.</li>
+<li><strong>Alternative</strong>: a pre-built <code>ns</code>. It is one line shorter, but the instance is shared, and a
+  mutation by one importer is seen by every other.</li>
+</ul>
+<h3 id="importscheck-isolated-runs-in-the-same-process"><code>imports.check-isolated</code> runs in the same process<a class="headerlink" href="#importscheck-isolated-runs-in-the-same-process" title="Permanent link">&para;</a></h3>
+<p><code>imports.check-isolated</code> imports each module in its own fresh interpreter, so a module cannot hide
+a missing import behind another one. <code>_discover.import_each</code> starts these interpreters and the task
+calls it directly, with no intermediate worker process. A worker would only help if the <code>sys.path</code>
+of the task differed from the one of the project, and the check of the project root makes sure it
+does not.</p>
+<ul>
+<li><strong>Cost</strong>: the task trusts the working directory. It exits with <code>2</code> if it is not the project root.</li>
+<li><strong>Alternative</strong>: a worker process per task. It isolates more, and it adds a second entry point
+  to maintain.</li>
+</ul>
+<h3 id="names-are-private-until-the-user-guide-needs-them">Names are private until the user guide needs them<a class="headerlink" href="#names-are-private-until-the-user-guide-needs-them" title="Permanent link">&para;</a></h3>
+<p>Only a name of <code>config</code>, <code>runner</code>, <code>tools</code> or <code>output</code> that is in <code>__all__</code> and in
+<code>uguide/custom_tasks.md</code> is public (M2). The module constants, such as <code>clean._DIRS</code>, start with
+an underscore.</p>
+<ul>
+<li><strong>Cost</strong>: a project that wants one of these constants has to copy it, or ask for it to become
+  public.</li>
+<li><strong>Alternative</strong>: export everything. It is convenient, but every name becomes part of the API
+  that you have to keep stable.</li>
+</ul>
+<h3 id="linux-and-macos-only">Linux and macOS only<a class="headerlink" href="#linux-and-macos-only" title="Permanent link">&para;</a></h3>
+<p>The tasks rely on a POSIX shell for the quoting of the commands (P7). On Windows <code>make_ns</code> emits a
+<code>RuntimeWarning</code> and the platform is not supported.</p>
+<ul>
+<li><strong>Cost</strong>: a Windows project cannot rely on the tasks.</li>
+<li><strong>Alternative</strong>: abstract the shell. It is possible, but it needs a test matrix on Windows and a
+  different quoting rule.</li>
+</ul>
+<h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
+<p>Tests use <code>invoke.context.MockContext</code>, which records every <code>c.run(...)</code> call (made by
+<code>runner.run</code>) without executing it. This lets tests assert on the exact shell command a task would
+run, without depending on <code>ruff</code>, <code>pytest</code>, <code>uv</code>, etc. being installed or configured in the test
+environment. The unit tests also patch <code>shutil.which</code> (an autouse fixture in
+<code>tests/unit/conftest.py</code>) so that the check of the <code>PATH</code> done by
+<code>invoke_tasklib.tools.check_program</code> (called by <code>runner.run</code>) passes on any machine.</p>
+<h2 id="limits-and-extension-points">Limits and Extension Points<a class="headerlink" href="#limits-and-extension-points" title="Permanent link">&para;</a></h2>
+<p>What the current design does not cover, and where you would change it:</p>
+<ol>
+<li><strong>Task modules</strong>: a new concern (for example changelog generation) is a new module with its own
+   <code>NAMESPACE</code>, registered in <code>_MODULES</code>. See <a href="../development/#adding-a-new-task">Adding a New Task</a>.</li>
+<li><strong>Validation in CI without running a task</strong>: <code>config.show</code> validates the config, and an editor
+   checks <code>invoke.yaml</code> against the published JSON schema, but no command validates the file on its
+   own. A project that wants this runs <code>inv config.show</code> in CI.</li>
+<li><strong>Step names in the schema</strong>: the JSON schema does not list the valid step names (see
+   <a href="#design-choices">Design Choices</a>). The names are in <code>uguide/check.md</code> and <code>uguide/fix.md</code>.</li>
+</ol>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.pyinvoke.org/">Invoke documentation</a></li>
+<li><a href="https://docs.astral.sh/uv/"><code>uv</code> documentation</a></li>
+<li><a href="https://github.com/jimporter/mike"><code>mike</code> documentation</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 - present Thibaut Durand
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.expand", "content.code.copy", "content.code.select", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"method": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
