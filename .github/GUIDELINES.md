@@ -75,7 +75,7 @@ the `nightly-test-*` ones).
 | `nightly-test-package.yaml`          | called by `nightly-package.yaml`       | Run the checks against the installed PyPI package.                              |
 | `nightly-test-package-dep.yaml`      | called by `nightly-package.yaml`       | Test the installed PyPI package with the supported versions of one dependency.  |
 | `nightly-repo-tasks.yaml`            | nightly (10:40 UTC), manual            | Run the `shell` and `spelling` steps of `check.all` on the source.              |
-| `release-pypi.yaml`                  | version tag `v*.*.*`, manual           | Run the CI, then build, sign, attest (SLSA, GitHub) and publish to PyPI.        |
+| `release-pypi.yaml`                  | version tag `v*.*.*`, manual           | Build, sign, attest (SLSA, GitHub) and publish to PyPI.                         |
 | `release-docs.yaml`                  | version tag `v*.*.*`, manual           | Deploy the documentation of the stable version (with `mike`).                   |
 | `release-docs-dev.yaml`              | push to `main`, manual                 | Deploy the documentation of the development version.                            |
 | `release-docs-publish.yaml`          | called by the two previous workflows   | Build and deploy the documentation (shared logic).                              |
