@@ -112,7 +112,7 @@ jobs:
             dist/*.whl
 
   publish:
-    needs: [build,sign-and-release, provenance, attest]
+    needs: [build, sign-and-release, provenance, attest]
     # Only fail-closed on tag pushes: on a tag, publish must wait for
     # sign-and-release, provenance and attest to succeed; on
     # workflow_dispatch they are skipped (not failed), so allow publish to
