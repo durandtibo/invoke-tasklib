@@ -7,12 +7,6 @@ on:
 permissions: {}
 
 jobs:
-  # Read the package name from pyproject.toml, so it is not repeated here.
-  get-metadata:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/lib-get-package-metadata.yaml
-
   # Get the version bounds of the dependencies from
   # dev/config/package_versions.json.
   get-versions:
@@ -31,19 +25,19 @@ jobs:
   stable:
     permissions:
       contents: read
-    needs: [get-metadata, get-matrix]
+    needs: get-matrix
     uses: ./.github/workflows/nightly-test-package.yaml
     with:
-      install-cmd: "uv pip install ${{ needs.get-metadata.outputs.normalized_name }}"
+      install-cmd: "uv pip install invoke-tasklib"
       test-matrix: ${{ needs.get-matrix.outputs.test_matrix }}
 
   latest:
     permissions:
       contents: read
-    needs: [get-metadata, get-matrix]
+    needs: get-matrix
     uses: ./.github/workflows/nightly-test-package.yaml
     with:
-      install-cmd: "uv pip install --pre ${{ needs.get-metadata.outputs.normalized_name }}"
+      install-cmd: "uv pip install --pre invoke-tasklib"
       test-matrix: ${{ needs.get-matrix.outputs.test_matrix }}
 
   #################################
@@ -56,14 +50,14 @@ jobs:
   test-dep:
     permissions:
       contents: read
-    needs: [get-metadata, get-versions, get-matrix]
+    needs: [get-versions, get-matrix]
     strategy:
       fail-fast: false
       matrix:
         package-name: ["invoke"]
     uses: ./.github/workflows/nightly-test-package-dep.yaml
     with:
-      install-cmd: "uv pip install ${{ needs.get-metadata.outputs.normalized_name }}"
+      install-cmd: "uv pip install invoke-tasklib"
       package-name: ${{ matrix.package-name }}
       package-versions: ${{ toJson(fromJson(needs.get-versions.outputs.package_versions)[matrix.package-name]) }}
       test-matrix: ${{ needs.get-matrix.outputs.test_matrix }}

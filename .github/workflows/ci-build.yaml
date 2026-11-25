@@ -14,18 +14,11 @@ on:
 permissions: {}
 
 jobs:
-  # Read the package name from pyproject.toml, so it is not repeated here.
-  get-metadata:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/lib-get-package-metadata.yaml
-
   # Every supported Python version x sdist/wheel. invoke-tasklib has no
   # optional dependencies, so there is no per-extra build as in coola.
   build:
     permissions:
       contents: read
-    needs: get-metadata
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
@@ -47,6 +40,6 @@ jobs:
       - name: Verify Build
         uses: durandtibo/verify-uv-build-action@88da014d506b5f0b4f657d4ba8920061ab785620 # ratchet:durandtibo/verify-uv-build-action@v0.0.7
         with:
-          package-name: ${{ needs.get-metadata.outputs.name }}
+          package-name: invoke-tasklib
           package-dependencies: "invoke"
           dist-type: ${{ matrix.dist-type }}
