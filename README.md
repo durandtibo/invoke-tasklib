@@ -47,7 +47,7 @@
 
 Reusable [Invoke](https://www.pyinvoke.org/) tasks shared across Python
 projects: formatting, linting, type-checking, testing, environment setup,
-security auditing, releasing, documentation, and cleanup — all as a single
+security auditing, releasing, documentation, and cleanup, all as a single
 importable package instead of a `tasks.py` you copy-paste and let drift
 between repositories.
 
@@ -110,7 +110,7 @@ for a full walkthrough.
 
 Tasks are grouped into namespaces, one per module. Each task either
 **checks/reports** (read-only, exits non-zero on violations) or
-**mutates** (formats, builds, publishes) — the table below flags which.
+**mutates** (formats, builds, publishes); the table below flags which.
 
 | Namespace  | Task                          | Behavior                                                                                 | Mutates? |
 | ---------- | ----------------------------- | ---------------------------------------------------------------------------------------- | :------: |
@@ -168,7 +168,7 @@ tools each one wraps, see the
 
 ## Configuration
 
-Only `tasklib.package.name` is required — everything else has a sensible
+Only `tasklib.package.name` is required; everything else has a sensible
 default derived from it:
 
 ```yaml
@@ -292,7 +292,7 @@ composition for things that are genuinely one-off to a single project.
 ## API Stability
 
 :warning: `invoke-tasklib` is under active development and its API is not
-yet stable — pin a specific version in your project's dependencies for
+yet stable: pin a specific version in your project's dependencies for
 consistent behavior across releases.
 
 ## Contributing
