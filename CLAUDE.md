@@ -186,9 +186,8 @@ job id.
   create a `ci-<name>.yaml` reusable workflow and add a job in `ci.yaml`.
 - Set up Python with `durandtibo/setup-venv-uv-action` (it activates the virtual environment, so
   the steps run `inv ...` without `uv run`), get the OSs and Python versions to test from
-  `lib-get-test-matrix.yaml` (`durandtibo/workflow-config-action`) and the project metadata from
-  `lib-get-package-metadata.yaml` (`durandtibo/extract-pyproject-metadata-action`). Do not repeat
-  the package name or the versions in a workflow.
+  `lib-get-test-matrix.yaml` (`durandtibo/workflow-config-action`). Hardcode the package name
+  (`invoke-tasklib`) where a workflow needs it, and do not repeat the Python versions.
 - Run the checks of a workflow through the task it maps to (for example
   `inv lint.check-python` in `ci-format.yaml`), so the CI and the local run use the same
   command.

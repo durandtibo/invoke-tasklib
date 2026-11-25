@@ -69,7 +69,6 @@ the `nightly-test-*` ones).
 | `ci-benchmark.yaml`                  | nightly, manual                        | Run the benchmarks and compare them with the previous run (not a merge gate).   |
 | `ci-verify-workflows.yaml`           | pull request, push to `main`, manual   | Lint the files of `.github/workflows`.                                          |
 | `lib-get-test-matrix.yaml`           | called by other workflows, manual      | Load the Python versions and the operating systems to test.                     |
-| `lib-get-package-metadata.yaml`      | called by other workflows, manual      | Read the name, the version and the dependency specifiers from `pyproject.toml`. |
 | `lib-get-package-versions.yaml`      | called by other workflows, manual      | Read the versions of the dependencies to test from `dev/config`.                |
 | `nightly-package.yaml`               | nightly (10:30 UTC), manual            | Test the package published on PyPI: calls the `nightly-test-*` workflows.       |
 | `nightly-test-package.yaml`          | called by `nightly-package.yaml`       | Run the checks against the installed PyPI package.                              |
@@ -187,11 +186,10 @@ instead of repeated:
   `lib-get-package-versions.yaml`. Regenerated weekly by
   `bot-generate-package-versions.yaml` via `../dev/generate_versions.py`.
 
-The package name and version, and the version specifiers of the dependencies,
-are never duplicated in config: they are read directly from
-`../pyproject.toml` by the `durandtibo/extract-pyproject-metadata-action`
-composite action, wrapped in `lib-get-package-metadata.yaml` so that its
-outputs can be used by other jobs.
+The package name (`invoke-tasklib`) is hardcoded where a workflow needs it
+(`ci-build.yaml`, `nightly-package.yaml`, `release-pypi.yaml`). The version
+specifiers of the dependencies are read from `../pyproject.toml` by
+`../dev/generate_versions.py`.
 
 ## Validating changes to this directory
 
