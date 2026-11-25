@@ -2113,14 +2113,14 @@ always put its console scripts on <code>PATH</code> the way you expect. Make sur
 renamed the variable or wrapped it, Invoke won't find it. The package has no pre-built
 <code>invoke_tasklib.ns</code>: <code>from invoke_tasklib import ns</code> raises an <code>ImportError</code>, use <code>make_ns()</code>.</p>
 <h2 id="a-task-fails-with-command-not-found-ruff-ty-shellcheck">A task fails with "command not found" (<code>ruff</code>, <code>ty</code>, <code>shellcheck</code>, ...)<a class="headerlink" href="#a-task-fails-with-command-not-found-ruff-ty-shellcheck" title="Permanent link">&para;</a></h2>
-<p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools — it does not vendor them. Run
+<p><code>invoke-tasklib</code> tasks are wrappers around external CLI tools; it does not vendor them. Run
 <code>invoke env.check-tools</code> to see, in one list, which tools are available and which are missing.
 Install the missing tool, either directly or via your project's dependency groups:</p>
 <div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>env.install<span class="w">                  </span><span class="c1"># installs dev deps: ruff, ty, pytest, ...</span>
 invoke<span class="w"> </span>env.install<span class="w"> </span>--groups<span class="w"> </span>dev,docs<span class="w">  </span><span class="c1"># additionally installs mike</span>
 </code></pre></div>
 <p><code>shellcheck</code> and <code>shfmt</code> are not Python packages; install them with your system package manager
-(e.g. <code>brew install shellcheck shfmt</code> on macOS) — see the
+(e.g. <code>brew install shellcheck shfmt</code> on macOS); see the
 <a href="../uguide/format/">Format</a> page. The full external-tool matrix is in the
 <a href="../uguide/#external-tools">User Guide overview</a>.</p>
 <h2 id="docpublish-latest-fails-with-no-version-tag-found"><code>doc.publish-latest</code> fails with <code>No version tag found</code><a class="headerlink" href="#docpublish-latest-fails-with-no-version-tag-found" title="Permanent link">&para;</a></h2>
