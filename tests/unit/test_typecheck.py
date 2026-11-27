@@ -110,3 +110,51 @@ def test_check_args_go_to_the_configured_checker() -> None:
 def test_check_says_which_checker_it_runs(capsys: pytest.CaptureFixture[str]) -> None:
     typecheck.check(make_context(_with_checker("mypy")))
     assert capsys.readouterr().out == "🔬 Checking type hints with mypy...\n✅ Type check passed\n"
+
+
+######################################
+#     Tests for check_public_api     #
+######################################
+
+
+def test_check_public_api() -> None:
+    c = make_context(_CFG)
+    typecheck.check_public_api(c)
+    assert commands(c) == ["pyright --verifytypes mypkg --ignoreexternal"]
+
+
+def test_check_public_api_uses_the_import_name() -> None:
+    c = make_context({"package": {"name": "my-pkg", "import_name": "my_module"}})
+    typecheck.check_public_api(c)
+    assert commands(c) == ["pyright --verifytypes my_module --ignoreexternal"]
+
+
+@pytest.mark.parametrize("checker", ["ty", "pyright", "mypy"])
+def test_check_public_api_runs_pyright_with_any_checker(checker: str) -> None:
+    c = make_context(_with_checker(checker))
+    typecheck.check_public_api(c)
+    assert commands(c) == ["pyright --verifytypes mypkg --ignoreexternal"]
+
+
+def test_check_public_api_args() -> None:
+    c = make_context(_CFG)
+    typecheck.check_public_api(c, args="--verbose --outputjson")
+    assert commands(c) == ["pyright --verifytypes mypkg --ignoreexternal --verbose --outputjson"]
+
+
+def test_check_public_api_args_are_quoted() -> None:
+    c = make_context(_CFG)
+    typecheck.check_public_api(c, args="--project 'my dir'")
+    assert commands(c) == ["pyright --verifytypes mypkg --ignoreexternal --project 'my dir'"]
+
+
+def test_check_public_api_rejects_unbalanced_args() -> None:
+    with pytest.raises(Exit, match=r"Cannot parse the value of --args"):
+        typecheck.check_public_api(make_context(_CFG), args="'unclosed")
+
+
+def test_check_public_api_says_what_it_does(capsys: pytest.CaptureFixture[str]) -> None:
+    typecheck.check_public_api(make_context(_CFG))
+    assert capsys.readouterr().out == (
+        "🔬 Checking the types of the public API...\n✅ Public API check passed\n"
+    )

@@ -137,6 +137,7 @@ A project that needs fewer tasks, or tasks of its own, builds the namespace with
 ### 🔬 **Type Checking**
 
 - `types.check`: check type hints with ty (`--complete` also runs pyright)
+- `types.check-public-api`: check that the public API of the package is fully typed
 
 [Learn more →](uguide/types.md)
 

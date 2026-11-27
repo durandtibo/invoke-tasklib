@@ -70,6 +70,7 @@ def test_list_succeeds(project: Path) -> None:
         "security.audit",
         "test.unit",
         "types.check",
+        "types.check-public-api",
     ],
 )
 def test_list_contains_the_task(project: Path, task: str) -> None:

@@ -62,6 +62,7 @@ def project(tmp_path: Path) -> Path:
         "format.check-python",
         "lint.check-python",
         "types.check",
+        "types.check-public-api",
         "test.unit",
         "test.doctest",
         "imports.check-cycles",

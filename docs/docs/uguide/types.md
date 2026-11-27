@@ -4,9 +4,10 @@
 
 ## Overview
 
-| Task          | Behavior                                                            |
-| ------------- | ------------------------------------------------------------------- |
-| `types.check` | Checks type hints with [ty](https://docs.astral.sh/ty/) (read-only) |
+| Task                     | Behavior                                                             |
+| ------------------------ | -------------------------------------------------------------------- |
+| `types.check`            | Checks type hints with [ty](https://docs.astral.sh/ty/) (read-only)  |
+| `types.check-public-api` | Checks that the public API of the package is fully typed (read-only) |
 
 ## Usage
 
@@ -35,6 +36,31 @@ invoke types.check --complete --args "--python-version 3.12" --pyright-args "--p
 Without `--paths`, `ty` checks the project and `pyright` the files of its own `include` setting (in
 `pyproject.toml` or `pyrightconfig.json`), so the two tools can look at different files. Set the
 same files in both, or pass `--paths`, to keep them aligned.
+
+## Public API
+
+`types.check-public-api` checks that the public API of the package is fully typed, which is what the
+users of a package with a `py.typed` file rely on:
+
+```shell
+invoke types.check-public-api
+```
+
+It runs `pyright --verifytypes <package> --ignoreexternal`, where `<package>` is
+`tasklib.package.import_name` (see the [config](config.md)), and fails if the type completeness
+score is below 100 %. It runs `pyright` whatever `tasklib.types.checker` is, and it is not a step
+of `check.all`.
+
+The package must be installed (editable or not) in the environment that runs `invoke`. The
+environment does not have to be activated. Calling `.venv/bin/pyright --verifytypes` directly
+without activating it reports `No py.typed file found`, because `pyright` looks for the package
+with the first `python` of the `PATH`.
+
+`--args` is passed to `pyright`:
+
+```shell
+invoke types.check-public-api --args "--verbose"
+```
 
 ## See Also
 
