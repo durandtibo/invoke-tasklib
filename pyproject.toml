@@ -10,7 +10,7 @@ only-include = ["src", "tests"]
 
 [project]
 name = "invoke-tasklib"
-version = "0.1.1a0"
+version = "0.1.1"
 description = "Reusable Invoke tasks shared across Python projects."
 readme = "README.md"
 authors = [{ name = "Thibaut Durand", email = "durand.tibo+gh@gmail.com" }]
