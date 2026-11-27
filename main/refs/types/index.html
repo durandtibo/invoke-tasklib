@@ -1342,6 +1342,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.typecheck.check_public_api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_public_api
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1812,6 +1823,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#invoke_tasklib.typecheck.check_public_api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_public_api
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1851,7 +1873,10 @@
 
     <div class="doc doc-contents first">
 
-        <p>Type-checking task (<code>types.check</code>).</p>
+        <p>Type-checking tasks (<code>types.*</code>).</p>
+<p>The <code>types.check</code> task checks the type hints of the project. The
+<code>types.check-public-api</code> task checks that the public API of the
+package is fully typed.</p>
 <p>The module is named <code>typecheck</code> so that it does not shadow the
 standard library module <code>types</code>; its namespace is <code>types</code>, see
 <code>NAMESPACE</code>.</p>
@@ -2022,6 +2047,117 @@ run. They are only used with <code>complete</code>.</p>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="invoke_tasklib.typecheck.check_public_api" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">invoke_tasklib.typecheck.check_public_api</span>
+
+
+<a href="#invoke_tasklib.typecheck.check_public_api" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_public_api</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n"><span title="invoke.context.Context">Context</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check that the public API of the package is fully typed.</p>
+<p>It runs <code>pyright --verifytypes &lt;package&gt; --ignoreexternal</code> on
+<code>tasklib.package.import_name</code>, which fails if the type
+completeness score is below 100 %. The symbols of the other
+packages are ignored.</p>
+<p>pyright reads the package of the first <code>python</code> of the <code>PATH</code>,
+which is the one of the environment that runs Invoke, so no
+activation is needed. The package must be installed in that
+environment (editable or not) and have a <code>py.typed</code> file.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code><span title="invoke.context.Context">Context</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The invoke context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>args</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra arguments for pyright, e.g. <code>"--verbose"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Exit</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>args</code> cannot be split or <code>pyright</code> is not found.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>UnexpectedExit</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If pyright fails: the public API is not fully
+typed, or the package or its <code>py.typed</code> file is not found.</p>
+              </div>
             </td>
           </tr>
       </tbody>

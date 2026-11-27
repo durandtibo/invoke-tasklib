@@ -714,6 +714,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#public-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1801,6 +1812,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#public-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1846,6 +1868,10 @@
 <td><code>types.check</code></td>
 <td>Checks type hints with <a href="https://docs.astral.sh/ty/">ty</a> (read-only)</td>
 </tr>
+<tr>
+<td><code>types.check-public-api</code></td>
+<td>Checks that the public API of the package is fully typed (read-only)</td>
+</tr>
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
@@ -1865,6 +1891,22 @@ more thorough; nothing more if the checker is <code>pyright</code>):</p>
 <p>Without <code>--paths</code>, <code>ty</code> checks the project and <code>pyright</code> the files of its own <code>include</code> setting (in
 <code>pyproject.toml</code> or <code>pyrightconfig.json</code>), so the two tools can look at different files. Set the
 same files in both, or pass <code>--paths</code>, to keep them aligned.</p>
+<h2 id="public-api">Public API<a class="headerlink" href="#public-api" title="Permanent link">&para;</a></h2>
+<p><code>types.check-public-api</code> checks that the public API of the package is fully typed, which is what the
+users of a package with a <code>py.typed</code> file rely on:</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>types.check-public-api
+</code></pre></div>
+<p>It runs <code>pyright --verifytypes &lt;package&gt; --ignoreexternal</code>, where <code>&lt;package&gt;</code> is
+<code>tasklib.package.import_name</code> (see the <a href="../config/">config</a>), and fails if the type completeness
+score is below 100 %. It runs <code>pyright</code> whatever <code>tasklib.types.checker</code> is, and it is not a step
+of <code>check.all</code>.</p>
+<p>The package must be installed (editable or not) in the environment that runs <code>invoke</code>. The
+environment does not have to be activated. Calling <code>.venv/bin/pyright --verifytypes</code> directly
+without activating it reports <code>No py.typed file found</code>, because <code>pyright</code> looks for the package
+with the first <code>python</code> of the <code>PATH</code>.</p>
+<p><code>--args</code> is passed to <code>pyright</code>:</p>
+<div class="highlight"><pre><span></span><code>invoke<span class="w"> </span>types.check-public-api<span class="w"> </span>--args<span class="w"> </span><span class="s2">"--verbose"</span>
+</code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../refs/types/"><code>invoke_tasklib.typecheck</code> reference</a></li>

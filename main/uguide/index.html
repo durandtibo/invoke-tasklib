@@ -1998,6 +1998,12 @@ one page in this guide.</p>
 <td style="text-align: center;">❌</td>
 </tr>
 <tr>
+<td><a href="types/">Types</a></td>
+<td><code>types.check-public-api</code></td>
+<td>Check that the public API is fully typed (pyright)</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
 <td><a href="test/">Test</a></td>
 <td><code>test.doctest</code></td>
 <td>Run doctests on source code and markdown files</td>
@@ -2254,6 +2260,11 @@ invoke<span class="w"> </span>test.all<span class="w"> </span>--cov
 <td style="text-align: center;">✅</td>
 </tr>
 <tr>
+<td><code>types.check-public-api</code></td>
+<td><code>pyright</code></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
 <td><code>security.audit</code></td>
 <td><code>pip-audit</code></td>
 <td style="text-align: center;">❌</td>
@@ -2351,7 +2362,7 @@ skipped directory is a skipped step, not a failure.</p>
 </tr>
 <tr>
 <td><a href="https://microsoft.github.io/pyright/"><code>pyright</code></a></td>
-<td><code>types.check --complete</code></td>
+<td><code>types.check --complete</code>, <code>types.check-public-api</code></td>
 </tr>
 <tr>
 <td><a href="https://docs.pytest.org/"><code>pytest</code></a></td>
