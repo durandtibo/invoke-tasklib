@@ -83,6 +83,7 @@ def test_ns_contains_the_complete_list_of_tasks() -> None:
         "test.integration",
         "test.unit",
         "types.check",
+        "types.check-public-api",
     ]
 
 
@@ -167,7 +168,8 @@ def test_make_ns_exclude_a_task_keeps_its_siblings() -> None:
 
 
 def test_make_ns_exclude_all_tasks_of_a_namespace_removes_it() -> None:
-    assert "types" not in make_ns(exclude=["types.check"]).collections
+    ns = make_ns(exclude=["types.check", "types.check-public-api"])
+    assert "types" not in ns.collections
 
 
 def test_make_ns_exclude_a_namespace_keeps_its_step_in_check() -> None:

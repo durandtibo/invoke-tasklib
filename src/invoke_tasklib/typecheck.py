@@ -1,4 +1,8 @@
-r"""Type-checking task (``types.check``).
+r"""Type-checking tasks (``types.*``).
+
+The ``types.check`` task checks the type hints of the project. The
+``types.check-public-api`` task checks that the public API of the
+package is fully typed.
 
 The module is named ``typecheck`` so that it does not shadow the
 standard library module ``types``; its namespace is ``types``, see
@@ -13,7 +17,7 @@ from invoke.tasks import task
 
 from invoke_tasklib.config import load_config
 from invoke_tasklib.output import say, step
-from invoke_tasklib.runner import PATHS_HELP, build_command, run
+from invoke_tasklib.runner import ARGS_HELP, PATHS_HELP, build_command, run
 
 if TYPE_CHECKING:
     from invoke.context import Context
@@ -74,3 +78,32 @@ def check(
                     ["pyright"], args=pyright_args, paths=paths, args_option="--pyright-args"
                 ),
             )
+
+
+@task(help={"args": ARGS_HELP})
+def check_public_api(c: Context, *, args: str | None = None) -> None:
+    r"""Check that the public API of the package is fully typed.
+
+    It runs ``pyright --verifytypes <package> --ignoreexternal`` on
+    ``tasklib.package.import_name``, which fails if the type
+    completeness score is below 100 %. The symbols of the other
+    packages are ignored.
+
+    pyright reads the package of the first ``python`` of the ``PATH``,
+    which is the one of the environment that runs Invoke, so no
+    activation is needed. The package must be installed in that
+    environment (editable or not) and have a ``py.typed`` file.
+
+    Args:
+        c: The invoke context.
+        args: Extra arguments for pyright, e.g. ``"--verbose"``.
+
+    Raises:
+        Exit: If ``args`` cannot be split or ``pyright`` is not found.
+        UnexpectedExit: If pyright fails: the public API is not fully
+            typed, or the package or its ``py.typed`` file is not found.
+    """
+    name = load_config(c).package.import_name
+    with step(c, "🔬 Checking the types of the public API...", "✅ Public API check passed"):
+        words = ["pyright", "--verifytypes", name, "--ignoreexternal"]
+        run(c, build_command(words, args=args))

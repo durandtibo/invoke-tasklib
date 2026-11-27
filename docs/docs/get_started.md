@@ -127,6 +127,8 @@ Available tasks:
   test.integration              Run integration tests.
   test.unit                     Run unit tests.
   types.check                   Check type hints.
+  types.check-public-api        Check that the public API of the package is
+                                fully typed.
 
 ```
 

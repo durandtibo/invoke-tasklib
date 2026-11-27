@@ -24,6 +24,7 @@ Each task either **checks/reports** (read-only, exits non-zero on violations) or
 | [Imports](imports.md)   | `imports.check-cycles`        | Check for cyclic import dependencies                 |    ❌    |
 | [Imports](imports.md)   | `imports.check-isolated`      | Check that every module imports on its own           |    ❌    |
 | [Types](types.md)       | `types.check`                 | Check type hints with ty (`--complete`: + pyright)   |    ❌    |
+| [Types](types.md)       | `types.check-public-api`      | Check that the public API is fully typed (pyright)   |    ❌    |
 | [Test](test.md)         | `test.doctest`                | Run doctests on source code and markdown files       |    ❌    |
 | [Test](test.md)         | `test.doctest-src`            | Run doctests on source code                          |    ❌    |
 | [Test](test.md)         | `test.doctest-markdown`       | Run doctests on Python examples in markdown          |    ❌    |
@@ -105,6 +106,7 @@ Every task that runs an external tool takes `--args`, and the tasks that run on 
 | `lint.check-spelling`                                                            | `codespell`           |    ✅     |
 | `lint.pre-commit`                                                                | `pre-commit`          |    ❌     |
 | `types.check`                                                                    | `ty` (only)           |    ✅     |
+| `types.check-public-api`                                                         | `pyright`             |    ❌     |
 | `security.audit`                                                                 | `pip-audit`           |    ❌     |
 | `doc.build`, `doc.serve`                                                         | `mkdocs`              |    ❌     |
 | `release.build`                                                                  | `uv build`            |    ❌     |
@@ -152,7 +154,7 @@ Tasks are thin wrappers around external command-line tools. Each is expected to 
 | [`shellcheck`](https://www.shellcheck.net/)                       | `format.check-shell`                                                                         |
 | [`shfmt`](https://github.com/mvdan/sh)                            | `format.check-shell-format`, `format.fix-shell`                                              |
 | [`ty`](https://docs.astral.sh/ty/)                                | `types.check`                                                                                |
-| [`pyright`](https://microsoft.github.io/pyright/)                 | `types.check --complete`                                                                     |
+| [`pyright`](https://microsoft.github.io/pyright/)                 | `types.check --complete`, `types.check-public-api`                                           |
 | [`pytest`](https://docs.pytest.org/)                              | `test.*` except `test.doctest` and `test.doctest-markdown`                                   |
 | [`pytest-timeout`](https://pypi.org/project/pytest-timeout/)      | `test.unit`, `test.integration`, `test.functional`, `test.all`                               |
 | [`pytest-cov`](https://pytest-cov.readthedocs.io/)                | the `--cov` option of the `test.*` tasks                                                     |
